@@ -2355,7 +2355,7 @@ let state = {
   skuTab:   localStorage.getItem('ck_sku_tab')   || 'ba',         // ba | month | year
   skuQuery: localStorage.getItem('ck_sku_query') || '',           // typed SKU (individual mode)
   skuPromo: localStorage.getItem('ck_sku_promo') || '__auto__',   // promotion_id or __auto__ (individual mode)
-  skuAggPromo: localStorage.getItem('ck_sku_agg_promo') || 'CHOICE_KIT',    // promotion_id (aggregate mode)
+  skuAggPromo: localStorage.getItem('ck_sku_agg_promo') || '',    // promotion_id (aggregate mode) — auto-picked from data
   skuAggDrillSku: '',                                             // session: drilled-into SKU in aggregate mode
 
   hiddenWidgets: (localStorage.getItem('ck_widget_order_v') === WIDGET_ORDER_VERSION
@@ -6268,9 +6268,10 @@ function renderSkuAggregate() {
 
   // Auto-pick the promotion with the most SKUs on first visit, so users see a
   // meaningful aggregate immediately instead of a tiny/empty promotion.
-  if (!state.skuAggPromo) {
-    const keys = listPromotionKeys();
-    if (keys.length) {
+  // 저장된 promo 값이 현재 데이터에 없으면 자동 선택
+  const _allPromoKeys = listPromotionKeys();
+  if (!state.skuAggPromo || !_allPromoKeys.includes(state.skuAggPromo)) {
+    if (_allPromoKeys.length) {
       const skuCount = {};
       state.orders.forEach(o => {
         const k = promoKeyOfOrder(o);
@@ -6278,8 +6279,8 @@ function renderSkuAggregate() {
         if (!skuCount[k]) skuCount[k] = new Set();
         skuCount[k].add(o.sku);
       });
-      const best = keys.slice().sort((a,b) => (skuCount[b]?.size||0) - (skuCount[a]?.size||0))[0];
-      state.skuAggPromo = best || keys[0];
+      const best = _allPromoKeys.slice().sort((a,b) => (skuCount[b]?.size||0) - (skuCount[a]?.size||0))[0];
+      state.skuAggPromo = best || _allPromoKeys[0];
       try { localStorage.setItem('ck_sku_agg_promo', state.skuAggPromo); } catch(_) {}
       const aggSel = document.getElementById('selSkuAggPromo');
       if (aggSel) aggSel.value = state.skuAggPromo;
