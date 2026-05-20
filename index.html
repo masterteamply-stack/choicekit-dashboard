@@ -1525,6 +1525,7 @@ header .mono b.t-orange {
     <input type="file" id="fMkt" accept=".csv" />
     <input type="file" id="fBudgets" accept=".csv" />
     <input type="file" id="fBulk" accept=".csv" multiple />
+    <input type="file" id="fCtrModel" accept=".csv" />
 
     <!-- Import 폴드 메뉴 -->
     <div class="import-menu" id="importMenu">
@@ -1548,6 +1549,10 @@ header .mono b.t-orange {
         </button>
         <button onclick="reloadAutoCSV(true);document.getElementById('importMenu').classList.remove('open')" title="Auto-load from this folder">
           🔄 Reload CSV
+        </button>
+        <hr style="border:none;border-top:1px solid var(--line-2);margin:4px 0">
+        <button onclick="document.getElementById('fCtrModel').click();document.getElementById('importMenu').classList.remove('open')" title="CTR Code ↔ Vehicle Model 매핑 CSV 업로드">
+          🚗 CTR-Model Mapping
         </button>
       </div>
     </div>
@@ -4518,11 +4523,15 @@ function renderTopInsights(fOrders) {
   const region = state.topInsightsRegion;
   const country = state.topInsightsCountry;
   const keyMap = { model:'make_model', product:'product', ctr:'ctr_code' };
-  // make_model 없을 경우 product로 fallback
+  // make_model 없을 경우 CTR-Model 매핑 → product 순으로 fallback
   const valKey = (o, key, dim) => {
     const v = o[key];
     if (v && v.trim()) return v.trim();
-    if (dim === 'model') return o['product'] || '(unspecified)';
+    if (dim === 'model') {
+      const mapped = resolveModel(o['sku'] || o['order_id'] || o['ctr_code'] || '');
+      if (mapped) return mapped;
+      return o['product'] || '(unspecified)';
+    }
     return '(unspecified)';
   };
   const labelMap = { model:'Vehicle Model', product:'Product', ctr:'CTR Code' };
@@ -7587,6 +7596,70 @@ const AUTO_CSV_FILES = { orders: 'orders.csv', marketing: 'marketing.csv', budge
 const SB_SHARED_URL = 'https://waxjtcxdgulbdofycywr.supabase.co';
 const SB_SHARED_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndheGp0Y3hkZ3VsYmRvZnljeXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMjc3NTIsImV4cCI6MjA4ODgwMzc1Mn0.rvkmwG-dsjeFfT2NAMUJaKjCBMm2SOmAQ1SXl3V3jHI';
 
+/* ── CTR-Model 매핑 ──────────────────────────────────── */
+let ctrModelMap = {};   // { 'CB0210R': 'HYUNDAI SONATA', ... }
+
+async function loadCtrModelMap() {
+  try {
+    const res = await fetch(
+      `${SB_SHARED_URL}/rest/v1/ck_ctr_model?select=ctr_code,make_model,brand,vehicle_type`,
+      { headers: { apikey: SB_SHARED_KEY, Authorization: `Bearer ${SB_SHARED_KEY}` } }
+    );
+    if (!res.ok) return;
+    const rows = await res.json();
+    ctrModelMap = {};
+    rows.forEach(r => { if (r.ctr_code) ctrModelMap[r.ctr_code.toUpperCase()] = r; });
+    console.log(`✅ CTR-Model map loaded: ${rows.length}건`);
+  } catch(e) { console.warn('CTR-Model map load failed:', e); }
+}
+
+async function uploadCtrModelCSV(file) {
+  const text = await file.text();
+  const lines = text.trim().split(/\r?\n/);
+  const header = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/[^a-z0-9_]/g,'_'));
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const vals = lines[i].split(',');
+    const row = {};
+    header.forEach((h, idx) => { row[h] = (vals[idx]||'').trim(); });
+    // 컬럼 자동 매핑
+    const ctr = row['ctr_code'] || row['ctr'] || row['code'] || row['part_no'] || '';
+    const model = row['make_model'] || row['model'] || row['vehicle_model'] || row['vehicle'] || '';
+    const brand = row['brand'] || row['make'] || '';
+    const vtype = row['vehicle_type'] || row['type'] || '';
+    if (ctr) rows.push({ ctr_code: ctr.toUpperCase(), make_model: model, brand, vehicle_type: vtype });
+  }
+  if (!rows.length) { alert('유효한 데이터가 없습니다.'); return; }
+
+  // Supabase upsert
+  const res = await fetch(`${SB_SHARED_URL}/rest/v1/ck_ctr_model`, {
+    method: 'POST',
+    headers: {
+      apikey: SB_SHARED_KEY, Authorization: `Bearer ${SB_SHARED_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'resolution=merge-duplicates'
+    },
+    body: JSON.stringify(rows)
+  });
+  if (res.ok || res.status === 201) {
+    showToast(`✅ CTR-Model 매핑 ${rows.length}건 저장 완료`);
+    await loadCtrModelMap();
+    rebuildAll();
+  } else {
+    const err = await res.text();
+    alert('저장 실패: ' + err);
+  }
+}
+
+// CTR Code → make_model 변환 (매핑 있으면 사용, 없으면 원본)
+function resolveModel(ctrCode) {
+  if (!ctrCode) return '';
+  const entry = ctrModelMap[ctrCode.toUpperCase()];
+  if (!entry) return '';
+  return [entry.brand, entry.make_model, entry.vehicle_type].filter(Boolean).join(' ').trim();
+}
+
 async function loadSharedData(force = false) {
   // 개인 커스텀 데이터가 있고 force가 아니면 스킵
   const hasPersonal = localStorage.getItem('ck_has_personal_data') === '1';
@@ -7650,6 +7723,13 @@ async function resetToSharedData() {
   else showToast('⚠️ 공유 데이터를 불러오지 못했습니다');
 }
 window.resetToSharedData = resetToSharedData;
+
+// CTR-Model 매핑 파일 업로드
+document.getElementById('fCtrModel').addEventListener('change', async e => {
+  const file = e.target.files[0]; if (!file) return;
+  await uploadCtrModelCSV(file);
+  e.target.value = '';
+});
 
 // Import 메뉴 외부 클릭 시 닫기
 document.addEventListener('click', e => {
@@ -8012,6 +8092,7 @@ window.publishSnapshot = publishSnapshot;
   }
   // 페이지 진입 시 공유 데이터 로드 (개인 커스텀 없으면 Supabase에서 자동 로드)
   if (location.protocol === 'http:' || location.protocol === 'https:') {
+    try { await loadCtrModelMap(); } catch(e) { console.warn('CTR map load skipped:', e); }
     try { await loadSharedData(false); } catch(e) { console.warn('Shared data load skipped:', e); }
     try { await reloadAutoCSV(false); } catch (e) { console.warn('Auto CSV load skipped:', e); }
   } else if (location.protocol === 'file:') {
