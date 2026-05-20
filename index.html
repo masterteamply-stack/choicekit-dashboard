@@ -4524,18 +4524,25 @@ function renderTopInsights(fOrders) {
   const keyMap = { model:'make_model', product:'product', ctr:'ctr_code' };
   // make_model 없을 경우 CTR-Model 매핑 → product 순으로 fallback
   const valKey = (o, key, dim) => {
-    const v = o[key];
-    if (v && v.trim()) return v.trim();
     if (dim === 'model') {
+      // 1순위: orders 자체 make_model 필드 (직접 입력값) → brand 추출
+      const rawModel = o['make_model'];
+      if (rawModel && rawModel.trim()) {
+        // "HONDA_Accord 1990-1991" → "HONDA" 추출
+        const brand = rawModel.trim().split(/[_\s]/)[0].toUpperCase();
+        if (brand) return brand;
+        return rawModel.trim();
+      }
+      // 2순위: CTR 매핑 테이블 (sku → brand)
       const ctr = o['sku'] || o['order_id'] || o['ctr_code'] || '';
-      // brand 기준으로 집계 (동일 브랜드 묶기)
       const brand = resolveModel(ctr, 'brand');
       if (brand) return brand;
-      // brand 없으면 make_model 전체
-      const full = resolveModel(ctr, 'full');
-      if (full) return full;
+      // 3순위: product
       return o['product'] || '(unspecified)';
     }
+    // model 아닌 dim: 기존 필드값 그대로
+    const v = o[key];
+    if (v && String(v).trim()) return String(v).trim();
     return '(unspecified)';
   };
   const labelMap = { model:'Vehicle Model', product:'Product', ctr:'CTR Code' };
