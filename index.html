@@ -1630,7 +1630,6 @@ header .mono b.t-orange {
             <div class="label-mono" style="color:var(--teal)">Active Campaigns</div>
             <div class="kpi-num" id="kpiCamps" style="font-size:22px;margin:0">0</div>
           </div>
-          <div id="kpiCampsList" style="display:flex;flex-direction:column;gap:5px;margin-top:2px"></div>
           <div class="sub" id="kpiCampsSub" style="margin-top:6px">–</div>
         </div>
       </div>
@@ -3577,56 +3576,10 @@ function renderAll() {
       if (m.activity_id || m.id) activeActivities.add(m.activity_id || m.id);
     }
   });
-  document.getElementById('kpiCamps').textContent = `${fmtNum(activeCamps.size)} / ${fmtNum(camps.size)}`;
-  document.getElementById('kpiCampsSub').textContent = `${activeActivities.size} active activities`;
-
-  // Active Campaigns 상세 리스트 렌더링
-  const listEl = document.getElementById('kpiCampsList');
-  if (listEl) {
-    const todayY = new Date().toISOString().slice(0,10);
-    // 캠페인별 집계
-    const campMap = {};
-    fMkt.forEach(m => {
-      const cat = m.promotion_category; if (!cat) return;
-      if (!campMap[cat]) campMap[cat] = { acts: 0, activeActs: 0, cost: 0, currency: 'USD', startDate: '', endDate: '' };
-      const c = campMap[cat];
-      c.acts++;
-      const startDate = (m.activity_date || m.date || m.execution_date || '').slice(0,10);
-      if (startDate && (!c.startDate || startDate < c.startDate)) c.startDate = startDate;
-      // 유효 종료일 계산
-      const endD = m.end_date || m.end || '';
-      let effEnd = '';
-      if (endD) { effEnd = endD.slice(0,10); }
-      else if (startDate) {
-        const yr = startDate.slice(0,4);
-        const campEnd = `${yr}-11-30`;
-        const actEnd = new Date(startDate); actEnd.setDate(actEnd.getDate()+180);
-        const actEndStr = actEnd.toISOString().slice(0,10);
-        effEnd = actEndStr > campEnd ? actEndStr : campEnd;
-      }
-      if (effEnd && (!c.endDate || effEnd > c.endDate)) c.endDate = effEnd;
-      if (activeCamps.has(cat) && (activeActivities.has(m.activity_id) || activeActivities.has(m.id))) c.activeActs++;
-      c.cost += (m.cost || 0);
-    });
-
-    const rows = [...activeCamps].map(cat => {
-      const c = campMap[cat] || {};
-      const endLabel = c.endDate ? c.endDate : '–';
-      const costLabel = c.cost > 0 ? '$' + Math.round(c.cost).toLocaleString() : 'No cost';
-      const activeA = c.activeActs || activeActivities.size;
-      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border-radius:6px;background:rgba(75,227,207,.1);gap:8px">
-        <div style="min-width:0">
-          <div style="font-size:12px;font-weight:600;color:var(--teal);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${cat}</div>
-          <div style="font-size:10px;color:var(--text-2);margin-top:1px">${c.startDate||'–'} ~ ${endLabel}</div>
-        </div>
-        <div style="text-align:right;flex-shrink:0">
-          <div style="font-size:11px;font-weight:600;color:var(--fg)">${activeA} acts</div>
-          <div style="font-size:10px;color:var(--text-2)">${costLabel}</div>
-        </div>
-      </div>`;
-    });
-    listEl.innerHTML = rows.join('') || '<div style="font-size:11px;color:var(--text-2)">No active campaigns</div>';
-  }
+  // Active Campaigns: 활성 activities / 전체 activities
+  const totalActivities = fMkt.length;
+  document.getElementById('kpiCamps').textContent = `${fmtNum(activeActivities.size)} / ${fmtNum(totalActivities)}`;
+  document.getElementById('kpiCampsSub').textContent = `${[...activeCamps].join(', ') || '–'}`; 
 
   document.getElementById('ptCur').textContent = fmtMoney(orderAmt);
   document.getElementById('ptTgt').textContent = fmtMoney(orderTargetDisp);
