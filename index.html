@@ -3652,7 +3652,7 @@ function renderAll() {
   renderRegionChart(fOrders, fMkt);
   renderActivityChart(fMkt);
   renderBudgetStatus(fMkt);
-  renderCustomerTrend(fOrders);
+  renderCustomerTrend(fOrders, fMkt);
   renderTopInsights(fOrders);
   renderPromoCtrChart(fOrders);
   renderPromoChart(fOrders, fMkt);
@@ -4242,11 +4242,11 @@ window.__clearBudgetExecFilter = function() {
 /* ===== Top Customer Order Trend · by Campaign =====
    캠페인 선택 → Top N 고객 ranking 테이블(qty/amount/mkt cost) →
    고객 클릭 → 우측에 month/quarter/year 토글 trend 그래프 */
-function renderCustomerTrend(fOrders) {
+function renderCustomerTrend(fOrders, fMkt) {
   // 캠페인 select 채우기
   const sel = document.getElementById('selCustTrendCamp');
   if (sel) {
-    const camps = Array.from(new Set(state.orders.map(o=>o.promotion_category).filter(Boolean))).sort();
+    const camps = Array.from(new Set(fOrders.map(o=>o.promotion_category).filter(Boolean))).sort();
     const opts = ['<option value="__all__">All Campaigns</option>', ...camps.map(c=>`<option value="${c}">${c}</option>`)];
     if (sel.dataset.fillKey !== camps.join('|')) {
       sel.innerHTML = opts.join('');
@@ -4267,7 +4267,6 @@ function renderCustomerTrend(fOrders) {
   const scoped = camp==='__all__' ? fOrders : fOrders.filter(o => o.promotion_category === camp);
 
   // 고객별 집계: qty, amount, marketing cost (해당 캠페인 region/country 기준 추정)
-  const fMkt = state.marketing.filter(matchMkt).filter(m => isRegionVisible(m.region));
   const mktScoped = camp==='__all__' ? fMkt : fMkt.filter(m => m.promotion_category === camp);
 
   const byCust = {};
@@ -4323,7 +4322,7 @@ function renderCustomerTrend(fOrders) {
       tr.addEventListener('click', () => {
         state.custTrendCustomer = tr.dataset.cust;
         persist();
-        renderCustomerTrend(fOrders);
+        renderCustomerTrend(fOrders, fMkt);
       });
     });
   }
@@ -4542,17 +4541,17 @@ function renderTopInsights(fOrders) {
   // ── Widget-level scope (independent from global filter bar) ──
   // Promo + period are this widget's own controls; region/country still apply
   // on top via the inline dropdowns below.
-  let scoped = applyWidgetScope(state.orders, {
+  let scoped = applyWidgetScope(fOrders, {
     promo: state.topInsightsPromo,
     period: state.topInsightsPeriod,
     customFrom: state.topInsightsFrom,
     customTo: state.topInsightsTo,
-  }).filter(o => isRegionVisible(o.region));
+  });
 
   // ── Populate promo dropdown ──
   const promoSel = document.getElementById('selTopInsightsPromo');
   if (promoSel) {
-    const allPromos = listPromotionKeys();
+    const allPromos = listPromotionKeys(fOrders);
     promoSel.innerHTML = `<option value="__all__">All Promotions</option>` +
       allPromos.map(p => `<option value="${p}" ${p===state.topInsightsPromo?'selected':''}>${p}</option>`).join('');
     if (state.topInsightsPromo !== '__all__' && !allPromos.includes(state.topInsightsPromo)) {
@@ -4675,17 +4674,17 @@ function renderPromoCtrChart(fOrders) {
   const sel = document.getElementById('selPromoCtrFilter');
 
   // ── Widget-level scope (independent from global filter bar) ──
-  const scoped = applyWidgetScope(state.orders, {
+  const scoped = applyWidgetScope(fOrders, {
     promo: state.promoCtrPromo,
     period: state.promoCtrPeriod,
     customFrom: state.promoCtrFrom,
     customTo: state.promoCtrTo,
-  }).filter(o => isRegionVisible(o.region));
+  });
 
   // ── Populate promo dropdown ──
   const promoSel = document.getElementById('selPromoCtrPromo');
   if (promoSel) {
-    const allPromos = listPromotionKeys();
+    const allPromos = listPromotionKeys(fOrders);
     promoSel.innerHTML = `<option value="__all__">All Promotions</option>` +
       allPromos.map(p => `<option value="${p}" ${p===state.promoCtrPromo?'selected':''}>${p}</option>`).join('');
     if (state.promoCtrPromo !== '__all__' && !allPromos.includes(state.promoCtrPromo)) {
@@ -5497,17 +5496,17 @@ function renderActivitiesTable(fMkt) {
 function promoKeyOfOrder(o) { return o.promotion_category || o.promotion_id || 'OTHER'; }
 function promoKeyOfMkt(m)   { return m.promotion_category || m.promotion_id || 'OTHER'; }
 
-function listPromotionKeys() {
+function listPromotionKeys(orders, marketing) {
   const set = new Set();
-  state.orders.forEach(o => { const k = promoKeyOfOrder(o); if (k) set.add(k); });
-  state.marketing.forEach(m => { const k = promoKeyOfMkt(m); if (k) set.add(k); });
+  (orders || state.orders).forEach(o => { const k = promoKeyOfOrder(o); if (k) set.add(k); });
+  (marketing || state.marketing).forEach(m => { const k = promoKeyOfMkt(m); if (k) set.add(k); });
   return Array.from(set).sort();
 }
 
-function populatePotPromoSelect() {
+function populatePotPromoSelect(fOrders) {
   const sel = document.getElementById('selPotPromo');
   if (!sel) return;
-  const keys = listPromotionKeys();
+  const keys = listPromotionKeys(fOrders);
   const cur = state.potPromo;
   sel.innerHTML = '<option value="__all__">All promotions</option>' +
     keys.map(k => `<option value="${k}">${k}</option>`).join('');
@@ -5517,7 +5516,7 @@ function populatePotPromoSelect() {
 
 /* ===== Promotion Order Trends - 전년 동기간 비교 추가 ===== */
 function renderPromoOrderTrendWithYoY(fOrders, fMkt) {
-  populatePotPromoSelect();
+  populatePotPromoSelect(fOrders);
   
   // 현재 필터링된 오더
   const promoFilter = state.potPromo;
@@ -5748,9 +5747,9 @@ function findPromoStartDate(skuOrders, promoKey) {
   return pool.map(m => m.date).sort()[0]; // earliest
 }
 
-function listSkus() {
+function listSkus(orders) {
   const set = new Set();
-  state.orders.forEach(o => { if (o.sku) set.add(o.sku); });
+  (orders || state.orders).forEach(o => { if (o.sku) set.add(o.sku); });
   return Array.from(set).sort();
 }
 
@@ -5764,12 +5763,12 @@ function populateSkuUI() {
     let skus;
     if (state.skuMode === 'individual' && state.skuPromo && state.skuPromo !== '__auto__') {
       const set = new Set();
-      state.orders.forEach(o => {
+      fOrders.forEach(o => {
         if (o.sku && promoKeyOfOrder(o) === state.skuPromo) set.add(o.sku);
       });
       skus = Array.from(set).sort();
     } else {
-      skus = listSkus();
+      skus = listSkus(fOrders);
     }
     dl.innerHTML = skus.slice(0, 500).map(s => `<option value="${s}">`).join(''); // datalist cap
   }
@@ -6285,11 +6284,11 @@ function renderSkuAggregate() {
   // Auto-pick the promotion with the most SKUs on first visit, so users see a
   // meaningful aggregate immediately instead of a tiny/empty promotion.
   // 저장된 promo 값이 현재 데이터에 없으면 자동 선택
-  const _allPromoKeys = listPromotionKeys();
+  const _allPromoKeys = listPromotionKeys(fOrders);
   if (!state.skuAggPromo || !_allPromoKeys.includes(state.skuAggPromo)) {
     if (_allPromoKeys.length) {
       const skuCount = {};
-      state.orders.forEach(o => {
+      fOrders.forEach(o => {
         const k = promoKeyOfOrder(o);
         if (!o.sku || !k) return;
         if (!skuCount[k]) skuCount[k] = new Set();
