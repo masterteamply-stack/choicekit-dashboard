@@ -2360,7 +2360,7 @@ let state = {
   skuTab:   localStorage.getItem('ck_sku_tab')   || 'ba',         // ba | month | year
   skuQuery: localStorage.getItem('ck_sku_query') || '',           // typed SKU (individual mode)
   skuPromo: localStorage.getItem('ck_sku_promo') || '',   // promotion_id (individual mode)
-  skuAggPromo: localStorage.getItem('ck_sku_agg_promo') || '',    // promotion_id (aggregate mode) — auto-picked from data
+  skuAggPromo: localStorage.getItem('ck_sku_agg_promo') || '__all__',  // __all__ = 전체 프로모션
   skuAggDrillSku: '',                                             // session: drilled-into SKU in aggregate mode
 
   hiddenWidgets: (localStorage.getItem('ck_widget_order_v') === WIDGET_ORDER_VERSION
@@ -4525,17 +4525,19 @@ function renderTopInsights(fOrders) {
   // make_model 없을 경우 CTR-Model 매핑 → product 순으로 fallback
   const valKey = (o, key, dim) => {
     if (dim === 'model') {
-      // 1순위: orders.make_model (k열) — 값 있으면 그대로 표시
-      const rawModel = o['make_model'];
-      if (rawModel && rawModel.trim()) return rawModel.trim();
-      // 2순위: CTR 매핑 테이블 C열 (make_model = 브랜드+차종 통합)
-      const ctr = o['sku'] || o['order_id'] || o['ctr_code'] || '';
-      const mapped = resolveModel(ctr, 'full');  // "BRAND · MODEL YEAR" 형식
-      if (mapped) return mapped;
+      // 1순위: orders.make_model (k열) — NULL도 빈 문자열도 아닌 경우만
+      const rawModel = (o['make_model'] || '').trim();
+      if (rawModel) return rawModel;
+      // 2순위: CTR 매핑 테이블 C열 (sku 또는 order_id → make_model)
+      const ctr = (o['sku'] || o['order_id'] || '').trim();
+      if (ctr) {
+        const mapped = resolveModel(ctr, 'full');
+        if (mapped) return mapped;
+      }
       // 3순위: product fallback
-      return o['product'] || '(unspecified)';
+      return (o['product'] || '').trim() || '(unspecified)';
     }
-    // model 아닌 dim: 기존 필드값 그대로
+    // model 아닌 dim
     const v = o[key];
     if (v && String(v).trim()) return String(v).trim();
     return '(unspecified)';
@@ -5794,10 +5796,11 @@ function populateSkuUI() {
   // Aggregate mode promo select
   const aggSel = document.getElementById('selSkuAggPromo');
   if (aggSel) {
-    const cur = state.skuAggPromo;
-    aggSel.innerHTML = '<option value="">— select a promotion —</option>' +
+    const cur = state.skuAggPromo || '__all__';
+    aggSel.innerHTML = '<option value="__all__">All Promotions</option>' +
                        promoKeys.map(k => `<option value="${k}">${k}</option>`).join('');
-    aggSel.value = promoKeys.includes(cur) ? cur : '';
+    aggSel.value = (cur === '__all__' || promoKeys.includes(cur)) ? cur : '__all__';
+    if (state.skuAggPromo !== aggSel.value) state.skuAggPromo = aggSel.value;
   }
   // Mode segmented + input rows
   document.querySelectorAll('#segSkuMode button').forEach(b => b.classList.toggle('active', b.dataset.v === state.skuMode));
@@ -6293,47 +6296,44 @@ function renderSkuAggregate(fOrders) {
   // meaningful aggregate immediately instead of a tiny/empty promotion.
   // 저장된 promo 값이 현재 데이터에 없으면 자동 선택
   const _allPromoKeys = listPromotionKeys(fOrders);
-  if (!state.skuAggPromo || !_allPromoKeys.includes(state.skuAggPromo)) {
-    if (_allPromoKeys.length) {
-      const skuCount = {};
-      fOrders.forEach(o => {
-        const k = promoKeyOfOrder(o);
-        if (!o.sku || !k) return;
-        if (!skuCount[k]) skuCount[k] = new Set();
-        skuCount[k].add(o.sku);
-      });
-      const best = _allPromoKeys.slice().sort((a,b) => (skuCount[b]?.size||0) - (skuCount[a]?.size||0))[0];
-      state.skuAggPromo = best || _allPromoKeys[0];
-      try { localStorage.setItem('ck_sku_agg_promo', state.skuAggPromo); } catch(_) {}
-      const aggSel = document.getElementById('selSkuAggPromo');
-      if (aggSel) aggSel.value = state.skuAggPromo;
+  const promo = state.skuAggPromo || '__all__';
+
+  // 현재 연도 기준 orders 필터 (올해 데이터)
+  const curYear = new Date().getFullYear().toString();
+  const yearFiltered = (fOrders||state.orders).filter(o => (o.order_date||'').startsWith(curYear));
+  const baseOrders = yearFiltered.length > 0 ? yearFiltered : (fOrders||state.orders);
+
+  // 프로모션 필터: __all__이면 전체
+  const promoOrders = promo === '__all__'
+    ? baseOrders.filter(o => o.sku)
+    : baseOrders.filter(matchOrderExceptDate).filter(o => promoKeyOfOrder(o) === promo);
+
+  if (!promoOrders.length) {
+    // 올해 데이터 없으면 전체 데이터로 재시도
+    const fallbackOrders = promo === '__all__'
+      ? (fOrders||state.orders).filter(o => o.sku)
+      : (fOrders||state.orders).filter(matchOrderExceptDate).filter(o => promoKeyOfOrder(o) === promo);
+    if (!fallbackOrders.length) {
+      if (meta) meta.textContent = `No orders found — load orders CSV first`;
+      clearSkuPanels();
+      return;
     }
   }
-  const promo = state.skuAggPromo || '';
 
-  if (!promo) {
-    if (meta) meta.textContent = 'No promotions available yet — load orders/marketing CSVs first';
-    clearSkuPanels();
-    return;
-  }
+  const finalOrders = promoOrders.length > 0 ? promoOrders
+    : (promo === '__all__' ? (fOrders||state.orders).filter(o => o.sku)
+      : (fOrders||state.orders).filter(matchOrderExceptDate).filter(o => promoKeyOfOrder(o) === promo));
 
-  // Find all SKUs whose orders carry this promotion (via promoKeyOfOrder match)
-  const promoOrders = (fOrders||state.orders).filter(matchOrderExceptDate).filter(o => promoKeyOfOrder(o) === promo);
-  if (!promoOrders.length) {
-    if (meta) meta.textContent = `No orders found for promotion "${promo}"`;
-    clearSkuPanels();
-    return;
-  }
-  const skus = Array.from(new Set(promoOrders.map(o => o.sku).filter(Boolean)));
+  const skus = Array.from(new Set(finalOrders.map(o => o.sku).filter(Boolean)));
   if (!skus.length) {
-    if (meta) meta.textContent = `No SKUs found for promotion "${promo}"`;
+    if (meta) meta.textContent = 'No SKUs found';
     clearSkuPanels();
     return;
   }
   // Earliest matching marketing activity for this promotion
-  const startDate = findPromoStartDate(promoOrders, promo);
+  const startDate = findPromoStartDate(finalOrders, promo);
 
-  // Per-SKU full history (Before/After needs pre-promotion history)
+  // Per-SKU full history
   const perSku = skus.map(sku => {
     const ords = (fOrders||state.orders).filter(matchOrderExceptDate).filter(o => o.sku === sku);
     return {
@@ -7608,15 +7608,25 @@ let ctrModelMap = {};   // { 'CB0210R': 'HYUNDAI SONATA', ... }
 
 async function loadCtrModelMap() {
   try {
-    const res = await fetch(
-      `${SB_SHARED_URL}/rest/v1/ck_ctr_model?select=ctr_code,make_model,brand,vehicle_type`,
-      { headers: { apikey: SB_SHARED_KEY, Authorization: `Bearer ${SB_SHARED_KEY}` } }
-    );
-    if (!res.ok) return;
-    const rows = await res.json();
+    // 22,000건 이상이므로 페이지네이션으로 전체 로드
+    const PAGE = 1000;
+    let all = [];
+    let from = 0;
+    while (true) {
+      const res = await fetch(
+        `${SB_SHARED_URL}/rest/v1/ck_ctr_model?select=ctr_code,make_model,brand&limit=${PAGE}&offset=${from}`,
+        { headers: { apikey: SB_SHARED_KEY, Authorization: `Bearer ${SB_SHARED_KEY}` } }
+      );
+      if (!res.ok) break;
+      const rows = await res.json();
+      if (!rows.length) break;
+      all = all.concat(rows);
+      if (rows.length < PAGE) break;
+      from += PAGE;
+    }
     ctrModelMap = {};
-    rows.forEach(r => { if (r.ctr_code) ctrModelMap[r.ctr_code.toUpperCase()] = r; });
-    console.log(`✅ CTR-Model map loaded: ${rows.length}건`);
+    all.forEach(r => { if (r.ctr_code) ctrModelMap[r.ctr_code.toUpperCase()] = r; });
+    console.log(`✅ CTR-Model map loaded: ${all.length}건`);
   } catch(e) { console.warn('CTR-Model map load failed:', e); }
 }
 
