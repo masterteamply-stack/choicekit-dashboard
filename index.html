@@ -4525,19 +4525,14 @@ function renderTopInsights(fOrders) {
   // make_model 없을 경우 CTR-Model 매핑 → product 순으로 fallback
   const valKey = (o, key, dim) => {
     if (dim === 'model') {
-      // 1순위: orders 자체 make_model 필드 (직접 입력값) → brand 추출
+      // 1순위: orders.make_model (k열) — 값 있으면 그대로 표시
       const rawModel = o['make_model'];
-      if (rawModel && rawModel.trim()) {
-        // "HONDA_Accord 1990-1991" → "HONDA" 추출
-        const brand = rawModel.trim().split(/[_\s]/)[0].toUpperCase();
-        if (brand) return brand;
-        return rawModel.trim();
-      }
-      // 2순위: CTR 매핑 테이블 (sku → brand)
+      if (rawModel && rawModel.trim()) return rawModel.trim();
+      // 2순위: CTR 매핑 테이블 C열 (make_model = 브랜드+차종 통합)
       const ctr = o['sku'] || o['order_id'] || o['ctr_code'] || '';
-      const brand = resolveModel(ctr, 'brand');
-      if (brand) return brand;
-      // 3순위: product
+      const mapped = resolveModel(ctr, 'full');  // "BRAND · MODEL YEAR" 형식
+      if (mapped) return mapped;
+      // 3순위: product fallback
       return o['product'] || '(unspecified)';
     }
     // model 아닌 dim: 기존 필드값 그대로
@@ -7669,9 +7664,9 @@ function resolveModel(ctrCode, mode) {
   if (!ctrCode) return '';
   const entry = ctrModelMap[ctrCode.toUpperCase()];
   if (!entry) return '';
-  // mode='brand': 브랜드만, mode='full': 전체, default: make_model
+  // mode='brand': 브랜드만, mode='full': make_model 전체(C열), default: make_model
   if (mode === 'brand') return entry.brand || '';
-  if (mode === 'full') return [entry.brand, entry.make_model].filter(Boolean).join(' · ');
+  // 'full' 또는 default: 매핑 테이블 C열 (make_model) 그대로 반환
   return entry.make_model || entry.brand || '';
 }
 
