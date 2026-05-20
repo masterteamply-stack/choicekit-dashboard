@@ -4,6 +4,24 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="build" content="2026-05-20-r1" />
+<!-- 봇/크롤러 차단 -->
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
+<meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet" />
+<meta name="bingbot" content="noindex, nofollow" />
+<meta name="referrer" content="no-referrer" />
+<!-- CSP: 허가된 출처만 허용 -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self' https://waxjtcxdgulbdofycywr.supabase.co;
+  script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
+  font-src 'self' https://fonts.gstatic.com;
+  img-src 'self' data: blob:;
+  connect-src 'self' https://waxjtcxdgulbdofycywr.supabase.co https://api.exchangerate-api.com;
+  frame-ancestors 'none';
+" />
+<meta http-equiv="X-Frame-Options" content="DENY" />
+<meta http-equiv="X-Content-Type-Options" content="nosniff" />
+<meta http-equiv="Permissions-Policy" content="geolocation=(), camera=(), microphone=()" />
 <title>Choice Kit · Marketing KPI Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -7745,6 +7763,87 @@ async function resetToSharedData() {
   else showToast('⚠️ 공유 데이터를 불러오지 못했습니다');
 }
 window.resetToSharedData = resetToSharedData;
+/* ============================================================
+   SECURITY: 봇/크롤러 차단 및 데이터 보호
+   ============================================================ */
+(function() {
+  // ── 봇/크롤러 UA 감지 및 차단 ──
+  const BOT_PATTERNS = [
+    /bot/i, /crawl/i, /spider/i, /scraper/i, /slurp/i,
+    /curl/i, /wget/i, /python-requests/i, /axios/i, /fetch/i,
+    /headless/i, /phantom/i, /selenium/i, /playwright/i, /puppeteer/i,
+    /scrapy/i, /httpx/i, /aiohttp/i, /urllib/i, /java\//i,
+    /go-http/i, /ruby/i, /perl/i, /libwww/i,
+  ];
+  const ua = navigator.userAgent || '';
+  const isBot = BOT_PATTERNS.some(p => p.test(ua));
+
+  // ── 자동화 도구 감지 ──
+  const isAutomated =
+    navigator.webdriver === true ||
+    window._phantom !== undefined ||
+    window.__nightmare !== undefined ||
+    window.callPhantom !== undefined ||
+    window.domAutomation !== undefined ||
+    document.documentElement.getAttribute('webdriver') !== null;
+
+  if (isBot || isAutomated) {
+    document.documentElement.innerHTML = '<body style="background:#000;color:#000;user-select:none">.</body>';
+    return;
+  }
+
+  // ── 우클릭 차단 ──
+  document.addEventListener('contextmenu', e => { e.preventDefault(); return false; });
+
+  // ── 텍스트 선택 + 드래그 차단 ──
+  document.addEventListener('selectstart', e => { e.preventDefault(); return false; });
+  document.addEventListener('dragstart',   e => { e.preventDefault(); return false; });
+
+  // ── 키보드 단축키 차단 (F12, Ctrl+U, Ctrl+S, Ctrl+Shift+I/J/C) ──
+  document.addEventListener('keydown', e => {
+    const k = e.key;
+    const ctrl = e.ctrlKey || e.metaKey;
+    const shift = e.shiftKey;
+    if (k === 'F12') { e.preventDefault(); return false; }
+    if (ctrl && k === 'u') { e.preventDefault(); return false; }
+    if (ctrl && k === 's') { e.preventDefault(); return false; }
+    if (ctrl && k === 'p') { e.preventDefault(); return false; }
+    if (ctrl && shift && ['i','j','c','I','J','C'].includes(k)) { e.preventDefault(); return false; }
+  });
+
+  // ── DevTools 열림 감지 (크기 기반) ──
+  let devtoolsOpen = false;
+  const threshold = 160;
+  setInterval(() => {
+    const wDiff = window.outerWidth - window.innerWidth > threshold;
+    const hDiff = window.outerHeight - window.innerHeight > threshold;
+    if ((wDiff || hDiff) && !devtoolsOpen) {
+      devtoolsOpen = true;
+      // 데이터 영역 blur 처리
+      const main = document.querySelector('main');
+      if (main) main.style.filter = 'blur(8px)';
+    } else if (!wDiff && !hDiff && devtoolsOpen) {
+      devtoolsOpen = false;
+      const main = document.querySelector('main');
+      if (main) main.style.filter = '';
+    }
+  }, 1000);
+
+  // ── CSS: 텍스트 선택 비활성화 ──
+  const style = document.createElement('style');
+  style.textContent = `
+    body { -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
+    input, textarea, [contenteditable] { -webkit-user-select: text; user-select: text; }
+  `;
+  document.head.appendChild(style);
+
+  // ── Print 차단 ──
+  window.onbeforeprint = () => { document.body.style.display = 'none'; };
+  window.onafterprint  = () => { document.body.style.display = ''; };
+
+})();
+
+
 
 // CTR-Model 매핑 파일 업로드
 document.getElementById('fCtrModel').addEventListener('change', async e => {
