@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const ws = require('ws');
 const fs = require('fs');
 const path = require('path');
 
@@ -14,7 +15,9 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
   process.exit(1);
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+  realtime: { transport: ws }
+});
 
 async function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
@@ -40,14 +43,10 @@ async function main() {
   const startTime = Date.now();
 
   for (let i = START_CHUNK; i <= endChunk; i++) {
-    // manifest의 파일 경로에서 파일명만 추출 후 DATA_DIR 기준으로 읽기
     const fname = path.basename(manifest.files[i]);
     const filePath = path.join(DATA_DIR, fname);
+    if (!fs.existsSync(filePath)) { console.warn(`⚠️ 파일 없음: ${filePath}`); continue; }
 
-    if (!fs.existsSync(filePath)) {
-      console.warn(`⚠️ 파일 없음: ${filePath}`);
-      continue;
-    }
     const records = JSON.parse(fs.readFileSync(filePath, 'utf8'));
     const result = await insertChunk(records, i);
 
