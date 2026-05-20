@@ -7363,7 +7363,7 @@ window.reloadAutoCSV = reloadAutoCSV;
    - state.preOrdersEnabled : 로드 여부 플래그 (true면 비교 KPI baseline에 자동 포함)
 ================================================================ */
 const PRE_ORDER_MARK = '__preOrder__';
-const PRE_ORDER_JSON_URL = 'pre_orders.json'; // served from same GitHub Pages repo root
+const PRE_ORDER_JSON_URL = 'https://waxjtcxdgulbdofycywr.supabase.co/functions/v1/pre-orders-data';
 
 async function fetchPreOrdersOnce() {
   if (state.preOrders && state.preOrders.length) return state.preOrders;
