@@ -1793,189 +1793,6 @@ header .mono b.t-orange {
       </div>
 
       <!-- Plan vs Execution — Drill-down Explorer (Region → Country → Promotion) -->
-      <div class="panel widget" data-widget-id="planexec">
-        <div class="widget-head">
-          <div>
-            <h3 class="h-section">Campaign Plan vs Execution — Drill-down Explorer</h3>
-            <p class="label-mono" style="margin-top:4px">Region → Country → Promotion · click a card to drill down · health: 🟢 healthy · 🟡 watch · 🔴 over-budget or negative ROI</p>
-          </div>
-          <div class="chart-tools">
-            <span class="label-mono" style="font-size:11px">SORT</span>
-            <div class="seg" id="segPlanExecSort">
-              <button data-v="budget" class="active">Budget</button>
-              <button data-v="executed">Executed</button>
-              <button data-v="orderAmt">Order Amt</button>
-              <button data-v="roi">ROI</button>
-              <button data-v="burn" title="Budget Used % = Actual Cost ÷ Planned Budget">Budget Used %</button>
-            </div>
-            <div class="widget-order-controls"></div>
-          </div>
-        </div>
-        <!-- Breadcrumb -->
-        <div id="planExecCrumb" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0 12px;font-family:'IBM Plex Mono',monospace;font-size:12px"></div>
-        <div style="display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:14px">
-          <div id="planExecCards" style="display:flex;flex-direction:column;gap:8px;max-height:560px;overflow:auto;padding-right:4px"></div>
-          <div>
-            <div class="chart-wrap" style="height:300px;margin-bottom:10px"><canvas id="chPlanExec"></canvas></div>
-            <div style="overflow:auto;max-height:240px"><table id="tblPlanExecDetail" style="font-size:12px"></table></div>
-          </div>
-        </div>
-        <!-- Needs Attention (그래프 아래) -->
-        <div id="planExecAttention" style="margin-top:12px"></div>
-      </div>
-
-      <!-- Promotion Category × Top CTR Sales (이동 가능) -->
-      <div class="panel widget" data-widget-id="promoctr">
-        <div class="widget-head">
-          <div>
-            <h3 class="h-section">Promotion Category × Top CTR Sales</h3>
-            <p class="label-mono" style="margin-top:4px">CTR sales pivoted by Category, Region or Country. Drill into a row to see customer-level detail.<br><span style="color:#86868B;font-size:10px">These widget-level filters override the global filter bar for this widget only.</span></p>
-          </div>
-          <div class="chart-tools">
-            <span class="label-mono" style="font-size:11px">PROMO</span>
-            <select id="selPromoCtrPromo" style="min-width:160px;height:34px;padding:4px 10px;font-size:13px">
-              <option value="__all__">All Promotions</option>
-            </select>
-            <span class="label-mono" style="font-size:11px">PERIOD</span>
-            <div class="seg" id="segPromoCtrPeriod">
-              <button data-v="all" class="active">All</button>
-              <button data-v="ytd">YTD</button>
-              <button data-v="qtd">QTD</button>
-              <button data-v="mtd">MTD</button>
-              <button data-v="custom">Custom</button>
-            </div>
-            <span class="cmp-manual" id="promoCtrCustomRange" style="display:none">
-              <input type="date" id="inpPromoCtrFrom" style="font-size:11px;padding:2px 4px" />
-              <span class="muted" style="font-size:11px">~</span>
-              <input type="date" id="inpPromoCtrTo"   style="font-size:11px;padding:2px 4px" />
-            </span>
-            <span class="label-mono" style="font-size:11px">DIM</span>
-            <div class="seg" id="segPromoCtrDim">
-              <button data-v="category" class="active">Category</button>
-              <button data-v="region">Region</button>
-              <button data-v="country">Country</button>
-            </div>
-            <span class="label-mono" style="font-size:11px;margin-left:6px">METRIC</span>
-            <div class="seg" id="segPromoCtrMetric">
-              <button data-v="amount" class="active">Amount</button>
-              <button data-v="qty">Qty</button>
-            </div>
-            <span class="label-mono" style="font-size:11px;margin-left:6px">FILTER</span>
-            <select id="selPromoCtrFilter" style="min-width:160px;height:34px;padding:4px 10px;font-size:13px">
-              <option value="__all__">All (overview)</option>
-            </select>
-            <div class="widget-order-controls"></div>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-          <div class="chart-wrap" style="height:480px"><canvas id="chPromoCtr"></canvas></div>
-          <div style="overflow:auto;max-height:480px">
-            <p class="label-mono" style="font-size:11px;margin-bottom:6px" id="promoCtrDetailHead">SELECT A CATEGORY TO VIEW REGION × CUSTOMER DETAIL</p>
-            <table id="tblPromoCtrDetail" style="font-size:12px"></table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Region — Order/Marketing + Activity Breakdown (merged) -->
-      <div class="panel widget" data-widget-id="region">
-        <div class="widget-head">
-          <div>
-            <h3 class="h-section">Region — Order, Marketing & Activity Breakdown</h3>
-            <p class="label-mono" style="margin-top:4px">Region-level Order vs Marketing comparison · use region tabs for Executed Cost / MKT Budget detail by activity type</p>
-          </div>
-          <div class="chart-tools">
-            <span class="label-mono" style="font-size:11px">METRIC</span>
-            <div class="seg" id="segRegionMetric">
-              <button data-v="order" class="active">Order</button>
-              <button data-v="marketing">Marketing</button>
-            </div>
-            <div class="widget-order-controls"></div>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-          <div>
-            <p class="label-mono" style="font-size:11px;margin-bottom:6px;text-align:center">REGION COMPARISON (Executed vs Target / Budget)</p>
-            <div class="chart-wrap" style="height:340px"><canvas id="chRegion"></canvas></div>
-          </div>
-          <div>
-            <p class="label-mono" style="font-size:11px;margin-bottom:6px;text-align:center">ACTIVITY-TYPE BREAKDOWN <span id="breakdownRegionLbl" class="t-blue">(All Regions)</span></p>
-            <div id="breakdownTabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
-            <div class="chart-wrap" style="height:240px"><canvas id="chActivity"></canvas></div>
-            <div style="overflow:auto;margin-top:8px;max-height:160px"><table id="tblBreakdown" style="font-size:12px"></table></div>
-          </div>
-        </div>
-      </div>
-
-       <!-- Marketing Budget Allocation & Status by Region -->
-       <div class="panel widget" data-widget-id="budgetstatus">
-         <div class="widget-head">
-           <div>
-             <h3 class="h-section">Marketing Budget — Allocation & Status by Region</h3>
-             <p class="label-mono" style="margin-top:4px">Regional budget allocation + execution progress (Executed Cost / MKT Budget). Click a region in ALLOCATION SHARE to filter EXECUTION SHARE.</p>
-           </div>
-           <div class="widget-order-controls"></div>
-         </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-            <div>
-              <p class="label-mono" style="font-size:11px;margin-bottom:6px;text-align:center">ALLOCATION SHARE % (MKT Budget)</p>
-              <div class="chart-wrap" style="height:300px"><canvas id="chBudgetAlloc"></canvas></div>
-            </div>
-            <div>
-              <p class="label-mono" id="execShareLabel" style="font-size:11px;margin-bottom:6px;text-align:center">EXECUTION SHARE % (Executed Cost)</p>
-              <div class="chart-wrap" style="height:300px"><canvas id="chBudgetExec"></canvas></div>
-            </div>
-          </div>
-          <div style="overflow:auto;margin-top:12px"><table id="tblBudgetStatus"></table></div>
-        </div>
-
-        <!-- Customer Order Trend by Campaign -->
-        <div class="panel widget" data-widget-id="customertrend">
-          <div class="widget-head">
-            <div>
-              <h3 class="h-section">Top Customer Order Trend · by Campaign</h3>
-              <p class="label-mono" style="margin-top:4px">Top customer ranking by campaign + trend chart for the selected customer</p>
-            </div>
-            <div class="chart-tools">
-              <span class="label-mono" style="font-size:11px">CAMPAIGN</span>
-              <select id="selCustTrendCamp" style="min-width:180px;height:34px;padding:4px 10px;font-size:13px"></select>
-              <span class="label-mono" style="font-size:11px">TOP N</span>
-              <select id="selCustTrendN" style="min-width:80px;height:34px;padding:4px 10px;font-size:13px">
-                <option value="3">3</option>
-                <option value="5" selected>5</option>
-                <option value="8">8</option>
-                <option value="10">10</option>
-                <option value="20">20</option>
-              </select>
-              <div class="widget-order-controls"></div>
-            </div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:14px;align-items:start">
-            <div style="overflow:auto;max-height:460px"><table id="tblCustTrend"></table></div>
-            <div>
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap">
-                <span class="label-mono" style="font-size:11px" id="custTrendSelLabel">Select a customer →</span>
-                <div class="seg" id="segCustTrendGrain">
-                  <button data-v="month" class="active">Month</button>
-                  <button data-v="quarter">Quarter</button>
-                  <button data-v="year">Year</button>
-                </div>
-              </div>
-              <div class="chart-wrap" style="height:340px"><canvas id="chCustTrend"></canvas></div>
-            </div>
-            <div>
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap">
-                <span class="label-mono" style="font-size:11px" id="custProdLabel">TOP 10 PRODUCTS</span>
-                <div class="seg" id="segCustProdMode">
-                  <button data-v="amount" class="active">Amount</button>
-                  <button data-v="qty">Qty</button>
-                </div>
-              </div>
-              <div style="overflow:auto;max-height:340px"><table id="tblCustProducts" style="font-size:12px"></table></div>
-            </div>
-          </div>
-        </div>
-
-      <!-- Top Insights — Models / Products / CTR Codes by Region & Country -->
       <div class="panel widget" data-widget-id="topinsights">
         <div class="widget-head">
           <div>
@@ -2035,7 +1852,84 @@ header .mono b.t-orange {
 
 
       <!-- Promotion Performance (split widget) -->
-      <div class="panel widget" data-widget-id="promo">
+      <div class="panel widget" data-widget-id="customertrend">
+          <div class="widget-head">
+            <div>
+              <h3 class="h-section">Top Customer Order Trend · by Campaign</h3>
+              <p class="label-mono" style="margin-top:4px">Top customer ranking by campaign + trend chart for the selected customer</p>
+            </div>
+            <div class="chart-tools">
+              <span class="label-mono" style="font-size:11px">CAMPAIGN</span>
+              <select id="selCustTrendCamp" style="min-width:180px;height:34px;padding:4px 10px;font-size:13px"></select>
+              <span class="label-mono" style="font-size:11px">TOP N</span>
+              <select id="selCustTrendN" style="min-width:80px;height:34px;padding:4px 10px;font-size:13px">
+                <option value="3">3</option>
+                <option value="5" selected>5</option>
+                <option value="8">8</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+              </select>
+              <div class="widget-order-controls"></div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:14px;align-items:start">
+            <div style="overflow:auto;max-height:460px"><table id="tblCustTrend"></table></div>
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap">
+                <span class="label-mono" style="font-size:11px" id="custTrendSelLabel">Select a customer →</span>
+                <div class="seg" id="segCustTrendGrain">
+                  <button data-v="month" class="active">Month</button>
+                  <button data-v="quarter">Quarter</button>
+                  <button data-v="year">Year</button>
+                </div>
+              </div>
+              <div class="chart-wrap" style="height:340px"><canvas id="chCustTrend"></canvas></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap">
+                <span class="label-mono" style="font-size:11px" id="custProdLabel">TOP 10 PRODUCTS</span>
+                <div class="seg" id="segCustProdMode">
+                  <button data-v="amount" class="active">Amount</button>
+                  <button data-v="qty">Qty</button>
+                </div>
+              </div>
+              <div style="overflow:auto;max-height:340px"><table id="tblCustProducts" style="font-size:12px"></table></div>
+            </div>
+          </div>
+        </div>
+
+      <!-- Top Insights — Models / Products / CTR Codes by Region & Country -->
+      <div class="panel widget" data-widget-id="region">
+        <div class="widget-head">
+          <div>
+            <h3 class="h-section">Region — Order, Marketing & Activity Breakdown</h3>
+            <p class="label-mono" style="margin-top:4px">Region-level Order vs Marketing comparison · use region tabs for Executed Cost / MKT Budget detail by activity type</p>
+          </div>
+          <div class="chart-tools">
+            <span class="label-mono" style="font-size:11px">METRIC</span>
+            <div class="seg" id="segRegionMetric">
+              <button data-v="order" class="active">Order</button>
+              <button data-v="marketing">Marketing</button>
+            </div>
+            <div class="widget-order-controls"></div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div>
+            <p class="label-mono" style="font-size:11px;margin-bottom:6px;text-align:center">REGION COMPARISON (Executed vs Target / Budget)</p>
+            <div class="chart-wrap" style="height:340px"><canvas id="chRegion"></canvas></div>
+          </div>
+          <div>
+            <p class="label-mono" style="font-size:11px;margin-bottom:6px;text-align:center">ACTIVITY-TYPE BREAKDOWN <span id="breakdownRegionLbl" class="t-blue">(All Regions)</span></p>
+            <div id="breakdownTabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
+            <div class="chart-wrap" style="height:240px"><canvas id="chActivity"></canvas></div>
+            <div style="overflow:auto;margin-top:8px;max-height:160px"><table id="tblBreakdown" style="font-size:12px"></table></div>
+          </div>
+        </div>
+      </div>
+
+       <!-- Marketing Budget Allocation & Status by Region -->
+       <div class="panel widget" data-widget-id="promo">
         <div class="widget-head">
           <div>
             <h3 class="h-section">Promotion Performance</h3>
@@ -2057,33 +1951,38 @@ header .mono b.t-orange {
       </div>
 
       <!-- Sales Trend (merged: Promotion Category + Region/Country Monthly) -->
-      <div class="panel widget" data-widget-id="category">
+      <div class="panel widget" data-widget-id="planexec">
         <div class="widget-head">
           <div>
-            <h3 class="h-section">Sales Trend — Promotion Category & Region</h3>
-            <p class="label-mono" style="margin-top:4px">Order Amount over time. Switch view between Promotion Category breakdown and Region/Country trend.</p>
+            <h3 class="h-section">Campaign Plan vs Execution — Drill-down Explorer</h3>
+            <p class="label-mono" style="margin-top:4px">Region → Country → Promotion · click a card to drill down · health: 🟢 healthy · 🟡 watch · 🔴 over-budget or negative ROI</p>
           </div>
           <div class="chart-tools">
-            <span class="label-mono" style="font-size:11px">VIEW</span>
-            <div class="seg" id="segCategoryView">
-              <button data-v="category" class="active">By Category</button>
-              <button data-v="geo">By Region/Country</button>
+            <span class="label-mono" style="font-size:11px">SORT</span>
+            <div class="seg" id="segPlanExecSort">
+              <button data-v="budget" class="active">Budget</button>
+              <button data-v="executed">Executed</button>
+              <button data-v="orderAmt">Order Amt</button>
+              <button data-v="roi">ROI</button>
+              <button data-v="burn" title="Budget Used % = Actual Cost ÷ Planned Budget">Budget Used %</button>
             </div>
-            <select id="selTrendDim" style="display:none;min-width:140px;height:34px;padding:4px 10px;font-size:13px">
-              <option value="region">By Region</option>
-              <option value="country">By Country</option>
-            </select>
-            <button class="btn ghost period-btn active" data-period="month">Month</button>
-            <button class="btn ghost period-btn" data-period="quarter">Quarter</button>
-            <button class="btn ghost period-btn" data-period="year">Year</button>
             <div class="widget-order-controls"></div>
           </div>
         </div>
-        <div class="chart-wrap" style="height:380px"><canvas id="chCategory"></canvas></div>
-        <div class="chart-wrap" style="height:380px;display:none" id="chMonthlyWrap"><canvas id="chMonthly"></canvas></div>
+        <!-- Breadcrumb -->
+        <div id="planExecCrumb" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0 12px;font-family:'IBM Plex Mono',monospace;font-size:12px"></div>
+        <div style="display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:14px">
+          <div id="planExecCards" style="display:flex;flex-direction:column;gap:8px;max-height:560px;overflow:auto;padding-right:4px"></div>
+          <div>
+            <div class="chart-wrap" style="height:300px;margin-bottom:10px"><canvas id="chPlanExec"></canvas></div>
+            <div style="overflow:auto;max-height:240px"><table id="tblPlanExecDetail" style="font-size:12px"></table></div>
+          </div>
+        </div>
+        <!-- Needs Attention (그래프 아래) -->
+        <div id="planExecAttention" style="margin-top:12px"></div>
       </div>
 
-      <!-- Activities table -->
+      <!-- Promotion Category × Top CTR Sales (이동 가능) -->
       <div class="panel widget" data-widget-id="activities">
         <div class="widget-head">
           <div>
@@ -2118,7 +2017,108 @@ header .mono b.t-orange {
         </div>
 
         <div style="overflow:auto;max-height:480px"><table id="tblActivities"></table></div>
+      </div>      <div class="panel widget" data-widget-id="budgetstatus">
+         <div class="widget-head">
+           <div>
+             <h3 class="h-section">Marketing Budget — Allocation & Status by Region</h3>
+             <p class="label-mono" style="margin-top:4px">Regional budget allocation + execution progress (Executed Cost / MKT Budget). Click a region in ALLOCATION SHARE to filter EXECUTION SHARE.</p>
+           </div>
+           <div class="widget-order-controls"></div>
+         </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div>
+              <p class="label-mono" style="font-size:11px;margin-bottom:6px;text-align:center">ALLOCATION SHARE % (MKT Budget)</p>
+              <div class="chart-wrap" style="height:300px"><canvas id="chBudgetAlloc"></canvas></div>
+            </div>
+            <div>
+              <p class="label-mono" id="execShareLabel" style="font-size:11px;margin-bottom:6px;text-align:center">EXECUTION SHARE % (Executed Cost)</p>
+              <div class="chart-wrap" style="height:300px"><canvas id="chBudgetExec"></canvas></div>
+            </div>
+          </div>
+          <div style="overflow:auto;margin-top:12px"><table id="tblBudgetStatus"></table></div>
+        </div>
+
+        <!-- Customer Order Trend by Campaign -->
+        <div class="panel widget" data-widget-id="promoctr">
+        <div class="widget-head">
+          <div>
+            <h3 class="h-section">Promotion Category × Top CTR Sales</h3>
+            <p class="label-mono" style="margin-top:4px">CTR sales pivoted by Category, Region or Country. Drill into a row to see customer-level detail.<br><span style="color:#86868B;font-size:10px">These widget-level filters override the global filter bar for this widget only.</span></p>
+          </div>
+          <div class="chart-tools">
+            <span class="label-mono" style="font-size:11px">PROMO</span>
+            <select id="selPromoCtrPromo" style="min-width:160px;height:34px;padding:4px 10px;font-size:13px">
+              <option value="__all__">All Promotions</option>
+            </select>
+            <span class="label-mono" style="font-size:11px">PERIOD</span>
+            <div class="seg" id="segPromoCtrPeriod">
+              <button data-v="all" class="active">All</button>
+              <button data-v="ytd">YTD</button>
+              <button data-v="qtd">QTD</button>
+              <button data-v="mtd">MTD</button>
+              <button data-v="custom">Custom</button>
+            </div>
+            <span class="cmp-manual" id="promoCtrCustomRange" style="display:none">
+              <input type="date" id="inpPromoCtrFrom" style="font-size:11px;padding:2px 4px" />
+              <span class="muted" style="font-size:11px">~</span>
+              <input type="date" id="inpPromoCtrTo"   style="font-size:11px;padding:2px 4px" />
+            </span>
+            <span class="label-mono" style="font-size:11px">DIM</span>
+            <div class="seg" id="segPromoCtrDim">
+              <button data-v="category" class="active">Category</button>
+              <button data-v="region">Region</button>
+              <button data-v="country">Country</button>
+            </div>
+            <span class="label-mono" style="font-size:11px;margin-left:6px">METRIC</span>
+            <div class="seg" id="segPromoCtrMetric">
+              <button data-v="amount" class="active">Amount</button>
+              <button data-v="qty">Qty</button>
+            </div>
+            <span class="label-mono" style="font-size:11px;margin-left:6px">FILTER</span>
+            <select id="selPromoCtrFilter" style="min-width:160px;height:34px;padding:4px 10px;font-size:13px">
+              <option value="__all__">All (overview)</option>
+            </select>
+            <div class="widget-order-controls"></div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="chart-wrap" style="height:480px"><canvas id="chPromoCtr"></canvas></div>
+          <div style="overflow:auto;max-height:480px">
+            <p class="label-mono" style="font-size:11px;margin-bottom:6px" id="promoCtrDetailHead">SELECT A CATEGORY TO VIEW REGION × CUSTOMER DETAIL</p>
+            <table id="tblPromoCtrDetail" style="font-size:12px"></table>
+          </div>
+        </div>
       </div>
+
+      <!-- Region — Order/Marketing + Activity Breakdown (merged) -->
+      <div class="panel widget" data-widget-id="category">
+        <div class="widget-head">
+          <div>
+            <h3 class="h-section">Sales Trend — Promotion Category & Region</h3>
+            <p class="label-mono" style="margin-top:4px">Order Amount over time. Switch view between Promotion Category breakdown and Region/Country trend.</p>
+          </div>
+          <div class="chart-tools">
+            <span class="label-mono" style="font-size:11px">VIEW</span>
+            <div class="seg" id="segCategoryView">
+              <button data-v="category" class="active">By Category</button>
+              <button data-v="geo">By Region/Country</button>
+            </div>
+            <select id="selTrendDim" style="display:none;min-width:140px;height:34px;padding:4px 10px;font-size:13px">
+              <option value="region">By Region</option>
+              <option value="country">By Country</option>
+            </select>
+            <button class="btn ghost period-btn active" data-period="month">Month</button>
+            <button class="btn ghost period-btn" data-period="quarter">Quarter</button>
+            <button class="btn ghost period-btn" data-period="year">Year</button>
+            <div class="widget-order-controls"></div>
+          </div>
+        </div>
+        <div class="chart-wrap" style="height:380px"><canvas id="chCategory"></canvas></div>
+        <div class="chart-wrap" style="height:380px;display:none" id="chMonthlyWrap"><canvas id="chMonthly"></canvas></div>
+      </div>
+
+      <!-- Activities table -->
+
 
     </div>
   </div>
