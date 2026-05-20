@@ -3536,7 +3536,7 @@ function renderAll() {
   // OR whose date range covers today (fallback when status is missing).
   const ACTIVE_STATUS = new Set(['STARTED','LIVE','IN_PROGRESS','RELEASED','DISTRIBUTED']);
   const todayStr = new Date().toISOString().slice(0,10);
-  const ACTIVE_DURATION_DAYS = 90; // 종료일 미설정 시 시작일로부터 90일간 active
+  const ACTIVE_DURATION_DAYS = 180; // 종료일 미설정 시 시작일로부터 180일간 active
   const activeCamps = new Set();
   const activeActivities = new Set(); // 개별 활동 ID 기준
   fMkt.forEach(m => {
