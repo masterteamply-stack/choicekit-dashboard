@@ -6210,13 +6210,13 @@ function renderSkuExplorer(fOrders, fMkt) {
 
   if (state.skuMode === 'individual') {
     if (brkWrap) brkWrap.style.display = 'none';
-    return renderSkuIndividual();
+    return renderSkuIndividual(fOrders);
   } else {
-    return renderSkuAggregate();
+    return renderSkuAggregate(fOrders);
   }
 }
 
-function renderSkuIndividual() {
+function renderSkuIndividual(fOrders) {
   const sku = (state.skuQuery || '').trim().toUpperCase();
   const meta = document.getElementById('skuMeta');
 
@@ -6225,7 +6225,7 @@ function renderSkuIndividual() {
     clearSkuPanels();
     return;
   }
-  const allSkuOrders = state.orders.filter(matchOrderExceptDate).filter(o => (o.sku||'').toUpperCase() === sku);
+  const allSkuOrders = (fOrders||state.orders).filter(matchOrderExceptDate).filter(o => (o.sku||'').toUpperCase() === sku);
   if (!allSkuOrders.length) {
     if (meta) meta.textContent = `No orders found for SKU "${sku}"`;
     clearSkuPanels();
@@ -6255,12 +6255,12 @@ function renderSkuIndividual() {
 
   // ── Promotion-total card (sum across all SKUs in the same promotion) ──
   if (promo) {
-    const promoOrders = state.orders.filter(matchOrderExceptDate).filter(o => promoKeyOfOrder(o) === promo);
+    const promoOrders = (fOrders||state.orders).filter(matchOrderExceptDate).filter(o => promoKeyOfOrder(o) === promo);
     const promoSkus = Array.from(new Set(promoOrders.map(o => o.sku).filter(Boolean)));
     if (promoSkus.length > 1) {
       let totBefore=0, totAfter=0;
       promoSkus.forEach(s => {
-        const ords = state.orders.filter(matchOrderExceptDate).filter(o => o.sku === s);
+        const ords = (fOrders||state.orders).filter(matchOrderExceptDate).filter(o => o.sku === s);
         const ba = buildBaStats(ords, startDate);
         totBefore += ba.beforeAmt; totAfter += ba.afterAmt;
       });
@@ -6284,7 +6284,7 @@ function renderSkuIndividual() {
   }
 }
 
-function renderSkuAggregate() {
+function renderSkuAggregate(fOrders) {
   const meta = document.getElementById('skuAggMeta');
   const brkWrap = document.getElementById('skuAggBreakdown');
   const brkTbl = document.getElementById('tblSkuAggBreakdown');
@@ -6318,7 +6318,7 @@ function renderSkuAggregate() {
   }
 
   // Find all SKUs whose orders carry this promotion (via promoKeyOfOrder match)
-  const promoOrders = state.orders.filter(matchOrderExceptDate).filter(o => promoKeyOfOrder(o) === promo);
+  const promoOrders = (fOrders||state.orders).filter(matchOrderExceptDate).filter(o => promoKeyOfOrder(o) === promo);
   if (!promoOrders.length) {
     if (meta) meta.textContent = `No orders found for promotion "${promo}"`;
     clearSkuPanels();
@@ -6335,7 +6335,7 @@ function renderSkuAggregate() {
 
   // Per-SKU full history (Before/After needs pre-promotion history)
   const perSku = skus.map(sku => {
-    const ords = state.orders.filter(matchOrderExceptDate).filter(o => o.sku === sku);
+    const ords = (fOrders||state.orders).filter(matchOrderExceptDate).filter(o => o.sku === sku);
     return {
       sku,
       product: (ords[0] && ords[0].product) || '',
