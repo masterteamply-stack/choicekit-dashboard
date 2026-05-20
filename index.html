@@ -1550,9 +1550,12 @@ header .mono b.t-orange {
     <span class="mono" style="font-size:14px;color:var(--text-2)">
       Orders: <b class="t-blue" id="cntOrders">0</b> · Activities: <b class="t-orange" id="cntMkt">0</b>
     </span>
-    <button class="btn danger" onclick="clearAll()">
+    <button class="btn danger" onclick="clearAll()" title="개인 데이터 삭제 후 공유 데이터로 복원">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
-      Clear
+      Reset
+    </button>
+    <button class="btn ghost" onclick="resetToSharedData()" title="공유 데이터로 완전 초기화" style="font-size:12px;">
+      🔄 Shared
     </button>
 
     <div class="tpl-menu" id="tplMenu" title="Download CSV import templates">
@@ -6385,7 +6388,9 @@ document.getElementById('fOrders').addEventListener('change', async e => {
   try {
     const rows = await parseOrderCSV(f);
     rows.forEach(r => { r[SNAPSHOT_USER_MARK] = true; });
-    state.orders = state.orders.concat(rows); persist();
+    state.orders = state.orders.concat(rows);
+    localStorage.setItem('ck_has_personal_data', '1');
+    persist();
     await loadFxRates();
     rebuildAll();
     alert(`${rows.length} order rows added`);
@@ -6397,7 +6402,9 @@ document.getElementById('fMkt').addEventListener('change', async e => {
   try {
     const rows = await parseMarketingCSV(f);
     rows.forEach(r => { r[SNAPSHOT_USER_MARK] = true; });
-    state.marketing = state.marketing.concat(rows); persist();
+    state.marketing = state.marketing.concat(rows);
+    localStorage.setItem('ck_has_personal_data', '1');
+    persist();
     await loadFxRates();
     rebuildAll();
     alert(`${rows.length} marketing activities added`);
@@ -6405,8 +6412,13 @@ document.getElementById('fMkt').addEventListener('change', async e => {
 });
 
 function clearAll() {
-  if (!confirm('Delete all data? This cannot be undone.')) return;
-  state.orders = []; state.marketing = []; persist(); rebuildAll();
+  if (!confirm('개인 데이터를 삭제하고 공유 데이터로 초기화하시겠습니까?')) return;
+  localStorage.removeItem('ck_has_personal_data');
+  state.orders = []; state.marketing = [];
+  loadSharedData(true).then(loaded => {
+    persist(); loadFxRates().then(() => rebuildAll());
+    if (loaded) showToast('✅ 공유 데이터로 초기화 완료');
+  });
 }
 
 /* Modal */
@@ -7484,6 +7496,69 @@ function visibleRegionFilter(arr) {
 */
 const AUTO_CSV_FILES = { orders: 'orders.csv', marketing: 'marketing.csv', budgets: 'budgets.csv' };
 
+/* =================== SUPABASE SHARED DATA ===================
+   ck_shared_data 테이블에서 공유 CSV를 로드합니다.
+   - 모든 사용자가 동일한 기본 데이터를 봅니다.
+   - 사용자가 직접 CSV를 올리면 개인 커스텀 데이터가 localStorage에 저장됩니다.
+   - Reset to Shared Data 버튼으로 공유 데이터로 복원할 수 있습니다.
+================================================================ */
+const SB_SHARED_URL = 'https://waxjtcxdgulbdofycywr.supabase.co';
+const SB_SHARED_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndheGp0Y3hkZ3VsYmRvZnljeXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMjc3NTIsImV4cCI6MjA4ODgwMzc1Mn0.rvkmwG-dsjeFfT2NAMUJaKjCBMm2SOmAQ1SXl3V3jHI';
+
+async function loadSharedData(force = false) {
+  // 개인 커스텀 데이터가 있고 force가 아니면 스킵
+  const hasPersonal = localStorage.getItem('ck_has_personal_data') === '1';
+  if (hasPersonal && !force) return false;
+
+  try {
+    const res = await fetch(
+      `${SB_SHARED_URL}/rest/v1/ck_shared_data?select=key,content`,
+      { headers: { apikey: SB_SHARED_KEY, Authorization: `Bearer ${SB_SHARED_KEY}` } }
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const rows = await res.json();
+    if (!rows || !rows.length) return false;
+
+    let loaded = false;
+    for (const row of rows) {
+      if (row.key === 'orders' && row.content) {
+        try {
+          const parsed = await parseOrderCSV(row.content);
+          if (parsed.length) { state.orders = parsed; loaded = true; }
+        } catch(e) { console.warn('shared orders parse error:', e); }
+      }
+      if (row.key === 'marketing' && row.content) {
+        try {
+          const parsed = await parseMarketingCSV(row.content);
+          if (parsed.length) { state.marketing = parsed; loaded = true; }
+        } catch(e) { console.warn('shared marketing parse error:', e); }
+      }
+      if (row.key === 'budgets' && row.content) {
+        try {
+          applyBudgets(parseBudgetsCSV(row.content));
+          loaded = true;
+        } catch(e) { console.warn('shared budgets parse error:', e); }
+      }
+    }
+    if (loaded) { persist(); console.log('✅ Shared data loaded from Supabase'); }
+    return loaded;
+  } catch(e) {
+    console.warn('Shared data load failed:', e);
+    return false;
+  }
+}
+
+async function resetToSharedData() {
+  if (!confirm('공유 데이터로 초기화하시겠습니까?\n개인 커스텀 데이터가 삭제됩니다.')) return;
+  localStorage.removeItem('ck_has_personal_data');
+  state.orders = []; state.marketing = [];
+  const loaded = await loadSharedData(true);
+  await loadFxRates(); rebuildAll();
+  if (loaded) showToast('✅ 공유 데이터로 초기화 완료');
+  else showToast('⚠️ 공유 데이터를 불러오지 못했습니다');
+}
+window.resetToSharedData = resetToSharedData;
+
 async function fetchCsvText(name) {
   const url = `${name}?t=${Date.now()}`;
   const res = await fetch(url, { cache: 'no-store' });
@@ -7837,8 +7912,9 @@ window.publishSnapshot = publishSnapshot;
     showPublishedBanner(embeddedSnap);
     applyWidgetOrder(); // re-apply in case widgetOrder changed
   }
-  // 페이지 진입 시 자동 CSV 로드 시도 (실패해도 조용히 무시)
+  // 페이지 진입 시 공유 데이터 로드 (개인 커스텀 없으면 Supabase에서 자동 로드)
   if (location.protocol === 'http:' || location.protocol === 'https:') {
+    try { await loadSharedData(false); } catch(e) { console.warn('Shared data load skipped:', e); }
     try { await reloadAutoCSV(false); } catch (e) { console.warn('Auto CSV load skipped:', e); }
   } else if (location.protocol === 'file:') {
     // file://에서는 fetch가 차단됨 → 데이터가 비어있을 때만 한 번 안내 배너 표시
