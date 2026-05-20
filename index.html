@@ -499,6 +499,38 @@ header {
   z-index: 30;
 }
 .tpl-menu.open .tpl-pop { display: flex; }
+
+/* Import fold menu */
+.import-menu { position: relative; }
+.import-pop {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  box-shadow: var(--shadow-2);
+  padding: 6px;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 180px;
+  z-index: 40;
+}
+.import-menu.open .import-pop { display: flex; }
+.import-pop button {
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: var(--text-1);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+}
+.import-pop button:hover { background: var(--surface-3); }
 .tpl-pop button {
   text-align: left;
   padding: 8px 10px;
@@ -1490,33 +1522,35 @@ header .mono b.t-orange {
     </button>
 
     <input type="file" id="fOrders" accept=".csv" />
-    <button class="btn" onclick="document.getElementById('fOrders').click()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      Order CSV
-    </button>
-
     <input type="file" id="fMkt" accept=".csv" />
-    <button class="btn" onclick="document.getElementById('fMkt').click()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      Marketing CSV
-    </button>
-
     <input type="file" id="fBudgets" accept=".csv" />
-    <button class="btn" onclick="document.getElementById('fBudgets').click()" title="Upload Budgets CSV (region / promotion budget & order target)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      Budgets CSV
-    </button>
-
     <input type="file" id="fBulk" accept=".csv" multiple />
-    <button class="btn" onclick="document.getElementById('fBulk').click()" title="Upload Order / Marketing / Budgets CSV at once (auto-detected by header)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      Bulk Upload
-    </button>
 
-    <button class="btn" onclick="reloadAutoCSV(true)" title="Auto-load orders.csv / marketing.csv / budgets.csv from this HTML folder">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-      Reload CSV
-    </button>
+    <!-- Import 폴드 메뉴 -->
+    <div class="import-menu" id="importMenu">
+      <button class="btn" id="importToggle" onclick="document.getElementById('importMenu').classList.toggle('open')" title="CSV 파일 업로드">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Import
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="import-pop">
+        <button onclick="document.getElementById('fOrders').click();document.getElementById('importMenu').classList.remove('open')">
+          📋 Order CSV
+        </button>
+        <button onclick="document.getElementById('fMkt').click();document.getElementById('importMenu').classList.remove('open')">
+          📣 Marketing CSV
+        </button>
+        <button onclick="document.getElementById('fBudgets').click();document.getElementById('importMenu').classList.remove('open')" title="Upload Budgets CSV">
+          💰 Budgets CSV
+        </button>
+        <button onclick="document.getElementById('fBulk').click();document.getElementById('importMenu').classList.remove('open')" title="Upload Order / Marketing / Budgets CSV at once">
+          📦 Bulk Upload
+        </button>
+        <button onclick="reloadAutoCSV(true);document.getElementById('importMenu').classList.remove('open')" title="Auto-load from this folder">
+          🔄 Reload CSV
+        </button>
+      </div>
+    </div>
 
     <button class="btn" id="btnPreOrder" onclick="togglePreOrders()" title="Load pre_orders.json as a baseline reference for YoY / QoQ / MoM / WoW comparisons. Pre-order rows are NEVER merged into the main dashboard — they only fill in 'previous period' values in the comparison KPIs.">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
@@ -7590,6 +7624,12 @@ async function resetToSharedData() {
   else showToast('⚠️ 공유 데이터를 불러오지 못했습니다');
 }
 window.resetToSharedData = resetToSharedData;
+
+// Import 메뉴 외부 클릭 시 닫기
+document.addEventListener('click', e => {
+  const menu = document.getElementById('importMenu');
+  if (menu && !menu.contains(e.target)) menu.classList.remove('open');
+});
 
 async function fetchCsvText(name) {
   const url = `${name}?t=${Date.now()}`;
