@@ -1951,38 +1951,6 @@ header .mono b.t-orange {
       </div>
 
       <!-- Sales Trend (merged: Promotion Category + Region/Country Monthly) -->
-      <div class="panel widget" data-widget-id="planexec">
-        <div class="widget-head">
-          <div>
-            <h3 class="h-section">Campaign Plan vs Execution — Drill-down Explorer</h3>
-            <p class="label-mono" style="margin-top:4px">Region → Country → Promotion · click a card to drill down · health: 🟢 healthy · 🟡 watch · 🔴 over-budget or negative ROI</p>
-          </div>
-          <div class="chart-tools">
-            <span class="label-mono" style="font-size:11px">SORT</span>
-            <div class="seg" id="segPlanExecSort">
-              <button data-v="budget" class="active">Budget</button>
-              <button data-v="executed">Executed</button>
-              <button data-v="orderAmt">Order Amt</button>
-              <button data-v="roi">ROI</button>
-              <button data-v="burn" title="Budget Used % = Actual Cost ÷ Planned Budget">Budget Used %</button>
-            </div>
-            <div class="widget-order-controls"></div>
-          </div>
-        </div>
-        <!-- Breadcrumb -->
-        <div id="planExecCrumb" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0 12px;font-family:'IBM Plex Mono',monospace;font-size:12px"></div>
-        <div style="display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:14px">
-          <div id="planExecCards" style="display:flex;flex-direction:column;gap:8px;max-height:560px;overflow:auto;padding-right:4px"></div>
-          <div>
-            <div class="chart-wrap" style="height:300px;margin-bottom:10px"><canvas id="chPlanExec"></canvas></div>
-            <div style="overflow:auto;max-height:240px"><table id="tblPlanExecDetail" style="font-size:12px"></table></div>
-          </div>
-        </div>
-        <!-- Needs Attention (그래프 아래) -->
-        <div id="planExecAttention" style="margin-top:12px"></div>
-      </div>
-
-      <!-- Promotion Category × Top CTR Sales (이동 가능) -->
       <div class="panel widget" data-widget-id="activities">
         <div class="widget-head">
           <div>
@@ -2017,29 +1985,39 @@ header .mono b.t-orange {
         </div>
 
         <div style="overflow:auto;max-height:480px"><table id="tblActivities"></table></div>
-      </div>      <div class="panel widget" data-widget-id="budgetstatus">
-         <div class="widget-head">
-           <div>
-             <h3 class="h-section">Marketing Budget — Allocation & Status by Region</h3>
-             <p class="label-mono" style="margin-top:4px">Regional budget allocation + execution progress (Executed Cost / MKT Budget). Click a region in ALLOCATION SHARE to filter EXECUTION SHARE.</p>
-           </div>
-           <div class="widget-order-controls"></div>
-         </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-            <div>
-              <p class="label-mono" style="font-size:11px;margin-bottom:6px;text-align:center">ALLOCATION SHARE % (MKT Budget)</p>
-              <div class="chart-wrap" style="height:300px"><canvas id="chBudgetAlloc"></canvas></div>
-            </div>
-            <div>
-              <p class="label-mono" id="execShareLabel" style="font-size:11px;margin-bottom:6px;text-align:center">EXECUTION SHARE % (Executed Cost)</p>
-              <div class="chart-wrap" style="height:300px"><canvas id="chBudgetExec"></canvas></div>
-            </div>
+      </div>      <div class="panel widget" data-widget-id="planexec">
+        <div class="widget-head">
+          <div>
+            <h3 class="h-section">Campaign Plan vs Execution — Drill-down Explorer</h3>
+            <p class="label-mono" style="margin-top:4px">Region → Country → Promotion · click a card to drill down · health: 🟢 healthy · 🟡 watch · 🔴 over-budget or negative ROI</p>
           </div>
-          <div style="overflow:auto;margin-top:12px"><table id="tblBudgetStatus"></table></div>
+          <div class="chart-tools">
+            <span class="label-mono" style="font-size:11px">SORT</span>
+            <div class="seg" id="segPlanExecSort">
+              <button data-v="budget" class="active">Budget</button>
+              <button data-v="executed">Executed</button>
+              <button data-v="orderAmt">Order Amt</button>
+              <button data-v="roi">ROI</button>
+              <button data-v="burn" title="Budget Used % = Actual Cost ÷ Planned Budget">Budget Used %</button>
+            </div>
+            <div class="widget-order-controls"></div>
+          </div>
         </div>
+        <!-- Breadcrumb -->
+        <div id="planExecCrumb" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0 12px;font-family:'IBM Plex Mono',monospace;font-size:12px"></div>
+        <div style="display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:14px">
+          <div id="planExecCards" style="display:flex;flex-direction:column;gap:8px;max-height:560px;overflow:auto;padding-right:4px"></div>
+          <div>
+            <div class="chart-wrap" style="height:300px;margin-bottom:10px"><canvas id="chPlanExec"></canvas></div>
+            <div style="overflow:auto;max-height:240px"><table id="tblPlanExecDetail" style="font-size:12px"></table></div>
+          </div>
+        </div>
+        <!-- Needs Attention (그래프 아래) -->
+        <div id="planExecAttention" style="margin-top:12px"></div>
+      </div>
 
-        <!-- Customer Order Trend by Campaign -->
-        <div class="panel widget" data-widget-id="promoctr">
+      <!-- Promotion Category × Top CTR Sales (이동 가능) -->
+      <div class="panel widget" data-widget-id="promoctr">
         <div class="widget-head">
           <div>
             <h3 class="h-section">Promotion Category × Top CTR Sales</h3>
@@ -2118,7 +2096,29 @@ header .mono b.t-orange {
       </div>
 
       <!-- Activities table -->
+      <div class="panel widget" data-widget-id="budgetstatus">
+         <div class="widget-head">
+           <div>
+             <h3 class="h-section">Marketing Budget — Allocation & Status by Region</h3>
+             <p class="label-mono" style="margin-top:4px">Regional budget allocation + execution progress (Executed Cost / MKT Budget). Click a region in ALLOCATION SHARE to filter EXECUTION SHARE.</p>
+           </div>
+           <div class="widget-order-controls"></div>
+         </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div>
+              <p class="label-mono" style="font-size:11px;margin-bottom:6px;text-align:center">ALLOCATION SHARE % (MKT Budget)</p>
+              <div class="chart-wrap" style="height:300px"><canvas id="chBudgetAlloc"></canvas></div>
+            </div>
+            <div>
+              <p class="label-mono" id="execShareLabel" style="font-size:11px;margin-bottom:6px;text-align:center">EXECUTION SHARE % (Executed Cost)</p>
+              <div class="chart-wrap" style="height:300px"><canvas id="chBudgetExec"></canvas></div>
+            </div>
+          </div>
+          <div style="overflow:auto;margin-top:12px"><table id="tblBudgetStatus"></table></div>
+        </div>
 
+        <!-- Customer Order Trend by Campaign -->
+  
 
     </div>
   </div>
