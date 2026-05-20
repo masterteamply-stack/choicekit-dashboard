@@ -2005,9 +2005,9 @@ header .mono b.t-orange {
             </select>
             <span class="label-mono" style="font-size:11px;margin-left:6px">DIMENSION</span>
             <div class="seg" id="segTopInsightsDim">
-              <button data-v="model" class="active">Vehicle Model</button>
+              <button data-v="model">Vehicle Model</button>
               <button data-v="product">Product</button>
-              <button data-v="ctr">CTR Code</button>
+              <button data-v="ctr" class="active">CTR Code</button>
             </div>
             <span class="label-mono" style="font-size:11px;margin-left:6px">METRIC</span>
             <div class="seg" id="segTopInsightsMetric">
@@ -2308,7 +2308,7 @@ let state = {
     ? (JSON.parse(localStorage.getItem('ck_widget_order') || 'null') || DEFAULT_WIDGET_ORDER.slice())
     : DEFAULT_WIDGET_ORDER.slice()),
   // chart per-widget toggles
-  topInsightsDim: localStorage.getItem('ck_topinsights_dim') || 'model',
+  topInsightsDim: localStorage.getItem('ck_topinsights_dim') || 'ctr',
   topInsightsMetric: localStorage.getItem('ck_topinsights_metric') || 'amount',
   topInsightsRegion: localStorage.getItem('ck_topinsights_region') || '__all__',
   topInsightsCountry: localStorage.getItem('ck_topinsights_country') || '__all__',
@@ -4443,7 +4443,7 @@ function topChart(canvasId, fOrders, dim, primaryKey, colorAmt, colorQty) {
   if (dim !== 'region' && dim !== 'country') {
     const map = {};
     fOrders.forEach(o => {
-      const k = o[primaryKey] || '(unspecified)';
+      const k = valKey(o, primaryKey, dim);
       map[k] = map[k] || { qty:0, orderAmt:0 };
       map[k].qty += o.qty; map[k].orderAmt += convOrder(o);
     });
@@ -4472,7 +4472,7 @@ function topChart(canvasId, fOrders, dim, primaryKey, colorAmt, colorQty) {
   // 1) 전체 Top N item (orderAmt 기준)
   const itemTotals = {};
   fOrders.forEach(o => {
-    const k = o[primaryKey] || '(unspecified)';
+    const k = valKey(o, primaryKey, dim);
     itemTotals[k] = (itemTotals[k] || 0) + convOrder(o);
   });
   const topItems = Object.entries(itemTotals).sort((a,b)=>b[1]-a[1]).slice(0,8).map(d=>d[0]);
@@ -4481,7 +4481,7 @@ function topChart(canvasId, fOrders, dim, primaryKey, colorAmt, colorQty) {
   // 3) item × group 매트릭스
   const cell = {};
   fOrders.forEach(o => {
-    const k = o[primaryKey] || '(unspecified)';
+    const k = valKey(o, primaryKey, dim);
     const g = o[dim] || '–';
     if (!topItems.includes(k)) return;
     cell[k+'|||'+g] = (cell[k+'|||'+g] || 0) + convOrder(o);
@@ -4518,6 +4518,13 @@ function renderTopInsights(fOrders) {
   const region = state.topInsightsRegion;
   const country = state.topInsightsCountry;
   const keyMap = { model:'make_model', product:'product', ctr:'ctr_code' };
+  // make_model 없을 경우 product로 fallback
+  const valKey = (o, key, dim) => {
+    const v = o[key];
+    if (v && v.trim()) return v.trim();
+    if (dim === 'model') return o['product'] || '(unspecified)';
+    return '(unspecified)';
+  };
   const labelMap = { model:'Vehicle Model', product:'Product', ctr:'CTR Code' };
   const colorMap = { model:'#0A0A0A', product:'#A1A1A6', ctr:'#757575' };
   const colorQty = { model:'#A1A1A6', product:'#525257', ctr:'#DC4A1B' };
@@ -4582,7 +4589,7 @@ function renderTopInsights(fOrders) {
   // Aggregate by primaryKey
   const agg = {};
   scoped.forEach(o => {
-    const k = o[primaryKey] || '(unspecified)';
+    const k = valKey(o, primaryKey, dim);
     agg[k] = agg[k] || { key:k, qty:0, amount:0, orders:0, regions:new Set(), countries:new Set() };
     agg[k].qty += Number(o.qty)||0;
     agg[k].amount += convOrder(o);
