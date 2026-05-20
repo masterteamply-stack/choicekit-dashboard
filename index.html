@@ -1668,10 +1668,10 @@ header .mono b.t-orange {
           <div class="chart-tools">
             <span class="label-mono" style="font-size:11px">PERIOD</span>
             <div class="seg" id="segPotPeriod">
-              <button data-v="region" class="active">By Region</button>
+              <button data-v="region">By Region</button>
               <button data-v="year">Annual</button>
               <button data-v="quarter">Quarterly</button>
-              <button data-v="month">Monthly</button>
+              <button data-v="month" class="active">Monthly</button>
             </div>
             <span class="label-mono" style="font-size:11px;margin-left:8px">METRIC</span>
             <div class="seg" id="segPotMetric">
@@ -2311,7 +2311,7 @@ let state = {
   actSelectedId: null, // selected activity id for detail panel (session)
 
   // — Promotion Order Trends widget —
-  potPeriod: localStorage.getItem('ck_pot_period') || 'region',   // region | year | quarter | month
+  potPeriod: localStorage.getItem('ck_pot_period') || 'month',   // region | year | quarter | month
   potMetric: localStorage.getItem('ck_pot_metric') || 'amount',   // amount | qty
   potPromo:  localStorage.getItem('ck_pot_promo')  || '__all__',  // promotion_id or __all__
 
