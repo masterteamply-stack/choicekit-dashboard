@@ -7586,12 +7586,16 @@ async function loadSharedData(force = false) {
 
   try {
     const res = await fetch(
-      `${SB_SHARED_URL}/rest/v1/ck_shared_data?select=key,content`,
+      `${SB_SHARED_URL}/rest/v1/ck_shared_data?select=key,content,row_count,updated_at`,
       { headers: { apikey: SB_SHARED_KEY, Authorization: `Bearer ${SB_SHARED_KEY}` } }
     );
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const rows = await res.json();
     if (!rows || !rows.length) return false;
+
+    // 로드 전 기존 state 초기화 (구버전 데이터 혼입 방지)
+    state.orders = [];
+    state.marketing = [];
 
     let loaded = false;
     for (const row of rows) {
@@ -7614,7 +7618,13 @@ async function loadSharedData(force = false) {
         } catch(e) { console.warn('shared budgets parse error:', e); }
       }
     }
-    if (loaded) { persist(); console.log('✅ Shared data loaded from Supabase'); }
+    if (loaded) {
+      // 버전 스탬프 저장 — 구버전 localStorage 자동 무효화용
+      const mktRow = rows.find(r => r.key === 'marketing');
+      if (mktRow) localStorage.setItem('ck_shared_mkt_version', `${mktRow.row_count}_${mktRow.updated_at}`);
+      persist();
+      console.log('✅ Shared data loaded from Supabase', state.orders.length, 'orders,', state.marketing.length, 'marketing');
+    }
     return loaded;
   } catch(e) {
     console.warn('Shared data load failed:', e);
