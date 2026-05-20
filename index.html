@@ -4525,19 +4525,15 @@ function renderTopInsights(fOrders) {
   // make_model 없을 경우 CTR-Model 매핑 → product 순으로 fallback
   const valKey = (o, key, dim) => {
     if (dim === 'model') {
-      // 1순위: orders.make_model (k열) — NULL도 빈 문자열도 아닌 경우만
-      const rawModel = (o['make_model'] || '').trim();
-      if (rawModel) return rawModel;
-      // 2순위: CTR 매핑 테이블 C열 (sku 또는 order_id → make_model)
+      // 1순위: orders.make_model (DB/CSV 직접값)
+      const raw = (o['make_model'] || '').trim();
+      if (raw) return raw;
+      // 2순위: CTR 매핑 테이블 (sku → make_model)
       const ctr = (o['sku'] || o['order_id'] || '').trim();
-      if (ctr) {
-        const mapped = resolveModel(ctr, 'full');
-        if (mapped) return mapped;
-      }
+      if (ctr) { const m = resolveModel(ctr, 'full'); if (m) return m; }
       // 3순위: product fallback
       return (o['product'] || '').trim() || '(unspecified)';
     }
-    // model 아닌 dim
     const v = o[key];
     if (v && String(v).trim()) return String(v).trim();
     return '(unspecified)';
@@ -6298,44 +6294,35 @@ function renderSkuAggregate(fOrders) {
   const _allPromoKeys = listPromotionKeys(fOrders);
   const promo = state.skuAggPromo || '__all__';
 
-  // 현재 연도 기준 orders 필터 (올해 데이터)
+  // 올해 데이터 우선, 없으면 전체 fallback
   const curYear = new Date().getFullYear().toString();
-  const yearFiltered = (fOrders||state.orders).filter(o => (o.order_date||'').startsWith(curYear));
-  const baseOrders = yearFiltered.length > 0 ? yearFiltered : (fOrders||state.orders);
+  const base = fOrders || state.orders;
+  const yearBase = base.filter(o => (o.order_date||'').startsWith(curYear));
+  const useBase = yearBase.length > 0 ? yearBase : base;
 
-  // 프로모션 필터: __all__이면 전체
+  // 프로모션 필터 적용
   const promoOrders = promo === '__all__'
-    ? baseOrders.filter(o => o.sku)
-    : baseOrders.filter(matchOrderExceptDate).filter(o => promoKeyOfOrder(o) === promo);
+    ? useBase.filter(o => o.sku)
+    : useBase.filter(o => promoKeyOfOrder(o) === promo && o.sku);
 
   if (!promoOrders.length) {
-    // 올해 데이터 없으면 전체 데이터로 재시도
-    const fallbackOrders = promo === '__all__'
-      ? (fOrders||state.orders).filter(o => o.sku)
-      : (fOrders||state.orders).filter(matchOrderExceptDate).filter(o => promoKeyOfOrder(o) === promo);
-    if (!fallbackOrders.length) {
-      if (meta) meta.textContent = `No orders found — load orders CSV first`;
-      clearSkuPanels();
-      return;
-    }
+    if (meta) meta.textContent = base.length ? `No data for "${promo}" in ${curYear} — try a different filter` : 'No orders loaded — click 🔄 Shared to load data';
+    clearSkuPanels();
+    return;
   }
 
-  const finalOrders = promoOrders.length > 0 ? promoOrders
-    : (promo === '__all__' ? (fOrders||state.orders).filter(o => o.sku)
-      : (fOrders||state.orders).filter(matchOrderExceptDate).filter(o => promoKeyOfOrder(o) === promo));
-
-  const skus = Array.from(new Set(finalOrders.map(o => o.sku).filter(Boolean)));
+  const skus = Array.from(new Set(promoOrders.map(o => o.sku).filter(Boolean)));
   if (!skus.length) {
     if (meta) meta.textContent = 'No SKUs found';
     clearSkuPanels();
     return;
   }
   // Earliest matching marketing activity for this promotion
-  const startDate = findPromoStartDate(finalOrders, promo);
+  const startDate = findPromoStartDate(promoOrders, promo);
 
-  // Per-SKU full history
+  // Per-SKU full history (전체 기간 기준)
   const perSku = skus.map(sku => {
-    const ords = (fOrders||state.orders).filter(matchOrderExceptDate).filter(o => o.sku === sku);
+    const ords = base.filter(o => o.sku === sku);
     return {
       sku,
       product: (ords[0] && ords[0].product) || '',
