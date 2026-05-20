@@ -3536,18 +3536,42 @@ function renderAll() {
   // OR whose date range covers today (fallback when status is missing).
   const ACTIVE_STATUS = new Set(['STARTED','LIVE','IN_PROGRESS','RELEASED','DISTRIBUTED']);
   const todayStr = new Date().toISOString().slice(0,10);
+  const ACTIVE_DURATION_DAYS = 90; // 종료일 미설정 시 시작일로부터 90일간 active
   const activeCamps = new Set();
+  const activeActivities = new Set(); // 개별 활동 ID 기준
   fMkt.forEach(m => {
     const cat = m.promotion_category; if (!cat) return;
+    // 활동 날짜: activity_date 또는 date 필드 모두 지원
+    const startDate = m.activity_date || m.date || m.execution_date || '';
+    const endDate   = m.end_date || m.end || '';
     const st = normalizeStatus(m.status || m.kpi_status || '');
-    if (ACTIVE_STATUS.has(st)) { activeCamps.add(cat); return; }
-    if (!st && m.date && m.date <= todayStr) {
-      // No status set but activity date already reached → treat as in-progress
+
+    let isActive = false;
+
+    if (ACTIVE_STATUS.has(st)) {
+      // 명시적 active 상태
+      isActive = true;
+    } else if (startDate) {
+      const start = startDate.slice(0,10);
+      if (endDate) {
+        // 시작~종료 범위 내에 오늘이 포함되면 active
+        isActive = start <= todayStr && todayStr <= endDate.slice(0,10);
+      } else {
+        // 종료일 없으면: 시작일 이후 ACTIVE_DURATION_DAYS 일 동안 active
+        const endFallback = new Date(start);
+        endFallback.setDate(endFallback.getDate() + ACTIVE_DURATION_DAYS);
+        const endFallbackStr = endFallback.toISOString().slice(0,10);
+        isActive = start <= todayStr && todayStr <= endFallbackStr;
+      }
+    }
+
+    if (isActive) {
       activeCamps.add(cat);
+      if (m.activity_id || m.id) activeActivities.add(m.activity_id || m.id);
     }
   });
   document.getElementById('kpiCamps').textContent = `${fmtNum(activeCamps.size)} / ${fmtNum(camps.size)}`;
-  document.getElementById('kpiCampsSub').textContent = `${activeCamps.size} in progress · ${[...camps].slice(0,3).join(', ')||'–'}`;
+  document.getElementById('kpiCampsSub').textContent = `${activeActivities.size} activities · ${[...activeCamps].slice(0,3).join(', ')||'–'}`;
 
   document.getElementById('ptCur').textContent = fmtMoney(orderAmt);
   document.getElementById('ptTgt').textContent = fmtMoney(orderTargetDisp);
