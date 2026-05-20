@@ -1,0 +1,34 @@
+name: Insert Pre-Orders to Supabase
+on:
+  workflow_dispatch:
+    inputs:
+      start_chunk:
+        description: "시작 청크 (기본: 0)"
+        required: false
+        default: "0"
+      end_chunk:
+        description: "종료 청크 (-1=전체)"
+        required: false
+        default: "-1"
+      truncate_first:
+        description: "기존 데이터 삭제 후 삽입 (true/false)"
+        required: false
+        default: "false"
+jobs:
+  insert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm install @supabase/supabase-js ws
+      - env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          START_CHUNK: ${{ github.event.inputs.start_chunk }}
+          END_CHUNK: ${{ github.event.inputs.end_chunk }}
+          MANIFEST_PATH: data/manifest.json
+          DATA_DIR: data
+        run: node scripts/insert_orders.js
