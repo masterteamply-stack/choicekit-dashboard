@@ -5742,14 +5742,24 @@ function renderPromoOrderTrend(fOrders, fMkt) {
 // Earliest marketing-activity date that matches the SKU's promotion key (and ideally region).
 // Used as the "promotion start" boundary for Before/After.
 function findPromoStartDate(skuOrders, promoKey) {
-  if (!promoKey || promoKey === '__auto__') return null;
   const regions = new Set(skuOrders.map(o => o.region).filter(Boolean));
-  const candidates = state.marketing.filter(m => promoKeyOfMkt(m) === promoKey && m.date);
-  if (!candidates.length) return null;
-  // Prefer activities in the same region(s) as the SKU's order history
-  const sameRegion = candidates.filter(m => regions.size === 0 || regions.has(m.region));
-  const pool = sameRegion.length ? sameRegion : candidates;
-  return pool.map(m => m.date).sort()[0]; // earliest
+  let candidates;
+  if (!promoKey || promoKey === '__auto__') {
+    candidates = state.marketing.filter(m => m.date);
+  } else if (promoKey === '__all__') {
+    candidates = state.marketing.filter(m => m.date);
+  } else {
+    candidates = state.marketing.filter(m => promoKeyOfMkt(m) === promoKey && m.date);
+  }
+  if (candidates.length) {
+    const sameRegion = candidates.filter(m => regions.size === 0 || regions.has(m.region));
+    const pool = sameRegion.length ? sameRegion : candidates;
+    return pool.map(m => m.date).sort()[0];
+  }
+  // 마케팅 데이터 없으면 오더 중간점 기준 (중앙값 날짜)
+  if (!skuOrders.length) return null;
+  const dates = skuOrders.map(o => o.order_date).filter(Boolean).sort();
+  return dates[Math.floor(dates.length / 2)] || dates[0];
 }
 
 function listSkus(orders) {
@@ -6284,44 +6294,50 @@ function renderSkuIndividual(fOrders) {
 }
 
 function renderSkuAggregate(fOrders) {
-  const meta = document.getElementById('skuAggMeta');
+  const meta  = document.getElementById('skuAggMeta');
   const brkWrap = document.getElementById('skuAggBreakdown');
-  const brkTbl = document.getElementById('tblSkuAggBreakdown');
+  const brkTbl  = document.getElementById('tblSkuAggBreakdown');
 
-  // Auto-pick the promotion with the most SKUs on first visit, so users see a
-  // meaningful aggregate immediately instead of a tiny/empty promotion.
-  // 저장된 promo 값이 현재 데이터에 없으면 자동 선택
   const promo = state.skuAggPromo || '__all__';
 
-  // SKU Analysis: state.orders 전체 기반 (글로벌 날짜필터 무관)
+  // ── 데이터 소스: state.orders 전체 (날짜 필터 무관, 올해+작년 통합) ──
   const allOrd = (state.orders || []).filter(o => o && o.sku);
   if (!allOrd.length) {
     if (meta) meta.textContent = 'No orders loaded — click 🔄 Shared to load data';
     clearSkuPanels(); return;
   }
 
-  // 올해 우선, 없으면 전체 fallback
-  const curYear = new Date().getFullYear().toString();
-  const yearOrd = allOrd.filter(o => (o.order_date||'').startsWith(curYear));
-  const scopeOrd = yearOrd.length > 0 ? yearOrd : allOrd;
+  // 올해 + 작년 데이터 (2개년 통합)
+  const curYear = new Date().getFullYear();
+  const twoYearOrd = allOrd.filter(o => {
+    const y = parseInt((o.order_date||'').slice(0,4));
+    return y >= curYear - 1;
+  });
+  const baseOrd = twoYearOrd.length > 0 ? twoYearOrd : allOrd;
 
   // 프로모션 필터
   const promoOrders = promo === '__all__'
-    ? scopeOrd
-    : scopeOrd.filter(o => promoKeyOfOrder(o) === promo);
+    ? baseOrd
+    : baseOrd.filter(o => promoKeyOfOrder(o) === promo);
 
-  const finalOrders = promoOrders.length > 0 ? promoOrders : allOrd;
+  // 결과 없으면 전체 fallback
+  const useOrders = promoOrders.length > 0 ? promoOrders : baseOrd;
 
-  const skus = Array.from(new Set(finalOrders.map(o => o.sku).filter(Boolean)));
+  const skus = Array.from(new Set(useOrders.map(o => o.sku).filter(Boolean)));
   if (!skus.length) {
-    if (meta) meta.textContent = 'No SKUs found';
+    if (meta) meta.textContent = 'No SKUs found — load orders data first';
     clearSkuPanels(); return;
   }
 
-  // Earliest marketing activity date (startDate for Before/After)
-  const startDate = findPromoStartDate(finalOrders, promo);
+  // ── 프로모션 시작일 결정 (Before/After 기준점) ──
+  // 1순위: 마케팅 활동 날짜 / 2순위: 오더 날짜 중앙값
+  let startDate = findPromoStartDate(useOrders, promo);
+  if (!startDate) {
+    const sorted = useOrders.map(o=>o.order_date).filter(Boolean).sort();
+    startDate = sorted[Math.floor(sorted.length / 2)] || sorted[0];
+  }
 
-  // Per-SKU: 전체 기간 기준으로 이력 계산
+  // Per-SKU: allOrd 전체 기간 기준 (Before/After 계산을 위해)
   const perSku = skus.map(sku => {
     const ords = allOrd.filter(o => o.sku === sku);
     return {
@@ -6401,7 +6417,7 @@ function renderSkuAggregate(fOrders) {
   } else {
     if (meta) {
       const startTxt = startDate ? ` · promotion start ${startDate}` : ' · no matching marketing activity';
-      meta.textContent = `Promotion "${promo}" · ${n} SKUs · ${fmtNum(totalOrds)} total orders${startTxt} · tip: click any SKU row below`;
+      meta.textContent = `Promotion: ${promo==="__all__"?"All":promo} · ${n} SKUs · ${fmtNum(totalOrds)} orders · Before/After split: ${startDate||"–"} · click row to drill`;
     }
     renderSkuBeforeAfter(avg, { mode:'aggregate' });
     renderSkuMonthly(avgMonthly, { mode:'aggregate' });
@@ -6454,7 +6470,7 @@ function renderSkuAggregate(fOrders) {
   }
 
   // ── Period Comparison KPIs (scoped to all orders in this promotion) ──
-  renderSkuCompareKpis(promoOrders);
+  renderSkuCompareKpis(useOrders);
 }
 
 /* =================== ACTIONS =================== */
