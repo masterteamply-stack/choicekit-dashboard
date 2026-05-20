@@ -6291,38 +6291,39 @@ function renderSkuAggregate(fOrders) {
   // Auto-pick the promotion with the most SKUs on first visit, so users see a
   // meaningful aggregate immediately instead of a tiny/empty promotion.
   // 저장된 promo 값이 현재 데이터에 없으면 자동 선택
-  const _allPromoKeys = listPromotionKeys(fOrders);
   const promo = state.skuAggPromo || '__all__';
 
-  // 올해 데이터 우선, 없으면 전체 fallback
-  const curYear = new Date().getFullYear().toString();
-  const base = fOrders || state.orders;
-  const yearBase = base.filter(o => (o.order_date||'').startsWith(curYear));
-  const useBase = yearBase.length > 0 ? yearBase : base;
-
-  // 프로모션 필터 적용
-  const promoOrders = promo === '__all__'
-    ? useBase.filter(o => o.sku)
-    : useBase.filter(o => promoKeyOfOrder(o) === promo && o.sku);
-
-  if (!promoOrders.length) {
-    if (meta) meta.textContent = base.length ? `No data for "${promo}" in ${curYear} — try a different filter` : 'No orders loaded — click 🔄 Shared to load data';
-    clearSkuPanels();
-    return;
+  // SKU Analysis: state.orders 전체 기반 (글로벌 날짜필터 무관)
+  const allOrd = (state.orders || []).filter(o => o && o.sku);
+  if (!allOrd.length) {
+    if (meta) meta.textContent = 'No orders loaded — click 🔄 Shared to load data';
+    clearSkuPanels(); return;
   }
 
-  const skus = Array.from(new Set(promoOrders.map(o => o.sku).filter(Boolean)));
+  // 올해 우선, 없으면 전체 fallback
+  const curYear = new Date().getFullYear().toString();
+  const yearOrd = allOrd.filter(o => (o.order_date||'').startsWith(curYear));
+  const scopeOrd = yearOrd.length > 0 ? yearOrd : allOrd;
+
+  // 프로모션 필터
+  const promoOrders = promo === '__all__'
+    ? scopeOrd
+    : scopeOrd.filter(o => promoKeyOfOrder(o) === promo);
+
+  const finalOrders = promoOrders.length > 0 ? promoOrders : allOrd;
+
+  const skus = Array.from(new Set(finalOrders.map(o => o.sku).filter(Boolean)));
   if (!skus.length) {
     if (meta) meta.textContent = 'No SKUs found';
-    clearSkuPanels();
-    return;
+    clearSkuPanels(); return;
   }
-  // Earliest matching marketing activity for this promotion
-  const startDate = findPromoStartDate(promoOrders, promo);
 
-  // Per-SKU full history (전체 기간 기준)
+  // Earliest marketing activity date (startDate for Before/After)
+  const startDate = findPromoStartDate(finalOrders, promo);
+
+  // Per-SKU: 전체 기간 기준으로 이력 계산
   const perSku = skus.map(sku => {
-    const ords = base.filter(o => o.sku === sku);
+    const ords = allOrd.filter(o => o.sku === sku);
     return {
       sku,
       product: (ords[0] && ords[0].product) || '',
