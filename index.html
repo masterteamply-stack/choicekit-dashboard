@@ -1758,7 +1758,7 @@ header .mono b.t-orange {
         <!-- Aggregate mode input -->
         <div id="skuAggRow" style="display:none;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px">
           <span class="label-mono muted">Promotion</span>
-          <select id="selSkuAggPromo" style="min-width:220px"><option value="">— select a promotion —</option></select>
+          <select id="selSkuAggPromo" style="min-width:220px"></select>
           <span class="label-mono muted" id="skuAggMeta" style="margin-left:auto">–</span>
         </div>
         <div class="cur-toggle" id="segSkuTab" style="margin-bottom:12px">
@@ -2359,7 +2359,7 @@ let state = {
   skuMode:  localStorage.getItem('ck_sku_mode')  || 'aggregate',  // individual | aggregate
   skuTab:   localStorage.getItem('ck_sku_tab')   || 'ba',         // ba | month | year
   skuQuery: localStorage.getItem('ck_sku_query') || '',           // typed SKU (individual mode)
-  skuPromo: localStorage.getItem('ck_sku_promo') || '__auto__',   // promotion_id or __auto__ (individual mode)
+  skuPromo: localStorage.getItem('ck_sku_promo') || '',   // promotion_id (individual mode)
   skuAggPromo: localStorage.getItem('ck_sku_agg_promo') || '',    // promotion_id (aggregate mode) — auto-picked from data
   skuAggDrillSku: '',                                             // session: drilled-into SKU in aggregate mode
 
@@ -4527,8 +4527,13 @@ function renderTopInsights(fOrders) {
     const v = o[key];
     if (v && v.trim()) return v.trim();
     if (dim === 'model') {
-      const mapped = resolveModel(o['sku'] || o['order_id'] || o['ctr_code'] || '');
-      if (mapped) return mapped;
+      const ctr = o['sku'] || o['order_id'] || o['ctr_code'] || '';
+      // brand 기준으로 집계 (동일 브랜드 묶기)
+      const brand = resolveModel(ctr, 'brand');
+      if (brand) return brand;
+      // brand 없으면 make_model 전체
+      const full = resolveModel(ctr, 'full');
+      if (full) return full;
       return o['product'] || '(unspecified)';
     }
     return '(unspecified)';
@@ -5779,9 +5784,10 @@ function populateSkuUI() {
   const sel = document.getElementById('selSkuPromo');
   if (sel) {
     const cur = state.skuPromo;
-    sel.innerHTML = '<option value="__auto__">Auto-detect (first match)</option>' +
-                    promoKeys.map(k => `<option value="${k}">${k}</option>`).join('');
-    sel.value = (cur === '__auto__' || promoKeys.includes(cur)) ? cur : '__auto__';
+    sel.innerHTML = promoKeys.map(k => `<option value="${k}">${k}</option>`).join('');
+    const validPromo = promoKeys.includes(cur) ? cur : (promoKeys[0] || '');
+    sel.value = validPromo;
+    if (state.skuPromo !== validPromo) { state.skuPromo = validPromo; }
   }
   // Aggregate mode promo select
   const aggSel = document.getElementById('selSkuAggPromo');
@@ -7652,11 +7658,14 @@ async function uploadCtrModelCSV(file) {
 }
 
 // CTR Code → make_model 변환 (매핑 있으면 사용, 없으면 원본)
-function resolveModel(ctrCode) {
+function resolveModel(ctrCode, mode) {
   if (!ctrCode) return '';
   const entry = ctrModelMap[ctrCode.toUpperCase()];
   if (!entry) return '';
-  return [entry.brand, entry.make_model, entry.vehicle_type].filter(Boolean).join(' ').trim();
+  // mode='brand': 브랜드만, mode='full': 전체, default: make_model
+  if (mode === 'brand') return entry.brand || '';
+  if (mode === 'full') return [entry.brand, entry.make_model].filter(Boolean).join(' · ');
+  return entry.make_model || entry.brand || '';
 }
 
 async function loadSharedData(force = false) {

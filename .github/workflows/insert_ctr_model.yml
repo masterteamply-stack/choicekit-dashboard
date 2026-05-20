@@ -1,0 +1,23 @@
+name: Insert CTR-Model Mapping
+
+on:
+  workflow_dispatch:
+
+jobs:
+  insert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm install @supabase/supabase-js ws
+      - env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          MANIFEST_PATH: ctr_data/manifest.json
+          DATA_DIR: ctr_data
+          TABLE_NAME: ck_ctr_model
+          UPSERT: "true"
+        run: node scripts/insert_ctr_model.js
