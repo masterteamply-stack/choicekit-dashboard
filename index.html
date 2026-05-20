@@ -5768,24 +5768,21 @@ function listSkus(orders) {
   return Array.from(set).sort();
 }
 
-function populateSkuUI() {
-  const promoKeys = listPromotionKeys();
+function populateSkuUI(fOrders) {
+  const _ord = fOrders || state.orders || [];
+  const promoKeys = listPromotionKeys(_ord);
 
-  // Datalist of SKUs: when a specific promotion is selected in Individual mode,
-  // restrict the autocomplete to that promotion's SKUs so users find them quickly.
   const dl = document.getElementById('dlSkuList');
   if (dl) {
     let skus;
-    if (state.skuMode === 'individual' && state.skuPromo && state.skuPromo !== '__auto__') {
+    if (state.skuMode === 'individual' && state.skuPromo) {
       const set = new Set();
-      fOrders.forEach(o => {
-        if (o.sku && promoKeyOfOrder(o) === state.skuPromo) set.add(o.sku);
-      });
+      _ord.forEach(o => { if (o.sku && promoKeyOfOrder(o) === state.skuPromo) set.add(o.sku); });
       skus = Array.from(set).sort();
     } else {
-      skus = listSkus(fOrders);
+      skus = listSkus(_ord);
     }
-    dl.innerHTML = skus.slice(0, 500).map(s => `<option value="${s}">`).join(''); // datalist cap
+    dl.innerHTML = skus.slice(0, 500).map(s => `<option value="${s}">`).join('');
   }
   const inp = document.getElementById('inpSkuSearch');
   if (inp && state.skuQuery && inp.value !== state.skuQuery) inp.value = state.skuQuery;
@@ -6205,7 +6202,7 @@ function buildAnnualSeries(orders) {
 }
 
 function renderSkuExplorer(fOrders, fMkt) {
-  populateSkuUI();
+  populateSkuUI(fOrders);
   const brkWrap = document.getElementById('skuAggBreakdown');
 
   // Mount the period comparison controls into the BA panel header.
