@@ -1702,8 +1702,8 @@ header .mono b.t-orange {
           <div class="chart-tools">
             <span class="label-mono" style="font-size:11px">MODE</span>
             <div class="seg" id="segSkuMode">
-              <button data-v="individual" class="active">Individual</button>
-              <button data-v="aggregate">Aggregate (avg/SKU)</button>
+              <button data-v="individual">Individual</button>
+              <button data-v="aggregate" class="active">Aggregate (avg/SKU)</button>
             </div>
             <div class="widget-order-controls"></div>
           </div>
@@ -2322,7 +2322,7 @@ let state = {
   skuTab:   localStorage.getItem('ck_sku_tab')   || 'ba',         // ba | month | year
   skuQuery: localStorage.getItem('ck_sku_query') || '',           // typed SKU (individual mode)
   skuPromo: localStorage.getItem('ck_sku_promo') || '__auto__',   // promotion_id or __auto__ (individual mode)
-  skuAggPromo: localStorage.getItem('ck_sku_agg_promo') || '',    // promotion_id (aggregate mode)
+  skuAggPromo: localStorage.getItem('ck_sku_agg_promo') || 'CHOICE_KIT',    // promotion_id (aggregate mode)
   skuAggDrillSku: '',                                             // session: drilled-into SKU in aggregate mode
 
   hiddenWidgets: (localStorage.getItem('ck_widget_order_v') === WIDGET_ORDER_VERSION
