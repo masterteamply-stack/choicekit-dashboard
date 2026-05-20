@@ -3611,8 +3611,9 @@ function renderAll() {
     }
   });
   // Active Campaigns: 활성 activities / 전체 activities
-  const totalActivities = fMkt.length;
-  document.getElementById('kpiCamps').textContent = `${fmtNum(activeActivities.size)} / ${fmtNum(totalActivities)}`;
+  // 캠페인 = promotion_category 기준 고유값
+  const totalCamps = camps.size;
+  document.getElementById('kpiCamps').textContent = `${fmtNum(activeCamps.size)} / ${fmtNum(totalCamps)}`;
   document.getElementById('kpiCampsSub').textContent = `${[...activeCamps].join(', ') || '–'}`; 
 
   document.getElementById('ptCur').textContent = fmtMoney(orderAmt);
