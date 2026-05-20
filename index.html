@@ -1664,7 +1664,7 @@ header .mono b.t-orange {
             <div class="label-mono" style="color:var(--teal)">Active Campaigns</div>
             <div class="kpi-num" id="kpiCamps" style="font-size:22px;margin:0">0</div>
           </div>
-          <div class="sub" id="kpiCampsSub" style="margin-top:6px">–</div>
+          <div id="kpiCampsSub" style="margin-top:6px;line-height:1.8">–</div>
         </div>
       </div>
 
@@ -3614,7 +3614,15 @@ function renderAll() {
   // 캠페인 = promotion_category 기준 고유값
   const totalCamps = camps.size;
   document.getElementById('kpiCamps').textContent = `${fmtNum(activeCamps.size)} / ${fmtNum(totalCamps)}`;
-  document.getElementById('kpiCampsSub').textContent = `${[...activeCamps].join(', ') || '–'}`; 
+  // 활성 캠페인명 태그 리스트
+  const subEl = document.getElementById('kpiCampsSub');
+  if ([...activeCamps].length) {
+    subEl.innerHTML = [...activeCamps].map(c =>
+      `<span style="display:inline-block;padding:2px 8px;margin:2px 3px 2px 0;border-radius:10px;font-size:11px;font-weight:600;background:rgba(75,227,207,.15);color:var(--teal);border:1px solid rgba(75,227,207,.3)">${c}</span>`
+    ).join('');
+  } else {
+    subEl.textContent = '–';
+  } 
 
   document.getElementById('ptCur').textContent = fmtMoney(orderAmt);
   document.getElementById('ptTgt').textContent = fmtMoney(orderTargetDisp);
@@ -6479,13 +6487,12 @@ document.getElementById('fMkt').addEventListener('change', async e => {
 });
 
 function clearAll() {
-  if (!confirm('개인 데이터를 삭제하고 공유 데이터로 초기화하시겠습니까?')) return;
+  if (!confirm('모든 데이터를 삭제하시겠습니까?')) return;
   localStorage.removeItem('ck_has_personal_data');
   state.orders = []; state.marketing = [];
-  loadSharedData(true).then(loaded => {
-    persist(); loadFxRates().then(() => rebuildAll());
-    if (loaded) showToast('✅ 공유 데이터로 초기화 완료');
-  });
+  state.regionBudgets = {}; state.regionTargets = {}; state.promoBudgets = {};
+  persist(); rebuildAll();
+  showToast('🗑️ 데이터가 초기화됐습니다');
 }
 
 /* Modal */
@@ -7616,7 +7623,7 @@ async function loadSharedData(force = false) {
 }
 
 async function resetToSharedData() {
-  if (!confirm('공유 데이터로 초기화하시겠습니까?\n개인 커스텀 데이터가 삭제됩니다.')) return;
+  if (!confirm('공유 기본 데이터를 불러오시겠습니까?')) return;
   localStorage.removeItem('ck_has_personal_data');
   state.orders = []; state.marketing = [];
   const loaded = await loadSharedData(true);
