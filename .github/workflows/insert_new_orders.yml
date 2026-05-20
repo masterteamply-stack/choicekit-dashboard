@@ -1,0 +1,40 @@
+name: Insert New Orders to Supabase
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_chunk:
+        description: '시작 청크 (기본: 0)'
+        required: false
+        default: '0'
+      end_chunk:
+        description: '종료 청크 (-1=전체)'
+        required: false
+        default: '-1'
+
+jobs:
+  insert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install @supabase/supabase-js
+
+      - name: Insert new orders to Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          START_CHUNK: ${{ github.event.inputs.start_chunk || '0' }}
+          END_CHUNK: ${{ github.event.inputs.end_chunk || '-1' }}
+          MANIFEST_PATH: 'new_data/manifest.json'
+          DATA_DIR: 'new_data'
+        run: node scripts/insert_orders.js
