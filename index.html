@@ -2109,6 +2109,9 @@ header .mono b.t-orange {
               <button data-v="quarter">Quarter</button>
               <button data-v="year">Year</button>
             </div>
+            <select id="promoCompareScope" title="Scope the period comparison to one promotion (matches that promotion's customers in the baseline)" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-1)">
+              <option value="__all__">All promotions</option>
+            </select>
             <div id="promoCompareSlot"></div>
             <div class="widget-order-controls"></div>
           </div>
@@ -2455,6 +2458,7 @@ let state = {
   planExecPath: JSON.parse(localStorage.getItem('ck_planexec_path') || '[]'),
   planExecSort: localStorage.getItem('ck_planexec_sort') || 'orderAmt',
   promoPerfPeriod: localStorage.getItem('ck_promo_perf_period') || 'month',
+  promoCompareScope: localStorage.getItem('ck_promo_compare_scope') || '__all__',
   regionMetric: localStorage.getItem('ck_region_metric') || 'order',
   breakdownRegion: localStorage.getItem('ck_breakdown_region') || '__all__',
   budgetExecRegion: localStorage.getItem('ck_budget_exec_region') || '__all__',
@@ -5511,7 +5515,62 @@ function renderPromoChart(fOrders, fMkt) {
   document.getElementById('tblPromo').innerHTML = head + body;
 
   // ── Period Comparison panel (YoY / QoQ / MoM / WoW) ──
-  renderCompareKpiPanel('promo', '#promoCompareSlot', '#promoCompareKpis', fOrders);
+  // Populate the scope dropdown with the promotions present in the data.
+  const scopeSel = document.getElementById('promoCompareScope');
+  if (scopeSel) {
+    const promoNames = summary.map(s => s.promotion).filter(Boolean);
+    const want = state.promoCompareScope || '__all__';
+    scopeSel.innerHTML = `<option value="__all__">All promotions</option>` +
+      promoNames.map(p => `<option value="${String(p).replace(/"/g,'&quot;')}">${p}</option>`).join('');
+    scopeSel.value = promoNames.includes(want) ? want : '__all__';
+    if (!scopeSel._bound) {
+      scopeSel.addEventListener('change', () => {
+        state.promoCompareScope = scopeSel.value;
+        try { localStorage.setItem('ck_promo_compare_scope', scopeSel.value); } catch(_){}
+        renderAll();
+      });
+      scopeSel._bound = true;
+    }
+  }
+
+  // Build an extraFilter scoping the comparison to the selected promotion's customers.
+  // A promotion like "Order boost" targets specific customers (e.g. Lordco Auto
+  // Parts). We collect those customers from the CURRENT orders, then match them
+  // against the baseline (which now carries a `customer` field) so the previous
+  // period reflects the SAME customers' historical sales — not all orders.
+  const scope = state.promoCompareScope || '__all__';
+  let promoCompareOpts = undefined;
+  if (scope !== '__all__') {
+    const custSet = new Set(
+      (state.orders || [])
+        .filter(o => (o.promotion_category || '') === scope)
+        .map(o => (o.customer || '').trim())
+        .filter(Boolean)
+    );
+    const skuSet = new Set(
+      (state.orders || [])
+        .filter(o => (o.promotion_category || '') === scope)
+        .map(o => (o.sku || '').trim())
+        .filter(Boolean)
+    );
+    // Prefer customer match (precise). If the promotion has no customer info,
+    // fall back to matching the promotion's SKUs.
+    const useCust = custSet.size > 0;
+    promoCompareOpts = {
+      extraFilter: (o) => {
+        if (useCust) {
+          const c = (o.customer || '').trim();
+          if (c && custSet.has(c)) return true;
+          // baseline rows may lack customer → fall back to SKU match for them
+          if (!c && skuSet.has((o.sku || '').trim())) return true;
+          return false;
+        }
+        return skuSet.has((o.sku || '').trim());
+      },
+      scopeLabel: scope,
+    };
+  }
+  renderCompareKpiPanel('promo', '#promoCompareSlot', '#promoCompareKpis', fOrders, promoCompareOpts);
 }
 
 /* Combined Sales Trend renderer — toggles between Promotion Category and Region/Country */
