@@ -2118,6 +2118,10 @@ header .mono b.t-orange {
         </div>
         <div id="promoCompareKpis" style="display:none;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px"></div>
         <div class="chart-wrap" style="height:340px"><canvas id="chPromo"></canvas></div>
+        <div id="promoBreakdownWrap" style="display:none;margin-top:16px">
+          <div class="label-mono" id="promoBreakdownTitle" style="margin-bottom:8px;font-weight:600"></div>
+          <div class="chart-wrap" style="height:300px"><canvas id="chPromoBreakdown"></canvas></div>
+        </div>
         <div style="overflow:auto;margin-top:12px"><table id="tblPromo"></table></div>
       </div>
 
@@ -5340,46 +5344,59 @@ function renderPromoChart(fOrders, fMkt) {
   // campaign products' pre-campaign baseline even for orders that predate the
   // campaign and were therefore never tagged with its promotion_category.
   //
-  // Target SKUs come from TWO sources, in priority order:
-  //   1) Explicit per-campaign lists loaded from campaign_target_skus.json
-  //      (e.g. Portfolio Expansion Program's official 4,001-SKU SA_list).
-  //   2) Fallback: SKUs that appear in orders tagged with this promotion.
+  // Each campaign is matched EITHER by SKU or by CUSTOMER, per its config in
+  // campaign_target_skus.json (match_by field):
+  //   match_by: 'sku'      → track target_skus (explicit list, else tagged-order SKUs)
+  //   match_by: 'customer' → track target_customers (Trade promotion / Order
+  //                          boost / Brand awareness are customer-targeted).
   const explicitTargets = state.campaignTargetSkus || {};
+  const promoMatchBy = {};      // promo → 'sku' | 'customer'
   const promoTargetSkus = {};   // promo → Set<sku>
-  // (1) seed from explicit lists
+  const promoTargetCust = {};   // promo → Set<customer>
   Object.keys(explicitTargets).forEach(p => {
-    const arr = (explicitTargets[p] && explicitTargets[p].target_skus) || [];
-    if (arr.length) promoTargetSkus[p] = new Set(arr.map(s => String(s).trim()));
+    const cfg = explicitTargets[p] || {};
+    const mb = (cfg.match_by || 'sku').toLowerCase();
+    promoMatchBy[p] = mb;
+    if (mb === 'customer') {
+      promoTargetCust[p] = new Set((cfg.target_customers || []).map(c => String(c).trim()));
+    } else if ((cfg.target_skus || []).length) {
+      promoTargetSkus[p] = new Set(cfg.target_skus.map(s => String(s).trim()));
+    }
   });
-  // (2) fill any campaign without an explicit list from tagged orders
+  // Fill SKU-based campaigns without an explicit list from tagged orders.
   (state.orders || []).forEach(o => {
     const p = o.promotion_category;
-    if (!p) return;
-    if (explicitTargets[p]) return;            // explicit list wins
+    if (!p || explicitTargets[p]) return;       // explicit config wins
+    promoMatchBy[p] = promoMatchBy[p] || 'sku';
     const sku = (o.sku || o.ctr_code || '').trim();
     if (!sku) return;
     promoTargetSkus[p] = promoTargetSkus[p] || new Set();
     promoTargetSkus[p].add(sku);
   });
 
-  // Accumulate before/after over the FULL order set PLUS the baseline
-  // (state.preOrders), scoped to each campaign's target SKUs. Including the
-  // baseline means the campaign products' pre-campaign historical sales
-  // (which live only in the baseline) show up in the BEFORE bucket.
+  // Accumulate before/after over the FULL order set PLUS the baseline.
   const _baScanSource = (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length)
     ? (state.orders || []).concat(state.preOrders)
     : (state.orders || []);
-  const baAmt = {};   // p → { before, after, skuCount }
+  const baAmt = {};   // p → { before, after, skuCount, custCount, matchBy }
   summary.forEach(s => {
     const p = s.promotion;
     const start = promoStart[p];
+    const mb = promoMatchBy[p] || 'sku';
     const skuSet = promoTargetSkus[p];
-    baAmt[p] = { before: 0, after: 0, skuCount: skuSet ? skuSet.size : 0 };
-    if (!start || !skuSet || skuSet.size === 0) return;
+    const custSet = promoTargetCust[p];
+    baAmt[p] = {
+      before: 0, after: 0, matchBy: mb,
+      skuCount: skuSet ? skuSet.size : 0,
+      custCount: custSet ? custSet.size : 0,
+    };
+    const hasTargets = mb === 'customer' ? (custSet && custSet.size) : (skuSet && skuSet.size);
+    if (!start || !hasTargets) return;
     _baScanSource.forEach(o => {
-      const sku = (o.sku || o.ctr_code || '').trim();
-      if (!sku || !skuSet.has(sku)) return;
-      // amount: baseline rows carry amount_usd; main rows use convOrder
+      const match = (mb === 'customer')
+        ? custSet.has((o.customer || '').trim())
+        : skuSet.has((o.sku || o.ctr_code || '').trim());
+      if (!match) return;
       const amt = (o.amount_usd != null && o[PRE_ORDER_MARK])
         ? Number(o.amount_usd) * usdToDisplay()
         : convOrder(o);
@@ -5389,11 +5406,13 @@ function renderPromoChart(fOrders, fMkt) {
   });
   // Attach onto each summary row (so the table can show them).
   summary.forEach(s => {
-    const ba = baAmt[s.promotion] || { before: 0, after: 0, skuCount: 0 };
+    const ba = baAmt[s.promotion] || { before: 0, after: 0, skuCount: 0, custCount: 0, matchBy: 'sku' };
     s.beforeAmt = ba.before;
     s.afterAmt = ba.after;
     s.baStart = promoStart[s.promotion] || null;
+    s.baMatchBy = ba.matchBy;
     s.baSkuCount = ba.skuCount;
+    s.baCustCount = ba.custCount;
     s.baDeltaPct = ba.before > 0 ? ((ba.after - ba.before) / ba.before) * 100 : null;
   });
 
@@ -5561,29 +5580,35 @@ function renderPromoChart(fOrders, fMkt) {
   const scope = state.promoCompareScope || '__all__';
   let promoCompareOpts = undefined;
   if (scope !== '__all__') {
-    const custSet = new Set(
+    const cfg = (state.campaignTargetSkus || {})[scope] || {};
+    const matchBy = (cfg.match_by || '').toLowerCase();
+
+    // Customer set: explicit config first, else derive from current orders.
+    const cfgCust = (cfg.target_customers || []).map(c => String(c).trim()).filter(Boolean);
+    const custSet = new Set(cfgCust.length ? cfgCust :
       (state.orders || [])
         .filter(o => (o.promotion_category || '') === scope)
         .map(o => (o.customer || '').trim())
         .filter(Boolean)
     );
-    const skuSet = new Set(
+    // SKU set: explicit config first, else derive from current orders.
+    const cfgSku = (cfg.target_skus || []).map(s => String(s).trim()).filter(Boolean);
+    const skuSet = new Set(cfgSku.length ? cfgSku :
       (state.orders || [])
         .filter(o => (o.promotion_category || '') === scope)
         .map(o => (o.sku || '').trim())
         .filter(Boolean)
     );
-    // Prefer customer match (precise). If the promotion has no customer info,
-    // fall back to matching the promotion's SKUs.
-    const useCust = custSet.size > 0;
+
+    // Decide matching strategy. Honor config; default to customer when present.
+    const useCust = matchBy === 'customer' || (matchBy !== 'sku' && custSet.size > 0);
     promoCompareOpts = {
       extraFilter: (o) => {
         if (useCust) {
           const c = (o.customer || '').trim();
-          if (c && custSet.has(c)) return true;
-          // baseline rows may lack customer → fall back to SKU match for them
-          if (!c && skuSet.has((o.sku || '').trim())) return true;
-          return false;
+          if (c) return custSet.has(c);
+          // baseline rows lacking customer → fall back to SKU match if we have SKUs
+          return skuSet.size ? skuSet.has((o.sku || '').trim()) : false;
         }
         return skuSet.has((o.sku || '').trim());
       },
@@ -5591,6 +5616,104 @@ function renderPromoChart(fOrders, fMkt) {
     };
   }
   renderCompareKpiPanel('promo', '#promoCompareSlot', '#promoCompareKpis', fOrders, promoCompareOpts);
+
+  // ── Per-customer / per-region trend comparison (shown when a promotion is selected) ──
+  renderPromoBreakdownChart(scope, promoCompareOpts);
+}
+
+// Renders the breakdown chart comparing each participating customer's (and each
+// region's) order amount in the current period vs the comparison period
+// (전년/전분기/전월/전주, per the active compare mode). Only shown when a single
+// promotion is selected in the scope dropdown.
+function renderPromoBreakdownChart(scope, promoCompareOpts) {
+  const wrap = document.getElementById('promoBreakdownWrap');
+  const titleEl = document.getElementById('promoBreakdownTitle');
+  if (!wrap) return;
+  if (charts.promoBreakdown) { charts.promoBreakdown.destroy(); charts.promoBreakdown = null; }
+
+  // Hide unless a specific promotion is selected AND a compare mode is active.
+  const cmp = getCompareRanges('promo');
+  if (scope === '__all__' || !cmp || cmp.mode === 'off' || !cmp.current || !cmp.previous) {
+    wrap.style.display = 'none';
+    return;
+  }
+  const extra = promoCompareOpts && promoCompareOpts.extraFilter;
+  const modeLabel = (CMP_MODE_LABEL && CMP_MODE_LABEL[cmp.mode]) || cmp.mode;
+
+  // Scan orders + baseline, scoped to the promotion (extraFilter), bucketed by
+  // customer and by region for current vs previous windows.
+  const src = (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length)
+    ? (state.orders || []).concat(state.preOrders)
+    : (state.orders || []);
+  const byCust = {};   // name → { cur, prev }
+  const byRegion = {}; // region → { cur, prev }
+  const within = (d, r) => d >= r.from && d <= r.to;
+  for (const o of src) {
+    if (!o || !o.order_date) continue;
+    if (extra && !extra(o)) continue;
+    const inCur = within(o.order_date, cmp.current);
+    const inPrev = within(o.order_date, cmp.previous);
+    if (!inCur && !inPrev) continue;
+    const amt = (o.amount_usd != null && o[PRE_ORDER_MARK])
+      ? Number(o.amount_usd) * usdToDisplay()
+      : convOrder(o);
+    const cust = (o.customer || '').trim() || '(unknown)';
+    const region = normalizeRegion(o.region || '') || '(none)';
+    byCust[cust]   = byCust[cust]   || { cur: 0, prev: 0 };
+    byRegion[region] = byRegion[region] || { cur: 0, prev: 0 };
+    if (inCur)  { byCust[cust].cur  += amt; byRegion[region].cur  += amt; }
+    if (inPrev) { byCust[cust].prev += amt; byRegion[region].prev += amt; }
+  }
+
+  // Build customer-level dataset (sorted by current desc, top 12).
+  const custRows = Object.entries(byCust)
+    .map(([name, v]) => ({ name, ...v }))
+    .filter(r => r.cur > 0 || r.prev > 0)
+    .sort((a, b) => (b.cur + b.prev) - (a.cur + a.prev))
+    .slice(0, 12);
+
+  if (!custRows.length) {
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = '';
+  titleEl.textContent = `${scope} · 참여 고객사별 오더 추이 — 현재 vs ${modeLabel} (${cmp.current.from}~${cmp.current.to} vs ${cmp.previous.from}~${cmp.previous.to})`;
+
+  const labels = custRows.map(r => r.name);
+  const curData = custRows.map(r => Math.round(r.cur));
+  const prevData = custRows.map(r => Math.round(r.prev));
+
+  charts.promoBreakdown = new Chart(document.getElementById('chPromoBreakdown'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: `이전 (${modeLabel})`, data: prevData, backgroundColor: '#A1A1A6', borderRadius: 3, maxBarThickness: 38 },
+        { label: '현재', data: curData, backgroundColor: '#C8102E', borderRadius: 3, maxBarThickness: 38 },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { font: { family: 'IBM Plex Mono', size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: c => `${c.dataset.label}: ${fmtMoney(c.parsed.y)}`,
+            footer: items => {
+              const i = items[0].dataIndex;
+              const cur = curData[i], prev = prevData[i];
+              const d = prev > 0 ? ((cur - prev) / prev * 100) : null;
+              return d == null ? '' : `Δ ${d >= 0 ? '+' : ''}${d.toFixed(1)}%`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: { stacked: false, ticks: { color: '#1D1D1F', font: { family: 'IBM Plex Mono', weight: 600, size: 11 }, maxRotation: 35, minRotation: 0 }, grid: { display: false } },
+        y: { stacked: false, beginAtZero: true, ticks: { color: '#1D1D1F', font: { family: 'IBM Plex Mono', size: 12 }, callback: v => v >= 1000 ? (v/1000).toFixed(0)+'k' : v }, grid: { color: 'rgba(0,0,0,0.06)' }, title: { display: true, text: 'Order Amount', color: '#1D1D1F' } },
+      },
+    },
+  });
 }
 
 /* Combined Sales Trend renderer — toggles between Promotion Category and Region/Country */
