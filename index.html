@@ -2856,14 +2856,21 @@ const convMktActual   = m => {
   if (d && d > _todayStr()) return 0;
   return num(m.actual_cost) * rateToUsd(ymOf(d), m.currency) * usdToDisplay();
 };
-const convMktExpected = m => num(m.expected_cost) * rateToUsd(ymOf(m.date), m.currency) * usdToDisplay();
-const convMktBizreward = m => num(m.bizreward_amount) * rateToUsd(ymOf(m.date), m.currency) * usdToDisplay();
+// expected_cost / Bizreward in marketing.csv are ALWAYS in KRW (confirmed by
+// the user), even when the row's `currency` column says otherwise. Convert
+// them to USD using a robust KRW→USD rate, then to the display currency.
+// (krwToUsd already does manual-override → latest-cached → fallback.)
+const convMktExpected = m => num(m.expected_cost) * krwToUsd() * usdToDisplay();
+const convMktBizreward = m => num(m.bizreward_amount) * krwToUsd() * usdToDisplay();
+// USD-pinned variants — always return USD regardless of the display-currency
+// toggle. Used for Plan Budget, which the user wants always shown in USD.
+const convMktExpectedUsd  = m => num(m.expected_cost)    * krwToUsd();
+const convMktBizrewardUsd = m => num(m.bizreward_amount) * krwToUsd();
 const convMktBudget   = m => {
   const csvBudget = num(m.budget);
   if (csvBudget > 0) return csvBudget * rateToUsd(ymOf(m.date), m.currency) * usdToDisplay();
-  // No dedicated budget column → budget = expected_cost + bizreward
-  const fxAdj = rateToUsd(ymOf(m.date), m.currency) * usdToDisplay();
-  return (num(m.expected_cost) + num(m.bizreward_amount)) * fxAdj;
+  // No dedicated budget column → budget = expected_cost + bizreward (both KRW)
+  return (num(m.expected_cost) + num(m.bizreward_amount)) * krwToUsd() * usdToDisplay();
 };
 
 /* =================== DATA-UPDATE TIMESTAMPS =================== */
