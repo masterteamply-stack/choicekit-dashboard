@@ -5292,6 +5292,9 @@ function renderPromoCtrDetail(fOrders, dim, filterVal) {
     </tr>`).join('')||'<tr><td colspan="6" class="muted" style="text-align:center;padding:12px">No data</td></tr>'}</tbody>`;
 }
 
+function periodLabelOf(period) {
+  return period === 'year' ? 'Year' : (period === 'quarter' ? 'Quarter' : 'Month');
+}
 function renderPromoChart(fOrders, fMkt) {
   const period = state.promoPerfPeriod || 'month';
 
@@ -5416,74 +5419,120 @@ function renderPromoChart(fOrders, fMkt) {
     s.baDeltaPct = ba.before > 0 ? ((ba.after - ba.before) / ba.before) * 100 : null;
   });
 
-  // ── Chart: stacked bar per promotion category (Before + After) ──
-  // Single x-axis = promotion name. Two stacked segments per bar so the user
-  // sees campaign impact instantly. Total amount sits as a datalabel on top.
-  const labels = summary.map(s => s.promotion);
-  const beforeData = summary.map(s => s.beforeAmt);
-  const afterData  = summary.map(s => s.afterAmt);
-  const totalsData = summary.map(s => s.orderAmt);
+  // ── Main chart: per-campaign ORDER AMOUNT TREND over time ──
+  // X axis = period buckets (month/quarter/year per the toggle). Each campaign
+  // is a line. When a single promotion is selected in the scope dropdown, only
+  // that line is shown. This makes the chart respond to BOTH the period toggle
+  // and the scope selector (previously it was a static before/after bar that
+  // ignored both).
+  const scopeSel0 = state.promoCompareScope || '__all__';
+  // Build the ordered list of period buckets present across the filtered orders.
+  const periodBuckets = Array.from(new Set(
+    fOrders.map(o => periodKey(o.order_date, period)).filter(Boolean)
+  )).sort();
+  // Which promotions to plot as lines.
+  const plotPromos = (scopeSel0 === '__all__')
+    ? summary.map(s => s.promotion)
+    : summary.map(s => s.promotion).filter(p => p === scopeSel0);
+  // promo → { periodKey → amount }
+  const trend = {};
+  plotPromos.forEach(p => { trend[p] = {}; periodBuckets.forEach(pk => trend[p][pk] = 0); });
+  // Aggregate the trend over current orders PLUS baseline so the line shows
+  // the full history (baseline supplies pre-campaign periods). When a specific
+  // customer-based promotion is selected, the baseline is matched by customer.
+  const trendSrc = (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length)
+    ? (fOrders || []).concat(state.preOrders)
+    : (fOrders || []);
+  // For scoped customer-based promotions, precompute the customer set so we can
+  // attribute baseline rows (which have no promotion_category) to the campaign.
+  let scopeCustSet = null, scopeSkuSet = null, scopeMatchBy = null;
+  if (scopeSel0 !== '__all__') {
+    const cfg = (state.campaignTargetSkus || {})[scopeSel0] || {};
+    scopeMatchBy = (cfg.match_by || 'sku').toLowerCase();
+    if (scopeMatchBy === 'customer') {
+      const cc = (cfg.target_customers || []).map(c => String(c).trim()).filter(Boolean);
+      scopeCustSet = new Set(cc.length ? cc : (state.orders||[]).filter(o=>o.promotion_category===scopeSel0).map(o=>(o.customer||'').trim()).filter(Boolean));
+    } else {
+      const ss = (cfg.target_skus || []).map(s => String(s).trim()).filter(Boolean);
+      scopeSkuSet = new Set(ss.length ? ss : (state.orders||[]).filter(o=>o.promotion_category===scopeSel0).map(o=>(o.sku||'').trim()).filter(Boolean));
+    }
+  }
+  trendSrc.forEach(o => {
+    const pk = periodKey(o.order_date, period);
+    if (!pk || !(pk in (trend[plotPromos[0]] || {}))) {
+      // period bucket may be outside current-order range (baseline past periods)
+      // — add the bucket if missing so history shows.
+    }
+    const amt = (o.amount_usd != null && o[PRE_ORDER_MARK])
+      ? Number(o.amount_usd) * usdToDisplay()
+      : convOrder(o);
+    if (scopeSel0 === '__all__') {
+      const p = o.promotion_category || o.promotion_id || '–';
+      if (!(p in trend)) return;
+      if (!pk) return;
+      if (!(pk in trend[p])) trend[p][pk] = 0;
+      // only count current orders for the all-promotions view (avoid baseline
+      // double-counting across untagged promotions)
+      if (!o[PRE_ORDER_MARK]) trend[p][pk] += amt;
+    } else {
+      // single promotion: attribute matching rows (current tagged OR baseline matched)
+      const p = scopeSel0;
+      if (!pk) return;
+      let match = false;
+      if (o[PRE_ORDER_MARK]) {
+        match = scopeMatchBy === 'customer'
+          ? (scopeCustSet && scopeCustSet.has((o.customer||'').trim()))
+          : (scopeSkuSet && scopeSkuSet.has((o.sku||'').trim()));
+      } else {
+        match = (o.promotion_category || '') === p;
+      }
+      if (!match) return;
+      if (!(pk in trend[p])) trend[p][pk] = 0;
+      trend[p][pk] += amt;
+    }
+  });
+  // Recompute period buckets to include any historical periods added above.
+  const allBuckets = new Set(periodBuckets);
+  plotPromos.forEach(p => Object.keys(trend[p] || {}).forEach(pk => allBuckets.add(pk)));
+  const finalBuckets = Array.from(allBuckets).sort();
+  // A distinct color per promotion (stable order).
+  const PROMO_COLORS = ['#C8102E','#0A84FF','#34C759','#FF9500','#AF52DE','#5AC8FA','#FF2D55','#A2845E','#1D1D1F'];
+  const lineDatasets = plotPromos.map((p, i) => {
+    const col = PROMO_COLORS[i % PROMO_COLORS.length];
+    return {
+      label: p,
+      data: finalBuckets.map(pk => Math.round(trend[p][pk] || 0)),
+      borderColor: col,
+      backgroundColor: col + '22',
+      borderWidth: 2,
+      pointRadius: 3,
+      pointHoverRadius: 5,
+      tension: 0.25,
+      fill: false,
+    };
+  });
 
   if (charts.promo) charts.promo.destroy();
   charts.promo = new Chart(document.getElementById('chPromo'), {
-    type:'bar',
-    data:{
-      labels,
-      datasets: [
-        {
-          label: 'Before (캠페인 시작 전)',
-          data: beforeData,
-          backgroundColor: '#A1A1A6',
-          borderRadius: 3,
-          maxBarThickness: 48,
-        },
-        {
-          label: 'After (캠페인 시작 후)',
-          data: afterData,
-          backgroundColor: '#C8102E',
-          borderRadius: 3,
-          maxBarThickness: 48,
-        },
-      ],
-    },
-    options:{
-      ...chartOpts(true),
-      layout: { padding: { top: 32 } },  // headroom for datalabels
-      plugins:{ ...chartOpts(true).plugins,
+    type: 'line',
+    data: { labels: finalBuckets, datasets: lineDatasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
         legend: { display: true, position: 'top', labels: { color:'#1D1D1F', font:{family:'IBM Plex Mono',weight:600,size:11}, boxWidth:14, padding:8 } },
-        datalabels: {
-          // Show the value on top of every bar so before/after are directly comparable.
-          display: true,
-          anchor: 'end',
-          align: 'top',
-          formatter: v => (v > 0 ? fmtMoney(v) : ''),
-          color: (ctx) => ctx.datasetIndex === 0 ? '#525257' : '#C8102E',
-          font: { family:'IBM Plex Mono', weight:700, size:11 },
-        },
-        tooltip:{ ...chartOpts(true).plugins.tooltip,
-          callbacks:{
-            title: items => items[0].label,
+        datalabels: { display: false },
+        tooltip: {
+          callbacks: {
             label: c => `${c.dataset.label}: ${fmtMoney(c.parsed.y)}`,
-            footer: items => {
-              const i = items[0].dataIndex;
-              const total = totalsData[i] || 0;
-              const before = beforeData[i] || 0;
-              const dPct = before > 0 ? ((afterData[i] - before) / before) * 100 : null;
-              const dTxt = dPct == null ? '' : ` · Δ ${dPct >= 0 ? '+' : ''}${dPct.toFixed(1)}%`;
-              const start = promoStart[labels[i]];
-              const skuN = (summary[i] && summary[i].baSkuCount) || 0;
-              const skuLine = skuN > 0 ? `\nTarget SKUs: ${skuN}` : '';
-              return `Total ${fmtMoney(total)}${dTxt}${start ? `\nMarketing start: ${start}` : ''}${skuLine}`;
-            },
-          }
-        }
+          },
+        },
       },
-      scales:{
-        // grouped (not stacked) — two bars per promotion sit side-by-side
-        x:{ stacked:false, ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:12},autoSkip:false,maxRotation:30,minRotation:0}, grid:{display:false} },
-        y:{ stacked:false, beginAtZero:true, ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:14},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:true,text:'Order Amount',color:'#1D1D1F'} },
-      }
-    }
+      scales: {
+        x: { ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:11},maxRotation:30,minRotation:0}, grid:{display:false}, title:{display:true,text:periodLabelOf(period),color:'#86868B'} },
+        y: { beginAtZero:true, ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',size:12},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:true,text:'Order Amount',color:'#1D1D1F'} },
+      },
+    },
   });
 
   // periods are still used by the right-side period × promotion table columns.
