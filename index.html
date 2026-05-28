@@ -1899,36 +1899,16 @@ header .mono b.t-orange {
         <div class="widget-head">
           <div>
             <h3 class="h-section">SKU Analysis</h3>
-            <p class="label-mono" style="margin-top:4px">Promotion impact · Individual SKU drill-down or Aggregate (per-SKU average across promotion's SKUs) · uses SAP order data<br><span style="color:#86868B;font-size:10px">Date filter is intentionally ignored here — full SKU history is needed to see promotion before/after effect. Region, country, promotion and customer filters still apply.</span></p>
+            <p class="label-mono" style="margin-top:4px">캠페인별 대상 SKU의 프로모션 전/후 오더 비교 · SAP order data<br><span style="color:#86868B;font-size:10px">날짜 필터는 무시됩니다 — 전체 SKU 이력을 봐야 전/후 효과가 보입니다. Region·country·customer 필터는 적용됩니다.</span></p>
           </div>
           <div class="chart-tools">
-            <span class="label-mono" style="font-size:11px">MODE</span>
-            <div class="seg" id="segSkuMode">
-              <button data-v="individual">Individual</button>
-              <button data-v="aggregate" class="active">Aggregate (avg/SKU)</button>
-            </div>
+            <span class="label-mono muted">Promotion</span>
+            <select id="selSkuAggPromo" style="min-width:220px"></select>
             <div class="widget-order-controls"></div>
           </div>
         </div>
-        <!-- Individual mode input -->
-        <div id="skuIndivRow" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px">
-          <span class="label-mono muted">SKU</span>
-          <input id="inpSkuSearch" list="dlSkuList" placeholder="Search SKU (e.g. GK0383)" style="min-width:200px" autocomplete="off" />
-          <datalist id="dlSkuList"></datalist>
-          <span class="label-mono muted">Promotion</span>
-          <select id="selSkuPromo" style="min-width:180px"><option value="__auto__">Auto-detect (first match)</option></select>
-          <span class="label-mono muted" id="skuMeta" style="margin-left:auto">–</span>
-        </div>
-        <!-- Aggregate mode input -->
-        <div id="skuAggRow" style="display:none;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px">
-          <span class="label-mono muted">Promotion</span>
-          <select id="selSkuAggPromo" style="min-width:220px"></select>
+        <div id="skuAggRow" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px">
           <span class="label-mono muted" id="skuAggMeta" style="margin-left:auto">–</span>
-        </div>
-        <div class="cur-toggle" id="segSkuTab" style="margin-bottom:12px">
-          <button data-v="ba" class="active">Before / After Promotion</button>
-          <button data-v="month">Monthly Trend</button>
-          <button data-v="year">Annual Trend</button>
         </div>
         <div id="skuPanel-ba" class="sku-tab-panel">
           <div id="skuCompareSlot" style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap"></div>
@@ -1947,16 +1927,8 @@ header .mono b.t-orange {
               <div class="chart-wrap" style="height:320px"><canvas id="chSkuBeforeAfterQty"></canvas></div>
             </div>
           </div>
-          <!-- Aggregate-mode SKU breakdown table -->
-          <div id="skuAggBreakdown" style="display:none;overflow:auto;max-height:280px;margin-top:14px"><table id="tblSkuAggBreakdown" style="font-size:12px"></table></div>
-        </div>
-        <div id="skuPanel-month" class="sku-tab-panel" style="display:none">
-          <div class="chart-wrap" style="height:340px"><canvas id="chSkuMonthly"></canvas></div>
-          <div style="overflow:auto;max-height:240px;margin-top:10px"><table id="tblSkuMonthly" style="font-size:12px"></table></div>
-        </div>
-        <div id="skuPanel-year" class="sku-tab-panel" style="display:none">
-          <div class="chart-wrap" style="height:340px"><canvas id="chSkuYearly"></canvas></div>
-          <div style="overflow:auto;max-height:240px;margin-top:10px"><table id="tblSkuYearly" style="font-size:12px"></table></div>
+          <!-- Per-SKU breakdown table -->
+          <div id="skuAggBreakdown" style="overflow:auto;max-height:280px;margin-top:14px"><table id="tblSkuAggBreakdown" style="font-size:12px"></table></div>
         </div>
       </div>
 
@@ -2101,7 +2073,7 @@ header .mono b.t-orange {
         <div class="widget-head">
           <div>
             <h3 class="h-section">Promotion Performance</h3>
-            <p class="label-mono" style="margin-top:4px">Order Amount by promotion across selected period unit</p>
+            <p class="label-mono" style="margin-top:4px">Monthly order trend — by promotion, customer, or region</p>
           </div>
           <div class="chart-tools">
             <div class="seg" id="segPromoPerf">
@@ -2109,19 +2081,16 @@ header .mono b.t-orange {
               <button data-v="quarter">Quarter</button>
               <button data-v="year">Year</button>
             </div>
-            <select id="promoCompareScope" title="Scope the period comparison to one promotion (matches that promotion's customers in the baseline)" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-1)">
-              <option value="__all__">All promotions</option>
+            <select id="promoDimSel" title="What to break the trend down by" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-1)">
+              <option value="promotion">By promotion</option>
+              <option value="customer">By customer</option>
+              <option value="region">By region</option>
             </select>
-            <div id="promoCompareSlot"></div>
             <div class="widget-order-controls"></div>
           </div>
         </div>
-        <div id="promoCompareKpis" style="display:none;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px"></div>
-        <div class="chart-wrap" style="height:340px"><canvas id="chPromo"></canvas></div>
-        <div id="promoBreakdownWrap" style="display:none;margin-top:16px">
-          <div class="label-mono" id="promoBreakdownTitle" style="margin-bottom:8px;font-weight:600"></div>
-          <div class="chart-wrap" style="height:300px"><canvas id="chPromoBreakdown"></canvas></div>
-        </div>
+        <div id="promoInsight" class="label-mono" style="margin-bottom:10px;font-size:11px;color:#525257"></div>
+        <div class="chart-wrap" style="height:360px"><canvas id="chPromo"></canvas></div>
         <div style="overflow:auto;margin-top:12px"><table id="tblPromo"></table></div>
       </div>
 
@@ -2462,7 +2431,7 @@ let state = {
   planExecPath: JSON.parse(localStorage.getItem('ck_planexec_path') || '[]'),
   planExecSort: localStorage.getItem('ck_planexec_sort') || 'orderAmt',
   promoPerfPeriod: localStorage.getItem('ck_promo_perf_period') || 'month',
-  promoCompareScope: localStorage.getItem('ck_promo_compare_scope') || '__all__',
+  promoDim: localStorage.getItem('ck_promo_dim') || 'promotion',
   campaignTargetSkus: {},
   regionMetric: localStorage.getItem('ck_region_metric') || 'order',
   breakdownRegion: localStorage.getItem('ck_breakdown_region') || '__all__',
@@ -5419,114 +5388,84 @@ function renderPromoChart(fOrders, fMkt) {
     s.baDeltaPct = ba.before > 0 ? ((ba.after - ba.before) / ba.before) * 100 : null;
   });
 
-  // ── Main chart: per-campaign ORDER AMOUNT TREND over time ──
-  // X axis = period buckets (month/quarter/year per the toggle). Each campaign
-  // is a line. When a single promotion is selected in the scope dropdown, only
-  // that line is shown. This makes the chart respond to BOTH the period toggle
-  // and the scope selector (previously it was a static before/after bar that
-  // ignored both).
-  const scopeSel0 = state.promoCompareScope || '__all__';
-  // Build the ordered list of period buckets present across the filtered orders.
+  // ── Main chart: monthly ORDER TREND, switchable by dimension ──
+  // dim = 'promotion' | 'customer' | 'region'. The period toggle controls the
+  // x-axis bucket. For 'promotion' we also draw a bold TOTAL line (all promos
+  // combined). No second-campaign comparison — the chart simply tracks trends.
+  const dim = state.promoDim || 'promotion';
+  // Bind the dimension selector (once).
+  const dimSel = document.getElementById('promoDimSel');
+  if (dimSel) {
+    dimSel.value = dim;
+    if (!dimSel._bound) {
+      dimSel.addEventListener('change', () => {
+        state.promoDim = dimSel.value;
+        try { localStorage.setItem('ck_promo_dim', dimSel.value); } catch(_){}
+        renderAll();
+      });
+      dimSel._bound = true;
+    }
+  }
   const periodBuckets = Array.from(new Set(
     fOrders.map(o => periodKey(o.order_date, period)).filter(Boolean)
   )).sort();
-  // Which promotions to plot as lines.
-  const plotPromos = (scopeSel0 === '__all__')
-    ? summary.map(s => s.promotion)
-    : summary.map(s => s.promotion).filter(p => p === scopeSel0);
-  // promo → { periodKey → amount }
-  const trend = {};
-  plotPromos.forEach(p => { trend[p] = {}; periodBuckets.forEach(pk => trend[p][pk] = 0); });
-  // Aggregate the trend over current orders PLUS baseline so the line shows
-  // the full history (baseline supplies pre-campaign periods). When a specific
-  // customer-based promotion is selected, the baseline is matched by customer.
-  const trendSrc = (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length)
-    ? (fOrders || []).concat(state.preOrders)
-    : (fOrders || []);
-  // For scoped customer-based promotions, precompute the customer set so we can
-  // attribute baseline rows (which have no promotion_category) to the campaign.
-  let scopeCustSet = null, scopeSkuSet = null, scopeMatchBy = null;
-  if (scopeSel0 !== '__all__') {
-    const cfg = (state.campaignTargetSkus || {})[scopeSel0] || {};
-    scopeMatchBy = (cfg.match_by || 'sku').toLowerCase();
-    if (scopeMatchBy === 'customer') {
-      const cc = (cfg.target_customers || []).map(c => String(c).trim()).filter(Boolean);
-      scopeCustSet = new Set(cc.length ? cc : (state.orders||[]).filter(o=>o.promotion_category===scopeSel0).map(o=>(o.customer||'').trim()).filter(Boolean));
-    } else {
-      const ss = (cfg.target_skus || []).map(s => String(s).trim()).filter(Boolean);
-      scopeSkuSet = new Set(ss.length ? ss : (state.orders||[]).filter(o=>o.promotion_category===scopeSel0).map(o=>(o.sku||'').trim()).filter(Boolean));
-    }
+
+  // Aggregate amount by (seriesKey → periodKey).
+  const series = {};   // key → { pk → amount }
+  const seriesTotal = {}; // key → total amount (for ranking / top-N)
+  function add(key, pk, amt) {
+    if (!key || !pk) return;
+    series[key] = series[key] || {};
+    series[key][pk] = (series[key][pk] || 0) + amt;
+    seriesTotal[key] = (seriesTotal[key] || 0) + amt;
   }
-  trendSrc.forEach(o => {
+  fOrders.forEach(o => {
     const pk = periodKey(o.order_date, period);
-    if (!pk || !(pk in (trend[plotPromos[0]] || {}))) {
-      // period bucket may be outside current-order range (baseline past periods)
-      // — add the bucket if missing so history shows.
-    }
-    const amt = (o.amount_usd != null && o[PRE_ORDER_MARK])
-      ? Number(o.amount_usd) * usdToDisplay()
-      : convOrder(o);
-    if (scopeSel0 === '__all__') {
-      const p = o.promotion_category || o.promotion_id || '–';
-      if (!(p in trend)) return;
-      if (!pk) return;
-      if (!(pk in trend[p])) trend[p][pk] = 0;
-      // only count current orders for the all-promotions view (avoid baseline
-      // double-counting across untagged promotions)
-      if (!o[PRE_ORDER_MARK]) trend[p][pk] += amt;
-    } else {
-      // single promotion: attribute matching rows (current tagged OR baseline matched)
-      const p = scopeSel0;
-      if (!pk) return;
-      let match = false;
-      if (o[PRE_ORDER_MARK]) {
-        match = scopeMatchBy === 'customer'
-          ? (scopeCustSet && scopeCustSet.has((o.customer||'').trim()))
-          : (scopeSkuSet && scopeSkuSet.has((o.sku||'').trim()));
-      } else {
-        match = (o.promotion_category || '') === p;
-      }
-      if (!match) return;
-      if (!(pk in trend[p])) trend[p][pk] = 0;
-      trend[p][pk] += amt;
-    }
+    const amt = convOrder(o);
+    if (dim === 'promotion') add(o.promotion_category || '(none)', pk, amt);
+    else if (dim === 'customer') add((o.customer || '').trim() || '(unknown)', pk, amt);
+    else if (dim === 'region') add(normalizeRegion(o.region || '') || '(none)', pk, amt);
   });
-  // Recompute period buckets to include any historical periods added above.
-  const allBuckets = new Set(periodBuckets);
-  plotPromos.forEach(p => Object.keys(trend[p] || {}).forEach(pk => allBuckets.add(pk)));
-  const finalBuckets = Array.from(allBuckets).sort();
-  // A distinct color per promotion (stable order).
-  const PROMO_COLORS = ['#C8102E','#0A84FF','#34C759','#FF9500','#AF52DE','#5AC8FA','#FF2D55','#A2845E','#1D1D1F'];
-  const lineDatasets = plotPromos.map((p, i) => {
-    const col = PROMO_COLORS[i % PROMO_COLORS.length];
+
+  // Choose which series to plot. Customer dim can be large → top 8 by total.
+  let keys = Object.keys(seriesTotal).sort((a, b) => seriesTotal[b] - seriesTotal[a]);
+  const MAX_SERIES = dim === 'customer' ? 8 : 12;
+  const shownKeys = keys.slice(0, MAX_SERIES);
+
+  const PALETTE = ['#C8102E','#0A84FF','#34C759','#FF9500','#AF52DE','#5AC8FA','#FF2D55','#A2845E','#1D1D1F','#30B0C7','#FFD60A','#BF5AF2'];
+  const lineDatasets = shownKeys.map((key, i) => {
+    const col = PALETTE[i % PALETTE.length];
     return {
-      label: p,
-      data: finalBuckets.map(pk => Math.round(trend[p][pk] || 0)),
-      borderColor: col,
-      backgroundColor: col + '22',
-      borderWidth: 2,
-      pointRadius: 3,
-      pointHoverRadius: 5,
-      tension: 0.25,
-      fill: false,
+      label: key,
+      data: periodBuckets.map(pk => Math.round((series[key] && series[key][pk]) || 0)),
+      borderColor: col, backgroundColor: col + '22',
+      borderWidth: 2, pointRadius: 2.5, pointHoverRadius: 5, tension: 0.25, fill: false,
     };
   });
+  // Add a bold TOTAL line (combined) for the promotion view.
+  if (dim === 'promotion') {
+    const totalByPk = periodBuckets.map(pk =>
+      Math.round(Object.keys(series).reduce((s, k) => s + ((series[k] && series[k][pk]) || 0), 0))
+    );
+    lineDatasets.unshift({
+      label: '전체 (Total)',
+      data: totalByPk,
+      borderColor: '#1D1D1F', backgroundColor: 'transparent',
+      borderWidth: 3, borderDash: [6, 3], pointRadius: 0, pointHoverRadius: 4, tension: 0.25, fill: false,
+    });
+  }
 
   if (charts.promo) charts.promo.destroy();
   charts.promo = new Chart(document.getElementById('chPromo'), {
     type: 'line',
-    data: { labels: finalBuckets, datasets: lineDatasets },
+    data: { labels: periodBuckets, datasets: lineDatasets },
     options: {
       responsive: true, maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { display: true, position: 'top', labels: { color:'#1D1D1F', font:{family:'IBM Plex Mono',weight:600,size:11}, boxWidth:14, padding:8 } },
         datalabels: { display: false },
-        tooltip: {
-          callbacks: {
-            label: c => `${c.dataset.label}: ${fmtMoney(c.parsed.y)}`,
-          },
-        },
+        tooltip: { callbacks: { label: c => `${c.dataset.label}: ${fmtMoney(c.parsed.y)}` } },
       },
       scales: {
         x: { ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:11},maxRotation:30,minRotation:0}, grid:{display:false}, title:{display:true,text:periodLabelOf(period),color:'#86868B'} },
@@ -5534,6 +5473,40 @@ function renderPromoChart(fOrders, fMkt) {
       },
     },
   });
+
+  // ── Insight line: who/what leads this period and overall ──
+  try {
+    const lastPk = periodBuckets[periodBuckets.length - 1];
+    // Leader in the latest period
+    let topNowKey = null, topNowVal = -1;
+    Object.keys(series).forEach(k => {
+      const v = (series[k] && series[k][lastPk]) || 0;
+      if (v > topNowVal) { topNowVal = v; topNowKey = k; }
+    });
+    // Leader overall
+    const topAllKey = keys[0];
+    const dimLabel = dim === 'promotion' ? '프로모션' : (dim === 'customer' ? '고객' : '권역');
+    let insight = '';
+    if (topNowKey) insight += `이번 ${periodLabelOf(period)}(${lastPk}) 최다 ${dimLabel}: <b>${topNowKey}</b> (${fmtMoney(topNowVal)})`;
+    if (topAllKey) insight += `${insight ? ' · ' : ''}전체 누적 최다 ${dimLabel}: <b>${topAllKey}</b> (${fmtMoney(seriesTotal[topAllKey])})`;
+    // Region × promotion highlight (which promotion stands out per region)
+    if (dim === 'region' || dim === 'promotion') {
+      const rp = {}; // region → { promo → amt }
+      fOrders.forEach(o => {
+        const r = normalizeRegion(o.region || '') || '(none)';
+        const p = o.promotion_category || '(none)';
+        rp[r] = rp[r] || {}; rp[r][p] = (rp[r][p] || 0) + convOrder(o);
+      });
+      const parts = Object.keys(rp).map(r => {
+        const best = Object.entries(rp[r]).sort((a,b)=>b[1]-a[1])[0];
+        return best ? `${r}→<b>${best[0]}</b>` : null;
+      }).filter(Boolean);
+      if (parts.length) insight += `<br>권역별 두각 프로모션: ${parts.join(' · ')}`;
+    }
+    const insEl = document.getElementById('promoInsight');
+    if (insEl) insEl.innerHTML = insight;
+  } catch (e) { console.warn('promo insight failed:', e); }
+
 
   // periods are still used by the right-side period × promotion table columns.
   const periods = Array.from(new Set(fOrders.map(o=>periodKey(o.order_date, period)).filter(Boolean))).sort();
@@ -5601,168 +5574,6 @@ function renderPromoChart(fOrders, fMkt) {
     </tr>`;
   }).join('')}</tbody>`;
   document.getElementById('tblPromo').innerHTML = head + body;
-
-  // ── Period Comparison panel (YoY / QoQ / MoM / WoW) ──
-  // Populate the scope dropdown with the promotions present in the data.
-  const scopeSel = document.getElementById('promoCompareScope');
-  if (scopeSel) {
-    const promoNames = summary.map(s => s.promotion).filter(Boolean);
-    const want = state.promoCompareScope || '__all__';
-    scopeSel.innerHTML = `<option value="__all__">All promotions</option>` +
-      promoNames.map(p => `<option value="${String(p).replace(/"/g,'&quot;')}">${p}</option>`).join('');
-    scopeSel.value = promoNames.includes(want) ? want : '__all__';
-    if (!scopeSel._bound) {
-      scopeSel.addEventListener('change', () => {
-        state.promoCompareScope = scopeSel.value;
-        try { localStorage.setItem('ck_promo_compare_scope', scopeSel.value); } catch(_){}
-        renderAll();
-      });
-      scopeSel._bound = true;
-    }
-  }
-
-  // Build an extraFilter scoping the comparison to the selected promotion's customers.
-  // A promotion like "Order boost" targets specific customers (e.g. Lordco Auto
-  // Parts). We collect those customers from the CURRENT orders, then match them
-  // against the baseline (which now carries a `customer` field) so the previous
-  // period reflects the SAME customers' historical sales — not all orders.
-  const scope = state.promoCompareScope || '__all__';
-  let promoCompareOpts = undefined;
-  if (scope !== '__all__') {
-    const cfg = (state.campaignTargetSkus || {})[scope] || {};
-    const matchBy = (cfg.match_by || '').toLowerCase();
-
-    // Customer set: explicit config first, else derive from current orders.
-    const cfgCust = (cfg.target_customers || []).map(c => String(c).trim()).filter(Boolean);
-    const custSet = new Set(cfgCust.length ? cfgCust :
-      (state.orders || [])
-        .filter(o => (o.promotion_category || '') === scope)
-        .map(o => (o.customer || '').trim())
-        .filter(Boolean)
-    );
-    // SKU set: explicit config first, else derive from current orders.
-    const cfgSku = (cfg.target_skus || []).map(s => String(s).trim()).filter(Boolean);
-    const skuSet = new Set(cfgSku.length ? cfgSku :
-      (state.orders || [])
-        .filter(o => (o.promotion_category || '') === scope)
-        .map(o => (o.sku || '').trim())
-        .filter(Boolean)
-    );
-
-    // Decide matching strategy. Honor config; default to customer when present.
-    const useCust = matchBy === 'customer' || (matchBy !== 'sku' && custSet.size > 0);
-    promoCompareOpts = {
-      extraFilter: (o) => {
-        if (useCust) {
-          const c = (o.customer || '').trim();
-          if (c) return custSet.has(c);
-          // baseline rows lacking customer → fall back to SKU match if we have SKUs
-          return skuSet.size ? skuSet.has((o.sku || '').trim()) : false;
-        }
-        return skuSet.has((o.sku || '').trim());
-      },
-      scopeLabel: scope,
-    };
-  }
-  renderCompareKpiPanel('promo', '#promoCompareSlot', '#promoCompareKpis', fOrders, promoCompareOpts);
-
-  // ── Per-customer / per-region trend comparison (shown when a promotion is selected) ──
-  renderPromoBreakdownChart(scope, promoCompareOpts);
-}
-
-// Renders the breakdown chart comparing each participating customer's (and each
-// region's) order amount in the current period vs the comparison period
-// (전년/전분기/전월/전주, per the active compare mode). Only shown when a single
-// promotion is selected in the scope dropdown.
-function renderPromoBreakdownChart(scope, promoCompareOpts) {
-  const wrap = document.getElementById('promoBreakdownWrap');
-  const titleEl = document.getElementById('promoBreakdownTitle');
-  if (!wrap) return;
-  if (charts.promoBreakdown) { charts.promoBreakdown.destroy(); charts.promoBreakdown = null; }
-
-  // Hide unless a specific promotion is selected AND a compare mode is active.
-  const cmp = getCompareRanges('promo');
-  if (scope === '__all__' || !cmp || cmp.mode === 'off' || !cmp.current || !cmp.previous) {
-    wrap.style.display = 'none';
-    return;
-  }
-  const extra = promoCompareOpts && promoCompareOpts.extraFilter;
-  const modeLabel = (CMP_MODE_LABEL && CMP_MODE_LABEL[cmp.mode]) || cmp.mode;
-
-  // Scan orders + baseline, scoped to the promotion (extraFilter), bucketed by
-  // customer and by region for current vs previous windows.
-  const src = (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length)
-    ? (state.orders || []).concat(state.preOrders)
-    : (state.orders || []);
-  const byCust = {};   // name → { cur, prev }
-  const byRegion = {}; // region → { cur, prev }
-  const within = (d, r) => d >= r.from && d <= r.to;
-  for (const o of src) {
-    if (!o || !o.order_date) continue;
-    if (extra && !extra(o)) continue;
-    const inCur = within(o.order_date, cmp.current);
-    const inPrev = within(o.order_date, cmp.previous);
-    if (!inCur && !inPrev) continue;
-    const amt = (o.amount_usd != null && o[PRE_ORDER_MARK])
-      ? Number(o.amount_usd) * usdToDisplay()
-      : convOrder(o);
-    const cust = (o.customer || '').trim() || '(unknown)';
-    const region = normalizeRegion(o.region || '') || '(none)';
-    byCust[cust]   = byCust[cust]   || { cur: 0, prev: 0 };
-    byRegion[region] = byRegion[region] || { cur: 0, prev: 0 };
-    if (inCur)  { byCust[cust].cur  += amt; byRegion[region].cur  += amt; }
-    if (inPrev) { byCust[cust].prev += amt; byRegion[region].prev += amt; }
-  }
-
-  // Build customer-level dataset (sorted by current desc, top 12).
-  const custRows = Object.entries(byCust)
-    .map(([name, v]) => ({ name, ...v }))
-    .filter(r => r.cur > 0 || r.prev > 0)
-    .sort((a, b) => (b.cur + b.prev) - (a.cur + a.prev))
-    .slice(0, 12);
-
-  if (!custRows.length) {
-    wrap.style.display = 'none';
-    return;
-  }
-  wrap.style.display = '';
-  titleEl.textContent = `${scope} · 참여 고객사별 오더 추이 — 현재 vs ${modeLabel} (${cmp.current.from}~${cmp.current.to} vs ${cmp.previous.from}~${cmp.previous.to})`;
-
-  const labels = custRows.map(r => r.name);
-  const curData = custRows.map(r => Math.round(r.cur));
-  const prevData = custRows.map(r => Math.round(r.prev));
-
-  charts.promoBreakdown = new Chart(document.getElementById('chPromoBreakdown'), {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        { label: `이전 (${modeLabel})`, data: prevData, backgroundColor: '#A1A1A6', borderRadius: 3, maxBarThickness: 38 },
-        { label: '현재', data: curData, backgroundColor: '#C8102E', borderRadius: 3, maxBarThickness: 38 },
-      ],
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'top', labels: { font: { family: 'IBM Plex Mono', size: 11 } } },
-        tooltip: {
-          callbacks: {
-            label: c => `${c.dataset.label}: ${fmtMoney(c.parsed.y)}`,
-            footer: items => {
-              const i = items[0].dataIndex;
-              const cur = curData[i], prev = prevData[i];
-              const d = prev > 0 ? ((cur - prev) / prev * 100) : null;
-              return d == null ? '' : `Δ ${d >= 0 ? '+' : ''}${d.toFixed(1)}%`;
-            },
-          },
-        },
-      },
-      scales: {
-        x: { stacked: false, ticks: { color: '#1D1D1F', font: { family: 'IBM Plex Mono', weight: 600, size: 11 }, maxRotation: 35, minRotation: 0 }, grid: { display: false } },
-        y: { stacked: false, beginAtZero: true, ticks: { color: '#1D1D1F', font: { family: 'IBM Plex Mono', size: 12 }, callback: v => v >= 1000 ? (v/1000).toFixed(0)+'k' : v }, grid: { color: 'rgba(0,0,0,0.06)' }, title: { display: true, text: 'Order Amount', color: '#1D1D1F' } },
-      },
-    },
-  });
 }
 
 /* Combined Sales Trend renderer — toggles between Promotion Category and Region/Country */
@@ -6568,31 +6379,7 @@ function populateSkuUI(fOrders) {
   const _ord = fOrders || state.orders || [];
   const promoKeys = listPromotionKeys(_ord);
 
-  const dl = document.getElementById('dlSkuList');
-  if (dl) {
-    let skus;
-    if (state.skuMode === 'individual' && state.skuPromo) {
-      const set = new Set();
-      _ord.forEach(o => { if (o.sku && promoKeyOfOrder(o) === state.skuPromo) set.add(o.sku); });
-      skus = Array.from(set).sort();
-    } else {
-      skus = listSkus(_ord);
-    }
-    dl.innerHTML = skus.slice(0, 500).map(s => `<option value="${s}">`).join('');
-  }
-  const inp = document.getElementById('inpSkuSearch');
-  if (inp && state.skuQuery && inp.value !== state.skuQuery) inp.value = state.skuQuery;
-
-  // Individual mode promo select
-  const sel = document.getElementById('selSkuPromo');
-  if (sel) {
-    const cur = state.skuPromo;
-    sel.innerHTML = promoKeys.map(k => `<option value="${k}">${k}</option>`).join('');
-    const validPromo = promoKeys.includes(cur) ? cur : (promoKeys[0] || '');
-    sel.value = validPromo;
-    if (state.skuPromo !== validPromo) { state.skuPromo = validPromo; }
-  }
-  // Aggregate mode promo select
+  // Promotion selector (only control now). Default: first promotion (or All).
   const aggSel = document.getElementById('selSkuAggPromo');
   if (aggSel) {
     const cur = state.skuAggPromo || '__all__';
@@ -6601,18 +6388,9 @@ function populateSkuUI(fOrders) {
     aggSel.value = (cur === '__all__' || promoKeys.includes(cur)) ? cur : '__all__';
     if (state.skuAggPromo !== aggSel.value) state.skuAggPromo = aggSel.value;
   }
-  // Mode segmented + input rows
-  document.querySelectorAll('#segSkuMode button').forEach(b => b.classList.toggle('active', b.dataset.v === state.skuMode));
-  const indivRow = document.getElementById('skuIndivRow');
-  const aggRow = document.getElementById('skuAggRow');
-  if (indivRow) indivRow.style.display = (state.skuMode === 'individual') ? 'flex' : 'none';
-  if (aggRow)   aggRow.style.display   = (state.skuMode === 'aggregate')  ? 'flex' : 'none';
-  // tab buttons
-  document.querySelectorAll('#segSkuTab button').forEach(b => b.classList.toggle('active', b.dataset.v === state.skuTab));
-  ['ba','month','year'].forEach(t => {
-    const el = document.getElementById('skuPanel-' + t);
-    if (el) el.style.display = (state.skuTab === t) ? '' : 'none';
-  });
+  // Mode/tab are fixed now: always aggregate + before/after.
+  state.skuMode = 'aggregate';
+  state.skuTab = 'ba';
 }
 
 /* ── Helpers to render each tab from a generic dataset ── */
@@ -7022,23 +6800,15 @@ function buildAnnualSeries(orders) {
 
 function renderSkuExplorer(fOrders, fMkt) {
   populateSkuUI(fOrders);
-  const brkWrap = document.getElementById('skuAggBreakdown');
 
   // Mount the period comparison controls into the BA panel header.
-  // This is shared between individual and aggregate modes.
   const slot = document.getElementById('skuCompareSlot');
   if (slot) {
     slot.innerHTML = renderCompareControls('sku') +
       '<div id="skuCompareKpis" style="display:none;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;flex:1 1 100%;margin-top:8px"></div>';
     bindCompareControls('#skuCompareSlot', 'sku', () => rebuildAll());
   }
-
-  if (state.skuMode === 'individual') {
-    if (brkWrap) brkWrap.style.display = 'none';
-    return renderSkuIndividual(fOrders);
-  } else {
-    return renderSkuAggregate(fOrders);
-  }
+  return renderSkuAggregate(fOrders);
 }
 
 function renderSkuIndividual(fOrders) {
@@ -7266,8 +7036,6 @@ function renderSkuAggregate(fOrders) {
         ` · <a href="#" id="lnkClearDrill" style="color:var(--blue);text-decoration:underline">Back to aggregate</a>`;
     }
     renderSkuBeforeAfter(drilled.ba, { mode:'individual' });
-    renderSkuMonthly(buildMonthlySeries(drilled.orders, startDate), { mode:'individual' });
-    renderSkuYearly(buildAnnualSeries(drilled.orders), { mode:'individual' });
   } else {
     if (meta) {
       const isAll = (promo === '__all__');
@@ -7276,11 +7044,8 @@ function renderSkuAggregate(fOrders) {
         : (startDate || '–');
       meta.textContent = `Promotion: ${isAll?"All":promo} · ${n} SKUs · ${fmtNum(totalOrds)} orders · Before/After split: ${startTxt} · click row to drill`;
     }
-    // Show TOTALS (sum across all SKUs) — not averages. Pass mode:'individual'
-    // so labels render as 'orders' / 'pcs' instead of 'avg/SKU'.
+    // Show TOTALS (sum across all SKUs) — not averages.
     renderSkuBeforeAfter(total, { mode:'individual' });
-    renderSkuMonthly(totalMonthly, { mode:'individual' });
-    renderSkuYearly(totalAnnual, { mode:'individual' });
 
     // Append a promotion-TOTAL summary card at the end of the existing BA summary grid
     const baSum = document.getElementById('skuBaSummary');
@@ -8020,30 +7785,12 @@ document.addEventListener('change', e => {
   if (e.target.id === 'selPotPromo') {
     state.potPromo = e.target.value; persist(); renderAll();
   }
-  if (e.target.id === 'selSkuPromo') {
-    state.skuPromo = e.target.value; persist(); renderAll();
-  }
   if (e.target.id === 'selSkuAggPromo') {
     state.skuAggPromo = e.target.value;
     state.skuAggDrillSku = ''; // changing promotion resets drill-in
     persist(); renderAll();
   }
-  if (e.target.id === 'inpSkuSearch') {
-    state.skuQuery = e.target.value.trim(); persist(); renderAll();
-  }
 });
-// SKU search reacts to typing too (debounced)
-(function bindSkuSearchInput(){
-  let t = null;
-  document.addEventListener('input', e => {
-    if (e.target.id !== 'inpSkuSearch') return;
-    clearTimeout(t);
-    t = setTimeout(() => {
-      state.skuQuery = e.target.value.trim();
-      persist(); renderAll();
-    }, 200);
-  });
-})();
 document.addEventListener('click', e => {
   // SKU Aggregate — "Back to aggregate" link
   if (e.target && e.target.id === 'lnkClearDrill') {
@@ -8143,27 +7890,8 @@ document.addEventListener('click', e => {
     // ── new widgets ──
     else if (id==='segPotPeriod'){ state.potPeriod = v; persist(); renderAll(); }
     else if (id==='segPotMetric'){ state.potMetric = v; persist(); renderAll(); }
-    else if (id==='segSkuMode'){
-      state.skuMode = v;
-      state.skuAggDrillSku = ''; // leaving aggregate clears drill
-      persist(); renderAll();
-    }
     else if (id==='segTopInsightsPeriod'){ state.topInsightsPeriod = v; persist(); renderAll(); }
     else if (id==='segPromoCtrPeriod'){    state.promoCtrPeriod    = v; persist(); renderAll(); }
-    return;
-  }
-  // SKU Analysis 탭 (cur-toggle 구조)
-  const skuTabBtn = e.target.closest('#segSkuTab button[data-v]');
-  if (skuTabBtn) {
-    state.skuTab = skuTabBtn.dataset.v;
-    document.querySelectorAll('#segSkuTab button').forEach(x => x.classList.toggle('active', x===skuTabBtn));
-    ['ba','month','year'].forEach(t => {
-      const el = document.getElementById('skuPanel-' + t);
-      if (el) el.style.display = (state.skuTab === t) ? '' : 'none';
-    });
-    persist();
-    // ensure chart sizes correctly after becoming visible
-    renderAll();
     return;
   }
   // Marketing Cost Breakdown Region 탭
