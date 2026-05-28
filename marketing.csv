@@ -14,10 +14,10 @@
 2026-10-20,CIS,카자흐스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,Event,Event,,"6,000,000",0,x,KRW,RELEASED,B2C,SELL_OUT,HY,0,
 2026-10-20,CIS,투르크메니스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,Event,Event,,"6,000,000",0,x,KRW,RELEASED,B2C,SELL_OUT,HY,0,
 2026-10-20,CIS,타지키스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,Event,Event,,"6,000,000",0,x,KRW,RELEASED,B2C,SELL_OUT,HY,0,
-2026-02-11,LATAM,멕시코,CHOICE_KIT,Worldcup Promotion,US vehicle,CONTENT,SNS Content,REFATRIX,800000,800000,x,KRW,RELEASED,B2B,SELL_IN,DH,"3,862.84","Nissan Versa, Chevrolet Aveo 모델 3월 매출 (4,5,6월 매출까지 합산하여 최종 결과 모니터링 예정)"
-2026-03-13,LATAM,멕시코,CHOICE_KIT,Worldcup Promotion,Asian vehicle,CONTENT,SNS Content,REFATRIX,399923,399923,x,KRW,RELEASED,B2B,SELL_IN,DH,3862.84,"Nissan Versa, Chevrolet Aveo 모델 3월 매출 (4,5,6월 매출까지 합산하여 최종 결과 모니터링 예정)"
-2026-03-13,LATAM,멕시코,CHOICE_KIT,Worldcup Promotion,Asian vehicle,EVENT,Event,REFATRIX,3420880,3420880,734700,KRW,STARTED,B2B,SELL_IN,DH,3862.84,"Nissan Versa, Chevrolet Aveo 모델 3월 매출 (4,5,6월 매출까지 합산하여 최종 결과 모니터링 예정)"
-2026-03-24,LATAM,멕시코,CHOICE_KIT,Worldcup Promotion,Asian vehicle,CONTENT,SNS Content,REFATRIX,799924,799924,x,KRW,RELEASED,B2B,SELL_IN,DH,3862.84,"Nissan Versa, Chevrolet Aveo 모델 3월 매출 (4,5,6월 매출까지 합산하여 최종 결과 모니터링 예정)"
+2026-02-11,LATAM,멕시코,CHOICE_KIT,Mexico Worldcup,US vehicle,CONTENT,SNS Content,REFATRIX,800000,800000,x,KRW,RELEASED,B2B,SELL_IN,DH,"3,862.84","Nissan Versa, Chevrolet Aveo 모델 3월 매출 (4,5,6월 매출까지 합산하여 최종 결과 모니터링 예정)"
+2026-03-13,LATAM,멕시코,CHOICE_KIT,Mexico Worldcup,Asian vehicle,CONTENT,SNS Content,REFATRIX,399923,399923,x,KRW,RELEASED,B2B,SELL_IN,DH,3862.84,"Nissan Versa, Chevrolet Aveo 모델 3월 매출 (4,5,6월 매출까지 합산하여 최종 결과 모니터링 예정)"
+2026-03-13,LATAM,멕시코,CHOICE_KIT,Mexico Worldcup,Asian vehicle,EVENT,Event,REFATRIX,3420880,3420880,734700,KRW,STARTED,B2B,SELL_IN,DH,3862.84,"Nissan Versa, Chevrolet Aveo 모델 3월 매출 (4,5,6월 매출까지 합산하여 최종 결과 모니터링 예정)"
+2026-03-24,LATAM,멕시코,CHOICE_KIT,Mexico Worldcup,Asian vehicle,CONTENT,SNS Content,REFATRIX,799924,799924,x,KRW,RELEASED,B2B,SELL_IN,DH,3862.84,"Nissan Versa, Chevrolet Aveo 모델 3월 매출 (4,5,6월 매출까지 합산하여 최종 결과 모니터링 예정)"
 2025-12-04,MENA,UAE,CHOICE_KIT,Portfolio Expansion Program,Brake Pad,Incentive,Incentive,DYNATRADE,1475000,0,x,KRW,RELEASED,B2B,SELL_IN,WS,20000,*예상목표 달성 시 지급할 비용입니다.
 2025-12-04,MENA,UAE,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,ESP,2065000,0,x,KRW,RELEASED,B2B,SELL_IN,WS,60000,*예상목표 달성 시 지급할 비용입니다.
 2025-12-04,MENA,시리아,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,AMP,1475000,0,x,KRW,RELEASED,B2B,SELL_IN,WS,20000,*예상목표 달성 시 지급할 비용입니다.
