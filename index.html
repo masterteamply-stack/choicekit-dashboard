@@ -8692,9 +8692,6 @@ const SHARED_CSV_URLS = {
   orders:    `${GH_REPO_BASE}/orders.csv`,
   marketing: `${GH_REPO_BASE}/marketing.csv`,
   budgets:   `${GH_REPO_BASE}/budgets.csv`,
-  // Supplementary order file — merged into state.orders alongside the main
-  // orders.csv. 404 is treated as "not present" (non-fatal).
-  asia_orders: `${GH_REPO_BASE}/ASIA_ORDER.csv`,
 };
 
 // Decode an ArrayBuffer to CSV text. Tries UTF-8 first, falls back to EUC-KR
@@ -8738,37 +8735,6 @@ async function fetchSharedCsv(kind) {
   }
 }
 
-// Standalone helper — always merges ASIA_ORDER.csv into state.orders if
-// available, regardless of personal-data flag. Called separately from
-// loadSharedData so it runs even when the user has personal CSVs uploaded
-// (since loadSharedData early-returns in that case).
-async function loadAsiaOrdersIntoMain() {
-  if (location.protocol === 'file:') return 0;
-  // Avoid double-loading if we already concatenated this dataset.
-  if (state._asiaOrdersMerged) return 0;
-  try {
-    const asiaRes = await fetchSharedCsv('asia_orders');
-    if (!asiaRes || !asiaRes.text) {
-      console.warn(`[asia] ASIA_ORDER.csv not fetched (404 or empty). URL tried: ${SHARED_CSV_URLS.asia_orders}`);
-      return 0;
-    }
-    const parsed = await parseOrderCSV(asiaRes.text);
-    if (!parsed.length) {
-      console.warn(`[asia] ASIA_ORDER.csv fetched but parsed to 0 rows — check CSV header row.`);
-      return 0;
-    }
-    state.orders = (state.orders || []).concat(parsed);
-    state._asiaOrdersMerged = true;
-    console.log(`[asia] ✅ merged ${parsed.length} ASIA_ORDER rows (total state.orders now ${state.orders.length})`);
-    try { showToast(`✅ ASIA_ORDER loaded — ${fmtNum(parsed.length)} rows`); } catch(_){}
-    return parsed.length;
-  } catch (e) {
-    console.warn('[asia] load failed:', e);
-    return 0;
-  }
-}
-window.loadAsiaOrdersIntoMain = loadAsiaOrdersIntoMain;
-
 async function loadSharedData(force = false) {
   // Personal data takes priority — skip default load unless forced (Reset to Shared Data button).
   const hasPersonal = localStorage.getItem('ck_has_personal_data') === '1';
@@ -8783,7 +8749,6 @@ async function loadSharedData(force = false) {
   // Pre-clear so stale data from a prior load doesn't mix in
   state.orders = [];
   state.marketing = [];
-  state._asiaOrdersMerged = false; // allow the supplementary merge to re-run
 
   // Fetch the main CSVs in parallel from GitHub raw
   const [ordersRes, marketingRes, budgetsRes] = await Promise.all([
@@ -8804,11 +8769,6 @@ async function loadSharedData(force = false) {
       }
     }
   } catch (e) { console.warn('[shared] orders parse error:', e); }
-  // Merge supplementary ASIA_ORDER.csv (idempotent via _asiaOrdersMerged flag)
-  try {
-    const added = await loadAsiaOrdersIntoMain();
-    if (added > 0) loaded = true;
-  } catch (e) { console.warn('[shared] asia_orders merge error:', e); }
   try {
     if (marketingRes.text) {
       const parsed = await parseMarketingCSV(marketingRes.text);
@@ -9340,9 +9300,6 @@ window.publishSnapshot = publishSnapshot;
   }
   // Embedded shared data is in-DOM, no fetch required — works on file:// too.
   try { await loadSharedData(false); } catch (e) { console.warn('Shared data load skipped:', e); }
-  // Always try to merge ASIA_ORDER.csv into state.orders — even when personal
-  // data is in use, since loadSharedData early-returns in that case.
-  try { await loadAsiaOrdersIntoMain(); } catch (e) { console.warn('ASIA_ORDER load skipped:', e); }
   // CTR-Model map + auto CSV refresh still require network — only attempt over http(s).
   if (location.protocol === 'http:' || location.protocol === 'https:') {
     try { await loadCtrModelMap(); } catch(e) { console.warn('CTR map load skipped:', e); }
