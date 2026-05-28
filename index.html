@@ -2086,10 +2086,17 @@ header .mono b.t-orange {
               <option value="customer">By customer</option>
               <option value="region">By region</option>
             </select>
+            <select id="promoCmpSel" title="Compare against a prior period" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-1)">
+              <option value="off">비교 없음</option>
+              <option value="yoy">전년 동기 (YoY)</option>
+              <option value="qoq">전분기 (QoQ)</option>
+              <option value="mom">전월 (MoM)</option>
+            </select>
             <div class="widget-order-controls"></div>
           </div>
         </div>
         <div id="promoInsight" class="label-mono" style="margin-bottom:10px;font-size:11px;color:#525257"></div>
+        <div id="promoCmpKpis" style="display:none;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px"></div>
         <div class="chart-wrap" style="height:360px"><canvas id="chPromo"></canvas></div>
         <div style="overflow:auto;margin-top:12px"><table id="tblPromo"></table></div>
       </div>
@@ -2432,6 +2439,7 @@ let state = {
   planExecSort: localStorage.getItem('ck_planexec_sort') || 'orderAmt',
   promoPerfPeriod: localStorage.getItem('ck_promo_perf_period') || 'month',
   promoDim: localStorage.getItem('ck_promo_dim') || 'promotion',
+  promoCmp: localStorage.getItem('ck_promo_cmp') || 'off',
   campaignTargetSkus: {},
   regionMetric: localStorage.getItem('ck_region_metric') || 'order',
   breakdownRegion: localStorage.getItem('ck_breakdown_region') || '__all__',
@@ -5406,6 +5414,18 @@ function renderPromoChart(fOrders, fMkt) {
       dimSel._bound = true;
     }
   }
+  const cmpSel = document.getElementById('promoCmpSel');
+  if (cmpSel) {
+    cmpSel.value = state.promoCmp || 'off';
+    if (!cmpSel._bound) {
+      cmpSel.addEventListener('change', () => {
+        state.promoCmp = cmpSel.value;
+        try { localStorage.setItem('ck_promo_cmp', cmpSel.value); } catch(_){}
+        renderAll();
+      });
+      cmpSel._bound = true;
+    }
+  }
   const periodBuckets = Array.from(new Set(
     fOrders.map(o => periodKey(o.order_date, period)).filter(Boolean)
   )).sort();
@@ -5453,6 +5473,95 @@ function renderPromoChart(fOrders, fMkt) {
       borderColor: '#1D1D1F', backgroundColor: 'transparent',
       borderWidth: 3, borderDash: [6, 3], pointRadius: 0, pointHoverRadius: 4, tension: 0.25, fill: false,
     });
+  }
+
+  // ── Prior-period comparison (YoY / QoQ / MoM) ──
+  // Build a second aggregation that includes the baseline so historical
+  // buckets are populated, then for each current bucket find the matching
+  // prior bucket and overlay it as a dashed line + KPI cards.
+  const cmpMode = state.promoCmp || 'off';
+  const cmpKpiEl = document.getElementById('promoCmpKpis');
+  // Shift a period bucket key back one unit per the comparison mode.
+  function shiftBucket(pk, mode, per) {
+    if (!pk) return '';
+    if (per === 'year') {            // pk = 'YYYY'
+      const y = parseInt(pk, 10);
+      if (mode === 'yoy') return String(y - 1);
+      return String(y - 1);          // qoq/mom on a yearly axis → previous year
+    }
+    if (per === 'quarter') {         // pk = 'YYYY-Qn'
+      const [ys, qs] = pk.split('-Q'); let y = +ys, q = +qs;
+      if (mode === 'yoy') return `${y - 1}-Q${q}`;
+      // qoq or mom → previous quarter
+      q -= 1; if (q < 1) { q = 4; y -= 1; }
+      return `${y}-Q${q}`;
+    }
+    // month: pk = 'YYYY-MM'
+    const [ys, ms] = pk.split('-'); let y = +ys, m = +ms;
+    if (mode === 'yoy') return `${y - 1}-${String(m).padStart(2,'0')}`;
+    if (mode === 'qoq') { m -= 3; while (m < 1) { m += 12; y -= 1; } return `${y}-${String(m).padStart(2,'0')}`; }
+    // mom
+    m -= 1; if (m < 1) { m = 12; y -= 1; }
+    return `${y}-${String(m).padStart(2,'0')}`;
+  }
+
+  if (cmpMode !== 'off') {
+    // Aggregate current + baseline by the SAME dimension into prior buckets.
+    const cmpSeries = {};   // key → { pk → amt }   (full history incl. baseline)
+    const srcAll = (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length)
+      ? (fOrders || []).concat(state.preOrders) : (fOrders || []);
+    srcAll.forEach(o => {
+      const pk = periodKey(o.order_date, period);
+      if (!pk) return;
+      const amt = (o.amount_usd != null && o[PRE_ORDER_MARK]) ? Number(o.amount_usd) * usdToDisplay() : convOrder(o);
+      let key;
+      if (dim === 'promotion') key = o.promotion_category || '(none)';
+      else if (dim === 'customer') key = (o.customer || '').trim() || '(unknown)';
+      else key = normalizeRegion(o.region || '') || '(none)';
+      cmpSeries[key] = cmpSeries[key] || {};
+      cmpSeries[key][pk] = (cmpSeries[key][pk] || 0) + amt;
+    });
+    // Overlay a dashed "prior" line per shown key, aligned to current buckets.
+    shownKeys.forEach((key, i) => {
+      const col = PALETTE[i % PALETTE.length];
+      const priorData = periodBuckets.map(pk => {
+        const ppk = shiftBucket(pk, cmpMode, period);
+        return Math.round((cmpSeries[key] && cmpSeries[key][ppk]) || 0);
+      });
+      lineDatasets.push({
+        label: `${key} · 이전`,
+        data: priorData,
+        borderColor: col, backgroundColor: 'transparent',
+        borderWidth: 1.5, borderDash: [4, 3], pointRadius: 0, pointHoverRadius: 4, tension: 0.25, fill: false,
+      });
+    });
+    // KPI cards: current-window total vs prior-window total (across shown keys).
+    const curTotal = periodBuckets.reduce((s, pk) =>
+      s + shownKeys.reduce((ss, key) => ss + ((series[key] && series[key][pk]) || 0), 0), 0);
+    const priorTotal = periodBuckets.reduce((s, pk) => {
+      const ppk = shiftBucket(pk, cmpMode, period);
+      return s + shownKeys.reduce((ss, key) => ss + ((cmpSeries[key] && cmpSeries[key][ppk]) || 0), 0);
+    }, 0);
+    const dPct = priorTotal > 0 ? ((curTotal - priorTotal) / priorTotal) * 100 : null;
+    const modeLabelKo = { yoy: '전년 동기', qoq: '전분기', mom: '전월' }[cmpMode] || '이전';
+    const tag = dPct == null ? '<span class="t-muted">–</span>'
+      : dPct >= 0 ? `<span class="t-green">▲ ${dPct.toFixed(1)}%</span>` : `<span class="t-red">▼ ${Math.abs(dPct).toFixed(1)}%</span>`;
+    if (cmpKpiEl) {
+      const card = (label, val, sub) => `
+        <div style="background:rgba(0,0,0,0.02);border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:10px 12px">
+          <div class="label-mono" style="font-size:10px;color:#86868B;letter-spacing:0.05em">${label}</div>
+          <div style="font-size:18px;font-weight:800;margin-top:2px">${val}</div>
+          ${sub ? `<div class="label-mono muted" style="font-size:11px">${sub}</div>` : ''}
+        </div>`;
+      cmpKpiEl.style.display = 'grid';
+      cmpKpiEl.innerHTML =
+        card('현재 합계', fmtMoney(curTotal), `표시된 ${shownKeys.length}개 항목 합산`) +
+        card(`${modeLabelKo} 합계`, fmtMoney(priorTotal), `${modeLabelKo} 동일 기간`) +
+        card('증감', tag, `현재 vs ${modeLabelKo}`);
+    }
+  } else if (cmpKpiEl) {
+    cmpKpiEl.style.display = 'none';
+    cmpKpiEl.innerHTML = '';
   }
 
   if (charts.promo) charts.promo.destroy();
