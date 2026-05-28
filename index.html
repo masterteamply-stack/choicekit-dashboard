@@ -2459,6 +2459,7 @@ let state = {
   planExecSort: localStorage.getItem('ck_planexec_sort') || 'orderAmt',
   promoPerfPeriod: localStorage.getItem('ck_promo_perf_period') || 'month',
   promoCompareScope: localStorage.getItem('ck_promo_compare_scope') || '__all__',
+  campaignTargetSkus: {},
   regionMetric: localStorage.getItem('ck_region_metric') || 'order',
   breakdownRegion: localStorage.getItem('ck_breakdown_region') || '__all__',
   budgetExecRegion: localStorage.getItem('ck_budget_exec_region') || '__all__',
@@ -5338,20 +5339,36 @@ function renderPromoChart(fOrders, fMkt) {
   // the campaign start; AFTER = same SKUs' sales ON/AFTER. This captures the
   // campaign products' pre-campaign baseline even for orders that predate the
   // campaign and were therefore never tagged with its promotion_category.
+  //
+  // Target SKUs come from TWO sources, in priority order:
+  //   1) Explicit per-campaign lists loaded from campaign_target_skus.json
+  //      (e.g. Portfolio Expansion Program's official 4,001-SKU SA_list).
+  //   2) Fallback: SKUs that appear in orders tagged with this promotion.
+  const explicitTargets = state.campaignTargetSkus || {};
   const promoTargetSkus = {};   // promo → Set<sku>
+  // (1) seed from explicit lists
+  Object.keys(explicitTargets).forEach(p => {
+    const arr = (explicitTargets[p] && explicitTargets[p].target_skus) || [];
+    if (arr.length) promoTargetSkus[p] = new Set(arr.map(s => String(s).trim()));
+  });
+  // (2) fill any campaign without an explicit list from tagged orders
   (state.orders || []).forEach(o => {
     const p = o.promotion_category;
     if (!p) return;
+    if (explicitTargets[p]) return;            // explicit list wins
     const sku = (o.sku || o.ctr_code || '').trim();
     if (!sku) return;
     promoTargetSkus[p] = promoTargetSkus[p] || new Set();
     promoTargetSkus[p].add(sku);
   });
 
-  // Accumulate before/after over the FULL order set (state.orders), scoped to
-  // each campaign's target SKUs. fOrders (region-filtered) would silently
-  // drop pre-campaign sales of those SKUs in other regions, which would
-  // distort the baseline — we want the full footprint of those parts.
+  // Accumulate before/after over the FULL order set PLUS the baseline
+  // (state.preOrders), scoped to each campaign's target SKUs. Including the
+  // baseline means the campaign products' pre-campaign historical sales
+  // (which live only in the baseline) show up in the BEFORE bucket.
+  const _baScanSource = (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length)
+    ? (state.orders || []).concat(state.preOrders)
+    : (state.orders || []);
   const baAmt = {};   // p → { before, after, skuCount }
   summary.forEach(s => {
     const p = s.promotion;
@@ -5359,10 +5376,13 @@ function renderPromoChart(fOrders, fMkt) {
     const skuSet = promoTargetSkus[p];
     baAmt[p] = { before: 0, after: 0, skuCount: skuSet ? skuSet.size : 0 };
     if (!start || !skuSet || skuSet.size === 0) return;
-    (state.orders || []).forEach(o => {
+    _baScanSource.forEach(o => {
       const sku = (o.sku || o.ctr_code || '').trim();
       if (!sku || !skuSet.has(sku)) return;
-      const amt = convOrder(o);
+      // amount: baseline rows carry amount_usd; main rows use convOrder
+      const amt = (o.amount_usd != null && o[PRE_ORDER_MARK])
+        ? Number(o.amount_usd) * usdToDisplay()
+        : convOrder(o);
       if ((o.order_date || '') < start) baAmt[p].before += amt;
       else                              baAmt[p].after  += amt;
     });
@@ -8752,6 +8772,29 @@ const SHARED_CSV_URLS = {
   marketing: `${GH_REPO_BASE}/marketing.csv`,
   budgets:   `${GH_REPO_BASE}/budgets.csv`,
 };
+const CAMPAIGN_TARGET_SKUS_URL = `${GH_REPO_BASE}/campaign_target_skus.json`;
+
+// Load explicit per-campaign target SKU lists (e.g. Portfolio Expansion's
+// SA_list). Populates state.campaignTargetSkus = { promo: {region, target_skus[]} }.
+// 404 is non-fatal — campaigns then fall back to tagged-order SKUs.
+async function loadCampaignTargetSkus() {
+  if (location.protocol === 'file:') return;
+  try {
+    const res = await fetch(CAMPAIGN_TARGET_SKUS_URL, { cache: 'no-cache' });
+    if (!res.ok) {
+      if (res.status !== 404) console.warn(`[targets] HTTP ${res.status}`);
+      return;
+    }
+    const json = await res.json();
+    if (json && typeof json === 'object') {
+      state.campaignTargetSkus = json;
+      const summary = Object.entries(json).map(([k,v]) => `${k}: ${(v.target_skus||[]).length} SKUs`).join(', ');
+      console.log(`[targets] ✅ loaded campaign target SKUs — ${summary}`);
+    }
+  } catch (e) {
+    console.warn('[targets] load failed (non-fatal):', e);
+  }
+}
 
 // Decode an ArrayBuffer to CSV text. Tries UTF-8 first, falls back to EUC-KR
 // (CP949) if the UTF-8 decode contains replacement chars. Mirrors readCsvText
@@ -9359,6 +9402,8 @@ window.publishSnapshot = publishSnapshot;
   }
   // Embedded shared data is in-DOM, no fetch required — works on file:// too.
   try { await loadSharedData(false); } catch (e) { console.warn('Shared data load skipped:', e); }
+  // Load explicit per-campaign target SKU lists (SA_list etc.) — best-effort.
+  try { await loadCampaignTargetSkus(); } catch (e) { console.warn('target SKU load skipped:', e); }
   // CTR-Model map + auto CSV refresh still require network — only attempt over http(s).
   if (location.protocol === 'http:' || location.protocol === 'https:') {
     try { await loadCtrModelMap(); } catch(e) { console.warn('CTR map load skipped:', e); }
