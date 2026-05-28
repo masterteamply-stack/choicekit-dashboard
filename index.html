@@ -2081,6 +2081,9 @@ header .mono b.t-orange {
               <button data-v="quarter">Quarter</button>
               <button data-v="year">Year</button>
             </div>
+            <select id="promoFilterSel" title="Show all promotions or focus on one" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-1)">
+              <option value="__all__">All promotions</option>
+            </select>
             <select id="promoDimSel" title="What to break the trend down by" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-1)">
               <option value="promotion">By promotion</option>
               <option value="customer">By customer</option>
@@ -2440,6 +2443,7 @@ let state = {
   promoPerfPeriod: localStorage.getItem('ck_promo_perf_period') || 'month',
   promoDim: localStorage.getItem('ck_promo_dim') || 'promotion',
   promoCmp: localStorage.getItem('ck_promo_cmp') || 'off',
+  promoFilter: localStorage.getItem('ck_promo_filter') || '__all__',
   campaignTargetSkus: {},
   regionMetric: localStorage.getItem('ck_region_metric') || 'order',
   breakdownRegion: localStorage.getItem('ck_breakdown_region') || '__all__',
@@ -5426,8 +5430,48 @@ function renderPromoChart(fOrders, fMkt) {
       cmpSel._bound = true;
     }
   }
+  // Promotion filter — limit the chart to a single campaign at a time.
+  const promoFilter = state.promoFilter || '__all__';
+  const filterSel = document.getElementById('promoFilterSel');
+  if (filterSel) {
+    const promoNames = Array.from(new Set(
+      (state.orders || []).map(o => o.promotion_category || '').filter(Boolean)
+    )).sort();
+    filterSel.innerHTML = '<option value="__all__">All promotions</option>' +
+      promoNames.map(p => `<option value="${String(p).replace(/"/g,'&quot;')}">${p}</option>`).join('');
+    filterSel.value = promoNames.includes(promoFilter) ? promoFilter : '__all__';
+    if (!filterSel._bound) {
+      filterSel.addEventListener('change', () => {
+        state.promoFilter = filterSel.value;
+        try { localStorage.setItem('ck_promo_filter', filterSel.value); } catch(_){}
+        renderAll();
+      });
+      filterSel._bound = true;
+    }
+  }
+  // Scope the current-period order set to the selected promotion (if any).
+  const fOrdersScoped = (promoFilter === '__all__')
+    ? fOrders
+    : fOrders.filter(o => (o.promotion_category || '') === promoFilter);
+  // For the baseline (used by the comparison overlay), match by the campaign's
+  // explicit target_customers or target_skus when filtering to one promotion,
+  // so prior-period values come from that campaign's actual targets.
+  let scopeCustSet = null, scopeSkuSet = null, scopeMatchBy = null;
+  if (promoFilter !== '__all__') {
+    const cfg = (state.campaignTargetSkus || {})[promoFilter] || {};
+    scopeMatchBy = (cfg.match_by || 'sku').toLowerCase();
+    if (scopeMatchBy === 'customer') {
+      const cc = (cfg.target_customers || []).map(c => String(c).trim()).filter(Boolean);
+      scopeCustSet = new Set(cc.length ? cc :
+        (state.orders||[]).filter(o => o.promotion_category===promoFilter).map(o => (o.customer||'').trim()).filter(Boolean));
+    } else {
+      const ss = (cfg.target_skus || []).map(s => String(s).trim()).filter(Boolean);
+      scopeSkuSet = new Set(ss.length ? ss :
+        (state.orders||[]).filter(o => o.promotion_category===promoFilter).map(o => (o.sku||'').trim()).filter(Boolean));
+    }
+  }
   const periodBuckets = Array.from(new Set(
-    fOrders.map(o => periodKey(o.order_date, period)).filter(Boolean)
+    fOrdersScoped.map(o => periodKey(o.order_date, period)).filter(Boolean)
   )).sort();
 
   // Aggregate amount by (seriesKey → periodKey).
@@ -5439,7 +5483,7 @@ function renderPromoChart(fOrders, fMkt) {
     series[key][pk] = (series[key][pk] || 0) + amt;
     seriesTotal[key] = (seriesTotal[key] || 0) + amt;
   }
-  fOrders.forEach(o => {
+  fOrdersScoped.forEach(o => {
     const pk = periodKey(o.order_date, period);
     const amt = convOrder(o);
     if (dim === 'promotion') add(o.promotion_category || '(none)', pk, amt);
@@ -5507,15 +5551,30 @@ function renderPromoChart(fOrders, fMkt) {
 
   if (cmpMode !== 'off') {
     // Aggregate current + baseline by the SAME dimension into prior buckets.
+    // When a single promotion is selected, scope:
+    //   • current: orders tagged with that promotion (already done — fOrdersScoped)
+    //   • baseline: rows matching that campaign's target_customers or target_skus
     const cmpSeries = {};   // key → { pk → amt }   (full history incl. baseline)
-    const srcAll = (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length)
-      ? (fOrders || []).concat(state.preOrders) : (fOrders || []);
+    const baselineRows = (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length)
+      ? state.preOrders : [];
+    const scopedBaseline = (promoFilter === '__all__')
+      ? baselineRows
+      : baselineRows.filter(o => {
+          if (scopeMatchBy === 'customer' && scopeCustSet) {
+            const c = (o.customer || '').trim();
+            // baseline rows lacking customer fall back to SKU match if available
+            return c ? scopeCustSet.has(c) : (scopeSkuSet ? scopeSkuSet.has((o.sku||'').trim()) : false);
+          }
+          if (scopeSkuSet) return scopeSkuSet.has((o.sku||'').trim());
+          return false;
+        });
+    const srcAll = (fOrdersScoped || []).concat(scopedBaseline);
     srcAll.forEach(o => {
       const pk = periodKey(o.order_date, period);
       if (!pk) return;
       const amt = (o.amount_usd != null && o[PRE_ORDER_MARK]) ? Number(o.amount_usd) * usdToDisplay() : convOrder(o);
       let key;
-      if (dim === 'promotion') key = o.promotion_category || '(none)';
+      if (dim === 'promotion') key = (promoFilter !== '__all__') ? promoFilter : (o.promotion_category || '(none)');
       else if (dim === 'customer') key = (o.customer || '').trim() || '(unknown)';
       else key = normalizeRegion(o.region || '') || '(none)';
       cmpSeries[key] = cmpSeries[key] || {};
@@ -5598,7 +5657,9 @@ function renderPromoChart(fOrders, fMkt) {
     let insight = '';
     if (topNowKey) insight += `이번 ${periodLabelOf(period)}(${lastPk}) 최다 ${dimLabel}: <b>${topNowKey}</b> (${fmtMoney(topNowVal)})`;
     if (topAllKey) insight += `${insight ? ' · ' : ''}전체 누적 최다 ${dimLabel}: <b>${topAllKey}</b> (${fmtMoney(seriesTotal[topAllKey])})`;
-    // Region × promotion highlight (which promotion stands out per region)
+    // Region × promotion highlight (which promotion stands out per region).
+    // Always computed from the full (unscoped) order set so this insight stays
+    // useful even when a single promotion is selected as the chart filter.
     if (dim === 'region' || dim === 'promotion') {
       const rp = {}; // region → { promo → amt }
       fOrders.forEach(o => {
