@@ -5358,17 +5358,13 @@ function renderPromoChart(fOrders, fMkt) {
     promoTargetSkus[p].add(sku);
   });
 
-  // Determine each campaign's EXECUTION WINDOW (first→last marketing date).
-  // The table's before/after will use this window: AFTER = orders inside the
-  // window, BEFORE = orders in a same-length window shifted back per the
-  // active comparison mode (YoY by default; QoQ / MoM if selected).
-  const promoEnd = {};       // p → last execution date (YYYY-MM-DD)
-  (state.marketing || []).forEach(m => {
-    const p = m.promotion_category || m.promotion_id || '–';
-    const d = (m.date || '').trim();
-    if (!d) return;
-    if (!promoEnd[p] || d > promoEnd[p]) promoEnd[p] = d;
-  });
+  // Determine each campaign's IMPACT WINDOW.
+  // window = [first execution_date, today]. We use "today" rather than the
+  // last marketing date because a campaign's effect on orders extends past
+  // its last touch — and short campaigns (single-date activities) would
+  // otherwise produce a near-zero window. The comparison window is the same
+  // length, shifted back by the active comparison mode (YoY/QoQ/MoM).
+  const _today = _todayStr();
 
   // Shift a YYYY-MM-DD date by mode (yoy=-1y, qoq=-3mo, mom=-1mo). When the
   // table's comparison defaults to YoY but the user selected a different mode
@@ -5395,7 +5391,7 @@ function renderPromoChart(fOrders, fMkt) {
   summary.forEach(s => {
     const p = s.promotion;
     const start = promoStart[p];
-    const end   = promoEnd[p] || start;
+    const end   = _today;
     const mb = promoMatchBy[p] || 'sku';
     const skuSet = promoTargetSkus[p];
     const custSet = promoTargetCust[p];
@@ -5523,6 +5519,22 @@ function renderPromoChart(fOrders, fMkt) {
     series[key][pk] = (series[key][pk] || 0) + amt;
     seriesTotal[key] = (seriesTotal[key] || 0) + amt;
   }
+
+  // For 'by promotion' grouping we need a way to label baseline rows
+  // (which have no promotion_category tag) with their owning campaign. Build a
+  // sku→promo and customer→promo lookup from the campaign target config.
+  const skuToPromo = {};
+  const custToPromo = {};
+  Object.keys(state.campaignTargetSkus || {}).forEach(p => {
+    const cfg = state.campaignTargetSkus[p] || {};
+    if ((cfg.match_by || 'sku') === 'customer') {
+      (cfg.target_customers || []).forEach(c => { custToPromo[String(c).trim()] = p; });
+    } else {
+      (cfg.target_skus || []).forEach(s => { skuToPromo[String(s).trim()] = p; });
+    }
+  });
+
+  // 1) Aggregate the CURRENT orders (scoped to selected promotion if any).
   fOrdersScoped.forEach(o => {
     const pk = periodKey(o.order_date, period);
     const amt = convOrder(o);
@@ -5530,6 +5542,37 @@ function renderPromoChart(fOrders, fMkt) {
     else if (dim === 'customer') add((o.customer || '').trim() || '(unknown)', pk, amt);
     else if (dim === 'region') add(normalizeRegion(o.region || '') || '(none)', pk, amt);
   });
+  // 2) Also aggregate the BASELINE so historical periods (2024, 2025) show a
+  //    real trend. Baseline rows are classified into a promotion via the
+  //    campaign's target SKUs / customers. When a single promotion is
+  //    selected, only baseline rows belonging to that campaign are added.
+  if (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length) {
+    state.preOrders.forEach(o => {
+      const pk = periodKey(o.order_date, period);
+      if (!pk) return;
+      const amt = Number(o.amount_usd || 0) * usdToDisplay();
+      if (!amt) return;
+      // Find this row's owning promotion (if any) via target lookups.
+      const cust = (o.customer || '').trim();
+      const sku  = (o.sku || '').trim();
+      const ownerPromo = custToPromo[cust] || skuToPromo[sku] || '';
+      // Promotion filter: when a single campaign is selected, only its rows pass.
+      if (promoFilter !== '__all__' && ownerPromo !== promoFilter) return;
+      if (dim === 'promotion') {
+        if (!ownerPromo) return;        // unaffiliated baseline rows don't fit any promotion line
+        add(ownerPromo, pk, amt);
+      } else if (dim === 'customer') {
+        add(cust || '(unknown)', pk, amt);
+      } else if (dim === 'region') {
+        add(normalizeRegion(o.region || '') || '(none)', pk, amt);
+      }
+    });
+    // Re-collect period buckets from the combined series (baseline adds older buckets).
+    const allPks = new Set(periodBuckets);
+    Object.values(series).forEach(m => Object.keys(m).forEach(pk => allPks.add(pk)));
+    periodBuckets.length = 0;
+    Array.from(allPks).sort().forEach(pk => periodBuckets.push(pk));
+  }
 
   // Choose which series to plot. Customer dim can be large → top 8 by total.
   let keys = Object.keys(seriesTotal).sort((a, b) => seriesTotal[b] - seriesTotal[a]);
@@ -5600,13 +5643,12 @@ function renderPromoChart(fOrders, fMkt) {
       .map(m => m.date);
     if (dates.length) {
       dates.sort();
-      // Walk month by month from first to last execution date and bucket each.
       const set = new Set();
-      const [y0,mo0,d0] = dates[0].split('-').map(Number);
-      const [y1,mo1] = dates[dates.length-1].split('-').map(Number);
-      // Iterate by month, collecting buckets at the chosen period unit.
+      const [y0,mo0] = dates[0].split('-').map(Number);
+      // End at TODAY (campaign impact extends past last marketing activity).
+      const [yT,moT] = _todayStr().split('-').map(Number);
       let y = y0, m = mo0;
-      while (y < y1 || (y === y1 && m <= mo1)) {
+      while (y < yT || (y === yT && m <= moT)) {
         const dateStr = `${y}-${String(m).padStart(2,'0')}-01`;
         const pk = periodKey(dateStr, period);
         if (pk) set.add(pk);
