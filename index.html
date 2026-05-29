@@ -5785,8 +5785,8 @@ function renderPromoChart(fOrders, fMkt) {
           data: {
             labels,
             datasets: [
-              { label: `${modeLabelKo}`, data: prvBars, backgroundColor:'#A1A1A6', borderRadius:3, maxBarThickness: 36 },
-              { label: '현재',          data: curBars, backgroundColor:'#C8102E', borderRadius:3, maxBarThickness: 36 },
+              { label: `${modeLabelKo}`, data: prvBars, backgroundColor:'#A1A1A6', hoverBackgroundColor:'#A1A1A6', borderColor:'#A1A1A6', hoverBorderColor:'#A1A1A6', borderWidth:0, borderRadius:3, maxBarThickness: 36 },
+              { label: '현재',          data: curBars, backgroundColor:'#C8102E', hoverBackgroundColor:'#C8102E', borderColor:'#C8102E', hoverBorderColor:'#C8102E', borderWidth:0, borderRadius:3, maxBarThickness: 36 },
             ],
           },
           options: {
@@ -5832,8 +5832,8 @@ function renderPromoChart(fOrders, fMkt) {
         data: {
           labels: execBuckets,
           datasets: [
-            { label: `${modeLabelKo}`, data: priorBars, backgroundColor:'#A1A1A6', borderRadius:3, maxBarThickness: 40 },
-            { label: '현재',          data: curBars,   backgroundColor:'#C8102E', borderRadius:3, maxBarThickness: 40 },
+            { label: `${modeLabelKo}`, data: priorBars, backgroundColor:'#A1A1A6', hoverBackgroundColor:'#A1A1A6', borderColor:'#A1A1A6', hoverBorderColor:'#A1A1A6', borderWidth:0, borderRadius:3, maxBarThickness: 40 },
+            { label: '현재',          data: curBars,   backgroundColor:'#C8102E', hoverBackgroundColor:'#C8102E', borderColor:'#C8102E', hoverBorderColor:'#C8102E', borderWidth:0, borderRadius:3, maxBarThickness: 40 },
           ],
         },
         options: {
