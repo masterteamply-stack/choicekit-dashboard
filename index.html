@@ -8247,24 +8247,65 @@ document.getElementById('fBulk').addEventListener('change', async e => {
   });
 })();
 
-// === Jump-to dropdown (in header) ===
+// === Jump-to dropdown (in header) + URL-hash deep linking ===
 (function setupJumpTo() {
   const sel = document.getElementById('jumpToSel');
-  if (!sel) return;
-  sel.addEventListener('change', () => {
-    const id = sel.value;
-    if (!id) return;
+  // Scroll helper used both by dropdown selection and URL-hash handling.
+  function jumpTo(id, { updateHash = true, flash = true } = {}) {
+    if (!id) return false;
     const el = document.querySelector(`.widget[data-widget-id="${id}"]`);
-    if (el) {
-      const headerH = (document.querySelector('header')?.getBoundingClientRect().height || 0) + 12;
-      const y = el.getBoundingClientRect().top + window.scrollY - headerH;
-      window.scrollTo({ top: y, behavior: 'smooth' });
+    if (!el) return false;
+    const headerH = (document.querySelector('header')?.getBoundingClientRect().height || 0) + 12;
+    const y = el.getBoundingClientRect().top + window.scrollY - headerH;
+    window.scrollTo({ top: y, behavior: 'smooth' });
+    if (flash) {
       el.classList.remove('jump-flash');
-      void el.offsetWidth;            // restart CSS animation
+      void el.offsetWidth;       // restart CSS animation
       el.classList.add('jump-flash');
     }
-    // Reset to placeholder so the same option can be re-selected later.
-    sel.value = '';
+    if (updateHash && location.hash.slice(1) !== id) {
+      // Use replaceState so the back button isn't polluted.
+      try { history.replaceState(null, '', `#${id}`); } catch(_) {}
+    }
+    return true;
+  }
+  // Expose globally so other code or future links can use it.
+  window._jumpToWidget = jumpTo;
+
+  if (sel) {
+    sel.addEventListener('change', () => {
+      const id = sel.value;
+      if (id) jumpTo(id);
+      sel.value = '';            // reset to placeholder
+    });
+  }
+  // Handle the initial URL hash once the dashboard is visible. We wait for
+  // either the #dashboard element to become visible or up to ~6s.
+  function tryInitialHash() {
+    const id = location.hash.replace(/^#/, '').trim();
+    if (!id) return true;        // nothing to do
+    const dash = document.getElementById('dashboard');
+    const visible = dash && dash.style.display !== 'none' && dash.offsetParent !== null;
+    if (!visible) return false;
+    return jumpTo(id, { updateHash: false });   // hash already in URL
+  }
+  function startInitialHashWatch() {
+    if (tryInitialHash()) return;
+    let tries = 0;
+    const iv = setInterval(() => {
+      tries++;
+      if (tryInitialHash() || tries > 30) clearInterval(iv);  // 30 × 200ms = 6s
+    }, 200);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startInitialHashWatch);
+  } else {
+    startInitialHashWatch();
+  }
+  // External hash changes (someone pastes a different link in the address bar).
+  window.addEventListener('hashchange', () => {
+    const id = location.hash.replace(/^#/, '').trim();
+    if (id) jumpTo(id, { updateHash: false });
   });
 })();
 
