@@ -1600,6 +1600,51 @@ header .mono b.t-orange {
   font-weight: 700;
 }
 
+/* === Collapsible filter bar === */
+.filter-wrap {
+  margin-bottom: 14px;
+}
+.filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-1);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  margin-bottom: 8px;
+  transition: background 0.15s;
+}
+.filter-toggle:hover { background: #f5f5f7; }
+.filter-toggle-arrow {
+  display: inline-block;
+  transition: transform 0.2s ease;
+  font-size: 9px;
+  color: #86868B;
+}
+.filter-wrap:not(.collapsed) .filter-toggle-arrow {
+  transform: rotate(90deg);
+}
+.filter-toggle-summary {
+  font-weight: 500;
+  letter-spacing: 0;
+  color: #86868B;
+  font-size: 10px;
+  font-family: -apple-system, sans-serif;
+}
+.filter-toggle-summary.has-filters {
+  color: #C8102E;
+  font-weight: 600;
+}
+.filter-wrap.collapsed .filter-bar {
+  display: none;
+}
 /* === Jump-to dropdown in header === */
 .jump-to {
   font-family: 'IBM Plex Mono', monospace;
@@ -1766,8 +1811,15 @@ header .mono b.t-orange {
 </header>
 
 <main>
-  <!-- Filter bar -->
-  <div class="panel filter-bar" id="filterBar"></div>
+  <!-- Filter bar (collapsible) -->
+  <div id="filterBarWrap" class="filter-wrap collapsed">
+    <button type="button" id="filterBarToggle" class="filter-toggle" aria-expanded="false">
+      <span class="filter-toggle-arrow">▶</span>
+      <span class="filter-toggle-label">FILTERS</span>
+      <span class="filter-toggle-summary" id="filterActiveBadge"></span>
+    </button>
+    <div class="panel filter-bar" id="filterBar"></div>
+  </div>
 
   <div id="emptyState" class="panel" style="text-align:center;padding:60px 20px">
     <h3 style="font-size:22px;font-weight:800;margin-bottom:10px">Please upload data</h3>
@@ -8247,6 +8299,51 @@ document.getElementById('fBulk').addEventListener('change', async e => {
     if (summary.unknown.length) lines.push('', 'Unrecognized:', ...summary.unknown);
     alert(lines.join('\n'));
   });
+})();
+
+// === Filter bar collapse toggle ===
+(function setupFilterToggle() {
+  const wrap = document.getElementById('filterBarWrap');
+  const btn = document.getElementById('filterBarToggle');
+  if (!wrap || !btn) return;
+  // Default is COLLAPSED unless the user has explicitly expanded it.
+  if (localStorage.getItem('ck_filter_collapsed') === '0') {
+    wrap.classList.remove('collapsed');
+    btn.setAttribute('aria-expanded', 'true');
+  }
+  btn.addEventListener('click', () => {
+    const nowOpen = wrap.classList.toggle('collapsed') === false;
+    btn.setAttribute('aria-expanded', String(nowOpen));
+    try { localStorage.setItem('ck_filter_collapsed', nowOpen ? '0' : '1'); } catch(_) {}
+  });
+  // Update the badge with a quick summary of any non-default filter values.
+  // Runs periodically so it reflects state mutations from anywhere in the app.
+  function summarize() {
+    const badge = document.getElementById('filterActiveBadge');
+    if (!badge) return;
+    const f = (state && state.filters) || {};
+    const parts = [];
+    if (f.year && f.year !== 'all')         parts.push(`Year: ${f.year}`);
+    if (f.quarter && f.quarter !== 'all')   parts.push(`Q: ${f.quarter}`);
+    if (f.month && f.month !== 'all')       parts.push(`Month: ${f.month}`);
+    if (f.region && f.region !== 'all')     parts.push(f.region);
+    if (f.country && f.country !== 'all')   parts.push(f.country);
+    if (f.customer && f.customer !== 'all') parts.push(f.customer);
+    if (f.promotion && f.promotion !== 'all') parts.push(f.promotion);
+    if (f.category && f.category !== 'all') parts.push(f.category);
+    if (f.sellType && f.sellType !== 'all') parts.push(f.sellType);
+    if (f.activity && f.activity !== 'all') parts.push(f.activity);
+    if (f.dateFrom || f.dateTo)             parts.push(`Date: ${f.dateFrom || '…'}~${f.dateTo || '…'}`);
+    if (parts.length === 0) {
+      badge.textContent = '(default · click to filter)';
+      badge.classList.remove('has-filters');
+    } else {
+      badge.textContent = `${parts.length} active · ${parts.slice(0,3).join(', ')}${parts.length>3?'…':''}`;
+      badge.classList.add('has-filters');
+    }
+  }
+  summarize();
+  setInterval(summarize, 800);
 })();
 
 // === Jump-to dropdown (in header) + URL-hash deep linking ===
