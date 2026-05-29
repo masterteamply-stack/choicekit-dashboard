@@ -8677,7 +8677,17 @@ async function tryLoadPreOrderBundle(setBtnLabel) {
       return { error: reason };
     }
     console.log(`[pre-orders] ✅ bundle loaded: ${expanded.length.toLocaleString()} rows (schema v${bundle.v}, n=${bundle.n})`);
-    return { rows: expanded, version: bundle.n };
+    // Content-aware version: row count plus a hash of the customer dict so any
+    // customer rename in a regenerated bundle invalidates the IndexedDB cache,
+    // even when row count stays the same.
+    let custSig = 0;
+    const custDict = (bundle.dicts && bundle.dicts.u) || [];
+    const custStr = custDict.join('|');
+    for (let i = 0; i < custStr.length; i++) {
+      custSig = (custSig * 31 + custStr.charCodeAt(i)) | 0;
+    }
+    const version = `${bundle.n}:${custDict.length}:${custSig}`;
+    return { rows: expanded, version };
   } catch (e) {
     const reason = `unexpected error: ${e && e.message || e}`;
     console.warn('[pre-orders] bundle:', reason, e);
