@@ -2758,6 +2758,41 @@ const normalizeRegion = v => {
   return ALIAS[s] || s;
 };
 
+// Customer-identity normalizer.
+// Goal: ensure orders from baseline (which often only carry a numeric VendorCode
+// like '288357') and current orders (which carry both 'customer' name and
+// 'Customer_No' code) collapse into the SAME chart series.
+// Strategy: build a code → name map from state.orders[i].customer_no↔customer
+// pairs, cache it, and use it to map any numeric-string customer value to its
+// known name. Unknown codes remain as their numeric string.
+let _customerCodeToName = null;
+let _customerMapKey = '';
+function _ensureCustomerMap() {
+  // Cheap cache: rebuild only when state.orders length changes.
+  const key = (state.orders || []).length + ':map';
+  if (_customerCodeToName && key === _customerMapKey) return _customerCodeToName;
+  const m = {};
+  (state.orders || []).forEach(o => {
+    const code = String(o.customer_no || '').trim();
+    const name = String(o.customer || '').trim();
+    if (code && name && !m[code]) m[code] = name;
+  });
+  _customerCodeToName = m;
+  _customerMapKey = key;
+  return m;
+}
+function normalizeCustomer(o) {
+  if (!o) return '';
+  const raw = String(o.customer || '').trim();
+  // If we already have a name (not a pure-digit code), keep it.
+  if (raw && !/^\d+$/.test(raw)) return raw;
+  // Numeric code or empty → try the code→name map (using customer or customer_no).
+  const code = /^\d+$/.test(raw) ? raw : String(o.customer_no || '').trim();
+  if (!code) return raw;  // both empty
+  const map = _ensureCustomerMap();
+  return map[code] || code;
+}
+
 /* =================== FX RATES =================== */
 const FALLBACK_TO_USD = { USD:1, EUR:1.08, KRW:0.00073, RUB:0.011, AED:0.272, AUD:0.66, BRL:0.20, GBP:1.27, JPY:0.0067, CNY:0.14, INR:0.012, KZT:0.0021 };
 const FALLBACK_FROM_USD = { USD:1, KRW:1370, EUR:0.93, JPY:150, CNY:7.15 };
@@ -2975,6 +3010,7 @@ async function parseOrderCSV(file) {
           channel: str(pick(r,'target','channel')),
           sell_type: (str(pick(r,'sell_type','sell type')) || 'SELL_IN').toUpperCase().replace('-','_'),
           customer: str(pick(r,'customer')),
+          customer_no: str(pick(r,'Customer_No','customer_no','customer no')),
         };
       }).filter(r => r.order_id);
       resolve(rows);
@@ -5539,7 +5575,10 @@ function renderPromoChart(fOrders, fMkt) {
     const pk = periodKey(o.order_date, period);
     const amt = convOrder(o);
     if (dim === 'promotion') add(o.promotion_category || '(none)', pk, amt);
-    else if (dim === 'customer') add((o.customer || '').trim() || '(unknown)', pk, amt);
+    else if (dim === 'customer') {
+      const c = normalizeCustomer(o);
+      if (c) add(c, pk, amt);   // skip empties → no more '(unknown)' bucket
+    }
     else if (dim === 'region') add(normalizeRegion(o.region || '') || '(none)', pk, amt);
   });
   // 2) Also aggregate the BASELINE so historical periods (2024, 2025) show a
@@ -5553,16 +5592,17 @@ function renderPromoChart(fOrders, fMkt) {
       const amt = Number(o.amount_usd || 0) * usdToDisplay();
       if (!amt) return;
       // Find this row's owning promotion (if any) via target lookups.
-      const cust = (o.customer || '').trim();
+      const custRaw = (o.customer || '').trim();
+      const cust = normalizeCustomer(o);   // fold numeric VendorCode → known name
       const sku  = (o.sku || '').trim();
-      const ownerPromo = custToPromo[cust] || skuToPromo[sku] || '';
+      const ownerPromo = custToPromo[cust] || custToPromo[custRaw] || skuToPromo[sku] || '';
       // Promotion filter: when a single campaign is selected, only its rows pass.
       if (promoFilter !== '__all__' && ownerPromo !== promoFilter) return;
       if (dim === 'promotion') {
         if (!ownerPromo) return;        // unaffiliated baseline rows don't fit any promotion line
         add(ownerPromo, pk, amt);
       } else if (dim === 'customer') {
-        add(cust || '(unknown)', pk, amt);
+        if (cust) add(cust, pk, amt);   // skip empty → no '(unknown)' line
       } else if (dim === 'region') {
         add(normalizeRegion(o.region || '') || '(none)', pk, amt);
       }
@@ -5684,7 +5724,7 @@ function renderPromoChart(fOrders, fMkt) {
       const amt = (o.amount_usd != null && o[PRE_ORDER_MARK]) ? Number(o.amount_usd) * usdToDisplay() : convOrder(o);
       let key;
       if (dim === 'promotion') key = (promoFilter !== '__all__') ? promoFilter : (o.promotion_category || '(none)');
-      else if (dim === 'customer') key = (o.customer || '').trim() || '(unknown)';
+      else if (dim === 'customer') { key = normalizeCustomer(o); if (!key) return; }
       else key = normalizeRegion(o.region || '') || '(none)';
       cmpSeries[key] = cmpSeries[key] || {};
       cmpSeries[key][pk] = (cmpSeries[key][pk] || 0) + amt;
