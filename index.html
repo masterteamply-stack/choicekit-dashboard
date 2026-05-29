@@ -5752,6 +5752,70 @@ function renderPromoChart(fOrders, fMkt) {
     // Build a bar chart whose x-axis = the campaign's execution months and
     // shows current vs prior side by side per month. Much clearer than the
     // dashed-line overlay when scoped to one campaign.
+    // ── BAR CHART for dim = customer or region (compare mode on) ──
+    // Each customer/region gets two bars (현재 vs 이전 period sum) so the
+    // comparison is clear per key. Otherwise (with line + dashed overlay) the
+    // 16 lines stack on top of each other and the prior values are unreadable.
+    if (dim === 'customer' || dim === 'region') {
+      // Decide the window. If a single promotion is selected with execBuckets,
+      // use those; else use all current periodBuckets.
+      const windowBuckets = (promoFilter !== '__all__' && execBuckets && execBuckets.length)
+        ? execBuckets : periodBuckets;
+      // Sum current/prior PER KEY over the window.
+      const perKey = shownKeys.map(key => {
+        const cur = windowBuckets.reduce((s, pk) => s + ((series[key] && series[key][pk]) || 0), 0);
+        const prv = windowBuckets.reduce((s, pk) => {
+          const ppk = shiftBucket(pk, cmpMode, period);
+          return s + ((cmpSeries[key] && cmpSeries[key][ppk]) || 0);
+        }, 0);
+        return { key, cur: Math.round(cur), prv: Math.round(prv) };
+      }).filter(r => r.cur > 0 || r.prv > 0)
+        .sort((a, b) => (b.cur + b.prv) - (a.cur + a.prv));
+      if (perKey.length) {
+        const labels = perKey.map(r => r.key);
+        const curBars = perKey.map(r => r.cur);
+        const prvBars = perKey.map(r => r.prv);
+        if (charts.promo) charts.promo.destroy();
+        const xTitleSuffix = (promoFilter !== '__all__')
+          ? `${promoFilter} · 집행 ${periodLabelOf(period)} 합산`
+          : `전체 ${periodLabelOf(period)} 합산`;
+        const dimNoun = dim === 'customer' ? '고객' : '권역';
+        charts.promo = new Chart(document.getElementById('chPromo'), {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [
+              { label: `${modeLabelKo}`, data: prvBars, backgroundColor:'#A1A1A6', borderRadius:3, maxBarThickness: 36 },
+              { label: '현재',          data: curBars, backgroundColor:'#C8102E', borderRadius:3, maxBarThickness: 36 },
+            ],
+          },
+          options: {
+            responsive:true, maintainAspectRatio:false,
+            plugins: {
+              legend: { position:'top', labels:{ color:'#1D1D1F', font:{family:'IBM Plex Mono',weight:600,size:11}, boxWidth:14, padding:8 } },
+              datalabels: { display:false },
+              tooltip: {
+                callbacks: {
+                  label: c => `${c.dataset.label}: ${fmtMoney(c.parsed.y)}`,
+                  footer: items => {
+                    const i = items[0].dataIndex;
+                    const cur = curBars[i], prv = prvBars[i];
+                    const d = prv > 0 ? ((cur - prv) / prv) * 100 : null;
+                    return d == null ? '' : `Δ ${d >= 0 ? '+' : ''}${d.toFixed(1)}%`;
+                  },
+                },
+              },
+            },
+            scales: {
+              x: { ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:11},maxRotation:40,minRotation:0}, grid:{display:false}, title:{display:true,text:`${dimNoun}별 · ${xTitleSuffix}`,color:'#86868B'} },
+              y: { beginAtZero:true, ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',size:12},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:true,text:'Order Amount',color:'#1D1D1F'} },
+            },
+          },
+        });
+        return;  // skip everything below
+      }
+    }
+    // ── BAR CHART for single-promotion compare on dim=promotion ──
     if (promoFilter !== '__all__' && execBuckets && execBuckets.length) {
       // Sum current/prior over all shown keys for each exec bucket.
       const curBars   = execBuckets.map(pk => Math.round(
