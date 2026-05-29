@@ -48,7 +48,9 @@
     var header = document.querySelector('header');
     var collapseBtn = document.getElementById('headerCollapseBtn');
     if (header && collapseBtn) {
-      if (localStorage.getItem('ck_header_collapsed') === '1') {
+      // Default to COLLAPSED unless the user has explicitly expanded it
+      // (localStorage value '0' = expanded). Missing key → collapsed.
+      if (localStorage.getItem('ck_header_collapsed') !== '0') {
         header.classList.add('collapsed');
       }
       collapseBtn.addEventListener('click', function(){
