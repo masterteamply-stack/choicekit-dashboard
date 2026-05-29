@@ -5358,14 +5358,44 @@ function renderPromoChart(fOrders, fMkt) {
     promoTargetSkus[p].add(sku);
   });
 
-  // Accumulate before/after over the FULL order set PLUS the baseline.
+  // Determine each campaign's EXECUTION WINDOW (first→last marketing date).
+  // The table's before/after will use this window: AFTER = orders inside the
+  // window, BEFORE = orders in a same-length window shifted back per the
+  // active comparison mode (YoY by default; QoQ / MoM if selected).
+  const promoEnd = {};       // p → last execution date (YYYY-MM-DD)
+  (state.marketing || []).forEach(m => {
+    const p = m.promotion_category || m.promotion_id || '–';
+    const d = (m.date || '').trim();
+    if (!d) return;
+    if (!promoEnd[p] || d > promoEnd[p]) promoEnd[p] = d;
+  });
+
+  // Shift a YYYY-MM-DD date by mode (yoy=-1y, qoq=-3mo, mom=-1mo). When the
+  // table's comparison defaults to YoY but the user selected a different mode
+  // for the chart, the table follows the same mode so the two stay aligned.
+  function shiftDate(dateStr, mode) {
+    if (!dateStr) return '';
+    const [y, m, d] = dateStr.split('-').map(Number);
+    let ny = y, nm = m;
+    if (mode === 'yoy') ny = y - 1;
+    else if (mode === 'qoq') { nm = m - 3; while (nm < 1) { nm += 12; ny -= 1; } }
+    else if (mode === 'mom') { nm = m - 1; if (nm < 1) { nm = 12; ny -= 1; } }
+    return `${ny}-${String(nm).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  }
+  // The table's comparison follows the chart's mode; if 'off', the table falls
+  // back to the simple pre/post split (legacy behavior) for at-a-glance impact.
+  const tableCmpMode = (state.promoCmp && state.promoCmp !== 'off') ? state.promoCmp : 'yoy';
+
+  // Accumulate AFTER (execution window) + BEFORE (same-length, shifted) over the
+  // FULL order set PLUS the baseline.
   const _baScanSource = (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length)
     ? (state.orders || []).concat(state.preOrders)
     : (state.orders || []);
-  const baAmt = {};   // p → { before, after, skuCount, custCount, matchBy }
+  const baAmt = {};   // p → { before, after, skuCount, custCount, matchBy, winFrom, winTo, prevFrom, prevTo }
   summary.forEach(s => {
     const p = s.promotion;
     const start = promoStart[p];
+    const end   = promoEnd[p] || start;
     const mb = promoMatchBy[p] || 'sku';
     const skuSet = promoTargetSkus[p];
     const custSet = promoTargetCust[p];
@@ -5373,30 +5403,40 @@ function renderPromoChart(fOrders, fMkt) {
       before: 0, after: 0, matchBy: mb,
       skuCount: skuSet ? skuSet.size : 0,
       custCount: custSet ? custSet.size : 0,
+      winFrom: start || '', winTo: end || '',
+      prevFrom: shiftDate(start, tableCmpMode), prevTo: shiftDate(end, tableCmpMode),
+      cmpMode: tableCmpMode,
     };
     const hasTargets = mb === 'customer' ? (custSet && custSet.size) : (skuSet && skuSet.size);
     if (!start || !hasTargets) return;
+    const winFrom = baAmt[p].winFrom, winTo = baAmt[p].winTo;
+    const prevFrom = baAmt[p].prevFrom, prevTo = baAmt[p].prevTo;
     _baScanSource.forEach(o => {
       const match = (mb === 'customer')
         ? custSet.has((o.customer || '').trim())
         : skuSet.has((o.sku || o.ctr_code || '').trim());
       if (!match) return;
+      const d = o.order_date || '';
+      if (!d) return;
       const amt = (o.amount_usd != null && o[PRE_ORDER_MARK])
         ? Number(o.amount_usd) * usdToDisplay()
         : convOrder(o);
-      if ((o.order_date || '') < start) baAmt[p].before += amt;
-      else                              baAmt[p].after  += amt;
+      if (d >= winFrom && d <= winTo)             baAmt[p].after  += amt;
+      else if (d >= prevFrom && d <= prevTo)      baAmt[p].before += amt;
     });
   });
   // Attach onto each summary row (so the table can show them).
   summary.forEach(s => {
-    const ba = baAmt[s.promotion] || { before: 0, after: 0, skuCount: 0, custCount: 0, matchBy: 'sku' };
+    const ba = baAmt[s.promotion] || { before: 0, after: 0, skuCount: 0, custCount: 0, matchBy: 'sku', winFrom:'', winTo:'', prevFrom:'', prevTo:'', cmpMode: tableCmpMode };
     s.beforeAmt = ba.before;
     s.afterAmt = ba.after;
     s.baStart = promoStart[s.promotion] || null;
     s.baMatchBy = ba.matchBy;
     s.baSkuCount = ba.skuCount;
     s.baCustCount = ba.custCount;
+    s.baWindow = (ba.winFrom && ba.winTo) ? `${ba.winFrom}~${ba.winTo}` : '';
+    s.baPrevWindow = (ba.prevFrom && ba.prevTo) ? `${ba.prevFrom}~${ba.prevTo}` : '';
+    s.baCmpMode = ba.cmpMode;
     s.baDeltaPct = ba.before > 0 ? ((ba.after - ba.before) / ba.before) * 100 : null;
   });
 
@@ -5549,6 +5589,33 @@ function renderPromoChart(fOrders, fMkt) {
     return `${y}-${String(m).padStart(2,'0')}`;
   }
 
+  // ── Campaign execution window (only meaningful when a single promotion is selected) ──
+  // The execution window = the set of period buckets covered by that campaign's
+  // marketing activities. We use it both for the KPI totals and for the per-
+  // campaign bar chart so the comparison sits inside the actual campaign months.
+  let execBuckets = null;        // array of period keys covered by the campaign
+  if (promoFilter !== '__all__') {
+    const dates = (state.marketing || [])
+      .filter(m => (m.promotion_category || '') === promoFilter && (m.date || ''))
+      .map(m => m.date);
+    if (dates.length) {
+      dates.sort();
+      // Walk month by month from first to last execution date and bucket each.
+      const set = new Set();
+      const [y0,mo0,d0] = dates[0].split('-').map(Number);
+      const [y1,mo1] = dates[dates.length-1].split('-').map(Number);
+      // Iterate by month, collecting buckets at the chosen period unit.
+      let y = y0, m = mo0;
+      while (y < y1 || (y === y1 && m <= mo1)) {
+        const dateStr = `${y}-${String(m).padStart(2,'0')}-01`;
+        const pk = periodKey(dateStr, period);
+        if (pk) set.add(pk);
+        m += 1; if (m > 12) { m = 1; y += 1; }
+      }
+      execBuckets = Array.from(set).sort();
+    }
+  }
+
   if (cmpMode !== 'off') {
     // Aggregate current + baseline by the SAME dimension into prior buckets.
     // When a single promotion is selected, scope:
@@ -5580,24 +5647,15 @@ function renderPromoChart(fOrders, fMkt) {
       cmpSeries[key] = cmpSeries[key] || {};
       cmpSeries[key][pk] = (cmpSeries[key][pk] || 0) + amt;
     });
-    // Overlay a dashed "prior" line per shown key, aligned to current buckets.
-    shownKeys.forEach((key, i) => {
-      const col = PALETTE[i % PALETTE.length];
-      const priorData = periodBuckets.map(pk => {
-        const ppk = shiftBucket(pk, cmpMode, period);
-        return Math.round((cmpSeries[key] && cmpSeries[key][ppk]) || 0);
-      });
-      lineDatasets.push({
-        label: `${key} · 이전`,
-        data: priorData,
-        borderColor: col, backgroundColor: 'transparent',
-        borderWidth: 1.5, borderDash: [4, 3], pointRadius: 0, pointHoverRadius: 4, tension: 0.25, fill: false,
-      });
-    });
-    // KPI cards: current-window total vs prior-window total (across shown keys).
-    const curTotal = periodBuckets.reduce((s, pk) =>
+    // ── KPI cards: restrict the window to the campaign's execution buckets ──
+    // For a single-promotion view, "현재 합계" and "전년 동기 합계" should sum
+    // only over the campaign's actual months — not every period in the data.
+    const kpiBuckets = (promoFilter !== '__all__' && execBuckets && execBuckets.length)
+      ? execBuckets
+      : periodBuckets;
+    const curTotal = kpiBuckets.reduce((s, pk) =>
       s + shownKeys.reduce((ss, key) => ss + ((series[key] && series[key][pk]) || 0), 0), 0);
-    const priorTotal = periodBuckets.reduce((s, pk) => {
+    const priorTotal = kpiBuckets.reduce((s, pk) => {
       const ppk = shiftBucket(pk, cmpMode, period);
       return s + shownKeys.reduce((ss, key) => ss + ((cmpSeries[key] && cmpSeries[key][ppk]) || 0), 0);
     }, 0);
@@ -5612,12 +5670,78 @@ function renderPromoChart(fOrders, fMkt) {
           <div style="font-size:18px;font-weight:800;margin-top:2px">${val}</div>
           ${sub ? `<div class="label-mono muted" style="font-size:11px">${sub}</div>` : ''}
         </div>`;
+      const subWindow = (promoFilter !== '__all__' && execBuckets && execBuckets.length)
+        ? `캠페인 집행 ${execBuckets.length}개 ${periodLabelOf(period)} 합산 (${execBuckets[0]}~${execBuckets[execBuckets.length-1]})`
+        : `표시된 ${shownKeys.length}개 항목 합산`;
       cmpKpiEl.style.display = 'grid';
       cmpKpiEl.innerHTML =
-        card('현재 합계', fmtMoney(curTotal), `표시된 ${shownKeys.length}개 항목 합산`) +
+        card('현재 합계', fmtMoney(curTotal), subWindow) +
         card(`${modeLabelKo} 합계`, fmtMoney(priorTotal), `${modeLabelKo} 동일 기간`) +
         card('증감', tag, `현재 vs ${modeLabelKo}`);
     }
+    // ── For single-promotion compare view, switch the chart to a grouped BAR ──
+    // Build a bar chart whose x-axis = the campaign's execution months and
+    // shows current vs prior side by side per month. Much clearer than the
+    // dashed-line overlay when scoped to one campaign.
+    if (promoFilter !== '__all__' && execBuckets && execBuckets.length) {
+      // Sum current/prior over all shown keys for each exec bucket.
+      const curBars   = execBuckets.map(pk => Math.round(
+        shownKeys.reduce((s, key) => s + ((series[key] && series[key][pk]) || 0), 0)
+      ));
+      const priorBars = execBuckets.map(pk => {
+        const ppk = shiftBucket(pk, cmpMode, period);
+        return Math.round(shownKeys.reduce((s, key) => s + ((cmpSeries[key] && cmpSeries[key][ppk]) || 0), 0));
+      });
+      // Render and EXIT — skip the default line chart.
+      if (charts.promo) charts.promo.destroy();
+      charts.promo = new Chart(document.getElementById('chPromo'), {
+        type: 'bar',
+        data: {
+          labels: execBuckets,
+          datasets: [
+            { label: `${modeLabelKo}`, data: priorBars, backgroundColor:'#A1A1A6', borderRadius:3, maxBarThickness: 40 },
+            { label: '현재',          data: curBars,   backgroundColor:'#C8102E', borderRadius:3, maxBarThickness: 40 },
+          ],
+        },
+        options: {
+          responsive:true, maintainAspectRatio:false,
+          plugins: {
+            legend: { position:'top', labels:{ color:'#1D1D1F', font:{family:'IBM Plex Mono',weight:600,size:11}, boxWidth:14, padding:8 } },
+            datalabels: { display:false },
+            tooltip: {
+              callbacks: {
+                label: c => `${c.dataset.label}: ${fmtMoney(c.parsed.y)}`,
+                footer: items => {
+                  const i = items[0].dataIndex;
+                  const cur = curBars[i], prv = priorBars[i];
+                  const d = prv > 0 ? ((cur - prv) / prv) * 100 : null;
+                  return d == null ? '' : `Δ ${d >= 0 ? '+' : ''}${d.toFixed(1)}%`;
+                },
+              },
+            },
+          },
+          scales: {
+            x: { ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:11},maxRotation:30,minRotation:0}, grid:{display:false}, title:{display:true,text:`${promoFilter} · 집행 ${periodLabelOf(period)}`,color:'#86868B'} },
+            y: { beginAtZero:true, ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',size:12},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:true,text:'Order Amount',color:'#1D1D1F'} },
+          },
+        },
+      });
+      return;  // skip the default line chart below
+    }
+    // Otherwise (All promotions + compare on): overlay dashed prior lines on the line chart.
+    shownKeys.forEach((key, i) => {
+      const col = PALETTE[i % PALETTE.length];
+      const priorData = periodBuckets.map(pk => {
+        const ppk = shiftBucket(pk, cmpMode, period);
+        return Math.round((cmpSeries[key] && cmpSeries[key][ppk]) || 0);
+      });
+      lineDatasets.push({
+        label: `${key} · 이전`,
+        data: priorData,
+        borderColor: col, backgroundColor: 'transparent',
+        borderWidth: 1.5, borderDash: [4, 3], pointRadius: 0, pointHoverRadius: 4, tension: 0.25, fill: false,
+      });
+    });
   } else if (cmpKpiEl) {
     cmpKpiEl.style.display = 'none';
     cmpKpiEl.innerHTML = '';
@@ -5691,8 +5815,8 @@ function renderPromoChart(fOrders, fMkt) {
         <th rowspan="2" class="text-right">ACTIVITIES</th>
         <th rowspan="2" class="text-right">ORDERS</th>
         <th rowspan="2" class="text-right">ORDER AMT</th>
-        <th rowspan="2" class="text-right" title="Sum of order amounts placed BEFORE the campaign's earliest marketing-execution date.">BEFORE<br><span class="muted" style="font-size:9px;font-weight:500">캠페인 전</span></th>
-        <th rowspan="2" class="text-right" title="Sum of order amounts placed ON or AFTER the campaign's earliest marketing-execution date.">AFTER<br><span class="muted" style="font-size:9px;font-weight:500">캠페인 후</span></th>
+        <th rowspan="2" class="text-right" title="동일 길이의 이전 기간(YoY/QoQ/MoM, 비교 설정에 따름) 동안의 매출">전년 동기<br><span class="muted" style="font-size:9px;font-weight:500">집행기간 = 이전</span></th>
+        <th rowspan="2" class="text-right" title="캠페인 집행 기간(첫 ~ 마지막 마케팅 활동) 동안의 매출">현재<br><span class="muted" style="font-size:9px;font-weight:500">집행기간</span></th>
         <th rowspan="2" class="text-right" title="(After − Before) ÷ Before × 100">Δ%</th>
         <th rowspan="2" class="text-right">MKT BUDGET</th>
         <th rowspan="2" class="text-right" title="Sum of actual_cost on activities executed up to today (future-dated activities count as 0).">EXECUTED COST<br><span class="muted" style="font-size:9px;font-weight:500">현재까지 집행</span></th>
@@ -5719,9 +5843,9 @@ function renderPromoChart(fOrders, fMkt) {
     const burnTooltip = p.burn == null
       ? `BUDGET USED 계산 불가 — expected_cost (예산) = 0`
       : `BUDGET USED = ${fmtMoney(p.actual)} ÷ ${fmtMoney(p.expected)} × 100 = ${p.burn.toFixed(1)}%`;
-    // Before/After tooltips — clarify the SKU-based matching logic.
+    const modeKo = { yoy:'전년 동기', qoq:'전분기', mom:'전월' }[p.baCmpMode || 'yoy'] || '이전';
     const baTooltip = p.baStart
-      ? `Marketing start: ${p.baStart}\nTarget SKUs: ${p.baSkuCount} (캠페인 후 실제 주문된 SKU 기준)\nBefore: ${fmtMoney(p.beforeAmt)} (이 SKU들의 캠페인 시작 전 매출)\nAfter:  ${fmtMoney(p.afterAmt)} (이 SKU들의 캠페인 시작 후 매출)`
+      ? `캠페인 집행 기간: ${p.baWindow || p.baStart}\n${modeKo} 동일 기간: ${p.baPrevWindow || '–'}\nTarget ${p.baMatchBy==='customer'?'고객':'SKU'}: ${p.baMatchBy==='customer'?p.baCustCount:p.baSkuCount}\n현재 (집행기간): ${fmtMoney(p.afterAmt)}\n${modeKo}: ${fmtMoney(p.beforeAmt)}`
       : `매칭되는 마케팅 활동이 없음`;
     const dPctTag = p.baDeltaPct == null
       ? '<span class="t-muted">–</span>'
