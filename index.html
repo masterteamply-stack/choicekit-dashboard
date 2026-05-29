@@ -1598,6 +1598,72 @@ header .mono b.t-orange {
   font-weight: 700;
 }
 
+/* === Sticky widget navigation === */
+.widget-nav {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.widget-nav-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #86868B;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.widget-nav-scroll {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  flex: 1;
+}
+.widget-nav-scroll::-webkit-scrollbar { height: 4px; }
+.widget-nav-scroll::-webkit-scrollbar-thumb { background: #d1d1d6; border-radius: 4px; }
+.widget-nav button {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text-1);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.widget-nav button:hover {
+  background: #f5f5f7;
+  border-color: #b0b0b6;
+}
+.widget-nav button.active {
+  background: #1D1D1F;
+  color: #ffffff;
+  border-color: #1D1D1F;
+}
+/* When a widget is the scroll target, flash a subtle highlight */
+.widget.jump-flash {
+  animation: ck-jump-flash 1.2s ease-out;
+}
+@keyframes ck-jump-flash {
+  0%   { box-shadow: 0 0 0 3px rgba(200,16,46,0.35); }
+  100% { box-shadow: 0 0 0 0 rgba(200,16,46,0); }
+}
 </style>
 
 <!-- ===== SHARED DATA SOURCE =====
@@ -1804,6 +1870,24 @@ header .mono b.t-orange {
         <div class="progress-bar" id="ptBar"><div style="width:0%"></div></div>
       </div>
     </section>
+
+    <!-- Quick-jump navigation: sticky bar with one button per widget -->
+    <nav id="widgetNav" class="widget-nav" aria-label="Jump to section">
+      <span class="widget-nav-label">JUMP TO</span>
+      <div class="widget-nav-scroll">
+        <button type="button" data-jump="promoOrderTrend">Order Trends</button>
+        <button type="button" data-jump="promoctr">Promo × CTR</button>
+        <button type="button" data-jump="skuExplorer">SKU Analysis</button>
+        <button type="button" data-jump="topinsights">Top Insights</button>
+        <button type="button" data-jump="customertrend">Customer Trend</button>
+        <button type="button" data-jump="region">Region</button>
+        <button type="button" data-jump="promo">Promotion Performance</button>
+        <button type="button" data-jump="planexec">Plan vs Execution</button>
+        <button type="button" data-jump="activities">Activities</button>
+        <button type="button" data-jump="category">Sales Trend</button>
+        <button type="button" data-jump="budgetstatus">Budget</button>
+      </div>
+    </nav>
 
     <!-- Sortable widget area -->
     <div id="widgetArea" style="display:flex;flex-direction:column;gap:18px">
@@ -8203,6 +8287,73 @@ document.getElementById('fBulk').addEventListener('change', async e => {
     if (summary.unknown.length) lines.push('', 'Unrecognized:', ...summary.unknown);
     alert(lines.join('\n'));
   });
+})();
+
+// === Widget navigation: smooth-scroll on click + auto-highlight on scroll ===
+(function setupWidgetNav() {
+  const nav = document.getElementById('widgetNav');
+  if (!nav) return;
+  const buttons = nav.querySelectorAll('button[data-jump]');
+  const navHeight = () => nav.getBoundingClientRect().height + 12;
+
+  // Click → smooth-scroll to the widget, with a quick flash highlight.
+  nav.addEventListener('click', e => {
+    const btn = e.target.closest('button[data-jump]');
+    if (!btn) return;
+    const id = btn.dataset.jump;
+    const el = document.querySelector(`.widget[data-widget-id="${id}"]`);
+    if (!el) return;
+    const y = el.getBoundingClientRect().top + window.scrollY - navHeight();
+    window.scrollTo({ top: y, behavior: 'smooth' });
+    el.classList.remove('jump-flash');
+    void el.offsetWidth;                 // restart CSS animation
+    el.classList.add('jump-flash');
+  });
+
+  // IntersectionObserver → highlight whichever widget currently dominates
+  // the viewport. Re-bound after widgets render in case the dashboard was
+  // hidden at first paint.
+  let observer = null;
+  function bindObserver() {
+    if (observer) observer.disconnect();
+    const widgets = document.querySelectorAll('.widget[data-widget-id]');
+    if (!widgets.length) return;
+    const idToBtn = {};
+    buttons.forEach(b => { idToBtn[b.dataset.jump] = b; });
+    observer = new IntersectionObserver(entries => {
+      // Pick the entry with the largest intersection ratio that's currently visible.
+      let best = null;
+      entries.forEach(en => {
+        if (!en.isIntersecting) return;
+        if (!best || en.intersectionRatio > best.intersectionRatio) best = en;
+      });
+      if (!best) return;
+      const id = best.target.getAttribute('data-widget-id');
+      buttons.forEach(b => b.classList.toggle('active', b.dataset.jump === id));
+      // Scroll the active button into view inside the horizontal nav.
+      const activeBtn = idToBtn[id];
+      if (activeBtn) {
+        const scroll = nav.querySelector('.widget-nav-scroll');
+        if (scroll) {
+          const r = activeBtn.getBoundingClientRect();
+          const sr = scroll.getBoundingClientRect();
+          if (r.left < sr.left || r.right > sr.right) {
+            activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+          }
+        }
+      }
+    }, { rootMargin: '-30% 0px -55% 0px', threshold: [0, 0.1, 0.3, 0.6] });
+    widgets.forEach(w => observer.observe(w));
+  }
+  // Run once after the dashboard becomes visible.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(bindObserver, 500));
+  } else {
+    setTimeout(bindObserver, 500);
+  }
+  // Re-bind whenever the dashboard finishes a render cycle (widget order may
+  // change due to drag-and-drop).
+  window._rebindWidgetNav = bindObserver;
 })();
 
 document.addEventListener('change', e => {
