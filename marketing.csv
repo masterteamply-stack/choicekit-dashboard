@@ -1,8 +1,8 @@
 ﻿execution_date,region,country,promotion_theme,promotion_category,target_product,activity_type,title,customer,expected_cost,actual_cost,Bizreward,currency,kpi_metric,target,sell_type,owner,Order_Target($),Unnamed: 18
-2026-03-02,,캐나다,CHOICE_KIT,Strategic Partner Program,All items in the market,PROMOTION,Incentive Trip,Lordco Auto Parts,"25,868,245",0,x,USD,STARTED,B2B,SELL_IN,DH,"1,185,141",
-2026-04-03,,캐나다,CHOICE_KIT,Strategic Partner Program,All items in the market,CONTENT,SNS Content,Lordco Auto Parts,"879,541","879,541",x,KRW,RELEASED,B2B,SELL_IN,DH,0,
-2026-04-17,,캐나다,CHOICE_KIT,Strategic Partner Program,All items in the market,CONTENT,SNS Content,Lordco Auto Parts,"1,053,590","1,053,590",x,KRW,RELEASED,B2B,SELL_IN,DH,0,
-2026-04-03,,캐나다,CHOICE_KIT,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",Lordco Auto Parts,0,0,x,KRW,RELEASED,B2B,SELL_IN,DH,0,
+2026-03-02,NA,캐나다,CHOICE_KIT,Strategic Partner Program,All items in the market,PROMOTION,Incentive Trip,Lordco Autoparts,"25,868,245",0,x,USD,STARTED,B2B,SELL_IN,DH,"1,185,141",
+2026-04-03,NA,캐나다,CHOICE_KIT,Strategic Partner Program,All items in the market,CONTENT,SNS Content,Lordco Autoparts,"879,541","879,541",x,KRW,RELEASED,B2B,SELL_IN,DH,0,
+2026-04-17,NA,캐나다,CHOICE_KIT,Strategic Partner Program,All items in the market,CONTENT,SNS Content,Lordco Autoparts,"1,053,590","1,053,590",x,KRW,RELEASED,B2B,SELL_IN,DH,0,
+2026-04-03,NA,캐나다,CHOICE_KIT,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",Lordco Autoparts,0,0,x,KRW,RELEASED,B2B,SELL_IN,DH,0,
 2026-04-09,CIS,키르기스스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,CONTENT,Catalog ,,0,0,x,USD,DISTRIBUTED,B2B,SELL_IN,HY,"175,000",
 2026-04-09,CIS,카자흐스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,CONTENT,Catalog ,,0,0,x,USD,DISTRIBUTED,B2B,SELL_IN,HY,0,
 2026-04-09,CIS,투르크메니스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,CONTENT,Catalog ,,0,0,x,USD,DISTRIBUTED,B2B,SELL_IN,HY,0,
@@ -61,8 +61,8 @@
 2026-06-01,Oceania,호주,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,Kailos,2000000,0,4000000,KRW,RELEASED,B2B,SELL_OUT,KH,"74,000",예상목표는 올해 고객사별 목표 오더를 기준으로 산정되었습니다.
 2026-04-24,Korea,한국,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,SEJONG PARTS,4000000,3500000,8440000,KRW,RELEASED,B2B,SELL_OUT,KH,"270,000",예상목표는 올해 고객사별 목표 오더를 기준으로 산정되었습니다.
 2026-06-01,Korea,호주,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,Mount shop,0,0,1000000,KRW,RELEASED,B2B,SELL_OUT,KH,0,예상목표는 올해 고객사별 목표 오더를 기준으로 산정되었습니다.
-2026-06-01,ASIA,미얀마,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",PTG,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,,
-2026-06-01,ASIA,미얀마,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",Annawa,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,,
+2026-06-01,NA,미얀마,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",PTG,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,,
+2026-06-01,NA,미얀마,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",Annawa,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,,
 2026-06-01,ASIA,베트남,CHOICE_KIT,Korean & Japanese vehicles,NEW SKU for Vietnam,Incentive,Incentive,MAST,0,0,0,KRW,STARTED,B2B,SELL_IN,KH,,
 2026-06-01,ASIA,베트남,CHOICE_KIT,Korean & Japanese vehicles,NEW SKU for Vietnam,Incentive,Incentive,NAM BAC,0,0,0,KRW,STARTED,B2B,SELL_IN,KH,,
 2026-06-01,ASIA,베트남,CHOICE_KIT,Korean & Japanese vehicles,NEW SKU for Vietnam,Incentive,Incentive,TAN CO,0,0,0,KRW,STARTED,B2B,SELL_IN,KH,,
