@@ -5433,6 +5433,13 @@ function renderPromoChart(fOrders, fMkt) {
   // back to the simple pre/post split (legacy behavior) for at-a-glance impact.
   const tableCmpMode = (state.promoCmp && state.promoCmp !== 'off') ? state.promoCmp : 'yoy';
 
+  // Build a per-promo region lookup (for the baAmt scan below).
+  const _promoRegionForBA = {};
+  Object.keys(state.campaignTargetSkus || {}).forEach(p => {
+    const r = (state.campaignTargetSkus[p] || {}).region;
+    if (r) _promoRegionForBA[p] = normalizeRegion(r);
+  });
+
   // Accumulate AFTER (execution window) + BEFORE (same-length, shifted) over the
   // FULL order set PLUS the baseline.
   const _baScanSource = (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length)
@@ -5446,6 +5453,7 @@ function renderPromoChart(fOrders, fMkt) {
     const mb = promoMatchBy[p] || 'sku';
     const skuSet = promoTargetSkus[p];
     const custSet = promoTargetCust[p];
+    const promoRegion = _promoRegionForBA[p] || '';   // campaign's region (CIS/NA/...)
     baAmt[p] = {
       before: 0, after: 0, matchBy: mb,
       skuCount: skuSet ? skuSet.size : 0,
@@ -5453,12 +5461,15 @@ function renderPromoChart(fOrders, fMkt) {
       winFrom: start || '', winTo: end || '',
       prevFrom: shiftDate(start, tableCmpMode), prevTo: shiftDate(end, tableCmpMode),
       cmpMode: tableCmpMode,
+      region: promoRegion,
     };
     const hasTargets = mb === 'customer' ? (custSet && custSet.size) : (skuSet && skuSet.size);
     if (!start || !hasTargets) return;
     const winFrom = baAmt[p].winFrom, winTo = baAmt[p].winTo;
     const prevFrom = baAmt[p].prevFrom, prevTo = baAmt[p].prevTo;
     _baScanSource.forEach(o => {
+      // Region gate: campaign's region must match the order's region.
+      if (promoRegion && normalizeRegion(o.region || '') !== promoRegion) return;
       const match = (mb === 'customer')
         ? custSet.has((o.customer || '').trim())
         : skuSet.has((o.sku || o.ctr_code || '').trim());
@@ -5546,16 +5557,35 @@ function renderPromoChart(fOrders, fMkt) {
   // For 'by promotion' grouping we need a way to label baseline rows
   // (which have no promotion_category tag) with their owning campaign. Build a
   // sku→promo and customer→promo lookup from the campaign target config.
+  // ALSO build a promo→region map so baseline rows are only attributed when
+  // the row's region matches the campaign's region (e.g. Asian vehicle = CIS:
+  // the same SKUs' EUROPE/NA sales in baseline are excluded).
   const skuToPromo = {};
   const custToPromo = {};
+  const promoToRegion = {};
   Object.keys(state.campaignTargetSkus || {}).forEach(p => {
     const cfg = state.campaignTargetSkus[p] || {};
+    if (cfg.region) promoToRegion[p] = normalizeRegion(cfg.region);
     if ((cfg.match_by || 'sku') === 'customer') {
       (cfg.target_customers || []).forEach(c => { custToPromo[String(c).trim()] = p; });
     } else {
       (cfg.target_skus || []).forEach(s => { skuToPromo[String(s).trim()] = p; });
     }
   });
+  // Helper: a baseline row qualifies for a campaign if its target matches AND
+  // the row's region matches the campaign's region (when configured).
+  function baselineMatchesPromo(o, p) {
+    if (!p) return false;
+    const cfg = (state.campaignTargetSkus || {})[p];
+    if (!cfg) return false;
+    const promoRegion = promoToRegion[p];
+    if (promoRegion && normalizeRegion(o.region || '') !== promoRegion) return false;
+    if ((cfg.match_by || 'sku') === 'customer') {
+      const c = (o.customer || '').trim();
+      return c && (cfg.target_customers || []).includes(c);
+    }
+    return (cfg.target_skus || []).includes((o.sku || '').trim());
+  }
 
   // 1) Aggregate the CURRENT orders (scoped to selected promotion if any).
   fOrdersScoped.forEach(o => {
@@ -5569,29 +5599,42 @@ function renderPromoChart(fOrders, fMkt) {
     else if (dim === 'region') add(normalizeRegion(o.region || '') || '(none)', pk, amt);
   });
   // 2) Also aggregate the BASELINE so historical periods (2024, 2025) show a
-  //    real trend. Baseline rows are classified into a promotion via the
-  //    campaign's target SKUs / customers. When a single promotion is
-  //    selected, only baseline rows belonging to that campaign are added.
+  //    real trend. Baseline rows are classified into a promotion ONLY when
+  //    both the target (SKU/customer) AND the campaign region match — so e.g.
+  //    Asian vehicle (CIS) excludes the same SKUs' EUROPE / NA sales.
   if (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length) {
     state.preOrders.forEach(o => {
       const pk = periodKey(o.order_date, period);
       if (!pk) return;
       const amt = Number(o.amount_usd || 0) * usdToDisplay();
       if (!amt) return;
-      // Find this row's owning promotion (if any) via target lookups.
       const custRaw = (o.customer || '').trim();
       const cust = normalizeCustomer(o);   // fold numeric VendorCode → known name
       const sku  = (o.sku || '').trim();
-      const ownerPromo = custToPromo[cust] || custToPromo[custRaw] || skuToPromo[sku] || '';
-      // Promotion filter: when a single campaign is selected, only its rows pass.
-      if (promoFilter !== '__all__' && ownerPromo !== promoFilter) return;
+      const oRegion = normalizeRegion(o.region || '');
+      // Resolve the owning campaign with region constraint.
+      // Try customer mapping first (normalized then raw), then SKU mapping.
+      // For each candidate, the row's region must match the campaign's region.
+      let ownerPromo = '';
+      const tryPromos = [custToPromo[cust], custToPromo[custRaw], skuToPromo[sku]].filter(Boolean);
+      for (const p of tryPromos) {
+        const r = promoToRegion[p];
+        if (!r || r === oRegion) { ownerPromo = p; break; }
+      }
+      // Promotion filter: when a single campaign is selected, only rows of
+      // that campaign's region pass — and (for customer/region dims) only
+      // rows that hit the campaign's target lists.
+      if (promoFilter !== '__all__') {
+        if (!baselineMatchesPromo(o, promoFilter)) return;
+        if (ownerPromo !== promoFilter) ownerPromo = promoFilter;
+      }
       if (dim === 'promotion') {
         if (!ownerPromo) return;        // unaffiliated baseline rows don't fit any promotion line
         add(ownerPromo, pk, amt);
       } else if (dim === 'customer') {
         if (cust) add(cust, pk, amt);   // skip empty → no '(unknown)' line
       } else if (dim === 'region') {
-        add(normalizeRegion(o.region || '') || '(none)', pk, amt);
+        add(oRegion || '(none)', pk, amt);
       }
     });
     // Re-collect period buckets from the combined series (baseline adds older buckets).
@@ -5687,23 +5730,18 @@ function renderPromoChart(fOrders, fMkt) {
 
   if (cmpMode !== 'off') {
     // Aggregate current + baseline by the SAME dimension into prior buckets.
-    // When a single promotion is selected, scope:
-    //   • current: orders tagged with that promotion (already done — fOrdersScoped)
-    //   • baseline: rows matching that campaign's target_customers or target_skus
+    // Baseline scope rules:
+    //   • single promotion: rows must belong to that campaign (target + region)
+    //   • all promotions:   rows must belong to ANY known campaign (target +
+    //                       region) so prior-period totals reflect the same
+    //                       scope as the current orders, not unrelated traffic
     const cmpSeries = {};   // key → { pk → amt }   (full history incl. baseline)
     const baselineRows = (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length)
       ? state.preOrders : [];
+    const knownPromos = Object.keys(state.campaignTargetSkus || {});
     const scopedBaseline = (promoFilter === '__all__')
-      ? baselineRows
-      : baselineRows.filter(o => {
-          if (scopeMatchBy === 'customer' && scopeCustSet) {
-            const c = (o.customer || '').trim();
-            // baseline rows lacking customer fall back to SKU match if available
-            return c ? scopeCustSet.has(c) : (scopeSkuSet ? scopeSkuSet.has((o.sku||'').trim()) : false);
-          }
-          if (scopeSkuSet) return scopeSkuSet.has((o.sku||'').trim());
-          return false;
-        });
+      ? baselineRows.filter(o => knownPromos.some(p => baselineMatchesPromo(o, p)))
+      : baselineRows.filter(o => baselineMatchesPromo(o, promoFilter));
     const srcAll = (fOrdersScoped || []).concat(scopedBaseline);
     srcAll.forEach(o => {
       const pk = periodKey(o.order_date, period);
