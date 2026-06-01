@@ -1694,12 +1694,12 @@ header .mono b.t-orange {
       <option value="">JUMP TO ▾</option>
       <option value="promoOrderTrend">Order Trends</option>
       <option value="promoctr">Promo × CTR</option>
-      <option value="choicekitImpact">Choice Kit Impact</option>
       <option value="skuExplorer">SKU Analysis</option>
       <option value="topinsights">Top Insights</option>
       <option value="customertrend">Customer Trend</option>
       <option value="region">Region</option>
       <option value="promo">Promotion Performance</option>
+      <option value="choicekitImpact">Choice Kit Impact</option>
       <option value="planexec">Plan vs Execution</option>
       <option value="activities">Activities</option>
       <option value="category">Sales Trend</option>
@@ -1991,51 +1991,6 @@ header .mono b.t-orange {
         </div>
       </div>
 
-      <!-- Choice Kit Impact — Dormant Activation (휴면 품번 활성화 분석) -->
-      <div class="panel widget" data-widget-id="choicekitImpact">
-        <div class="widget-head">
-          <div>
-            <h3 class="h-section">Choice Kit Impact — Dormant Activation</h3>
-            <p class="label-mono" style="margin-top:4px">캠페인 핵심 KPI: 안 팔리던 품번/고객이 캠페인 후 얼마나 깨어났는가</p>
-          </div>
-          <div class="chart-tools">
-            <span class="label-mono muted">Campaign</span>
-            <select id="ckiPromoSel" style="min-width:200px;font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface)"></select>
-            <span class="label-mono muted" style="margin-left:6px">휴면 기준</span>
-            <select id="ckiThresholdSel" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface)">
-              <option value="0">완전 미판매 ($0)</option>
-              <option value="100">$100 미만</option>
-              <option value="1000" selected>$1,000 미만 (기본)</option>
-              <option value="5000">$5,000 미만</option>
-            </select>
-            <div class="widget-order-controls"></div>
-          </div>
-        </div>
-        <!-- KPI cards (4) -->
-        <div id="ckiKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px"></div>
-        <!-- 2-column layout: funnel + activation matrix -->
-        <div style="display:grid;grid-template-columns:1.1fr 0.9fr;gap:14px;margin-bottom:14px">
-          <div>
-            <div class="label-mono muted" style="font-size:10px;margin-bottom:4px">DORMANT FUNNEL · 단계별 전환</div>
-            <div class="chart-wrap" style="height:260px"><canvas id="chCkiFunnel"></canvas></div>
-          </div>
-          <div>
-            <div class="label-mono muted" style="font-size:10px;margin-bottom:4px">ACTIVATION MATRIX · 2×2</div>
-            <div id="ckiMatrix" style="display:grid;grid-template-columns:1fr 1fr;gap:6px"></div>
-          </div>
-        </div>
-        <!-- Full-set analysis (only meaningful for SKU campaigns) -->
-        <div id="ckiFullsetWrap" style="margin-bottom:14px">
-          <div class="label-mono muted" style="font-size:10px;margin-bottom:4px">FULL-SET ORDERS · make_model 묶음으로 함께 주문된 캠페인 SKU</div>
-          <div id="ckiFullsetSummary" style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:13px"></div>
-        </div>
-        <!-- Activated SKU/Customer table -->
-        <div>
-          <div class="label-mono muted" style="font-size:10px;margin-bottom:4px">ACTIVATED · 휴면→활성 전환 상세 (최대 50)</div>
-          <div style="overflow:auto;max-height:280px"><table id="tblCkiActivated" style="font-size:12px"></table></div>
-        </div>
-      </div>
-
       <!-- Region — Order/Marketing + Activity Breakdown (merged) -->
       <div class="panel widget" data-widget-id="skuExplorer">
         <div class="widget-head">
@@ -2244,6 +2199,51 @@ header .mono b.t-orange {
         <div id="promoCmpKpis" style="display:none;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px"></div>
         <div class="chart-wrap" style="height:360px"><canvas id="chPromo"></canvas></div>
         <div style="overflow:auto;margin-top:12px"><table id="tblPromo"></table></div>
+      </div>
+
+      <!-- Choice Kit Impact — Dormant Activation (휴면 품번 활성화 분석) -->
+      <div class="panel widget" data-widget-id="choicekitImpact">
+        <div class="widget-head">
+          <div>
+            <h3 class="h-section">Choice Kit Impact — Dormant Activation</h3>
+            <p class="label-mono" style="margin-top:4px">캠페인 핵심 KPI: 안 팔리던 품번/고객이 캠페인 후 얼마나 깨어났는가</p>
+          </div>
+          <div class="chart-tools">
+            <span class="label-mono muted">Campaign</span>
+            <select id="ckiPromoSel" style="min-width:200px;font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface)"></select>
+            <span class="label-mono muted" style="margin-left:6px">휴면 기준</span>
+            <select id="ckiThresholdSel" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface)">
+              <option value="0">완전 미판매 ($0)</option>
+              <option value="100">$100 미만</option>
+              <option value="1000" selected>$1,000 미만 (기본)</option>
+              <option value="5000">$5,000 미만</option>
+            </select>
+            <div class="widget-order-controls"></div>
+          </div>
+        </div>
+        <!-- KPI cards (4) -->
+        <div id="ckiKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px"></div>
+        <!-- 2-column layout: funnel + activation matrix -->
+        <div style="display:grid;grid-template-columns:1.1fr 0.9fr;gap:14px;margin-bottom:14px">
+          <div>
+            <div class="label-mono muted" style="font-size:10px;margin-bottom:4px">DORMANT FUNNEL · 단계별 전환</div>
+            <div class="chart-wrap" style="height:260px"><canvas id="chCkiFunnel"></canvas></div>
+          </div>
+          <div>
+            <div class="label-mono muted" style="font-size:10px;margin-bottom:4px">ACTIVATION MATRIX · 2×2</div>
+            <div id="ckiMatrix" style="display:grid;grid-template-columns:1fr 1fr;gap:6px"></div>
+          </div>
+        </div>
+        <!-- Full-set analysis (only meaningful for SKU campaigns) -->
+        <div id="ckiFullsetWrap" style="margin-bottom:14px">
+          <div class="label-mono muted" style="font-size:10px;margin-bottom:4px">FULL-SET ORDERS · make_model 묶음으로 함께 주문된 캠페인 SKU</div>
+          <div id="ckiFullsetSummary" style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:13px"></div>
+        </div>
+        <!-- Activated SKU/Customer table -->
+        <div>
+          <div class="label-mono muted" style="font-size:10px;margin-bottom:4px">ACTIVATED · 휴면→활성 전환 상세 (최대 50)</div>
+          <div style="overflow:auto;max-height:280px"><table id="tblCkiActivated" style="font-size:12px"></table></div>
+        </div>
       </div>
 
       <!-- Sales Trend (merged: Promotion Category + Region/Country Monthly) -->
