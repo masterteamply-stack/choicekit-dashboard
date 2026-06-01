@@ -2164,48 +2164,48 @@ header .mono b.t-orange {
         <div style="overflow:auto;margin-top:12px"><table id="tblPromo"></table></div>
       </div>
 
-      <!-- Choice Kit Impact — Dormant Activation (휴면 품번 활성화 분석) -->
+      <!-- Choice Kit Impact — Dormant Activation -->
       <div class="panel widget" data-widget-id="choicekitImpact">
         <div class="widget-head">
           <div>
             <h3 class="h-section">Choice Kit Impact — Dormant Activation</h3>
-            <p class="label-mono" style="margin-top:4px">캠페인 핵심 KPI: 안 팔리던 품번/고객이 캠페인 후 얼마나 깨어났는가</p>
+            <p class="label-mono" style="margin-top:4px;font-size:13px">How many dormant SKUs / customers were activated by the campaign</p>
           </div>
           <div class="chart-tools">
             <span class="label-mono muted">Campaign</span>
-            <select id="ckiPromoSel" style="min-width:200px;font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface)"></select>
-            <span class="label-mono muted" style="margin-left:6px">휴면 기준</span>
-            <select id="ckiThresholdSel" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface)">
-              <option value="0">완전 미판매 ($0)</option>
-              <option value="100">$100 미만</option>
-              <option value="1000" selected>$1,000 미만 (기본)</option>
-              <option value="5000">$5,000 미만</option>
+            <select id="ckiPromoSel" style="min-width:200px;font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface)"></select>
+            <span class="label-mono muted" style="margin-left:8px">Dormancy</span>
+            <select id="ckiThresholdSel" style="font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface)">
+              <option value="0">Zero sales ($0)</option>
+              <option value="100">&lt; $100</option>
+              <option value="1000" selected>&lt; $1,000 (default)</option>
+              <option value="5000">&lt; $5,000</option>
             </select>
             <div class="widget-order-controls"></div>
           </div>
         </div>
-        <!-- KPI cards (4) -->
-        <div id="ckiKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px"></div>
+        <!-- KPI cards (6) -->
+        <div id="ckiKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:18px"></div>
         <!-- 2-column layout: funnel + activation matrix -->
-        <div style="display:grid;grid-template-columns:1.1fr 0.9fr;gap:14px;margin-bottom:14px">
+        <div style="display:grid;grid-template-columns:1.1fr 0.9fr;gap:18px;margin-bottom:18px">
           <div>
-            <div class="label-mono muted" style="font-size:10px;margin-bottom:4px">DORMANT FUNNEL · 단계별 전환</div>
-            <div class="chart-wrap" style="height:260px"><canvas id="chCkiFunnel"></canvas></div>
+            <div class="label-mono" style="font-size:12px;font-weight:700;margin-bottom:8px;color:#1D1D1F">DORMANT FUNNEL — Stage-by-stage Conversion</div>
+            <div class="chart-wrap" style="height:280px"><canvas id="chCkiFunnel"></canvas></div>
           </div>
           <div>
-            <div class="label-mono muted" style="font-size:10px;margin-bottom:4px">ACTIVATION MATRIX · 2×2</div>
-            <div id="ckiMatrix" style="display:grid;grid-template-columns:1fr 1fr;gap:6px"></div>
+            <div class="label-mono" style="font-size:12px;font-weight:700;margin-bottom:8px;color:#1D1D1F">ACTIVATION MATRIX (2×2)</div>
+            <div id="ckiMatrix" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
           </div>
         </div>
-        <!-- Full-set analysis (only meaningful for SKU campaigns) -->
-        <div id="ckiFullsetWrap" style="margin-bottom:14px">
-          <div class="label-mono muted" style="font-size:10px;margin-bottom:4px">FULL-SET ORDERS · make_model 묶음으로 함께 주문된 캠페인 SKU</div>
-          <div id="ckiFullsetSummary" style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:13px"></div>
+        <!-- Full-set analysis (SKU campaigns only) -->
+        <div id="ckiFullsetWrap" style="margin-bottom:18px">
+          <div class="label-mono" style="font-size:12px;font-weight:700;margin-bottom:8px;color:#1D1D1F">FULL-SET ORDERS — Target SKUs Co-ordered by Make / Model</div>
+          <div id="ckiFullsetSummary" style="display:flex;gap:18px;flex-wrap:wrap;align-items:center;font-size:14px"></div>
         </div>
-        <!-- Activated SKU/Customer table -->
+        <!-- Activated SKU / Customer table -->
         <div>
-          <div class="label-mono muted" style="font-size:10px;margin-bottom:4px">ACTIVATED · 휴면→활성 전환 상세 (최대 50)</div>
-          <div style="overflow:auto;max-height:280px"><table id="tblCkiActivated" style="font-size:12px"></table></div>
+          <div class="label-mono" style="font-size:12px;font-weight:700;margin-bottom:8px;color:#1D1D1F">ACTIVATED — Dormant → Active Conversion Detail (Top 50)</div>
+          <div style="overflow:auto;max-height:300px"><table id="tblCkiActivated" style="font-size:13px"></table></div>
         </div>
       </div>
       <!-- Region — Order/Marketing + Activity Breakdown (merged) -->
@@ -7443,7 +7443,7 @@ function renderChoiceKitImpact(fOrders, fMkt) {
   const matchBy = (pcfg.match_by || 'sku').toLowerCase();
   const targetRegion = pcfg.region || '';
   const threshold = Number(state.ckiThreshold) || 0;
-  const thresholdLabel = threshold === 0 ? '$0 (완전 미판매)' : `< ${fmtMoney(threshold)}`;
+  const thresholdLabel = threshold === 0 ? '$0 (zero sales)' : `< ${fmtMoney(threshold)}`;
 
   // First marketing date of this campaign = activation window start.
   const startDate = (function() {
@@ -7512,12 +7512,12 @@ function renderChoiceKitImpact(fOrders, fMkt) {
 
   // ── KPI cards ──
   const kpiEl = document.getElementById('ckiKpis');
-  const dimWord = matchBy === 'customer' ? '고객' : '품번';
+  const dimWord = matchBy === 'customer' ? 'Customer' : 'SKU';
   const card = (label, val, sub, accent) => `
-    <div style="background:rgba(0,0,0,0.02);border:1px solid ${accent||'rgba(0,0,0,0.08)'};border-radius:8px;padding:10px 12px;${accent?'border-left:3px solid '+accent:''}">
-      <div class="label-mono" style="font-size:10px;color:#86868B;letter-spacing:0.05em">${label}</div>
-      <div style="font-size:18px;font-weight:800;margin-top:2px">${val}</div>
-      ${sub ? `<div class="label-mono muted" style="font-size:11px">${sub}</div>` : ''}
+    <div style="background:rgba(0,0,0,0.02);border:1px solid ${accent||'rgba(0,0,0,0.08)'};border-radius:10px;padding:14px 16px;${accent?'border-left:4px solid '+accent:''}">
+      <div class="label-mono" style="font-size:11px;color:#86868B;letter-spacing:0.06em;font-weight:600;text-transform:uppercase">${label}</div>
+      <div style="font-size:22px;font-weight:800;margin-top:6px;line-height:1.2">${val}</div>
+      ${sub ? `<div class="label-mono muted" style="font-size:12px;margin-top:4px;line-height:1.4">${sub}</div>` : ''}
     </div>`;
 
   // Total activated SKU/customer post-campaign sales (newly + retained).
@@ -7535,15 +7535,11 @@ function renderChoiceKitImpact(fOrders, fMkt) {
   });
 
   // Pre-compute Full-set related orders so the KPI card can show the figure.
-  // Full-set bucket = (order_date, customer, make_model) with 2+ target SKUs in it.
-  // "연관 오더 매출" = sum of ALL line items (incl. non-target SKUs) that fell
-  // into any Full-set bucket — i.e. the total revenue ON Full-set orders.
   let fullsetCount = 0, singleCount = 0, fullsetTargetAmt = 0, fullsetTargetSkuTotal = 0;
-  let fullsetRelatedAmt = 0;       // including non-target lines that ship in the same Full-set bucket
+  let fullsetRelatedAmt = 0;
   let bestModel = null, bestSkuCount = 0;
-  const fullsetBuckets = new Map();  // key → { skus:Set, amt, qty, model }
+  const fullsetBuckets = new Map();
   if (matchBy === 'sku') {
-    // 1) Group target-SKU orders by (date|customer|model) to detect Full-sets.
     Object.values(postOrders).forEach(arr => arr.forEach(o => {
       const mm = (o.make_model || '').trim();
       if (!mm) return;
@@ -7554,7 +7550,6 @@ function renderChoiceKitImpact(fOrders, fMkt) {
       g.amt += convOrder(o);
       g.qty += Number(o.qty || 0);
     }));
-    // 2) Identify which buckets are Full-set (2+ distinct target SKUs).
     const fullsetKeys = new Set();
     fullsetBuckets.forEach((g, key) => {
       if (g.skus.size >= 2) {
@@ -7565,8 +7560,6 @@ function renderChoiceKitImpact(fOrders, fMkt) {
         if (g.skus.size > bestSkuCount) { bestSkuCount = g.skus.size; bestModel = g.model; }
       } else { singleCount++; }
     });
-    // 3) Re-scan ALL post-campaign orders of this promotion to sum lines that
-    //    fall into Full-set buckets — these are the related/co-ordered lines.
     (state.orders || []).forEach(o => {
       if ((o.promotion_category || '') !== promo) return;
       if (startDate && (o.order_date || '') < startDate) return;
@@ -7578,21 +7571,21 @@ function renderChoiceKitImpact(fOrders, fMkt) {
   }
 
   if (kpiEl) kpiEl.innerHTML =
-    card(`전체 대상 ${dimWord}`,    `${targetList.length.toLocaleString()}`,    `${promo} · ${targetRegion}${matchBy==='sku' ? ` · ${activatedModels.size}개 차종 활성` : ''}`) +
-    card(`휴면 ${dimWord}`,         `${dormant.length.toLocaleString()}`,       `baseline ${thresholdLabel}`) +
-    card(`🔵 신규 활성 (Choice Kit 효과)`, `${newlyActivated.length} / ${dormant.length} (${(dormantConvRate*100).toFixed(1)}%)`, `매출 ${fmtMoney(newlyAmt)} · ${newlyQty.toLocaleString()} pcs`, '#0A84FF') +
-    card(`활성 ${dimWord} 총 매출`,  `${fmtMoney(activatedAmtTotal)}`,            `${activatedAll.length}개 활성 · ${activatedQtyTotal.toLocaleString()} pcs`, '#C8102E') +
+    card(`Total Target ${dimWord}s`,         `${targetList.length.toLocaleString()}`,    `${promo} · ${targetRegion}${matchBy==='sku' ? ` · ${activatedModels.size} models activated` : ''}`) +
+    card(`Dormant ${dimWord}s`,               `${dormant.length.toLocaleString()}`,       `Baseline ${thresholdLabel}`) +
+    card(`🔵 Newly Activated (Choice Kit Effect)`, `${newlyActivated.length} / ${dormant.length} (${(dormantConvRate*100).toFixed(1)}%)`, `Revenue ${fmtMoney(newlyAmt)} · ${newlyQty.toLocaleString()} pcs`, '#0A84FF') +
+    card(`Activated ${dimWord} Revenue`,      `${fmtMoney(activatedAmtTotal)}`,           `${activatedAll.length} activated · ${activatedQtyTotal.toLocaleString()} pcs`, '#C8102E') +
     (matchBy === 'sku' ? card(
-      `🎯 Full-set 연관 오더 매출`,
+      `🎯 Full-set Related Revenue`,
       `${fmtMoney(fullsetRelatedAmt)}`,
-      `${fullsetCount.toLocaleString()}건 Full-set · 대상 SKU 매출만: ${fmtMoney(fullsetTargetAmt)}`,
+      `${fullsetCount.toLocaleString()} full-set orders · target-only: ${fmtMoney(fullsetTargetAmt)}`,
       '#34C759'
     ) : '') +
-    card(`아직 휴면 ${dimWord}`,    `${stillDormant.length.toLocaleString()}`,  `다음 액션 대상 (${(100*stillDormant.length/Math.max(1,targetList.length)).toFixed(0)}% of total)`);
+    card(`Still Dormant ${dimWord}s`,         `${stillDormant.length.toLocaleString()}`,  `Next action target (${(100*stillDormant.length/Math.max(1,targetList.length)).toFixed(0)}% of total)`);
 
   // ── Funnel chart ──
   if (charts.ckiFunnel) charts.ckiFunnel.destroy();
-  const funnelLabels = [`대상 ${dimWord}`, `휴면`, `신규 활성`, `매출 발생`];
+  const funnelLabels = [`Total ${dimWord}s`, `Dormant`, `Newly Activated`, `Revenue Generated`];
   const funnelData   = [targetList.length, dormant.length, newlyActivated.length, newlyActivated.filter(k=>postAmt[k]>0).length];
   charts.ckiFunnel = new Chart(document.getElementById('chCkiFunnel'), {
     type: 'bar',
@@ -7608,20 +7601,20 @@ function renderChoiceKitImpact(fOrders, fMkt) {
         legend: { display:false }, datalabels: { display:false },
         tooltip: {
           callbacks: {
-            label: c => `${c.parsed.x.toLocaleString()} ${dimWord}`,
+            label: c => `${c.parsed.x.toLocaleString()} ${dimWord}s`,
             footer: items => {
               const i = items[0].dataIndex;
               if (i === 0) return '';
               const prev = funnelData[i-1] || 0;
               const pct = prev ? (funnelData[i]/prev*100) : 0;
-              return `이전 단계 대비 ${pct.toFixed(1)}%`;
+              return `${pct.toFixed(1)}% of previous stage`;
             },
           },
         },
       },
       scales: {
-        x: { beginAtZero:true, ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',size:11}}, grid:{color:'rgba(0,0,0,0.06)'} },
-        y: { ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:11}}, grid:{display:false} },
+        x: { beginAtZero:true, ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',size:12}}, grid:{color:'rgba(0,0,0,0.06)'} },
+        y: { ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:700,size:12}}, grid:{display:false} },
       },
     },
   });
@@ -7630,16 +7623,16 @@ function renderChoiceKitImpact(fOrders, fMkt) {
   const matrixEl = document.getElementById('ckiMatrix');
   if (matrixEl) {
     const cell = (icon, title, count, amt, color, bg) => `
-      <div style="background:${bg};border:1px solid ${color}40;border-radius:8px;padding:10px 12px;min-height:78px">
-        <div style="font-size:14px;font-weight:700;color:${color}">${icon} ${title}</div>
-        <div style="font-size:20px;font-weight:800;margin-top:4px">${count.toLocaleString()} <span class="label-mono muted" style="font-size:11px;font-weight:500">${dimWord}</span></div>
-        <div class="label-mono muted" style="font-size:11px">${fmtMoney(amt)}</div>
+      <div style="background:${bg};border:1px solid ${color}40;border-radius:10px;padding:14px 16px;min-height:96px">
+        <div style="font-size:15px;font-weight:700;color:${color}">${icon} ${title}</div>
+        <div style="font-size:24px;font-weight:800;margin-top:6px;line-height:1.2">${count.toLocaleString()} <span class="label-mono muted" style="font-size:12px;font-weight:500">${dimWord}s</span></div>
+        <div class="label-mono muted" style="font-size:12px;margin-top:2px">${fmtMoney(amt)}</div>
       </div>`;
     matrixEl.innerHTML =
-      cell('🔵', '신규 활성', newlyActivated.length, sum(newlyActivated, postAmt), '#0A84FF', 'rgba(10,132,255,0.06)') +
-      cell('🟢', '유지 활성', retainedActive.length, sum(retainedActive, postAmt), '#34C759', 'rgba(52,199,89,0.06)') +
-      cell('⚪', '아직 휴면', stillDormant.length,   0,                             '#86868B', 'rgba(134,134,139,0.04)') +
-      cell('🟡', '이탈',     lostActive.length,     0,                             '#FF9500', 'rgba(255,149,0,0.06)');
+      cell('🔵', 'Newly Active', newlyActivated.length, sum(newlyActivated, postAmt), '#0A84FF', 'rgba(10,132,255,0.06)') +
+      cell('🟢', 'Retained Active', retainedActive.length, sum(retainedActive, postAmt), '#34C759', 'rgba(52,199,89,0.06)') +
+      cell('⚪', 'Still Dormant', stillDormant.length,   0,                             '#86868B', 'rgba(134,134,139,0.04)') +
+      cell('🟡', 'Lost Active',  lostActive.length,     0,                             '#FF9500', 'rgba(255,149,0,0.06)');
   }
 
   // ── Full-set analysis summary (SKU campaigns only — reuses pre-computed values) ──
@@ -7656,13 +7649,13 @@ function renderChoiceKitImpact(fOrders, fMkt) {
       if (g.skus.size >= 2) fullsetModels.add(g.model);
     });
     fsSum.innerHTML = `
-      <div><span class="label-mono muted" style="font-size:11px">FULL-SET 주문 (2+ SKU/차종)</span><div style="font-size:18px;font-weight:800;color:#C8102E">${fullsetCount.toLocaleString()}건 · ${fsRate.toFixed(1)}%</div></div>
-      <div><span class="label-mono muted" style="font-size:11px">단품 주문</span><div style="font-size:16px;font-weight:700">${singleCount.toLocaleString()}건</div></div>
-      <div><span class="label-mono muted" style="font-size:11px">Full-set 대상 SKU 매출</span><div style="font-size:16px;font-weight:700">${fmtMoney(fullsetTargetAmt)}</div></div>
-      <div><span class="label-mono muted" style="font-size:11px">Full-set 연관 오더 매출 (전 라인)</span><div style="font-size:16px;font-weight:700;color:#34C759">${fmtMoney(fullsetRelatedAmt)}</div></div>
-      <div><span class="label-mono muted" style="font-size:11px">Full-set 차종 수</span><div style="font-size:16px;font-weight:700">${fullsetModels.size}개</div></div>
-      <div><span class="label-mono muted" style="font-size:11px">Set 당 평균 SKU</span><div style="font-size:16px;font-weight:700">${avgSkuPerSet.toFixed(1)}</div></div>
-      ${bestModel ? `<div><span class="label-mono muted" style="font-size:11px">최대 SET 차종</span><div style="font-size:14px;font-weight:700">${bestModel} (${bestSkuCount} SKU 동시 주문)</div></div>` : ''}`;
+      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Full-set Orders (2+ SKUs / Model)</span><div style="font-size:22px;font-weight:800;color:#C8102E;margin-top:2px">${fullsetCount.toLocaleString()} · ${fsRate.toFixed(1)}%</div></div>
+      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Single-line Orders</span><div style="font-size:18px;font-weight:700;margin-top:2px">${singleCount.toLocaleString()}</div></div>
+      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Full-set Target SKU Revenue</span><div style="font-size:18px;font-weight:700;margin-top:2px">${fmtMoney(fullsetTargetAmt)}</div></div>
+      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Full-set Related Revenue (all lines)</span><div style="font-size:18px;font-weight:700;color:#34C759;margin-top:2px">${fmtMoney(fullsetRelatedAmt)}</div></div>
+      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Full-set Models</span><div style="font-size:18px;font-weight:700;margin-top:2px">${fullsetModels.size}</div></div>
+      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Avg SKU / Set</span><div style="font-size:18px;font-weight:700;margin-top:2px">${avgSkuPerSet.toFixed(1)}</div></div>
+      ${bestModel ? `<div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Largest Set</span><div style="font-size:15px;font-weight:700;margin-top:2px">${bestModel} <span class="muted" style="font-size:12px;font-weight:500">(${bestSkuCount} SKUs co-ordered)</span></div></div>` : ''}`;
   } else if (fsWrap) {
     fsWrap.style.display = 'none';
   }
@@ -7681,17 +7674,17 @@ function renderChoiceKitImpact(fOrders, fMkt) {
     rows.sort((a,b) => b.postAmt - a.postAmt);
     const shown = rows.slice(0, 50);
     if (!shown.length) {
-      tbl.innerHTML = '<thead><tr><th style="text-align:center;padding:20px;color:#86868B">아직 활성화된 ' + dimWord + '이 없습니다</th></tr></thead>';
+      tbl.innerHTML = '<thead><tr><th style="text-align:center;padding:24px;color:#86868B;font-size:14px">No activated ' + dimWord + 's yet</th></tr></thead>';
     } else {
       tbl.innerHTML = `
         <thead><tr>
-          <th>구분</th>
+          <th>Type</th>
           <th>${dimWord}</th>
-          ${matchBy==='sku'?'<th>차종</th>':''}
-          <th class="text-right">Baseline 매출</th>
-          <th class="text-right">캠페인 후 매출</th>
-          <th class="text-right">수량</th>
-          <th>첫 주문</th>
+          ${matchBy==='sku'?'<th>Make / Model</th>':''}
+          <th class="text-right">Baseline Revenue</th>
+          <th class="text-right">Post-Campaign Revenue</th>
+          <th class="text-right">Qty</th>
+          <th>First Order</th>
         </tr></thead>
         <tbody>${shown.map(r => {
           const orders = postOrders[r.key] || [];
@@ -7699,13 +7692,13 @@ function renderChoiceKitImpact(fOrders, fMkt) {
           const first = orders[0];
           const mm = matchBy==='sku' && first ? (first.make_model || '–') : '';
           return `<tr>
-            <td style="font-size:14px">${r.kind}</td>
+            <td style="font-size:15px">${r.kind}</td>
             <td><b>${r.key}</b></td>
-            ${matchBy==='sku'?`<td class="muted" style="font-size:11px">${mm}</td>`:''}
+            ${matchBy==='sku'?`<td class="muted" style="font-size:12px">${mm}</td>`:''}
             <td class="text-right ${r.baseAmt===0?'muted':''}">${r.baseAmt===0?'–':fmtMoney(r.baseAmt)}</td>
             <td class="text-right" style="font-weight:700;color:#C8102E">${fmtMoney(r.postAmt)}</td>
             <td class="text-right">${r.postQty.toLocaleString()}</td>
-            <td class="muted" style="font-size:11px">${first?first.order_date:'–'}</td>
+            <td class="muted" style="font-size:12px">${first?first.order_date:'–'}</td>
           </tr>`;
         }).join('')}</tbody>`;
     }
