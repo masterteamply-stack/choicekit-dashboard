@@ -2177,7 +2177,7 @@ header .mono b.t-orange {
             <span class="label-mono muted" style="margin-left:8px">Compare</span>
             <select id="ckiCompareSel" style="font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface)">
               <option value="baseline">All-time Baseline</option>
-              <option value="mom">vs Same-period Last Month (MoM)</option>
+              <option value="mom" selected>vs Same-period Last Month (MoM)</option>
               <option value="qoq">vs Same-period Last Quarter (QoQ)</option>
               <option value="yoy">vs Same-period Last Year (YoY)</option>
             </select>
@@ -2594,9 +2594,9 @@ let state = {
   promoPerfPeriod: localStorage.getItem('ck_promo_perf_period') || 'month',
   promoDim: localStorage.getItem('ck_promo_dim') || 'promotion',
   promoCmp: localStorage.getItem('ck_promo_cmp') || 'off',
-  ckiPromo: localStorage.getItem('ck_cki_promo') || '',
+  ckiPromo: localStorage.getItem('ck_cki_promo') || 'Asian vehicle',
   ckiThreshold: parseFloat(localStorage.getItem('ck_cki_threshold') || '5000'),
-  ckiCompare: localStorage.getItem('ck_cki_compare') || 'baseline',
+  ckiCompare: localStorage.getItem('ck_cki_compare') || 'mom',
   promoFilter: localStorage.getItem('ck_promo_filter') || '__all__',
   campaignTargetSkus: {},
   regionMetric: localStorage.getItem('ck_region_metric') || 'order',
@@ -5623,8 +5623,8 @@ function renderPromoChart(fOrders, fMkt) {
     const winFrom = baAmt[p].winFrom, winTo = baAmt[p].winTo;
     const prevFrom = baAmt[p].prevFrom, prevTo = baAmt[p].prevTo;
     _baScanSource.forEach(o => {
-      // Region gate: campaign's region must match the order's region.
-      if (promoRegion && normalizeRegion(o.region || '') !== promoRegion) return;
+      // Region gate removed — see baselineMatchesPromo for rationale.
+      // Match target SKU / customer regardless of region.
       const match = (mb === 'customer')
         ? custSet.has((o.customer || '').trim())
         : skuSet.has((o.sku || o.ctr_code || '').trim());
@@ -5733,8 +5733,11 @@ function renderPromoChart(fOrders, fMkt) {
     if (!p) return false;
     const cfg = (state.campaignTargetSkus || {})[p];
     if (!cfg) return false;
-    const promoRegion = promoToRegion[p];
-    if (promoRegion && normalizeRegion(o.region || '') !== promoRegion) return false;
+    // Region constraint removed (2026-05-29) — baseline of the same SKU /
+    // customer in ANY region now counts. For Asian vehicle (CIS), this surfaces
+    // $2.18M of legitimate pre-campaign baseline scattered across the bundle's
+    // EUROPE / N_AMERICA / ASIA_PACIFIC regions (CIS-adjacent markets like
+    // SERBIA, POLAND, BULGARIA, ROMANIA, MOLDOVA).
     if ((cfg.match_by || 'sku') === 'customer') {
       const c = (o.customer || '').trim();
       return c && (cfg.target_customers || []).includes(c);
@@ -7441,8 +7444,11 @@ function renderChoiceKitImpact(fOrders, fMkt) {
   if (sel) {
     sel.innerHTML = `<option value="__all__">All Promotions (aggregate)</option>` +
       promoNames.map(p => `<option value="${p.replace(/"/g,'&quot;')}">${p}</option>`).join('');
-    const cur = state.ckiPromo || '__all__';
-    sel.value = (cur === '__all__' || promoNames.includes(cur)) ? cur : '__all__';
+    const DEFAULT_PROMO = 'Asian vehicle';
+    const cur = state.ckiPromo || DEFAULT_PROMO;
+    sel.value = (cur === '__all__' || promoNames.includes(cur))
+      ? cur
+      : (promoNames.includes(DEFAULT_PROMO) ? DEFAULT_PROMO : '__all__');
     if (state.ckiPromo !== sel.value) state.ckiPromo = sel.value;
   }
   // Threshold selector.
@@ -7450,12 +7456,12 @@ function renderChoiceKitImpact(fOrders, fMkt) {
   if (thSel) thSel.value = String(state.ckiThreshold);
   // Compare-mode selector.
   const cmpSel = document.getElementById('ckiCompareSel');
-  if (cmpSel) cmpSel.value = state.ckiCompare || 'baseline';
+  if (cmpSel) cmpSel.value = state.ckiCompare || 'mom';
 
-  const promo = state.ckiPromo || '__all__';
+  const promo = state.ckiPromo || 'Asian vehicle';
   const threshold = Number(state.ckiThreshold) || 0;
   const thresholdLabel = threshold === 0 ? '$0 (zero sales)' : `< ${fmtMoney(threshold)}`;
-  const compareMode = state.ckiCompare || 'baseline';   // baseline | mom | qoq | yoy
+  const compareMode = state.ckiCompare || 'mom';   // baseline | mom | qoq | yoy
   const isAll = (promo === '__all__');
   const activeCampaigns = isAll ? promoNames : [promo];
 
@@ -7490,13 +7496,14 @@ function renderChoiceKitImpact(fOrders, fMkt) {
       ? (pcfg.target_customers || []).map(c => String(c).trim()).filter(Boolean)
       : (pcfg.target_skus || []).map(s => String(s).trim()).filter(Boolean);
     const targetSet = new Set(targetList);
-    // Baseline aggregation (region-filtered).
+    // Baseline aggregation — region constraint REMOVED so same SKU/customer
+    // matches across ALL regions in the bundle. Asian vehicle (CIS): baseline
+    // includes matching SKU sales in EUROPE/N_AMERICA/ASIA_PACIFIC ($2.18M
+    // previously hidden by the region filter).
     const baseAmt = {}, baseQty = {};
     targetList.forEach(k => { baseAmt[k]=0; baseQty[k]=0; });
     if (state.preOrdersEnabled && Array.isArray(state.preOrders)) {
       state.preOrders.forEach(o => {
-        const r = normalizeRegion(o.region || '');
-        if (targetRegion && r !== targetRegion) return;
         const key = (matchBy === 'customer') ? normalizeCustomer(o) : (o.sku || '').trim();
         if (!targetSet.has(key)) return;
         const amt = Number(o.amount_usd || 0) * usdToDisplay();
@@ -7522,8 +7529,7 @@ function renderChoiceKitImpact(fOrders, fMkt) {
     });
     // Prior-period order amounts/qty/order-count for same-period comparison
     // (MoM/QoQ/YoY). The window is [startDate, today] shifted back by the
-    // chosen period. Data comes from BASELINE (pre-campaign) — that's where
-    // prior history lives. Region-constrained, same as baseline aggregation.
+    // chosen period. No region constraint — same SKU/customer globally.
     const priorAmt = {}, priorQty = {}, priorOrderIds = {};
     targetList.forEach(k => { priorAmt[k]=0; priorQty[k]=0; priorOrderIds[k]=new Set(); });
     let priorFrom = '', priorTo = '';
@@ -7534,8 +7540,6 @@ function renderChoiceKitImpact(fOrders, fMkt) {
         state.preOrders.forEach(o => {
           const d = (o.order_date || '');
           if (!d || d < priorFrom || d > priorTo) return;
-          const r = normalizeRegion(o.region || '');
-          if (targetRegion && r !== targetRegion) return;
           const key = (matchBy === 'customer') ? normalizeCustomer(o) : (o.sku || '').trim();
           if (!targetSet.has(key)) return;
           const amt = Number(o.amount_usd || 0) * usdToDisplay();
