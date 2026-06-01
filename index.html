@@ -2186,6 +2186,8 @@ header .mono b.t-orange {
         </div>
         <!-- KPI cards (6) -->
         <div id="ckiKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:18px"></div>
+        <!-- Before vs After comparison (target SKU/customer volume) -->
+        <div id="ckiBeforeAfter" style="margin-bottom:18px"></div>
         <!-- 2-column layout: funnel + activation matrix -->
         <div style="display:grid;grid-template-columns:1.1fr 0.9fr;gap:18px;margin-bottom:18px">
           <div>
@@ -7426,167 +7428,301 @@ function renderChoiceKitImpact(fOrders, fMkt) {
   if (!promoNames.length) { wrap.style.display = 'none'; return; }
   wrap.style.display = '';
 
-  // Populate campaign selector (default to the first known campaign).
+  // Populate campaign selector with an "All Promotions" option at the top.
   const sel = document.getElementById('ckiPromoSel');
   if (sel) {
-    sel.innerHTML = promoNames.map(p => `<option value="${p.replace(/"/g,'&quot;')}">${p}</option>`).join('');
-    const cur = state.ckiPromo || promoNames[0];
-    sel.value = promoNames.includes(cur) ? cur : promoNames[0];
+    sel.innerHTML = `<option value="__all__">All Promotions (aggregate)</option>` +
+      promoNames.map(p => `<option value="${p.replace(/"/g,'&quot;')}">${p}</option>`).join('');
+    const cur = state.ckiPromo || '__all__';
+    sel.value = (cur === '__all__' || promoNames.includes(cur)) ? cur : '__all__';
     if (state.ckiPromo !== sel.value) state.ckiPromo = sel.value;
   }
   // Threshold selector.
   const thSel = document.getElementById('ckiThresholdSel');
   if (thSel) thSel.value = String(state.ckiThreshold);
 
-  const promo = state.ckiPromo || promoNames[0];
-  const pcfg = cfg[promo] || {};
-  const matchBy = (pcfg.match_by || 'sku').toLowerCase();
-  const targetRegion = pcfg.region || '';
+  const promo = state.ckiPromo || '__all__';
   const threshold = Number(state.ckiThreshold) || 0;
   const thresholdLabel = threshold === 0 ? '$0 (zero sales)' : `< ${fmtMoney(threshold)}`;
+  const isAll = (promo === '__all__');
+  const activeCampaigns = isAll ? promoNames : [promo];
 
-  // First marketing date of this campaign = activation window start.
-  const startDate = (function() {
-    let earliest = '';
+  // ──────────────────────────────────────────────────────────────────────
+  // Per-campaign metrics computation — used for both single and aggregate modes
+  // ──────────────────────────────────────────────────────────────────────
+  function computeForPromo(promoName) {
+    const pcfg = cfg[promoName] || {};
+    const matchBy = (pcfg.match_by || 'sku').toLowerCase();
+    const targetRegion = pcfg.region || '';
+    // First marketing date of this campaign = activation window start.
+    let startDate = '';
     (state.marketing || []).forEach(m => {
-      if ((m.promotion_category||'') !== promo) return;
+      if ((m.promotion_category||'') !== promoName) return;
       const d = (m.date || '').trim();
       if (!d) return;
-      if (!earliest || d < earliest) earliest = d;
+      if (!startDate || d < startDate) startDate = d;
     });
-    return earliest;
-  })();
-
-  // ── Build target list and per-target baseline / post-campaign metrics ──
-  const targetList = matchBy === 'customer'
-    ? (pcfg.target_customers || []).map(c => String(c).trim()).filter(Boolean)
-    : (pcfg.target_skus || []).map(s => String(s).trim()).filter(Boolean);
-  const targetSet = new Set(targetList);
-
-  // Baseline aggregation (filtered by region when configured).
-  // baseline rows have o.amount_usd; convert to display currency.
-  const baseAmt = {}, baseQty = {};
-  targetList.forEach(k => { baseAmt[k]=0; baseQty[k]=0; });
-  if (state.preOrdersEnabled && Array.isArray(state.preOrders)) {
-    state.preOrders.forEach(o => {
-      const r = normalizeRegion(o.region || '');
-      if (targetRegion && r !== targetRegion) return;
-      const key = (matchBy === 'customer') ? normalizeCustomer(o) : (o.sku || '').trim();
+    const targetList = matchBy === 'customer'
+      ? (pcfg.target_customers || []).map(c => String(c).trim()).filter(Boolean)
+      : (pcfg.target_skus || []).map(s => String(s).trim()).filter(Boolean);
+    const targetSet = new Set(targetList);
+    // Baseline aggregation (region-filtered).
+    const baseAmt = {}, baseQty = {};
+    targetList.forEach(k => { baseAmt[k]=0; baseQty[k]=0; });
+    if (state.preOrdersEnabled && Array.isArray(state.preOrders)) {
+      state.preOrders.forEach(o => {
+        const r = normalizeRegion(o.region || '');
+        if (targetRegion && r !== targetRegion) return;
+        const key = (matchBy === 'customer') ? normalizeCustomer(o) : (o.sku || '').trim();
+        if (!targetSet.has(key)) return;
+        const amt = Number(o.amount_usd || 0) * usdToDisplay();
+        baseAmt[key] = (baseAmt[key] || 0) + amt;
+        baseQty[key] = (baseQty[key] || 0) + Number(o.qty || 0);
+      });
+    }
+    // Post-campaign orders for this campaign.
+    const postAmt = {}, postQty = {}, postOrders = {};
+    targetList.forEach(k => { postAmt[k]=0; postQty[k]=0; postOrders[k]=[]; });
+    (state.orders || []).forEach(o => {
+      if ((o.promotion_category || '') !== promoName) return;
+      if (startDate && (o.order_date || '') < startDate) return;
+      const key = (matchBy === 'customer') ? (o.customer || '').trim() : (o.sku || '').trim();
       if (!targetSet.has(key)) return;
-      const amt = Number(o.amount_usd || 0) * usdToDisplay();
-      baseAmt[key] = (baseAmt[key] || 0) + amt;
-      baseQty[key] = (baseQty[key] || 0) + Number(o.qty || 0);
+      const amt = convOrder(o);
+      postAmt[key] = (postAmt[key] || 0) + amt;
+      postQty[key] = (postQty[key] || 0) + Number(o.qty || 0);
+      postOrders[key].push(o);
     });
+    // Classify into 2×2.
+    const dormant = [], active = [];
+    targetList.forEach(k => (baseAmt[k] < threshold ? dormant : active).push(k));
+    const newlyActivated = dormant.filter(k => postAmt[k] > 0);
+    const retainedActive = active.filter(k => postAmt[k] > 0);
+    const lostActive     = active.filter(k => postAmt[k] === 0);
+    const stillDormant   = dormant.filter(k => postAmt[k] === 0);
+    // Full-set analysis (SKU only).
+    const fullsetBuckets = new Map();
+    let fullsetCount = 0, singleCount = 0, fullsetTargetAmt = 0, fullsetTargetSkuTotal = 0;
+    let fullsetRelatedAmt = 0;
+    let bestModel = null, bestSkuCount = 0;
+    const fullsetModels = new Set();
+    if (matchBy === 'sku') {
+      Object.values(postOrders).forEach(arr => arr.forEach(o => {
+        const mm = (o.make_model || '').trim();
+        if (!mm) return;
+        const key = `${o.order_date}|${(o.customer||'').trim()}|${mm}`;
+        if (!fullsetBuckets.has(key)) fullsetBuckets.set(key, { skus:new Set(), amt:0, qty:0, model:mm });
+        const g = fullsetBuckets.get(key);
+        g.skus.add((o.sku || '').trim());
+        g.amt += convOrder(o);
+        g.qty += Number(o.qty || 0);
+      }));
+      const fullsetKeys = new Set();
+      fullsetBuckets.forEach((g, key) => {
+        if (g.skus.size >= 2) {
+          fullsetCount++;
+          fullsetTargetAmt += g.amt;
+          fullsetTargetSkuTotal += g.skus.size;
+          fullsetKeys.add(key);
+          fullsetModels.add(g.model);
+          if (g.skus.size > bestSkuCount) { bestSkuCount = g.skus.size; bestModel = g.model; }
+        } else { singleCount++; }
+      });
+      (state.orders || []).forEach(o => {
+        if ((o.promotion_category || '') !== promoName) return;
+        if (startDate && (o.order_date || '') < startDate) return;
+        const mm = (o.make_model || '').trim();
+        if (!mm) return;
+        const key = `${o.order_date}|${(o.customer||'').trim()}|${mm}`;
+        if (fullsetKeys.has(key)) fullsetRelatedAmt += convOrder(o);
+      });
+    }
+    // Distinct models touched by activated targets.
+    const activatedModels = new Set();
+    [...newlyActivated, ...retainedActive].forEach(k => {
+      (postOrders[k] || []).forEach(o => {
+        const mm = (o.make_model || '').trim();
+        if (mm) activatedModels.add(mm);
+      });
+    });
+    return {
+      promoName, matchBy, targetRegion, startDate,
+      targetList, targetSet, baseAmt, baseQty, postAmt, postQty, postOrders,
+      dormant, retainedActive, lostActive, stillDormant, newlyActivated,
+      fullsetCount, singleCount, fullsetTargetAmt, fullsetRelatedAmt,
+      fullsetTargetSkuTotal, fullsetModels, bestModel, bestSkuCount,
+      activatedModels,
+    };
   }
-  // Post-campaign orders for this campaign (tagged orders, optionally also
-  // any region-matching baseline rows after startDate — but we keep it strict:
-  // only promotion-tagged orders count as "campaign-driven activation").
-  const postAmt = {}, postQty = {}, postOrders = {};
-  targetList.forEach(k => { postAmt[k]=0; postQty[k]=0; postOrders[k]=[]; });
-  (state.orders || []).forEach(o => {
-    if ((o.promotion_category || '') !== promo) return;
-    if (startDate && (o.order_date || '') < startDate) return;
-    const key = (matchBy === 'customer') ? (o.customer || '').trim() : (o.sku || '').trim();
-    if (!targetSet.has(key)) return;
-    const amt = convOrder(o);
-    postAmt[key] = (postAmt[key] || 0) + amt;
-    postQty[key] = (postQty[key] || 0) + Number(o.qty || 0);
-    postOrders[key].push(o);
+  const metricsList = activeCampaigns.map(computeForPromo);
+
+  // Aggregate sums helper
+  const sumKeys = (arr, mapObj) => arr.reduce((s, k) => s + (mapObj[k] || 0), 0);
+
+  // ──────────────────────────────────────────────────────────────────────
+  // Aggregation across selected campaigns (works for 1 or many)
+  // For "newly activated key" disambiguation across campaigns we use
+  // "<campaign>::<key>" so the same key under different campaigns counts twice.
+  // ──────────────────────────────────────────────────────────────────────
+  let agg = {
+    targetCount: 0,
+    dormantCount: 0,
+    newlyCount: 0,
+    retainedCount: 0,
+    lostCount: 0,
+    stillDormantCount: 0,
+    newlyAmt: 0, newlyQty: 0,
+    activatedAmt: 0, activatedQty: 0,
+    activatedSkuBaselineAmt: 0,     // baseline of activated targets (for "activated-only" before/after)
+    allTargetBaselineAmt: 0,         // baseline of ALL targets
+    allTargetPostAmt: 0,             // post-campaign of ALL targets
+    fullsetCount: 0, singleCount: 0,
+    fullsetTargetAmt: 0, fullsetRelatedAmt: 0,
+    fullsetTargetSkuTotal: 0,
+    fullsetModels: new Set(),
+    activatedModels: new Set(),
+    bestModel: null, bestSkuCount: 0,
+    hasSku: false,           // at least one campaign in the set is SKU-based
+    hasCustomer: false,
+    regions: new Set(),
+    activatedRows: [],       // for the table
+  };
+  metricsList.forEach(M => {
+    agg.targetCount += M.targetList.length;
+    agg.dormantCount += M.dormant.length;
+    agg.newlyCount += M.newlyActivated.length;
+    agg.retainedCount += M.retainedActive.length;
+    agg.lostCount += M.lostActive.length;
+    agg.stillDormantCount += M.stillDormant.length;
+    agg.newlyAmt += sumKeys(M.newlyActivated, M.postAmt);
+    agg.newlyQty += sumKeys(M.newlyActivated, M.postQty);
+    const activatedAll = M.newlyActivated.concat(M.retainedActive);
+    agg.activatedAmt += sumKeys(activatedAll, M.postAmt);
+    agg.activatedQty += sumKeys(activatedAll, M.postQty);
+    agg.activatedSkuBaselineAmt += sumKeys(activatedAll, M.baseAmt);
+    agg.allTargetBaselineAmt += sumKeys(M.targetList, M.baseAmt);
+    agg.allTargetPostAmt += sumKeys(M.targetList, M.postAmt);
+    agg.fullsetCount += M.fullsetCount;
+    agg.singleCount += M.singleCount;
+    agg.fullsetTargetAmt += M.fullsetTargetAmt;
+    agg.fullsetRelatedAmt += M.fullsetRelatedAmt;
+    agg.fullsetTargetSkuTotal += M.fullsetTargetSkuTotal;
+    M.fullsetModels.forEach(m => agg.fullsetModels.add(m));
+    M.activatedModels.forEach(m => agg.activatedModels.add(m));
+    if (M.bestSkuCount > agg.bestSkuCount) { agg.bestSkuCount = M.bestSkuCount; agg.bestModel = M.bestModel; }
+    if (M.matchBy === 'sku') agg.hasSku = true; else agg.hasCustomer = true;
+    if (M.targetRegion) agg.regions.add(M.targetRegion);
+    // Collect activated detail rows for the table (with campaign label).
+    [...M.newlyActivated, ...M.retainedActive].forEach(k => {
+      const orders = M.postOrders[k] || [];
+      orders.sort((a,b) => String(a.order_date).localeCompare(String(b.order_date)));
+      const first = orders[0];
+      agg.activatedRows.push({
+        kind: M.newlyActivated.includes(k) ? '🔵' : '🟢',
+        campaign: M.promoName,
+        matchBy: M.matchBy,
+        key: k,
+        baseAmt: M.baseAmt[k] || 0,
+        postAmt: M.postAmt[k] || 0,
+        postQty: M.postQty[k] || 0,
+        firstDate: first ? first.order_date : '',
+        model: (M.matchBy === 'sku' && first) ? (first.make_model || '') : '',
+      });
+    });
   });
 
-  // Classify each target into the 2×2 matrix.
-  const dormant = [], active = [];                              // baseline classification
-  targetList.forEach(k => (baseAmt[k] < threshold ? dormant : active).push(k));
-  const newlyActivated = dormant.filter(k => postAmt[k] > 0);    // 🔵 the headline
-  const retainedActive = active.filter(k => postAmt[k] > 0);     // 🟢
-  const lostActive     = active.filter(k => postAmt[k] === 0);   // 🟡
-  const stillDormant   = dormant.filter(k => postAmt[k] === 0);  // ⚪
-
-  // Sum metrics for the headline KPIs.
-  const sum = (arr, m) => arr.reduce((s,k)=>s+(m[k]||0),0);
-  const newlyAmt = sum(newlyActivated, postAmt);
-  const newlyQty = sum(newlyActivated, postQty);
-  const totalPostAmt = sum(targetList, postAmt);
-  const activationRate = targetList.length ? (newlyActivated.length + retainedActive.length) / targetList.length : 0;
-  const dormantConvRate = dormant.length ? newlyActivated.length / dormant.length : 0;
+  // dimWord — for headlines. In mixed/all mode, use generic "Target".
+  const dimWord = isAll
+    ? 'Target'
+    : (metricsList[0].matchBy === 'customer' ? 'Customer' : 'SKU');
+  const regionLabel = isAll
+    ? `${activeCampaigns.length} campaigns · ${[...agg.regions].join(' / ')}`
+    : `${promo} · ${metricsList[0].targetRegion}`;
+  const showFullset = agg.hasSku;
+  const dormantConvRate = agg.dormantCount ? (agg.newlyCount / agg.dormantCount) : 0;
+  const activatedAllCount = agg.newlyCount + agg.retainedCount;
 
   // ── KPI cards ──
   const kpiEl = document.getElementById('ckiKpis');
-  const dimWord = matchBy === 'customer' ? 'Customer' : 'SKU';
   const card = (label, val, sub, accent) => `
     <div style="background:rgba(0,0,0,0.02);border:1px solid ${accent||'rgba(0,0,0,0.08)'};border-radius:10px;padding:14px 16px;${accent?'border-left:4px solid '+accent:''}">
       <div class="label-mono" style="font-size:11px;color:#86868B;letter-spacing:0.06em;font-weight:600;text-transform:uppercase">${label}</div>
       <div style="font-size:22px;font-weight:800;margin-top:6px;line-height:1.2">${val}</div>
       ${sub ? `<div class="label-mono muted" style="font-size:12px;margin-top:4px;line-height:1.4">${sub}</div>` : ''}
     </div>`;
-
-  // Total activated SKU/customer post-campaign sales (newly + retained).
-  const activatedAll = newlyActivated.concat(retainedActive);
-  const activatedAmtTotal = sum(activatedAll, postAmt);
-  const activatedQtyTotal = sum(activatedAll, postQty);
-
-  // Distinct make_models touched by activated SKUs (or by orders for activated customers).
-  const activatedModels = new Set();
-  activatedAll.forEach(k => {
-    (postOrders[k] || []).forEach(o => {
-      const mm = (o.make_model || '').trim();
-      if (mm) activatedModels.add(mm);
-    });
-  });
-
-  // Pre-compute Full-set related orders so the KPI card can show the figure.
-  let fullsetCount = 0, singleCount = 0, fullsetTargetAmt = 0, fullsetTargetSkuTotal = 0;
-  let fullsetRelatedAmt = 0;
-  let bestModel = null, bestSkuCount = 0;
-  const fullsetBuckets = new Map();
-  if (matchBy === 'sku') {
-    Object.values(postOrders).forEach(arr => arr.forEach(o => {
-      const mm = (o.make_model || '').trim();
-      if (!mm) return;
-      const key = `${o.order_date}|${(o.customer||'').trim()}|${mm}`;
-      if (!fullsetBuckets.has(key)) fullsetBuckets.set(key, { skus:new Set(), amt:0, qty:0, model:mm });
-      const g = fullsetBuckets.get(key);
-      g.skus.add((o.sku || '').trim());
-      g.amt += convOrder(o);
-      g.qty += Number(o.qty || 0);
-    }));
-    const fullsetKeys = new Set();
-    fullsetBuckets.forEach((g, key) => {
-      if (g.skus.size >= 2) {
-        fullsetCount++;
-        fullsetTargetAmt += g.amt;
-        fullsetTargetSkuTotal += g.skus.size;
-        fullsetKeys.add(key);
-        if (g.skus.size > bestSkuCount) { bestSkuCount = g.skus.size; bestModel = g.model; }
-      } else { singleCount++; }
-    });
-    (state.orders || []).forEach(o => {
-      if ((o.promotion_category || '') !== promo) return;
-      if (startDate && (o.order_date || '') < startDate) return;
-      const mm = (o.make_model || '').trim();
-      if (!mm) return;
-      const key = `${o.order_date}|${(o.customer||'').trim()}|${mm}`;
-      if (fullsetKeys.has(key)) fullsetRelatedAmt += convOrder(o);
-    });
-  }
-
   if (kpiEl) kpiEl.innerHTML =
-    card(`Total Target ${dimWord}s`,         `${targetList.length.toLocaleString()}`,    `${promo} · ${targetRegion}${matchBy==='sku' ? ` · ${activatedModels.size} models activated` : ''}`) +
-    card(`Dormant ${dimWord}s`,               `${dormant.length.toLocaleString()}`,       `Baseline ${thresholdLabel}`) +
-    card(`🔵 Newly Activated (Choice Kit Effect)`, `${newlyActivated.length} / ${dormant.length} (${(dormantConvRate*100).toFixed(1)}%)`, `Revenue ${fmtMoney(newlyAmt)} · ${newlyQty.toLocaleString()} pcs`, '#0A84FF') +
-    card(`Activated ${dimWord} Revenue`,      `${fmtMoney(activatedAmtTotal)}`,           `${activatedAll.length} activated · ${activatedQtyTotal.toLocaleString()} pcs`, '#C8102E') +
-    (matchBy === 'sku' ? card(
+    card(`Total Target ${dimWord}s`,         `${agg.targetCount.toLocaleString()}`,    `${regionLabel}${agg.hasSku ? ` · ${agg.activatedModels.size} models activated` : ''}`) +
+    card(`Dormant ${dimWord}s`,               `${agg.dormantCount.toLocaleString()}`,   `Baseline ${thresholdLabel}`) +
+    card(`🔵 Newly Activated (Choice Kit Effect)`, `${agg.newlyCount} / ${agg.dormantCount} (${(dormantConvRate*100).toFixed(1)}%)`, `Revenue ${fmtMoney(agg.newlyAmt)} · ${agg.newlyQty.toLocaleString()} pcs`, '#0A84FF') +
+    card(`Activated ${dimWord} Revenue`,      `${fmtMoney(agg.activatedAmt)}`,           `${activatedAllCount} activated · ${agg.activatedQty.toLocaleString()} pcs`, '#C8102E') +
+    (showFullset ? card(
       `🎯 Full-set Related Revenue`,
-      `${fmtMoney(fullsetRelatedAmt)}`,
-      `${fullsetCount.toLocaleString()} full-set orders · target-only: ${fmtMoney(fullsetTargetAmt)}`,
+      `${fmtMoney(agg.fullsetRelatedAmt)}`,
+      `${agg.fullsetCount.toLocaleString()} full-set orders · target-only: ${fmtMoney(agg.fullsetTargetAmt)}`,
       '#34C759'
     ) : '') +
-    card(`Still Dormant ${dimWord}s`,         `${stillDormant.length.toLocaleString()}`,  `Next action target (${(100*stillDormant.length/Math.max(1,targetList.length)).toFixed(0)}% of total)`);
+    card(`Still Dormant ${dimWord}s`,         `${agg.stillDormantCount.toLocaleString()}`, `Next action target (${(100*agg.stillDormantCount/Math.max(1,agg.targetCount)).toFixed(0)}% of total)`);
+
+  // ── Before vs After comparison block ──
+  const baEl = document.getElementById('ckiBeforeAfter');
+  if (baEl) {
+    const allDelta = agg.allTargetBaselineAmt > 0
+      ? ((agg.allTargetPostAmt - agg.allTargetBaselineAmt) / agg.allTargetBaselineAmt * 100)
+      : (agg.allTargetPostAmt > 0 ? Infinity : 0);
+    const actDelta = agg.activatedSkuBaselineAmt > 0
+      ? ((agg.activatedAmt - agg.activatedSkuBaselineAmt) / agg.activatedSkuBaselineAmt * 100)
+      : (agg.activatedAmt > 0 ? Infinity : 0);
+    const deltaPill = (d) => {
+      if (!isFinite(d)) return `<span style="color:#34C759;font-weight:800">▲ NEW</span>`;
+      if (d > 0) return `<span style="color:#34C759;font-weight:800">▲ +${d.toFixed(1)}%</span>`;
+      if (d < 0) return `<span style="color:#C8102E;font-weight:800">▼ ${d.toFixed(1)}%</span>`;
+      return `<span style="color:#86868B;font-weight:800">— 0%</span>`;
+    };
+    // Two stacked rows: All Targets, Activated only
+    baEl.innerHTML = `
+      <div class="label-mono" style="font-size:12px;font-weight:700;margin-bottom:8px;color:#1D1D1F">BEFORE vs AFTER — Target Volume Comparison</div>
+      <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 0.8fr;gap:14px;padding:12px 16px;background:rgba(0,0,0,0.02);border:1px solid rgba(0,0,0,0.08);border-radius:10px;align-items:center;margin-bottom:6px">
+        <div>
+          <div class="label-mono" style="font-size:11px;font-weight:600;color:#86868B;letter-spacing:0.05em;text-transform:uppercase">All Target ${dimWord}s</div>
+          <div style="font-size:14px;font-weight:600;margin-top:2px">${agg.targetCount.toLocaleString()} total · scope-wide</div>
+        </div>
+        <div>
+          <div class="label-mono muted" style="font-size:11px">Baseline (Before)</div>
+          <div style="font-size:20px;font-weight:800">${fmtMoney(agg.allTargetBaselineAmt)}</div>
+        </div>
+        <div>
+          <div class="label-mono muted" style="font-size:11px">Post-Campaign (After)</div>
+          <div style="font-size:20px;font-weight:800;color:#1D1D1F">${fmtMoney(agg.allTargetPostAmt)}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="label-mono muted" style="font-size:11px">Uplift</div>
+          <div style="font-size:18px">${deltaPill(allDelta)}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 0.8fr;gap:14px;padding:12px 16px;background:rgba(10,132,255,0.06);border:1px solid rgba(10,132,255,0.25);border-left:4px solid #0A84FF;border-radius:10px;align-items:center">
+        <div>
+          <div class="label-mono" style="font-size:11px;font-weight:600;color:#0A84FF;letter-spacing:0.05em;text-transform:uppercase">└ Activated ${dimWord}s only</div>
+          <div style="font-size:14px;font-weight:600;margin-top:2px">${activatedAllCount.toLocaleString()} of ${agg.targetCount.toLocaleString()} (${(100*activatedAllCount/Math.max(1,agg.targetCount)).toFixed(1)}%)</div>
+        </div>
+        <div>
+          <div class="label-mono muted" style="font-size:11px">Baseline (Before)</div>
+          <div style="font-size:20px;font-weight:800">${fmtMoney(agg.activatedSkuBaselineAmt)}</div>
+        </div>
+        <div>
+          <div class="label-mono muted" style="font-size:11px">Post-Campaign (After)</div>
+          <div style="font-size:20px;font-weight:800;color:#C8102E">${fmtMoney(agg.activatedAmt)}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="label-mono muted" style="font-size:11px">Uplift</div>
+          <div style="font-size:18px">${deltaPill(actDelta)}</div>
+        </div>
+      </div>`;
+  }
 
   // ── Funnel chart ──
   if (charts.ckiFunnel) charts.ckiFunnel.destroy();
   const funnelLabels = [`Total ${dimWord}s`, `Dormant`, `Newly Activated`, `Revenue Generated`];
-  const funnelData   = [targetList.length, dormant.length, newlyActivated.length, newlyActivated.filter(k=>postAmt[k]>0).length];
+  const funnelData   = [agg.targetCount, agg.dormantCount, agg.newlyCount, agg.newlyCount];  // revenue-generated count == newly activated with postAmt>0 (same since we only push newly when amt>0... but we filter postAmt>0)
   charts.ckiFunnel = new Chart(document.getElementById('chCkiFunnel'), {
     type: 'bar',
     data: { labels: funnelLabels, datasets: [{
@@ -7629,76 +7765,63 @@ function renderChoiceKitImpact(fOrders, fMkt) {
         <div class="label-mono muted" style="font-size:12px;margin-top:2px">${fmtMoney(amt)}</div>
       </div>`;
     matrixEl.innerHTML =
-      cell('🔵', 'Newly Active', newlyActivated.length, sum(newlyActivated, postAmt), '#0A84FF', 'rgba(10,132,255,0.06)') +
-      cell('🟢', 'Retained Active', retainedActive.length, sum(retainedActive, postAmt), '#34C759', 'rgba(52,199,89,0.06)') +
-      cell('⚪', 'Still Dormant', stillDormant.length,   0,                             '#86868B', 'rgba(134,134,139,0.04)') +
-      cell('🟡', 'Lost Active',  lostActive.length,     0,                             '#FF9500', 'rgba(255,149,0,0.06)');
+      cell('🔵', 'Newly Active', agg.newlyCount, agg.newlyAmt, '#0A84FF', 'rgba(10,132,255,0.06)') +
+      cell('🟢', 'Retained Active', agg.retainedCount, agg.activatedAmt - agg.newlyAmt, '#34C759', 'rgba(52,199,89,0.06)') +
+      cell('⚪', 'Still Dormant', agg.stillDormantCount, 0, '#86868B', 'rgba(134,134,139,0.04)') +
+      cell('🟡', 'Lost Active',  agg.lostCount,         0, '#FF9500', 'rgba(255,149,0,0.06)');
   }
 
-  // ── Full-set analysis summary (SKU campaigns only — reuses pre-computed values) ──
+  // ── Full-set summary (only when at least one SKU campaign in scope) ──
   const fsWrap = document.getElementById('ckiFullsetWrap');
   const fsSum  = document.getElementById('ckiFullsetSummary');
-  if (matchBy === 'sku' && fsWrap && fsSum) {
+  if (showFullset && fsWrap && fsSum) {
     fsWrap.style.display = '';
-    const total = fullsetCount + singleCount;
-    const fsRate = total ? (fullsetCount/total*100) : 0;
-    const avgSkuPerSet = fullsetCount ? (fullsetTargetSkuTotal/fullsetCount) : 0;
-    // Distinct make_models in Full-set buckets
-    const fullsetModels = new Set();
-    fullsetBuckets.forEach((g, key) => {
-      if (g.skus.size >= 2) fullsetModels.add(g.model);
-    });
+    const total = agg.fullsetCount + agg.singleCount;
+    const fsRate = total ? (agg.fullsetCount/total*100) : 0;
+    const avgSkuPerSet = agg.fullsetCount ? (agg.fullsetTargetSkuTotal/agg.fullsetCount) : 0;
     fsSum.innerHTML = `
-      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Full-set Orders (2+ SKUs / Model)</span><div style="font-size:22px;font-weight:800;color:#C8102E;margin-top:2px">${fullsetCount.toLocaleString()} · ${fsRate.toFixed(1)}%</div></div>
-      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Single-line Orders</span><div style="font-size:18px;font-weight:700;margin-top:2px">${singleCount.toLocaleString()}</div></div>
-      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Full-set Target SKU Revenue</span><div style="font-size:18px;font-weight:700;margin-top:2px">${fmtMoney(fullsetTargetAmt)}</div></div>
-      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Full-set Related Revenue (all lines)</span><div style="font-size:18px;font-weight:700;color:#34C759;margin-top:2px">${fmtMoney(fullsetRelatedAmt)}</div></div>
-      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Full-set Models</span><div style="font-size:18px;font-weight:700;margin-top:2px">${fullsetModels.size}</div></div>
+      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Full-set Orders (2+ SKUs / Model)</span><div style="font-size:22px;font-weight:800;color:#C8102E;margin-top:2px">${agg.fullsetCount.toLocaleString()} · ${fsRate.toFixed(1)}%</div></div>
+      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Single-line Orders</span><div style="font-size:18px;font-weight:700;margin-top:2px">${agg.singleCount.toLocaleString()}</div></div>
+      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Full-set Target SKU Revenue</span><div style="font-size:18px;font-weight:700;margin-top:2px">${fmtMoney(agg.fullsetTargetAmt)}</div></div>
+      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Full-set Related Revenue (all lines)</span><div style="font-size:18px;font-weight:700;color:#34C759;margin-top:2px">${fmtMoney(agg.fullsetRelatedAmt)}</div></div>
+      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Full-set Models</span><div style="font-size:18px;font-weight:700;margin-top:2px">${agg.fullsetModels.size}</div></div>
       <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Avg SKU / Set</span><div style="font-size:18px;font-weight:700;margin-top:2px">${avgSkuPerSet.toFixed(1)}</div></div>
-      ${bestModel ? `<div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Largest Set</span><div style="font-size:15px;font-weight:700;margin-top:2px">${bestModel} <span class="muted" style="font-size:12px;font-weight:500">(${bestSkuCount} SKUs co-ordered)</span></div></div>` : ''}`;
+      ${agg.bestModel ? `<div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Largest Set</span><div style="font-size:15px;font-weight:700;margin-top:2px">${agg.bestModel} <span class="muted" style="font-size:12px;font-weight:500">(${agg.bestSkuCount} SKUs co-ordered)</span></div></div>` : ''}`;
   } else if (fsWrap) {
     fsWrap.style.display = 'none';
   }
 
-  // ── Activated table (dormant→active rows first, then retained-active) ──
+  // ── Activated detail table ──
   const tbl = document.getElementById('tblCkiActivated');
   if (tbl) {
-    const rows = [];
-    newlyActivated.forEach(k => rows.push({
-      kind:'🔵', key:k, baseAmt:baseAmt[k]||0, postAmt:postAmt[k]||0, postQty:postQty[k]||0,
-    }));
-    retainedActive.forEach(k => rows.push({
-      kind:'🟢', key:k, baseAmt:baseAmt[k]||0, postAmt:postAmt[k]||0, postQty:postQty[k]||0,
-    }));
-    // Sort by post-campaign amount desc, cap 50.
-    rows.sort((a,b) => b.postAmt - a.postAmt);
+    const rows = agg.activatedRows.slice().sort((a,b) => b.postAmt - a.postAmt);
     const shown = rows.slice(0, 50);
     if (!shown.length) {
-      tbl.innerHTML = '<thead><tr><th style="text-align:center;padding:24px;color:#86868B;font-size:14px">No activated ' + dimWord + 's yet</th></tr></thead>';
+      tbl.innerHTML = '<thead><tr><th style="text-align:center;padding:24px;color:#86868B;font-size:14px">No activated targets yet</th></tr></thead>';
     } else {
+      const showCampaignCol = isAll;
+      const showModelCol = agg.hasSku;
       tbl.innerHTML = `
         <thead><tr>
           <th>Type</th>
+          ${showCampaignCol?'<th>Campaign</th>':''}
           <th>${dimWord}</th>
-          ${matchBy==='sku'?'<th>Make / Model</th>':''}
+          ${showModelCol?'<th>Make / Model</th>':''}
           <th class="text-right">Baseline Revenue</th>
           <th class="text-right">Post-Campaign Revenue</th>
           <th class="text-right">Qty</th>
           <th>First Order</th>
         </tr></thead>
         <tbody>${shown.map(r => {
-          const orders = postOrders[r.key] || [];
-          orders.sort((a,b) => String(a.order_date).localeCompare(String(b.order_date)));
-          const first = orders[0];
-          const mm = matchBy==='sku' && first ? (first.make_model || '–') : '';
           return `<tr>
             <td style="font-size:15px">${r.kind}</td>
+            ${showCampaignCol?`<td class="muted" style="font-size:12px">${r.campaign}</td>`:''}
             <td><b>${r.key}</b></td>
-            ${matchBy==='sku'?`<td class="muted" style="font-size:12px">${mm}</td>`:''}
+            ${showModelCol?`<td class="muted" style="font-size:12px">${r.matchBy==='sku' ? (r.model || '–') : '–'}</td>`:''}
             <td class="text-right ${r.baseAmt===0?'muted':''}">${r.baseAmt===0?'–':fmtMoney(r.baseAmt)}</td>
             <td class="text-right" style="font-weight:700;color:#C8102E">${fmtMoney(r.postAmt)}</td>
             <td class="text-right">${r.postQty.toLocaleString()}</td>
-            <td class="muted" style="font-size:12px">${first?first.order_date:'–'}</td>
+            <td class="muted" style="font-size:12px">${r.firstDate || '–'}</td>
           </tr>`;
         }).join('')}</tbody>`;
     }
