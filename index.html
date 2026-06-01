@@ -2537,12 +2537,12 @@ function colorForCampaign(name) {
 // (Promotion Order Trend — overlaps with Promotion Performance). Both can be
 // re-enabled in Settings.
 const DEFAULT_WIDGET_ORDER = [
-  'promo','skuExplorer',
+  'promo','choicekitImpact','skuExplorer',
   'planexec','promoctr','topinsights',
   'customertrend','budgetstatus','region','activities'
 ];
 const DEFAULT_HIDDEN_WIDGETS = ['category','promoOrderTrend'];
-const WIDGET_ORDER_VERSION = 'v26.4'; // bump → existing users get the new default once
+const WIDGET_ORDER_VERSION = 'v27.0'; // bump → existing users get the new default once
 
 let state = {
   orders: JSON.parse(localStorage.getItem('ck_orders') || '[]'),
