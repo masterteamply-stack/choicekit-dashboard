@@ -1694,6 +1694,7 @@ header .mono b.t-orange {
       <option value="">JUMP TO ▾</option>
       <option value="promoOrderTrend">Order Trends</option>
       <option value="promoctr">Promo × CTR</option>
+      <option value="choicekitImpact">Choice Kit Impact</option>
       <option value="skuExplorer">SKU Analysis</option>
       <option value="topinsights">Top Insights</option>
       <option value="customertrend">Customer Trend</option>
@@ -1987,6 +1988,51 @@ header .mono b.t-orange {
             <p class="label-mono" style="font-size:11px;margin-bottom:6px" id="promoCtrDetailHead">SELECT A CATEGORY TO VIEW REGION × CUSTOMER DETAIL</p>
             <table id="tblPromoCtrDetail" style="font-size:11px;width:100%;table-layout:auto"></table>
           </div>
+        </div>
+      </div>
+
+      <!-- Choice Kit Impact — Dormant Activation (휴면 품번 활성화 분석) -->
+      <div class="panel widget" data-widget-id="choicekitImpact">
+        <div class="widget-head">
+          <div>
+            <h3 class="h-section">Choice Kit Impact — Dormant Activation</h3>
+            <p class="label-mono" style="margin-top:4px">캠페인 핵심 KPI: 안 팔리던 품번/고객이 캠페인 후 얼마나 깨어났는가</p>
+          </div>
+          <div class="chart-tools">
+            <span class="label-mono muted">Campaign</span>
+            <select id="ckiPromoSel" style="min-width:200px;font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface)"></select>
+            <span class="label-mono muted" style="margin-left:6px">휴면 기준</span>
+            <select id="ckiThresholdSel" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface)">
+              <option value="0">완전 미판매 ($0)</option>
+              <option value="100">$100 미만</option>
+              <option value="1000" selected>$1,000 미만 (기본)</option>
+              <option value="5000">$5,000 미만</option>
+            </select>
+            <div class="widget-order-controls"></div>
+          </div>
+        </div>
+        <!-- KPI cards (4) -->
+        <div id="ckiKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px"></div>
+        <!-- 2-column layout: funnel + activation matrix -->
+        <div style="display:grid;grid-template-columns:1.1fr 0.9fr;gap:14px;margin-bottom:14px">
+          <div>
+            <div class="label-mono muted" style="font-size:10px;margin-bottom:4px">DORMANT FUNNEL · 단계별 전환</div>
+            <div class="chart-wrap" style="height:260px"><canvas id="chCkiFunnel"></canvas></div>
+          </div>
+          <div>
+            <div class="label-mono muted" style="font-size:10px;margin-bottom:4px">ACTIVATION MATRIX · 2×2</div>
+            <div id="ckiMatrix" style="display:grid;grid-template-columns:1fr 1fr;gap:6px"></div>
+          </div>
+        </div>
+        <!-- Full-set analysis (only meaningful for SKU campaigns) -->
+        <div id="ckiFullsetWrap" style="margin-bottom:14px">
+          <div class="label-mono muted" style="font-size:10px;margin-bottom:4px">FULL-SET ORDERS · make_model 묶음으로 함께 주문된 캠페인 SKU</div>
+          <div id="ckiFullsetSummary" style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:13px"></div>
+        </div>
+        <!-- Activated SKU/Customer table -->
+        <div>
+          <div class="label-mono muted" style="font-size:10px;margin-bottom:4px">ACTIVATED · 휴면→활성 전환 상세 (최대 50)</div>
+          <div style="overflow:auto;max-height:280px"><table id="tblCkiActivated" style="font-size:12px"></table></div>
         </div>
       </div>
 
@@ -2539,6 +2585,8 @@ let state = {
   promoPerfPeriod: localStorage.getItem('ck_promo_perf_period') || 'month',
   promoDim: localStorage.getItem('ck_promo_dim') || 'promotion',
   promoCmp: localStorage.getItem('ck_promo_cmp') || 'off',
+  ckiPromo: localStorage.getItem('ck_cki_promo') || '',
+  ckiThreshold: parseFloat(localStorage.getItem('ck_cki_threshold') || '1000'),
   promoFilter: localStorage.getItem('ck_promo_filter') || '__all__',
   campaignTargetSkus: {},
   regionMetric: localStorage.getItem('ck_region_metric') || 'order',
@@ -4118,6 +4166,7 @@ function renderAll() {
   renderActivitiesTable(fMkt);
   // New widgets (promotion-context narrative)
   renderPromoOrderTrend(fOrders, fMkt);
+  renderChoiceKitImpact(fOrders, fMkt);
   renderSkuExplorer(fOrders, fMkt);
 }
 
@@ -7359,6 +7408,259 @@ function buildAnnualSeries(orders) {
   });
 }
 
+/* =========================================================================
+   Choice Kit Impact — Dormant Activation analysis
+   "안 팔리던 품번/고객을 캠페인으로 깨우는" 효과를 정량화한다.
+   - SKU 기반 캠페인: target_skus 기준으로 baseline 매출이 threshold 이하인
+     '휴면 SKU'를 식별하고, 그 중 캠페인 기간에 1건이라도 주문된 SKU 수와
+     매출/수량을 'newly activated' 핵심 KPI로 표시.
+   - Customer 기반 캠페인: target_customers를 동일한 방식으로 분석.
+   - Full-set: 같은 주문/날짜/customer에서 같은 make_model의 캠페인 SKU가
+     2개 이상 함께 주문된 건수 → Full-range 동시 주문 효과.
+   ========================================================================= */
+function renderChoiceKitImpact(fOrders, fMkt) {
+  const wrap = document.querySelector('[data-widget-id="choicekitImpact"]');
+  if (!wrap) return;
+  const cfg = state.campaignTargetSkus || {};
+  const promoNames = Object.keys(cfg);
+  if (!promoNames.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = '';
+
+  // Populate campaign selector (default to the first known campaign).
+  const sel = document.getElementById('ckiPromoSel');
+  if (sel) {
+    sel.innerHTML = promoNames.map(p => `<option value="${p.replace(/"/g,'&quot;')}">${p}</option>`).join('');
+    const cur = state.ckiPromo || promoNames[0];
+    sel.value = promoNames.includes(cur) ? cur : promoNames[0];
+    if (state.ckiPromo !== sel.value) state.ckiPromo = sel.value;
+  }
+  // Threshold selector.
+  const thSel = document.getElementById('ckiThresholdSel');
+  if (thSel) thSel.value = String(state.ckiThreshold);
+
+  const promo = state.ckiPromo || promoNames[0];
+  const pcfg = cfg[promo] || {};
+  const matchBy = (pcfg.match_by || 'sku').toLowerCase();
+  const targetRegion = pcfg.region || '';
+  const threshold = Number(state.ckiThreshold) || 0;
+  const thresholdLabel = threshold === 0 ? '$0 (완전 미판매)' : `< ${fmtMoney(threshold)}`;
+
+  // First marketing date of this campaign = activation window start.
+  const startDate = (function() {
+    let earliest = '';
+    (state.marketing || []).forEach(m => {
+      if ((m.promotion_category||'') !== promo) return;
+      const d = (m.date || '').trim();
+      if (!d) return;
+      if (!earliest || d < earliest) earliest = d;
+    });
+    return earliest;
+  })();
+
+  // ── Build target list and per-target baseline / post-campaign metrics ──
+  const targetList = matchBy === 'customer'
+    ? (pcfg.target_customers || []).map(c => String(c).trim()).filter(Boolean)
+    : (pcfg.target_skus || []).map(s => String(s).trim()).filter(Boolean);
+  const targetSet = new Set(targetList);
+
+  // Baseline aggregation (filtered by region when configured).
+  // baseline rows have o.amount_usd; convert to display currency.
+  const baseAmt = {}, baseQty = {};
+  targetList.forEach(k => { baseAmt[k]=0; baseQty[k]=0; });
+  if (state.preOrdersEnabled && Array.isArray(state.preOrders)) {
+    state.preOrders.forEach(o => {
+      const r = normalizeRegion(o.region || '');
+      if (targetRegion && r !== targetRegion) return;
+      const key = (matchBy === 'customer') ? normalizeCustomer(o) : (o.sku || '').trim();
+      if (!targetSet.has(key)) return;
+      const amt = Number(o.amount_usd || 0) * usdToDisplay();
+      baseAmt[key] = (baseAmt[key] || 0) + amt;
+      baseQty[key] = (baseQty[key] || 0) + Number(o.qty || 0);
+    });
+  }
+  // Post-campaign orders for this campaign (tagged orders, optionally also
+  // any region-matching baseline rows after startDate — but we keep it strict:
+  // only promotion-tagged orders count as "campaign-driven activation").
+  const postAmt = {}, postQty = {}, postOrders = {};
+  targetList.forEach(k => { postAmt[k]=0; postQty[k]=0; postOrders[k]=[]; });
+  (state.orders || []).forEach(o => {
+    if ((o.promotion_category || '') !== promo) return;
+    if (startDate && (o.order_date || '') < startDate) return;
+    const key = (matchBy === 'customer') ? (o.customer || '').trim() : (o.sku || '').trim();
+    if (!targetSet.has(key)) return;
+    const amt = convOrder(o);
+    postAmt[key] = (postAmt[key] || 0) + amt;
+    postQty[key] = (postQty[key] || 0) + Number(o.qty || 0);
+    postOrders[key].push(o);
+  });
+
+  // Classify each target into the 2×2 matrix.
+  const dormant = [], active = [];                              // baseline classification
+  targetList.forEach(k => (baseAmt[k] < threshold ? dormant : active).push(k));
+  const newlyActivated = dormant.filter(k => postAmt[k] > 0);    // 🔵 the headline
+  const retainedActive = active.filter(k => postAmt[k] > 0);     // 🟢
+  const lostActive     = active.filter(k => postAmt[k] === 0);   // 🟡
+  const stillDormant   = dormant.filter(k => postAmt[k] === 0);  // ⚪
+
+  // Sum metrics for the headline KPIs.
+  const sum = (arr, m) => arr.reduce((s,k)=>s+(m[k]||0),0);
+  const newlyAmt = sum(newlyActivated, postAmt);
+  const newlyQty = sum(newlyActivated, postQty);
+  const totalPostAmt = sum(targetList, postAmt);
+  const activationRate = targetList.length ? (newlyActivated.length + retainedActive.length) / targetList.length : 0;
+  const dormantConvRate = dormant.length ? newlyActivated.length / dormant.length : 0;
+
+  // ── KPI cards ──
+  const kpiEl = document.getElementById('ckiKpis');
+  const dimWord = matchBy === 'customer' ? '고객' : '품번';
+  const card = (label, val, sub, accent) => `
+    <div style="background:rgba(0,0,0,0.02);border:1px solid ${accent||'rgba(0,0,0,0.08)'};border-radius:8px;padding:10px 12px;${accent?'border-left:3px solid '+accent:''}">
+      <div class="label-mono" style="font-size:10px;color:#86868B;letter-spacing:0.05em">${label}</div>
+      <div style="font-size:18px;font-weight:800;margin-top:2px">${val}</div>
+      ${sub ? `<div class="label-mono muted" style="font-size:11px">${sub}</div>` : ''}
+    </div>`;
+  if (kpiEl) kpiEl.innerHTML =
+    card(`전체 대상 ${dimWord}`,    `${targetList.length.toLocaleString()}`,    `${promo} · ${targetRegion}`) +
+    card(`휴면 ${dimWord}`,         `${dormant.length.toLocaleString()}`,       `baseline ${thresholdLabel}`) +
+    card(`🔵 신규 활성 (Choice Kit 효과)`, `${newlyActivated.length} / ${dormant.length} (${(dormantConvRate*100).toFixed(1)}%)`, `매출 ${fmtMoney(newlyAmt)} · ${newlyQty.toLocaleString()} pcs`, '#0A84FF') +
+    card(`아직 휴면 ${dimWord}`,    `${stillDormant.length.toLocaleString()}`,  `다음 액션 대상 (${(100*stillDormant.length/Math.max(1,targetList.length)).toFixed(0)}% of total)`);
+
+  // ── Funnel chart ──
+  if (charts.ckiFunnel) charts.ckiFunnel.destroy();
+  const funnelLabels = [`대상 ${dimWord}`, `휴면`, `신규 활성`, `매출 발생`];
+  const funnelData   = [targetList.length, dormant.length, newlyActivated.length, newlyActivated.filter(k=>postAmt[k]>0).length];
+  charts.ckiFunnel = new Chart(document.getElementById('chCkiFunnel'), {
+    type: 'bar',
+    data: { labels: funnelLabels, datasets: [{
+      data: funnelData,
+      backgroundColor: ['#1D1D1F','#A1A1A6','#0A84FF','#34C759'],
+      hoverBackgroundColor: ['#1D1D1F','#A1A1A6','#0A84FF','#34C759'],
+      borderRadius: 4, maxBarThickness: 38,
+    }] },
+    options: {
+      indexAxis: 'y', responsive:true, maintainAspectRatio:false,
+      plugins: {
+        legend: { display:false }, datalabels: { display:false },
+        tooltip: {
+          callbacks: {
+            label: c => `${c.parsed.x.toLocaleString()} ${dimWord}`,
+            footer: items => {
+              const i = items[0].dataIndex;
+              if (i === 0) return '';
+              const prev = funnelData[i-1] || 0;
+              const pct = prev ? (funnelData[i]/prev*100) : 0;
+              return `이전 단계 대비 ${pct.toFixed(1)}%`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: { beginAtZero:true, ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',size:11}}, grid:{color:'rgba(0,0,0,0.06)'} },
+        y: { ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:11}}, grid:{display:false} },
+      },
+    },
+  });
+
+  // ── 2×2 Activation matrix ──
+  const matrixEl = document.getElementById('ckiMatrix');
+  if (matrixEl) {
+    const cell = (icon, title, count, amt, color, bg) => `
+      <div style="background:${bg};border:1px solid ${color}40;border-radius:8px;padding:10px 12px;min-height:78px">
+        <div style="font-size:14px;font-weight:700;color:${color}">${icon} ${title}</div>
+        <div style="font-size:20px;font-weight:800;margin-top:4px">${count.toLocaleString()} <span class="label-mono muted" style="font-size:11px;font-weight:500">${dimWord}</span></div>
+        <div class="label-mono muted" style="font-size:11px">${fmtMoney(amt)}</div>
+      </div>`;
+    matrixEl.innerHTML =
+      cell('🔵', '신규 활성', newlyActivated.length, sum(newlyActivated, postAmt), '#0A84FF', 'rgba(10,132,255,0.06)') +
+      cell('🟢', '유지 활성', retainedActive.length, sum(retainedActive, postAmt), '#34C759', 'rgba(52,199,89,0.06)') +
+      cell('⚪', '아직 휴면', stillDormant.length,   0,                             '#86868B', 'rgba(134,134,139,0.04)') +
+      cell('🟡', '이탈',     lostActive.length,     0,                             '#FF9500', 'rgba(255,149,0,0.06)');
+  }
+
+  // ── Full-set analysis (SKU campaigns only) ──
+  const fsWrap = document.getElementById('ckiFullsetWrap');
+  const fsSum  = document.getElementById('ckiFullsetSummary');
+  if (matchBy === 'sku' && fsWrap && fsSum) {
+    fsWrap.style.display = '';
+    // Group post-campaign orders by (order_date + customer + make_model). When
+    // a group contains 2+ distinct target SKUs, it counts as a Full-set order.
+    const groups = new Map();
+    Object.values(postOrders).forEach(arr => arr.forEach(o => {
+      const mm = (o.make_model || '').trim();
+      if (!mm) return;
+      const key = `${o.order_date}|${(o.customer||'').trim()}|${mm}`;
+      if (!groups.has(key)) groups.set(key, { skus: new Set(), amt: 0, qty: 0, model: mm });
+      const g = groups.get(key);
+      g.skus.add((o.sku || '').trim());
+      g.amt += convOrder(o);
+      g.qty += Number(o.qty || 0);
+    }));
+    let fullset=0, single=0, fullsetAmt=0, fullsetSkuTotal=0;
+    let bestModel=null, bestSkuCount=0;
+    groups.forEach(g => {
+      if (g.skus.size >= 2) {
+        fullset++; fullsetAmt += g.amt; fullsetSkuTotal += g.skus.size;
+        if (g.skus.size > bestSkuCount) { bestSkuCount = g.skus.size; bestModel = g.model; }
+      } else { single++; }
+    });
+    const total = fullset + single;
+    const fsRate = total ? (fullset/total*100) : 0;
+    const avgSkuPerSet = fullset ? (fullsetSkuTotal/fullset) : 0;
+    fsSum.innerHTML = `
+      <div><span class="label-mono muted" style="font-size:11px">FULL-SET 주문 (2+ SKU/차종)</span><div style="font-size:18px;font-weight:800;color:#C8102E">${fullset.toLocaleString()}건 · ${fsRate.toFixed(1)}%</div></div>
+      <div><span class="label-mono muted" style="font-size:11px">단품 주문</span><div style="font-size:16px;font-weight:700">${single.toLocaleString()}건</div></div>
+      <div><span class="label-mono muted" style="font-size:11px">Full-set 매출</span><div style="font-size:16px;font-weight:700">${fmtMoney(fullsetAmt)}</div></div>
+      <div><span class="label-mono muted" style="font-size:11px">Set 당 평균 SKU</span><div style="font-size:16px;font-weight:700">${avgSkuPerSet.toFixed(1)}</div></div>
+      ${bestModel ? `<div><span class="label-mono muted" style="font-size:11px">최대 SET 차종</span><div style="font-size:14px;font-weight:700">${bestModel} (${bestSkuCount} SKU 동시 주문)</div></div>` : ''}`;
+  } else if (fsWrap) {
+    fsWrap.style.display = 'none';
+  }
+
+  // ── Activated table (dormant→active rows first, then retained-active) ──
+  const tbl = document.getElementById('tblCkiActivated');
+  if (tbl) {
+    const rows = [];
+    newlyActivated.forEach(k => rows.push({
+      kind:'🔵', key:k, baseAmt:baseAmt[k]||0, postAmt:postAmt[k]||0, postQty:postQty[k]||0,
+    }));
+    retainedActive.forEach(k => rows.push({
+      kind:'🟢', key:k, baseAmt:baseAmt[k]||0, postAmt:postAmt[k]||0, postQty:postQty[k]||0,
+    }));
+    // Sort by post-campaign amount desc, cap 50.
+    rows.sort((a,b) => b.postAmt - a.postAmt);
+    const shown = rows.slice(0, 50);
+    if (!shown.length) {
+      tbl.innerHTML = '<thead><tr><th style="text-align:center;padding:20px;color:#86868B">아직 활성화된 ' + dimWord + '이 없습니다</th></tr></thead>';
+    } else {
+      tbl.innerHTML = `
+        <thead><tr>
+          <th>구분</th>
+          <th>${dimWord}</th>
+          ${matchBy==='sku'?'<th>차종</th>':''}
+          <th class="text-right">Baseline 매출</th>
+          <th class="text-right">캠페인 후 매출</th>
+          <th class="text-right">수량</th>
+          <th>첫 주문</th>
+        </tr></thead>
+        <tbody>${shown.map(r => {
+          const orders = postOrders[r.key] || [];
+          orders.sort((a,b) => String(a.order_date).localeCompare(String(b.order_date)));
+          const first = orders[0];
+          const mm = matchBy==='sku' && first ? (first.make_model || '–') : '';
+          return `<tr>
+            <td style="font-size:14px">${r.kind}</td>
+            <td><b>${r.key}</b></td>
+            ${matchBy==='sku'?`<td class="muted" style="font-size:11px">${mm}</td>`:''}
+            <td class="text-right ${r.baseAmt===0?'muted':''}">${r.baseAmt===0?'–':fmtMoney(r.baseAmt)}</td>
+            <td class="text-right" style="font-weight:700;color:#C8102E">${fmtMoney(r.postAmt)}</td>
+            <td class="text-right">${r.postQty.toLocaleString()}</td>
+            <td class="muted" style="font-size:11px">${first?first.order_date:'–'}</td>
+          </tr>`;
+        }).join('')}</tbody>`;
+    }
+  }
+}
+
 function renderSkuExplorer(fOrders, fMkt) {
   populateSkuUI(fOrders);
 
@@ -8410,6 +8712,16 @@ document.getElementById('fBulk').addEventListener('change', async e => {
 
 document.addEventListener('change', e => {
   // Promotion Performance widget controls
+  if (e.target.id === 'ckiPromoSel') {
+    state.ckiPromo = e.target.value;
+    try { localStorage.setItem('ck_cki_promo', state.ckiPromo); } catch(_){}
+    renderAll(); return;
+  }
+  if (e.target.id === 'ckiThresholdSel') {
+    state.ckiThreshold = parseFloat(e.target.value) || 0;
+    try { localStorage.setItem('ck_cki_threshold', String(state.ckiThreshold)); } catch(_){}
+    renderAll(); return;
+  }
   if (e.target.id === 'promoFilterSel') {
     state.promoFilter = e.target.value;
     try { localStorage.setItem('ck_promo_filter', state.promoFilter); } catch(_){}
