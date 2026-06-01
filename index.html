@@ -2174,12 +2174,19 @@ header .mono b.t-orange {
           <div class="chart-tools">
             <span class="label-mono muted">Campaign</span>
             <select id="ckiPromoSel" style="min-width:200px;font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface)"></select>
+            <span class="label-mono muted" style="margin-left:8px">Compare</span>
+            <select id="ckiCompareSel" style="font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface)">
+              <option value="baseline">All-time Baseline</option>
+              <option value="mom">vs Same-period Last Month (MoM)</option>
+              <option value="qoq">vs Same-period Last Quarter (QoQ)</option>
+              <option value="yoy">vs Same-period Last Year (YoY)</option>
+            </select>
             <span class="label-mono muted" style="margin-left:8px">Dormancy</span>
             <select id="ckiThresholdSel" style="font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface)">
               <option value="0">Zero sales ($0)</option>
               <option value="100">&lt; $100</option>
-              <option value="1000" selected>&lt; $1,000 (default)</option>
-              <option value="5000">&lt; $5,000</option>
+              <option value="1000">&lt; $1,000</option>
+              <option value="5000" selected>&lt; $5,000 (default)</option>
             </select>
             <div class="widget-order-controls"></div>
           </div>
@@ -2588,7 +2595,8 @@ let state = {
   promoDim: localStorage.getItem('ck_promo_dim') || 'promotion',
   promoCmp: localStorage.getItem('ck_promo_cmp') || 'off',
   ckiPromo: localStorage.getItem('ck_cki_promo') || '',
-  ckiThreshold: parseFloat(localStorage.getItem('ck_cki_threshold') || '1000'),
+  ckiThreshold: parseFloat(localStorage.getItem('ck_cki_threshold') || '5000'),
+  ckiCompare: localStorage.getItem('ck_cki_compare') || 'baseline',
   promoFilter: localStorage.getItem('ck_promo_filter') || '__all__',
   campaignTargetSkus: {},
   regionMetric: localStorage.getItem('ck_region_metric') || 'order',
@@ -7440,12 +7448,28 @@ function renderChoiceKitImpact(fOrders, fMkt) {
   // Threshold selector.
   const thSel = document.getElementById('ckiThresholdSel');
   if (thSel) thSel.value = String(state.ckiThreshold);
+  // Compare-mode selector.
+  const cmpSel = document.getElementById('ckiCompareSel');
+  if (cmpSel) cmpSel.value = state.ckiCompare || 'baseline';
 
   const promo = state.ckiPromo || '__all__';
   const threshold = Number(state.ckiThreshold) || 0;
   const thresholdLabel = threshold === 0 ? '$0 (zero sales)' : `< ${fmtMoney(threshold)}`;
+  const compareMode = state.ckiCompare || 'baseline';   // baseline | mom | qoq | yoy
   const isAll = (promo === '__all__');
   const activeCampaigns = isAll ? promoNames : [promo];
+
+  // Date-shift helper for same-period comparison (MoM/QoQ/YoY).
+  function shiftDate(dateStr, mode) {
+    if (!dateStr) return '';
+    const [y,m,d] = dateStr.split('-').map(Number);
+    let ny=y, nm=m;
+    if (mode === 'yoy') ny = y - 1;
+    else if (mode === 'qoq') { nm = m - 3; while (nm < 1) { nm += 12; ny -= 1; } }
+    else if (mode === 'mom') { nm = m - 1; if (nm < 1) { nm = 12; ny -= 1; } }
+    return `${ny}-${String(nm).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  }
+  const _todayCki = _todayStr();
 
   // ──────────────────────────────────────────────────────────────────────
   // Per-campaign metrics computation — used for both single and aggregate modes
@@ -7496,6 +7520,32 @@ function renderChoiceKitImpact(fOrders, fMkt) {
       const oid = (o.order_id || '').trim();
       if (oid) { postOrderIds[key].add(oid); allOrderIds.add(oid); }
     });
+    // Prior-period order amounts/qty/order-count for same-period comparison
+    // (MoM/QoQ/YoY). The window is [startDate, today] shifted back by the
+    // chosen period. Data comes from BASELINE (pre-campaign) — that's where
+    // prior history lives. Region-constrained, same as baseline aggregation.
+    const priorAmt = {}, priorQty = {}, priorOrderIds = {};
+    targetList.forEach(k => { priorAmt[k]=0; priorQty[k]=0; priorOrderIds[k]=new Set(); });
+    let priorFrom = '', priorTo = '';
+    if (compareMode !== 'baseline' && startDate) {
+      priorFrom = shiftDate(startDate, compareMode);
+      priorTo   = shiftDate(_todayCki, compareMode);
+      if (state.preOrdersEnabled && Array.isArray(state.preOrders)) {
+        state.preOrders.forEach(o => {
+          const d = (o.order_date || '');
+          if (!d || d < priorFrom || d > priorTo) return;
+          const r = normalizeRegion(o.region || '');
+          if (targetRegion && r !== targetRegion) return;
+          const key = (matchBy === 'customer') ? normalizeCustomer(o) : (o.sku || '').trim();
+          if (!targetSet.has(key)) return;
+          const amt = Number(o.amount_usd || 0) * usdToDisplay();
+          priorAmt[key] = (priorAmt[key] || 0) + amt;
+          priorQty[key] = (priorQty[key] || 0) + Number(o.qty || 0);
+          const oid = (o.order_id || '').trim();
+          if (oid) priorOrderIds[key].add(oid);
+        });
+      }
+    }
     // Classify into 2×2.
     const dormant = [], active = [];
     targetList.forEach(k => (baseAmt[k] < threshold ? dormant : active).push(k));
@@ -7552,6 +7602,7 @@ function renderChoiceKitImpact(fOrders, fMkt) {
       promoName, matchBy, targetRegion, startDate,
       targetList, targetSet, baseAmt, baseQty, postAmt, postQty, postOrders,
       postOrderIds, allOrderIds,
+      priorAmt, priorQty, priorOrderIds, priorFrom, priorTo,
       dormant, retainedActive, lostActive, stillDormant, newlyActivated,
       fullsetCount, singleCount, fullsetTargetAmt, fullsetRelatedAmt,
       fullsetTargetSkuTotal, fullsetModels, bestModel, bestSkuCount,
@@ -7584,6 +7635,13 @@ function renderChoiceKitImpact(fOrders, fMkt) {
     activatedOrderCount: 0,          // # distinct orders that hit any activated target
     newlyOrderCount: 0,              // # distinct orders that hit any newly-activated target
     allTargetOrderCount: 0,          // # distinct orders involving any target (campaign-tagged)
+    // Prior-period (MoM/QoQ/YoY) metrics — same-window comparison
+    allTargetPriorAmt: 0,            // prior-period order amount for ALL targets
+    activatedPriorAmt: 0,            // prior-period order amount for activated targets only
+    allTargetPriorOrderCount: 0,
+    activatedPriorOrderCount: 0,
+    priorWindowFrom: '',
+    priorWindowTo: '',
     fullsetCount: 0, singleCount: 0,
     fullsetTargetAmt: 0, fullsetRelatedAmt: 0,
     fullsetTargetSkuTotal: 0,
@@ -7618,6 +7676,17 @@ function renderChoiceKitImpact(fOrders, fMkt) {
     M.newlyActivated.forEach(k => (M.postOrderIds[k] || new Set()).forEach(id => newOrderSet.add(id)));
     agg.activatedOrderCount += actOrderSet.size;
     agg.newlyOrderCount += newOrderSet.size;
+    // Prior-period (only meaningful when compareMode != 'baseline')
+    agg.allTargetPriorAmt += sumKeys(M.targetList, M.priorAmt);
+    agg.activatedPriorAmt += sumKeys(activatedAll, M.priorAmt);
+    const priorAllSet = new Set(), priorActSet = new Set();
+    M.targetList.forEach(k => (M.priorOrderIds[k] || new Set()).forEach(id => priorAllSet.add(id)));
+    activatedAll.forEach(k => (M.priorOrderIds[k] || new Set()).forEach(id => priorActSet.add(id)));
+    agg.allTargetPriorOrderCount += priorAllSet.size;
+    agg.activatedPriorOrderCount += priorActSet.size;
+    // Window labels — use the widest range across campaigns.
+    if (M.priorFrom && (!agg.priorWindowFrom || M.priorFrom < agg.priorWindowFrom)) agg.priorWindowFrom = M.priorFrom;
+    if (M.priorTo && (!agg.priorWindowTo || M.priorTo > agg.priorWindowTo)) agg.priorWindowTo = M.priorTo;
     agg.fullsetCount += M.fullsetCount;
     agg.singleCount += M.singleCount;
     agg.fullsetTargetAmt += M.fullsetTargetAmt;
@@ -7682,11 +7751,17 @@ function renderChoiceKitImpact(fOrders, fMkt) {
   // ── Before vs After comparison block ──
   const baEl = document.getElementById('ckiBeforeAfter');
   if (baEl) {
-    const allDelta = agg.allTargetBaselineAmt > 0
-      ? ((agg.allTargetPostAmt - agg.allTargetBaselineAmt) / agg.allTargetBaselineAmt * 100)
+    // Choose comparison source (baseline = all-time prior, others = same-period shifted).
+    const usePrior = (compareMode !== 'baseline');
+    const allBefore = usePrior ? agg.allTargetPriorAmt : agg.allTargetBaselineAmt;
+    const actBefore = usePrior ? agg.activatedPriorAmt : agg.activatedSkuBaselineAmt;
+    const allBeforeOrderCount = usePrior ? agg.allTargetPriorOrderCount : 0;
+    const actBeforeOrderCount = usePrior ? agg.activatedPriorOrderCount : 0;
+    const allDelta = allBefore > 0
+      ? ((agg.allTargetPostAmt - allBefore) / allBefore * 100)
       : (agg.allTargetPostAmt > 0 ? Infinity : 0);
-    const actDelta = agg.activatedSkuBaselineAmt > 0
-      ? ((agg.activatedAmt - agg.activatedSkuBaselineAmt) / agg.activatedSkuBaselineAmt * 100)
+    const actDelta = actBefore > 0
+      ? ((agg.activatedAmt - actBefore) / actBefore * 100)
       : (agg.activatedAmt > 0 ? Infinity : 0);
     const deltaPill = (d) => {
       if (!isFinite(d)) return `<span style="color:#34C759;font-weight:800">▲ NEW</span>`;
@@ -7694,17 +7769,35 @@ function renderChoiceKitImpact(fOrders, fMkt) {
       if (d < 0) return `<span style="color:#C8102E;font-weight:800">▼ ${d.toFixed(1)}%</span>`;
       return `<span style="color:#86868B;font-weight:800">— 0%</span>`;
     };
-    // Two stacked rows: All Targets, Activated only
+    // Dynamic title + "Before" column label depend on the chosen compare mode.
+    const cmpTitle = ({
+      baseline: 'BEFORE vs AFTER — Target Order Amount Comparison (All-time Baseline)',
+      mom:      'BEFORE vs AFTER — Same-period Last Month (MoM)',
+      qoq:      'BEFORE vs AFTER — Same-period Last Quarter (QoQ)',
+      yoy:      'BEFORE vs AFTER — Same-period Last Year (YoY)',
+    })[compareMode] || 'BEFORE vs AFTER';
+    const beforeLabel = ({
+      baseline: 'Baseline Order Amount (All-time Before)',
+      mom:      'Prior-month Order Amount (Same-period MoM)',
+      qoq:      'Prior-quarter Order Amount (Same-period QoQ)',
+      yoy:      'Prior-year Order Amount (Same-period YoY)',
+    })[compareMode] || 'Order Amount (Before)';
+    const windowNote = (usePrior && agg.priorWindowFrom && agg.priorWindowTo)
+      ? `<span class="label-mono muted" style="font-size:11px;font-weight:500;margin-left:8px">window: ${agg.priorWindowFrom} ~ ${agg.priorWindowTo}</span>`
+      : '';
+    const allBeforeOrders = (usePrior && allBeforeOrderCount > 0) ? ` · ${allBeforeOrderCount.toLocaleString()} orders` : '';
+    const actBeforeOrders = (usePrior && actBeforeOrderCount > 0) ? ` · ${actBeforeOrderCount.toLocaleString()} orders` : '';
+
     baEl.innerHTML = `
-      <div class="label-mono" style="font-size:12px;font-weight:700;margin-bottom:8px;color:#1D1D1F">BEFORE vs AFTER — Target Order Amount Comparison</div>
+      <div class="label-mono" style="font-size:12px;font-weight:700;margin-bottom:8px;color:#1D1D1F">${cmpTitle}${windowNote}</div>
       <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 0.8fr;gap:14px;padding:12px 16px;background:rgba(0,0,0,0.02);border:1px solid rgba(0,0,0,0.08);border-radius:10px;align-items:center;margin-bottom:6px">
         <div>
           <div class="label-mono" style="font-size:11px;font-weight:600;color:#86868B;letter-spacing:0.05em;text-transform:uppercase">All Target ${dimWord}s</div>
           <div style="font-size:14px;font-weight:600;margin-top:2px">${agg.targetCount.toLocaleString()} total · ${agg.allTargetOrderCount.toLocaleString()} post-campaign orders</div>
         </div>
         <div>
-          <div class="label-mono muted" style="font-size:11px">Baseline Order Amount (Before)</div>
-          <div style="font-size:20px;font-weight:800">${fmtMoney(agg.allTargetBaselineAmt)}</div>
+          <div class="label-mono muted" style="font-size:11px">${beforeLabel}${allBeforeOrders}</div>
+          <div style="font-size:20px;font-weight:800">${fmtMoney(allBefore)}</div>
         </div>
         <div>
           <div class="label-mono muted" style="font-size:11px">Post-Campaign Order Amount (After)</div>
@@ -7721,8 +7814,8 @@ function renderChoiceKitImpact(fOrders, fMkt) {
           <div style="font-size:14px;font-weight:600;margin-top:2px">${activatedAllCount.toLocaleString()} of ${agg.targetCount.toLocaleString()} (${(100*activatedAllCount/Math.max(1,agg.targetCount)).toFixed(1)}%) · ${agg.activatedOrderCount.toLocaleString()} orders</div>
         </div>
         <div>
-          <div class="label-mono muted" style="font-size:11px">Baseline Order Amount (Before)</div>
-          <div style="font-size:20px;font-weight:800">${fmtMoney(agg.activatedSkuBaselineAmt)}</div>
+          <div class="label-mono muted" style="font-size:11px">${beforeLabel}${actBeforeOrders}</div>
+          <div style="font-size:20px;font-weight:800">${fmtMoney(actBefore)}</div>
         </div>
         <div>
           <div class="label-mono muted" style="font-size:11px">Post-Campaign Order Amount (After)</div>
@@ -8905,6 +8998,11 @@ document.addEventListener('change', e => {
   if (e.target.id === 'ckiThresholdSel') {
     state.ckiThreshold = parseFloat(e.target.value) || 0;
     try { localStorage.setItem('ck_cki_threshold', String(state.ckiThreshold)); } catch(_){}
+    renderAll(); return;
+  }
+  if (e.target.id === 'ckiCompareSel') {
+    state.ckiCompare = e.target.value;
+    try { localStorage.setItem('ck_cki_compare', state.ckiCompare); } catch(_){}
     renderAll(); return;
   }
   if (e.target.id === 'promoFilterSel') {
