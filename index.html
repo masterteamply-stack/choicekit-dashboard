@@ -7668,13 +7668,13 @@ function renderChoiceKitImpact(fOrders, fMkt) {
     </div>`;
   if (kpiEl) kpiEl.innerHTML =
     card(`Total Target ${dimWord}s`,         `${agg.targetCount.toLocaleString()}`,    `${regionLabel}${agg.hasSku ? ` · ${agg.activatedModels.size} models activated` : ''}`) +
-    card(`Dormant ${dimWord}s`,               `${agg.dormantCount.toLocaleString()}`,   `Baseline Revenue ${thresholdLabel}`) +
-    card(`🔵 Newly Activated (Choice Kit Effect)`, `${agg.newlyCount} / ${agg.dormantCount} (${(dormantConvRate*100).toFixed(1)}%)`, `Revenue ${fmtMoney(agg.newlyAmt)} · ${agg.newlyQty.toLocaleString()} pcs · ${agg.newlyOrderCount.toLocaleString()} orders`, '#0A84FF') +
-    card(`Activated ${dimWord} Revenue`,      `${fmtMoney(agg.activatedAmt)}`,           `${activatedAllCount} activated · ${agg.activatedQty.toLocaleString()} pcs · ${agg.activatedOrderCount.toLocaleString()} orders`, '#C8102E') +
+    card(`Dormant ${dimWord}s`,               `${agg.dormantCount.toLocaleString()}`,   `Baseline Order Amount ${thresholdLabel}`) +
+    card(`🔵 Newly Activated (Choice Kit Effect)`, `${agg.newlyCount} / ${agg.dormantCount} (${(dormantConvRate*100).toFixed(1)}%)`, `Order Amount ${fmtMoney(agg.newlyAmt)} · ${agg.newlyQty.toLocaleString()} pcs · ${agg.newlyOrderCount.toLocaleString()} orders`, '#0A84FF') +
+    card(`Activated ${dimWord} Order Amount`,      `${fmtMoney(agg.activatedAmt)}`,           `${activatedAllCount} activated · ${agg.activatedQty.toLocaleString()} pcs · ${agg.activatedOrderCount.toLocaleString()} orders`, '#C8102E') +
     (showFullset ? card(
-      `🎯 Full-set Related Revenue`,
+      `🎯 Full-set Related Order Amount`,
       `${fmtMoney(agg.fullsetRelatedAmt)}`,
-      `${agg.fullsetCount.toLocaleString()} full-set orders · target-only Revenue: ${fmtMoney(agg.fullsetTargetAmt)}`,
+      `${agg.fullsetCount.toLocaleString()} full-set orders · target-only Order Amount: ${fmtMoney(agg.fullsetTargetAmt)}`,
       '#34C759'
     ) : '') +
     card(`Still Dormant ${dimWord}s`,         `${agg.stillDormantCount.toLocaleString()}`, `Next action target (${(100*agg.stillDormantCount/Math.max(1,agg.targetCount)).toFixed(0)}% of total)`);
@@ -7696,22 +7696,22 @@ function renderChoiceKitImpact(fOrders, fMkt) {
     };
     // Two stacked rows: All Targets, Activated only
     baEl.innerHTML = `
-      <div class="label-mono" style="font-size:12px;font-weight:700;margin-bottom:8px;color:#1D1D1F">BEFORE vs AFTER — Target Revenue Comparison</div>
+      <div class="label-mono" style="font-size:12px;font-weight:700;margin-bottom:8px;color:#1D1D1F">BEFORE vs AFTER — Target Order Amount Comparison</div>
       <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 0.8fr;gap:14px;padding:12px 16px;background:rgba(0,0,0,0.02);border:1px solid rgba(0,0,0,0.08);border-radius:10px;align-items:center;margin-bottom:6px">
         <div>
           <div class="label-mono" style="font-size:11px;font-weight:600;color:#86868B;letter-spacing:0.05em;text-transform:uppercase">All Target ${dimWord}s</div>
           <div style="font-size:14px;font-weight:600;margin-top:2px">${agg.targetCount.toLocaleString()} total · ${agg.allTargetOrderCount.toLocaleString()} post-campaign orders</div>
         </div>
         <div>
-          <div class="label-mono muted" style="font-size:11px">Baseline Revenue (Before)</div>
+          <div class="label-mono muted" style="font-size:11px">Baseline Order Amount (Before)</div>
           <div style="font-size:20px;font-weight:800">${fmtMoney(agg.allTargetBaselineAmt)}</div>
         </div>
         <div>
-          <div class="label-mono muted" style="font-size:11px">Post-Campaign Revenue (After)</div>
+          <div class="label-mono muted" style="font-size:11px">Post-Campaign Order Amount (After)</div>
           <div style="font-size:20px;font-weight:800;color:#1D1D1F">${fmtMoney(agg.allTargetPostAmt)}</div>
         </div>
         <div style="text-align:right">
-          <div class="label-mono muted" style="font-size:11px">Revenue Uplift</div>
+          <div class="label-mono muted" style="font-size:11px">Order Amount Uplift</div>
           <div style="font-size:18px">${deltaPill(allDelta)}</div>
         </div>
       </div>
@@ -7721,15 +7721,15 @@ function renderChoiceKitImpact(fOrders, fMkt) {
           <div style="font-size:14px;font-weight:600;margin-top:2px">${activatedAllCount.toLocaleString()} of ${agg.targetCount.toLocaleString()} (${(100*activatedAllCount/Math.max(1,agg.targetCount)).toFixed(1)}%) · ${agg.activatedOrderCount.toLocaleString()} orders</div>
         </div>
         <div>
-          <div class="label-mono muted" style="font-size:11px">Baseline Revenue (Before)</div>
+          <div class="label-mono muted" style="font-size:11px">Baseline Order Amount (Before)</div>
           <div style="font-size:20px;font-weight:800">${fmtMoney(agg.activatedSkuBaselineAmt)}</div>
         </div>
         <div>
-          <div class="label-mono muted" style="font-size:11px">Post-Campaign Revenue (After)</div>
+          <div class="label-mono muted" style="font-size:11px">Post-Campaign Order Amount (After)</div>
           <div style="font-size:20px;font-weight:800;color:#C8102E">${fmtMoney(agg.activatedAmt)}</div>
         </div>
         <div style="text-align:right">
-          <div class="label-mono muted" style="font-size:11px">Revenue Uplift</div>
+          <div class="label-mono muted" style="font-size:11px">Order Amount Uplift</div>
           <div style="font-size:18px">${deltaPill(actDelta)}</div>
         </div>
       </div>`;
@@ -7737,7 +7737,7 @@ function renderChoiceKitImpact(fOrders, fMkt) {
 
   // ── Funnel chart ──
   if (charts.ckiFunnel) charts.ckiFunnel.destroy();
-  const funnelLabels = [`Total ${dimWord}s`, `Dormant`, `Newly Activated`, `Revenue Generated`];
+  const funnelLabels = [`Total ${dimWord}s`, `Dormant`, `Newly Activated`, `Orders Generated`];
   const funnelData   = [agg.targetCount, agg.dormantCount, agg.newlyCount, agg.newlyCount];  // revenue-generated count == newly activated with postAmt>0 (same since we only push newly when amt>0... but we filter postAmt>0)
   charts.ckiFunnel = new Chart(document.getElementById('chCkiFunnel'), {
     type: 'bar',
@@ -7778,7 +7778,7 @@ function renderChoiceKitImpact(fOrders, fMkt) {
       <div style="background:${bg};border:1px solid ${color}40;border-radius:10px;padding:14px 16px;min-height:96px">
         <div style="font-size:15px;font-weight:700;color:${color}">${icon} ${title}</div>
         <div style="font-size:24px;font-weight:800;margin-top:6px;line-height:1.2">${count.toLocaleString()} <span class="label-mono muted" style="font-size:12px;font-weight:500">${dimWord}s</span></div>
-        <div class="label-mono muted" style="font-size:12px;margin-top:2px">Revenue ${fmtMoney(amt)}</div>
+        <div class="label-mono muted" style="font-size:12px;margin-top:2px">Order Amount ${fmtMoney(amt)}</div>
       </div>`;
     matrixEl.innerHTML =
       cell('🔵', 'Newly Active', agg.newlyCount, agg.newlyAmt, '#0A84FF', 'rgba(10,132,255,0.06)') +
@@ -7798,8 +7798,8 @@ function renderChoiceKitImpact(fOrders, fMkt) {
     fsSum.innerHTML = `
       <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Full-set Orders (2+ SKUs / Model)</span><div style="font-size:22px;font-weight:800;color:#C8102E;margin-top:2px">${agg.fullsetCount.toLocaleString()} · ${fsRate.toFixed(1)}%</div></div>
       <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Single-line Orders</span><div style="font-size:18px;font-weight:700;margin-top:2px">${agg.singleCount.toLocaleString()}</div></div>
-      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Full-set Target SKU Revenue</span><div style="font-size:18px;font-weight:700;margin-top:2px">${fmtMoney(agg.fullsetTargetAmt)}</div></div>
-      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Full-set Related Revenue (all lines)</span><div style="font-size:18px;font-weight:700;color:#34C759;margin-top:2px">${fmtMoney(agg.fullsetRelatedAmt)}</div></div>
+      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Full-set Target SKU Order Amount</span><div style="font-size:18px;font-weight:700;margin-top:2px">${fmtMoney(agg.fullsetTargetAmt)}</div></div>
+      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Full-set Related Order Amount (all lines)</span><div style="font-size:18px;font-weight:700;color:#34C759;margin-top:2px">${fmtMoney(agg.fullsetRelatedAmt)}</div></div>
       <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Full-set Models</span><div style="font-size:18px;font-weight:700;margin-top:2px">${agg.fullsetModels.size}</div></div>
       <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Avg SKU / Set</span><div style="font-size:18px;font-weight:700;margin-top:2px">${avgSkuPerSet.toFixed(1)}</div></div>
       ${agg.bestModel ? `<div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Largest Set</span><div style="font-size:15px;font-weight:700;margin-top:2px">${agg.bestModel} <span class="muted" style="font-size:12px;font-weight:500">(${agg.bestSkuCount} SKUs co-ordered)</span></div></div>` : ''}`;
@@ -7823,8 +7823,8 @@ function renderChoiceKitImpact(fOrders, fMkt) {
           ${showCampaignCol?'<th>Campaign</th>':''}
           <th>${dimWord}</th>
           ${showModelCol?'<th>Make / Model</th>':''}
-          <th class="text-right">Baseline Revenue</th>
-          <th class="text-right">Post-Campaign Revenue</th>
+          <th class="text-right">Baseline Order Amount</th>
+          <th class="text-right">Post-Campaign Order Amount</th>
           <th class="text-right">Qty</th>
           <th class="text-right">Orders</th>
           <th>First Order</th>
