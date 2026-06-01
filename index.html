@@ -7519,10 +7519,75 @@ function renderChoiceKitImpact(fOrders, fMkt) {
       <div style="font-size:18px;font-weight:800;margin-top:2px">${val}</div>
       ${sub ? `<div class="label-mono muted" style="font-size:11px">${sub}</div>` : ''}
     </div>`;
+
+  // Total activated SKU/customer post-campaign sales (newly + retained).
+  const activatedAll = newlyActivated.concat(retainedActive);
+  const activatedAmtTotal = sum(activatedAll, postAmt);
+  const activatedQtyTotal = sum(activatedAll, postQty);
+
+  // Distinct make_models touched by activated SKUs (or by orders for activated customers).
+  const activatedModels = new Set();
+  activatedAll.forEach(k => {
+    (postOrders[k] || []).forEach(o => {
+      const mm = (o.make_model || '').trim();
+      if (mm) activatedModels.add(mm);
+    });
+  });
+
+  // Pre-compute Full-set related orders so the KPI card can show the figure.
+  // Full-set bucket = (order_date, customer, make_model) with 2+ target SKUs in it.
+  // "연관 오더 매출" = sum of ALL line items (incl. non-target SKUs) that fell
+  // into any Full-set bucket — i.e. the total revenue ON Full-set orders.
+  let fullsetCount = 0, singleCount = 0, fullsetTargetAmt = 0, fullsetTargetSkuTotal = 0;
+  let fullsetRelatedAmt = 0;       // including non-target lines that ship in the same Full-set bucket
+  let bestModel = null, bestSkuCount = 0;
+  const fullsetBuckets = new Map();  // key → { skus:Set, amt, qty, model }
+  if (matchBy === 'sku') {
+    // 1) Group target-SKU orders by (date|customer|model) to detect Full-sets.
+    Object.values(postOrders).forEach(arr => arr.forEach(o => {
+      const mm = (o.make_model || '').trim();
+      if (!mm) return;
+      const key = `${o.order_date}|${(o.customer||'').trim()}|${mm}`;
+      if (!fullsetBuckets.has(key)) fullsetBuckets.set(key, { skus:new Set(), amt:0, qty:0, model:mm });
+      const g = fullsetBuckets.get(key);
+      g.skus.add((o.sku || '').trim());
+      g.amt += convOrder(o);
+      g.qty += Number(o.qty || 0);
+    }));
+    // 2) Identify which buckets are Full-set (2+ distinct target SKUs).
+    const fullsetKeys = new Set();
+    fullsetBuckets.forEach((g, key) => {
+      if (g.skus.size >= 2) {
+        fullsetCount++;
+        fullsetTargetAmt += g.amt;
+        fullsetTargetSkuTotal += g.skus.size;
+        fullsetKeys.add(key);
+        if (g.skus.size > bestSkuCount) { bestSkuCount = g.skus.size; bestModel = g.model; }
+      } else { singleCount++; }
+    });
+    // 3) Re-scan ALL post-campaign orders of this promotion to sum lines that
+    //    fall into Full-set buckets — these are the related/co-ordered lines.
+    (state.orders || []).forEach(o => {
+      if ((o.promotion_category || '') !== promo) return;
+      if (startDate && (o.order_date || '') < startDate) return;
+      const mm = (o.make_model || '').trim();
+      if (!mm) return;
+      const key = `${o.order_date}|${(o.customer||'').trim()}|${mm}`;
+      if (fullsetKeys.has(key)) fullsetRelatedAmt += convOrder(o);
+    });
+  }
+
   if (kpiEl) kpiEl.innerHTML =
-    card(`전체 대상 ${dimWord}`,    `${targetList.length.toLocaleString()}`,    `${promo} · ${targetRegion}`) +
+    card(`전체 대상 ${dimWord}`,    `${targetList.length.toLocaleString()}`,    `${promo} · ${targetRegion}${matchBy==='sku' ? ` · ${activatedModels.size}개 차종 활성` : ''}`) +
     card(`휴면 ${dimWord}`,         `${dormant.length.toLocaleString()}`,       `baseline ${thresholdLabel}`) +
     card(`🔵 신규 활성 (Choice Kit 효과)`, `${newlyActivated.length} / ${dormant.length} (${(dormantConvRate*100).toFixed(1)}%)`, `매출 ${fmtMoney(newlyAmt)} · ${newlyQty.toLocaleString()} pcs`, '#0A84FF') +
+    card(`활성 ${dimWord} 총 매출`,  `${fmtMoney(activatedAmtTotal)}`,            `${activatedAll.length}개 활성 · ${activatedQtyTotal.toLocaleString()} pcs`, '#C8102E') +
+    (matchBy === 'sku' ? card(
+      `🎯 Full-set 연관 오더 매출`,
+      `${fmtMoney(fullsetRelatedAmt)}`,
+      `${fullsetCount.toLocaleString()}건 Full-set · 대상 SKU 매출만: ${fmtMoney(fullsetTargetAmt)}`,
+      '#34C759'
+    ) : '') +
     card(`아직 휴면 ${dimWord}`,    `${stillDormant.length.toLocaleString()}`,  `다음 액션 대상 (${(100*stillDormant.length/Math.max(1,targetList.length)).toFixed(0)}% of total)`);
 
   // ── Funnel chart ──
@@ -7577,39 +7642,25 @@ function renderChoiceKitImpact(fOrders, fMkt) {
       cell('🟡', '이탈',     lostActive.length,     0,                             '#FF9500', 'rgba(255,149,0,0.06)');
   }
 
-  // ── Full-set analysis (SKU campaigns only) ──
+  // ── Full-set analysis summary (SKU campaigns only — reuses pre-computed values) ──
   const fsWrap = document.getElementById('ckiFullsetWrap');
   const fsSum  = document.getElementById('ckiFullsetSummary');
   if (matchBy === 'sku' && fsWrap && fsSum) {
     fsWrap.style.display = '';
-    // Group post-campaign orders by (order_date + customer + make_model). When
-    // a group contains 2+ distinct target SKUs, it counts as a Full-set order.
-    const groups = new Map();
-    Object.values(postOrders).forEach(arr => arr.forEach(o => {
-      const mm = (o.make_model || '').trim();
-      if (!mm) return;
-      const key = `${o.order_date}|${(o.customer||'').trim()}|${mm}`;
-      if (!groups.has(key)) groups.set(key, { skus: new Set(), amt: 0, qty: 0, model: mm });
-      const g = groups.get(key);
-      g.skus.add((o.sku || '').trim());
-      g.amt += convOrder(o);
-      g.qty += Number(o.qty || 0);
-    }));
-    let fullset=0, single=0, fullsetAmt=0, fullsetSkuTotal=0;
-    let bestModel=null, bestSkuCount=0;
-    groups.forEach(g => {
-      if (g.skus.size >= 2) {
-        fullset++; fullsetAmt += g.amt; fullsetSkuTotal += g.skus.size;
-        if (g.skus.size > bestSkuCount) { bestSkuCount = g.skus.size; bestModel = g.model; }
-      } else { single++; }
+    const total = fullsetCount + singleCount;
+    const fsRate = total ? (fullsetCount/total*100) : 0;
+    const avgSkuPerSet = fullsetCount ? (fullsetTargetSkuTotal/fullsetCount) : 0;
+    // Distinct make_models in Full-set buckets
+    const fullsetModels = new Set();
+    fullsetBuckets.forEach((g, key) => {
+      if (g.skus.size >= 2) fullsetModels.add(g.model);
     });
-    const total = fullset + single;
-    const fsRate = total ? (fullset/total*100) : 0;
-    const avgSkuPerSet = fullset ? (fullsetSkuTotal/fullset) : 0;
     fsSum.innerHTML = `
-      <div><span class="label-mono muted" style="font-size:11px">FULL-SET 주문 (2+ SKU/차종)</span><div style="font-size:18px;font-weight:800;color:#C8102E">${fullset.toLocaleString()}건 · ${fsRate.toFixed(1)}%</div></div>
-      <div><span class="label-mono muted" style="font-size:11px">단품 주문</span><div style="font-size:16px;font-weight:700">${single.toLocaleString()}건</div></div>
-      <div><span class="label-mono muted" style="font-size:11px">Full-set 매출</span><div style="font-size:16px;font-weight:700">${fmtMoney(fullsetAmt)}</div></div>
+      <div><span class="label-mono muted" style="font-size:11px">FULL-SET 주문 (2+ SKU/차종)</span><div style="font-size:18px;font-weight:800;color:#C8102E">${fullsetCount.toLocaleString()}건 · ${fsRate.toFixed(1)}%</div></div>
+      <div><span class="label-mono muted" style="font-size:11px">단품 주문</span><div style="font-size:16px;font-weight:700">${singleCount.toLocaleString()}건</div></div>
+      <div><span class="label-mono muted" style="font-size:11px">Full-set 대상 SKU 매출</span><div style="font-size:16px;font-weight:700">${fmtMoney(fullsetTargetAmt)}</div></div>
+      <div><span class="label-mono muted" style="font-size:11px">Full-set 연관 오더 매출 (전 라인)</span><div style="font-size:16px;font-weight:700;color:#34C759">${fmtMoney(fullsetRelatedAmt)}</div></div>
+      <div><span class="label-mono muted" style="font-size:11px">Full-set 차종 수</span><div style="font-size:16px;font-weight:700">${fullsetModels.size}개</div></div>
       <div><span class="label-mono muted" style="font-size:11px">Set 당 평균 SKU</span><div style="font-size:16px;font-weight:700">${avgSkuPerSet.toFixed(1)}</div></div>
       ${bestModel ? `<div><span class="label-mono muted" style="font-size:11px">최대 SET 차종</span><div style="font-size:14px;font-weight:700">${bestModel} (${bestSkuCount} SKU 동시 주문)</div></div>` : ''}`;
   } else if (fsWrap) {
