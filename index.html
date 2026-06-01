@@ -7736,17 +7736,17 @@ function renderChoiceKitImpact(fOrders, fMkt) {
       ${sub ? `<div class="label-mono muted" style="font-size:12px;margin-top:4px;line-height:1.4">${sub}</div>` : ''}
     </div>`;
   if (kpiEl) kpiEl.innerHTML =
-    card(`Total Target ${dimWord}s`,         `${agg.targetCount.toLocaleString()}`,    `${regionLabel}${agg.hasSku ? ` · ${agg.activatedModels.size} models activated` : ''}`) +
-    card(`Dormant ${dimWord}s`,               `${agg.dormantCount.toLocaleString()}`,   `Baseline Order Amount ${thresholdLabel}`) +
-    card(`🔵 Newly Activated (Choice Kit Effect)`, `${agg.newlyCount} / ${agg.dormantCount} (${(dormantConvRate*100).toFixed(1)}%)`, `Order Amount ${fmtMoney(agg.newlyAmt)} · ${agg.newlyQty.toLocaleString()} pcs · ${agg.newlyOrderCount.toLocaleString()} orders`, '#0A84FF') +
-    card(`Activated ${dimWord} Order Amount`,      `${fmtMoney(agg.activatedAmt)}`,           `${activatedAllCount} activated · ${agg.activatedQty.toLocaleString()} pcs · ${agg.activatedOrderCount.toLocaleString()} orders`, '#C8102E') +
+    card(`Total Target ${dimWord}s`,         `${agg.targetCount.toLocaleString()} ${dimWord}s`,    `${regionLabel}${agg.hasSku ? ` · ${agg.activatedModels.size} models activated` : ''}`) +
+    card(`Dormant ${dimWord}s`,               `${agg.dormantCount.toLocaleString()} ${dimWord}s`,   `Baseline Order Amount ${thresholdLabel}`) +
+    card(`🔵 Newly Activated (Choice Kit Effect)`, `${agg.newlyCount.toLocaleString()} ${dimWord}s`, `${(dormantConvRate*100).toFixed(1)}% of ${agg.dormantCount.toLocaleString()} dormant · Order Amount ${fmtMoney(agg.newlyAmt)} · ${agg.newlyQty.toLocaleString()} pcs · ${agg.newlyOrderCount.toLocaleString()} orders`, '#0A84FF') +
+    card(`Activated ${dimWord} Order Amount`, `${fmtMoney(agg.activatedAmt)}`,           `${activatedAllCount.toLocaleString()} ${dimWord}s activated · ${agg.activatedQty.toLocaleString()} pcs · ${agg.activatedOrderCount.toLocaleString()} orders`, '#C8102E') +
     (showFullset ? card(
       `🎯 Full-set Related Order Amount`,
       `${fmtMoney(agg.fullsetRelatedAmt)}`,
       `${agg.fullsetCount.toLocaleString()} full-set orders · target-only Order Amount: ${fmtMoney(agg.fullsetTargetAmt)}`,
       '#34C759'
     ) : '') +
-    card(`Still Dormant ${dimWord}s`,         `${agg.stillDormantCount.toLocaleString()}`, `Next action target (${(100*agg.stillDormantCount/Math.max(1,agg.targetCount)).toFixed(0)}% of total)`);
+    card(`Still Dormant ${dimWord}s`,         `${agg.stillDormantCount.toLocaleString()} ${dimWord}s`, `Next action target (${(100*agg.stillDormantCount/Math.max(1,agg.targetCount)).toFixed(0)}% of total)`);
 
   // ── Before vs After comparison block ──
   const baEl = document.getElementById('ckiBeforeAfter');
