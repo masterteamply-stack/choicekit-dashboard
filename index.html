@@ -7481,8 +7481,9 @@ function renderChoiceKitImpact(fOrders, fMkt) {
       });
     }
     // Post-campaign orders for this campaign.
-    const postAmt = {}, postQty = {}, postOrders = {};
-    targetList.forEach(k => { postAmt[k]=0; postQty[k]=0; postOrders[k]=[]; });
+    const postAmt = {}, postQty = {}, postOrders = {}, postOrderIds = {};
+    targetList.forEach(k => { postAmt[k]=0; postQty[k]=0; postOrders[k]=[]; postOrderIds[k]=new Set(); });
+    const allOrderIds = new Set();   // distinct orders this campaign generated (across all targets)
     (state.orders || []).forEach(o => {
       if ((o.promotion_category || '') !== promoName) return;
       if (startDate && (o.order_date || '') < startDate) return;
@@ -7492,6 +7493,8 @@ function renderChoiceKitImpact(fOrders, fMkt) {
       postAmt[key] = (postAmt[key] || 0) + amt;
       postQty[key] = (postQty[key] || 0) + Number(o.qty || 0);
       postOrders[key].push(o);
+      const oid = (o.order_id || '').trim();
+      if (oid) { postOrderIds[key].add(oid); allOrderIds.add(oid); }
     });
     // Classify into 2×2.
     const dormant = [], active = [];
@@ -7548,6 +7551,7 @@ function renderChoiceKitImpact(fOrders, fMkt) {
     return {
       promoName, matchBy, targetRegion, startDate,
       targetList, targetSet, baseAmt, baseQty, postAmt, postQty, postOrders,
+      postOrderIds, allOrderIds,
       dormant, retainedActive, lostActive, stillDormant, newlyActivated,
       fullsetCount, singleCount, fullsetTargetAmt, fullsetRelatedAmt,
       fullsetTargetSkuTotal, fullsetModels, bestModel, bestSkuCount,
@@ -7573,19 +7577,23 @@ function renderChoiceKitImpact(fOrders, fMkt) {
     stillDormantCount: 0,
     newlyAmt: 0, newlyQty: 0,
     activatedAmt: 0, activatedQty: 0,
-    activatedSkuBaselineAmt: 0,     // baseline of activated targets (for "activated-only" before/after)
-    allTargetBaselineAmt: 0,         // baseline of ALL targets
-    allTargetPostAmt: 0,             // post-campaign of ALL targets
+    activatedSkuBaselineAmt: 0,     // baseline revenue of activated targets (for "activated-only" before/after)
+    allTargetBaselineAmt: 0,         // baseline revenue of ALL targets
+    allTargetPostAmt: 0,             // post-campaign revenue of ALL targets
+    // Order-count metrics (distinct orders by order_id)
+    activatedOrderCount: 0,          // # distinct orders that hit any activated target
+    newlyOrderCount: 0,              // # distinct orders that hit any newly-activated target
+    allTargetOrderCount: 0,          // # distinct orders involving any target (campaign-tagged)
     fullsetCount: 0, singleCount: 0,
     fullsetTargetAmt: 0, fullsetRelatedAmt: 0,
     fullsetTargetSkuTotal: 0,
     fullsetModels: new Set(),
     activatedModels: new Set(),
     bestModel: null, bestSkuCount: 0,
-    hasSku: false,           // at least one campaign in the set is SKU-based
+    hasSku: false,
     hasCustomer: false,
     regions: new Set(),
-    activatedRows: [],       // for the table
+    activatedRows: [],
   };
   metricsList.forEach(M => {
     agg.targetCount += M.targetList.length;
@@ -7602,6 +7610,14 @@ function renderChoiceKitImpact(fOrders, fMkt) {
     agg.activatedSkuBaselineAmt += sumKeys(activatedAll, M.baseAmt);
     agg.allTargetBaselineAmt += sumKeys(M.targetList, M.baseAmt);
     agg.allTargetPostAmt += sumKeys(M.targetList, M.postAmt);
+    // Distinct order counts. Note: same order can hit multiple targets, but
+    // the campaign-level Set already de-duplicates.
+    agg.allTargetOrderCount += M.allOrderIds.size;
+    const actOrderSet = new Set(), newOrderSet = new Set();
+    activatedAll.forEach(k => (M.postOrderIds[k] || new Set()).forEach(id => actOrderSet.add(id)));
+    M.newlyActivated.forEach(k => (M.postOrderIds[k] || new Set()).forEach(id => newOrderSet.add(id)));
+    agg.activatedOrderCount += actOrderSet.size;
+    agg.newlyOrderCount += newOrderSet.size;
     agg.fullsetCount += M.fullsetCount;
     agg.singleCount += M.singleCount;
     agg.fullsetTargetAmt += M.fullsetTargetAmt;
@@ -7612,7 +7628,6 @@ function renderChoiceKitImpact(fOrders, fMkt) {
     if (M.bestSkuCount > agg.bestSkuCount) { agg.bestSkuCount = M.bestSkuCount; agg.bestModel = M.bestModel; }
     if (M.matchBy === 'sku') agg.hasSku = true; else agg.hasCustomer = true;
     if (M.targetRegion) agg.regions.add(M.targetRegion);
-    // Collect activated detail rows for the table (with campaign label).
     [...M.newlyActivated, ...M.retainedActive].forEach(k => {
       const orders = M.postOrders[k] || [];
       orders.sort((a,b) => String(a.order_date).localeCompare(String(b.order_date)));
@@ -7625,6 +7640,7 @@ function renderChoiceKitImpact(fOrders, fMkt) {
         baseAmt: M.baseAmt[k] || 0,
         postAmt: M.postAmt[k] || 0,
         postQty: M.postQty[k] || 0,
+        orderCount: (M.postOrderIds[k] || new Set()).size,
         firstDate: first ? first.order_date : '',
         model: (M.matchBy === 'sku' && first) ? (first.make_model || '') : '',
       });
@@ -7652,13 +7668,13 @@ function renderChoiceKitImpact(fOrders, fMkt) {
     </div>`;
   if (kpiEl) kpiEl.innerHTML =
     card(`Total Target ${dimWord}s`,         `${agg.targetCount.toLocaleString()}`,    `${regionLabel}${agg.hasSku ? ` · ${agg.activatedModels.size} models activated` : ''}`) +
-    card(`Dormant ${dimWord}s`,               `${agg.dormantCount.toLocaleString()}`,   `Baseline ${thresholdLabel}`) +
-    card(`🔵 Newly Activated (Choice Kit Effect)`, `${agg.newlyCount} / ${agg.dormantCount} (${(dormantConvRate*100).toFixed(1)}%)`, `Revenue ${fmtMoney(agg.newlyAmt)} · ${agg.newlyQty.toLocaleString()} pcs`, '#0A84FF') +
-    card(`Activated ${dimWord} Revenue`,      `${fmtMoney(agg.activatedAmt)}`,           `${activatedAllCount} activated · ${agg.activatedQty.toLocaleString()} pcs`, '#C8102E') +
+    card(`Dormant ${dimWord}s`,               `${agg.dormantCount.toLocaleString()}`,   `Baseline Revenue ${thresholdLabel}`) +
+    card(`🔵 Newly Activated (Choice Kit Effect)`, `${agg.newlyCount} / ${agg.dormantCount} (${(dormantConvRate*100).toFixed(1)}%)`, `Revenue ${fmtMoney(agg.newlyAmt)} · ${agg.newlyQty.toLocaleString()} pcs · ${agg.newlyOrderCount.toLocaleString()} orders`, '#0A84FF') +
+    card(`Activated ${dimWord} Revenue`,      `${fmtMoney(agg.activatedAmt)}`,           `${activatedAllCount} activated · ${agg.activatedQty.toLocaleString()} pcs · ${agg.activatedOrderCount.toLocaleString()} orders`, '#C8102E') +
     (showFullset ? card(
       `🎯 Full-set Related Revenue`,
       `${fmtMoney(agg.fullsetRelatedAmt)}`,
-      `${agg.fullsetCount.toLocaleString()} full-set orders · target-only: ${fmtMoney(agg.fullsetTargetAmt)}`,
+      `${agg.fullsetCount.toLocaleString()} full-set orders · target-only Revenue: ${fmtMoney(agg.fullsetTargetAmt)}`,
       '#34C759'
     ) : '') +
     card(`Still Dormant ${dimWord}s`,         `${agg.stillDormantCount.toLocaleString()}`, `Next action target (${(100*agg.stillDormantCount/Math.max(1,agg.targetCount)).toFixed(0)}% of total)`);
@@ -7680,40 +7696,40 @@ function renderChoiceKitImpact(fOrders, fMkt) {
     };
     // Two stacked rows: All Targets, Activated only
     baEl.innerHTML = `
-      <div class="label-mono" style="font-size:12px;font-weight:700;margin-bottom:8px;color:#1D1D1F">BEFORE vs AFTER — Target Volume Comparison</div>
+      <div class="label-mono" style="font-size:12px;font-weight:700;margin-bottom:8px;color:#1D1D1F">BEFORE vs AFTER — Target Revenue Comparison</div>
       <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 0.8fr;gap:14px;padding:12px 16px;background:rgba(0,0,0,0.02);border:1px solid rgba(0,0,0,0.08);border-radius:10px;align-items:center;margin-bottom:6px">
         <div>
           <div class="label-mono" style="font-size:11px;font-weight:600;color:#86868B;letter-spacing:0.05em;text-transform:uppercase">All Target ${dimWord}s</div>
-          <div style="font-size:14px;font-weight:600;margin-top:2px">${agg.targetCount.toLocaleString()} total · scope-wide</div>
+          <div style="font-size:14px;font-weight:600;margin-top:2px">${agg.targetCount.toLocaleString()} total · ${agg.allTargetOrderCount.toLocaleString()} post-campaign orders</div>
         </div>
         <div>
-          <div class="label-mono muted" style="font-size:11px">Baseline (Before)</div>
+          <div class="label-mono muted" style="font-size:11px">Baseline Revenue (Before)</div>
           <div style="font-size:20px;font-weight:800">${fmtMoney(agg.allTargetBaselineAmt)}</div>
         </div>
         <div>
-          <div class="label-mono muted" style="font-size:11px">Post-Campaign (After)</div>
+          <div class="label-mono muted" style="font-size:11px">Post-Campaign Revenue (After)</div>
           <div style="font-size:20px;font-weight:800;color:#1D1D1F">${fmtMoney(agg.allTargetPostAmt)}</div>
         </div>
         <div style="text-align:right">
-          <div class="label-mono muted" style="font-size:11px">Uplift</div>
+          <div class="label-mono muted" style="font-size:11px">Revenue Uplift</div>
           <div style="font-size:18px">${deltaPill(allDelta)}</div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 0.8fr;gap:14px;padding:12px 16px;background:rgba(10,132,255,0.06);border:1px solid rgba(10,132,255,0.25);border-left:4px solid #0A84FF;border-radius:10px;align-items:center">
         <div>
           <div class="label-mono" style="font-size:11px;font-weight:600;color:#0A84FF;letter-spacing:0.05em;text-transform:uppercase">└ Activated ${dimWord}s only</div>
-          <div style="font-size:14px;font-weight:600;margin-top:2px">${activatedAllCount.toLocaleString()} of ${agg.targetCount.toLocaleString()} (${(100*activatedAllCount/Math.max(1,agg.targetCount)).toFixed(1)}%)</div>
+          <div style="font-size:14px;font-weight:600;margin-top:2px">${activatedAllCount.toLocaleString()} of ${agg.targetCount.toLocaleString()} (${(100*activatedAllCount/Math.max(1,agg.targetCount)).toFixed(1)}%) · ${agg.activatedOrderCount.toLocaleString()} orders</div>
         </div>
         <div>
-          <div class="label-mono muted" style="font-size:11px">Baseline (Before)</div>
+          <div class="label-mono muted" style="font-size:11px">Baseline Revenue (Before)</div>
           <div style="font-size:20px;font-weight:800">${fmtMoney(agg.activatedSkuBaselineAmt)}</div>
         </div>
         <div>
-          <div class="label-mono muted" style="font-size:11px">Post-Campaign (After)</div>
+          <div class="label-mono muted" style="font-size:11px">Post-Campaign Revenue (After)</div>
           <div style="font-size:20px;font-weight:800;color:#C8102E">${fmtMoney(agg.activatedAmt)}</div>
         </div>
         <div style="text-align:right">
-          <div class="label-mono muted" style="font-size:11px">Uplift</div>
+          <div class="label-mono muted" style="font-size:11px">Revenue Uplift</div>
           <div style="font-size:18px">${deltaPill(actDelta)}</div>
         </div>
       </div>`;
@@ -7762,7 +7778,7 @@ function renderChoiceKitImpact(fOrders, fMkt) {
       <div style="background:${bg};border:1px solid ${color}40;border-radius:10px;padding:14px 16px;min-height:96px">
         <div style="font-size:15px;font-weight:700;color:${color}">${icon} ${title}</div>
         <div style="font-size:24px;font-weight:800;margin-top:6px;line-height:1.2">${count.toLocaleString()} <span class="label-mono muted" style="font-size:12px;font-weight:500">${dimWord}s</span></div>
-        <div class="label-mono muted" style="font-size:12px;margin-top:2px">${fmtMoney(amt)}</div>
+        <div class="label-mono muted" style="font-size:12px;margin-top:2px">Revenue ${fmtMoney(amt)}</div>
       </div>`;
     matrixEl.innerHTML =
       cell('🔵', 'Newly Active', agg.newlyCount, agg.newlyAmt, '#0A84FF', 'rgba(10,132,255,0.06)') +
@@ -7810,6 +7826,7 @@ function renderChoiceKitImpact(fOrders, fMkt) {
           <th class="text-right">Baseline Revenue</th>
           <th class="text-right">Post-Campaign Revenue</th>
           <th class="text-right">Qty</th>
+          <th class="text-right">Orders</th>
           <th>First Order</th>
         </tr></thead>
         <tbody>${shown.map(r => {
@@ -7821,6 +7838,7 @@ function renderChoiceKitImpact(fOrders, fMkt) {
             <td class="text-right ${r.baseAmt===0?'muted':''}">${r.baseAmt===0?'–':fmtMoney(r.baseAmt)}</td>
             <td class="text-right" style="font-weight:700;color:#C8102E">${fmtMoney(r.postAmt)}</td>
             <td class="text-right">${r.postQty.toLocaleString()}</td>
+            <td class="text-right">${(r.orderCount||0).toLocaleString()}</td>
             <td class="muted" style="font-size:12px">${r.firstDate || '–'}</td>
           </tr>`;
         }).join('')}</tbody>`;
