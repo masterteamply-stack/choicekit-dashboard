@@ -3136,10 +3136,14 @@ function deriveOrderTargets(mktRows) {
   return { byRegion, byRegionPromo };
 }
 function getRegionOrderTargetUSD(region, derived) {
-  // manual override wins if set; otherwise derived
-  const manual = Number(state.regionTargets[region]||0);
-  if (manual > 0) return manual;
-  return Number(derived?.byRegion[region]||0);
+  // CSV-derived value is the source of truth.
+  // Manual override only kicks in when the CSV has nothing for that region —
+  // this prevents stale manual values (from earlier Settings entries) from
+  // silently masking the real marketing.csv numbers.
+  const derivedVal = Number(derived?.byRegion?.[region] || 0);
+  if (derivedVal > 0) return derivedVal;
+  const manual = Number(state.regionTargets[region] || 0);
+  return manual > 0 ? manual : 0;
 }
 function getRegionPromoOrderTargetUSD(region, promo, derived) {
   return Number(derived?.byRegionPromo[region+'|||'+promo]||0);
@@ -8395,10 +8399,14 @@ function computeOrderTargetDisp() {
     f.regions.forEach(r => { s += tForRegion(r); });
     return s * usdToDisp;
   }
-  // Region 필터 미적용: 모든 Region의 타깃 합계
+  // Region 필터 미적용: 모든 Region의 타깃 합계.
+  // ALWAYS start from derived.byRegion (the marketing CSV is the source of truth);
+  // state.regionTargets only contributes additional regions that have a manual
+  // value but no marketing data. This prevents any region from being silently
+  // skipped if state.regionTargets is sparse.
   const allRegions = new Set([
-    ...Object.keys(state.regionTargets),
-    ...Object.keys(derived.byRegion),
+    ...Object.keys(derived.byRegion || {}),
+    ...Object.keys(state.regionTargets || {}),
   ]);
   let regionSum = 0;
   allRegions.forEach(r => { regionSum += tForRegion(r); });
