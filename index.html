@@ -3126,7 +3126,7 @@ function deriveOrderTargets(mktRows) {
     const r = m.region||''; const p = m.promotion_category||'';
     const d = m.date || m.execution_date || '';
     const c = m.country || '';
-    const cust = m.customer || '';
+    const cust = m.target_customer || m.customer || '';
     const k = `${r}|||${p}|||${d}|||${c}|||${cust}|||${t}`;
     if (seen.has(k)) return;
     seen.add(k);
@@ -8385,8 +8385,10 @@ function computePlanBudget() {
 function computeOrderTargetDisp() {
   const f = state.filters;
   const usdToDisp = usdToDisplay();
-  // marketing CSV에서 자동 도출된 By region 타깃 (USD)
-  const derived = deriveOrderTargets(state.marketing.filter(matchMkt));
+  // Order Target is a campaign-level baseline — derive from FULL marketing data
+  // (ignore date / category / promotion / activity / customer filters). Only
+  // the Region filter scopes the total, since region targets are independent.
+  const derived = deriveOrderTargets(state.marketing || []);
   const tForRegion = (r) => getRegionOrderTargetUSD(r, derived); // manual override → derived
   if (f.regions && f.regions.length) {
     let s = 0;
