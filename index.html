@@ -3113,14 +3113,21 @@ function showToast(text, ms) {
 function deriveOrderTargets(mktRows) {
   const byRegion = {};
   const byRegionPromo = {};
-  // Dedupe: same Order_Target($) value is repeated across many rows of the same campaign block.
-  // Use unique key (region|promotion_category|order_target_usd) to count once.
+  // Dedupe by full row identity (date + country + customer + target value).
+  // The same campaign+region often has the same target value repeated across
+  // multiple country/customer rows of a campaign block (e.g. CIS Asian vehicle
+  // $175,000 catalog activity in 4 countries). Each country/customer is a
+  // separate activity and MUST count separately, so the dedup key includes
+  // those fields rather than collapsing them.
   const seen = new Set();
   mktRows.forEach(m => {
     const t = Number(m.order_target_usd||0);
     if (!t) return;
     const r = m.region||''; const p = m.promotion_category||'';
-    const k = `${r}|||${p}|||${t}`;
+    const d = m.date || m.execution_date || '';
+    const c = m.country || '';
+    const cust = m.customer || '';
+    const k = `${r}|||${p}|||${d}|||${c}|||${cust}|||${t}`;
     if (seen.has(k)) return;
     seen.add(k);
     byRegion[r] = (byRegion[r]||0) + t;
