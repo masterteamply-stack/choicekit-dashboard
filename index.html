@@ -2800,6 +2800,27 @@ const COUNTRY_MAP = {
   '페루':'PERU',
   '에콰도르':'ECUADOR',
   '베네수엘라':'VENEZUELA',
+  // LATAM — 남미/중미 추가 매핑 (한/영 통합)
+  '우루과이':'URUGUAY',
+  '파라과이':'PARAGUAY',
+  '볼리비아':'BOLIVIA',
+  '과테말라':'GUATEMALA',
+  '파나마':'PANAMA',
+  '코스타리카':'COSTA RICA','COSTA_RICA':'COSTA RICA',
+  '온두라스':'HONDURAS',
+  '엘살바도르':'EL SALVADOR','EL_SALVADOR':'EL SALVADOR',
+  '니카라과':'NICARAGUA',
+  '도미니카 공화국':'DOMINICAN REPUBLIC','도미니카공화국':'DOMINICAN REPUBLIC','DOMINICAN_REPUBLIC':'DOMINICAN REPUBLIC',
+  '푸에르토리코':'PUERTO RICO','PUERTO_RICO':'PUERTO RICO',
+  '가이아나':'GUYANA',
+  '수리남':'SURINAME',
+  '쿠바':'CUBA',
+  '아이티':'HAITI',
+  '자메이카':'JAMAICA',
+  '트리니다드토바고':'TRINIDAD AND TOBAGO','TRINIDAD_AND_TOBAGO':'TRINIDAD AND TOBAGO',
+  '바하마':'BAHAMAS',
+  '바베이도스':'BARBADOS',
+  '벨리즈':'BELIZE',
   '호주':'AUSTRALIA','오스트레일리아':'AUSTRALIA',
   '뉴질랜드':'NEW ZEALAND',
   '한국':'KOREA','대한민국':'KOREA','남한':'KOREA','SOUTH KOREA':'KOREA','KOREA, REPUBLIC OF':'KOREA','REPUBLIC OF KOREA':'KOREA',
@@ -4326,7 +4347,9 @@ function buildPlanExecNodes(fOrders, fMkt) {
       const cust = (o.customer || '–').trim() || '–';
       // Determine owning promotion: customer→promo, fallback SKU→promo, else '–'
       const promoForCust = _custToPromo[cust] || _skuToPromo[(o.sku||'').trim()] || '–';
-      const x = ensure(reg||'–', o.country||'–', promoForCust, cust);
+      // Normalize country (한/영 통합) so 수리남/SURINAME collapse to one row.
+      const country = normalizeCountry(o.country || '') || (o.country||'–');
+      const x = ensure(reg||'–', country, promoForCust, cust);
       const yr = String(o.order_date||'').slice(0,4);
       const amt = Number(o.amount_usd||0) * usdToDisp;
       if (yr === currYear) x.orderAmt += amt;
@@ -5698,17 +5721,22 @@ function renderPromoChart(fOrders, fMkt) {
   };
 
   // 요약(전체 누적):
-  // - ORDERS: tag-based count (matches the row's own promotion_category tag)
-  // - ORDER AMT: BROADER scope — includes any row (orders.csv + baseline)
+  // - ORDERS: filtered fOrders count (matches the row's own promotion_category tag)
+  // - ORDER AMT: BROADER scope — sum over UNFILTERED state.orders + baseline,
   //   matched by (tag OR target SKU OR target customer), filtered to
   //   order_date >= campaign first marketing day.
-  //   This guarantees ORDER AMT >= 현재 (which uses target-only match).
+  //   Unfiltered to MATCH 현재's scope; guarantees ORDER AMT >= 현재.
   const sum = {};
   const ensureSum = k => sum[k] = sum[k] || {orders:0, orderAmt:0, actual:0, expected:0, activities:0, byPeriod:{}};
+  // ORDERS count (filtered)
   fOrders.forEach(o => {
     const k = o.promotion_category||o.promotion_id||'–';
-    ensureSum(k).orders++;   // ORDERS count keeps tag-based
-    // ORDER AMT: contribute to every campaign matched by tag/SKU/customer
+    ensureSum(k).orders++;
+  });
+  // ORDER AMT (unfiltered orders.csv) — uses state.orders so user filters
+  // (region/country/promotion/date) don't reduce the campaign's total below 현재.
+  const _allOrders = state.orders || [];
+  _allOrders.forEach(o => {
     const amt = convOrder(o);
     matchedCampaigns(o).forEach(p => {
       const start = promoStart[p];
@@ -5717,8 +5745,7 @@ function renderPromoChart(fOrders, fMkt) {
       }
     });
   });
-  // Baseline contributes to ORDER AMT via SKU/customer matching (baseline
-  // rows have no promotion_category tag). Only counted in post-campaign window.
+  // ORDER AMT (unfiltered baseline) — contributes via SKU/customer matching.
   if (state.preOrdersEnabled && Array.isArray(state.preOrders)) {
     const _dispMul = usdToDisplay();
     state.preOrders.forEach(o => {
