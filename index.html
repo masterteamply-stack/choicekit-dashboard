@@ -2650,6 +2650,9 @@ let state = {
   preOrdersEnabled: false,
 };
 const charts = {};
+// Shared: total ORDER AMT (post-campaign) computed by renderPromoChart.
+// renderAll reads this after renderPromoChart to keep kpiOrder/ptCur consistent.
+let _promoAfterTotal = null;
 
 const persist = () => {
   // Pre-order rows live in memory only — do NOT serialize into localStorage
@@ -4295,6 +4298,22 @@ function renderAll() {
   renderTopInsights(fOrders);
   renderPromoCtrChart(fOrders);
   renderPromoChart(fOrders, fMkt);
+  // ── Sync Marketing KPI Order Amount with the canonical post-campaign total ──
+  // renderPromoChart sets _promoAfterTotal (sum of baAmt.after across all promotions).
+  // Override the tag-based estimate computed earlier so all three displays agree:
+  //   • Marketing KPI "Order Amount" card  (kpiOrder / ptCur)
+  //   • Promotion Performance table ORDER AMT column  (= each row's afterAmt)
+  //   • Promotion Performance chart 현재 합계 KPI card
+  if (_promoAfterTotal !== null) {
+    document.getElementById('kpiOrder').textContent = fmtMoney(_promoAfterTotal);
+    document.getElementById('ptCur').textContent    = fmtMoney(_promoAfterTotal);
+    document.getElementById('kpiOrderSub').textContent = `after campaign start · post-campaign total`;
+    const tgtPctUpd = orderTargetDisp > 0 ? (_promoAfterTotal / orderTargetDisp) * 100 : 0;
+    document.getElementById('kpiAchv').textContent = orderTargetDisp > 0 ? fmtPct(tgtPctUpd) : '–';
+    const roiUpd = mktCost > 0 ? ((_promoAfterTotal - mktCost) / mktCost) * 100 : 0;
+    document.getElementById('kpiRoi').textContent = mktCost > 0 ? fmtPct(roiUpd) : '–';
+    document.getElementById('kpiRoiCard').classList.toggle('neg', roiUpd < 0);
+  }
   renderSalesTrendCombined(fOrders);
   renderActivitiesTable(fMkt);
   // New widgets (promotion-context narrative)
@@ -5899,6 +5918,10 @@ function renderPromoChart(fOrders, fMkt) {
   });
   // Now sort by the corrected orderAmt (was deferred from summary creation).
   summary.sort((a,b) => (b.orderAmt||0) - (a.orderAmt||0));
+  // ── Publish canonical post-campaign total for other widgets ──
+  // All three displays (Marketing KPI Order Amount, graph 현재 합계, table ORDER AMT)
+  // must agree. We use summary[].afterAmt (= baAmt.after) as the single source of truth.
+  _promoAfterTotal = summary.reduce((s, r) => s + (r.afterAmt || 0), 0);
 
   // ── Main chart: monthly ORDER TREND, switchable by dimension ──
   // dim = 'promotion' | 'customer' | 'region'. The period toggle controls the
@@ -6168,8 +6191,15 @@ function renderPromoChart(fOrders, fMkt) {
     const kpiBuckets = (promoFilter !== '__all__' && execBuckets && execBuckets.length)
       ? execBuckets
       : periodBuckets;
-    const curTotal = kpiBuckets.reduce((s, pk) =>
-      s + shownKeys.reduce((ss, key) => ss + ((series[key] && series[key][pk]) || 0), 0), 0);
+    // ── 현재 합계: use the same baAmt.after values as the table ORDER AMT column ──
+    // Using series[key][pk] accumulation was inconsistent because it (a) only
+    // covers shownKeys (capped at MAX_SERIES), (b) for dim=promotion uses
+    // fOrders-only while baAmt scans the full order set, and (c) ignores campaign
+    // start-date filtering that baAmt applies. Using summary.afterAmt ensures all
+    // three displays (KPI card, chart 현재 합계, table ORDER AMT) are identical.
+    const curTotal = promoFilter === '__all__'
+      ? summary.reduce((s, r) => s + (r.afterAmt || 0), 0)
+      : (baAmt[promoFilter] ? baAmt[promoFilter].after : 0);
     const priorTotal = kpiBuckets.reduce((s, pk) => {
       const ppk = shiftBucket(pk, cmpMode, period);
       return s + shownKeys.reduce((ss, key) => ss + ((cmpSeries[key] && cmpSeries[key][ppk]) || 0), 0);
@@ -6185,9 +6215,9 @@ function renderPromoChart(fOrders, fMkt) {
           <div style="font-size:18px;font-weight:800;margin-top:2px">${val}</div>
           ${sub ? `<div class="label-mono muted" style="font-size:11px">${sub}</div>` : ''}
         </div>`;
-      const subWindow = (promoFilter !== '__all__' && execBuckets && execBuckets.length)
-        ? `캠페인 집행 ${execBuckets.length}개 ${periodLabelOf(period)} 합산 (${execBuckets[0]}~${execBuckets[execBuckets.length-1]})`
-        : `표시된 ${shownKeys.length}개 항목 합산`;
+      const subWindow = (promoFilter !== '__all__')
+        ? `${promoFilter} · 캠페인 집행기간 합산`
+        : `전체 프로모션 캠페인 후 합계 (= 테이블 ORDER AMT 합산)`;
       cmpKpiEl.style.display = 'grid';
       cmpKpiEl.innerHTML =
         card('현재 합계', fmtMoney(curTotal), subWindow) +
