@@ -4414,8 +4414,9 @@ function buildPlanExecNodes(fOrders, fMkt) {
       const x = ensure(reg||'–', country, promoForCust, cust);
       const yr = String(o.order_date||'').slice(0,4);
       const amt = Number(o.amount_usd||0) * usdToDisp;
-      if (yr === currYear) x.orderAmt += amt;
-      else if (yr === prevYearStr) x.orderAmtPrev += amt;
+      // preOrders are strictly prior-year comparison data — never add to current orderAmt
+      if (yr === prevYearStr) x.orderAmtPrev += amt;
+      // (currYear preOrders intentionally ignored — current ORDER AMT = orders.csv only)
     });
   }
   fMkt.forEach(m => {
@@ -5916,9 +5917,11 @@ function renderPromoChart(fOrders, fMkt) {
     }
   });
 
-  // Accumulate AFTER (execution window) + BEFORE (same-length, shifted) over the
-  // FULL order set PLUS the baseline.
-  const _baScanSource = (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length)
+  // Accumulate AFTER (execution window) from orders.csv ONLY.
+  // preOrders are strictly for prior-period (before) comparison — they must
+  // never inflate the current campaign ORDER AMT.
+  const _baScanSource = (state.orders || []);
+  const _baPrevSource = (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length)
     ? (state.orders || []).concat(state.preOrders)
     : (state.orders || []);
   const baAmt = {};   // p → { before, after, skuCount, custCount, matchBy, winFrom, winTo, prevFrom, prevTo }
@@ -5943,9 +5946,19 @@ function renderPromoChart(fOrders, fMkt) {
     if (!start || !hasTargets) return;
     const winFrom = baAmt[p].winFrom, winTo = baAmt[p].winTo;
     const prevFrom = baAmt[p].prevFrom, prevTo = baAmt[p].prevTo;
+    // AFTER (current campaign window) — orders.csv only, no preOrders
     _baScanSource.forEach(o => {
-      // Region gate removed — see baselineMatchesPromo for rationale.
-      // Match target SKU / customer regardless of region.
+      const match = (mb === 'customer')
+        ? custSet.has((o.customer || '').trim())
+        : skuSet.has((o.sku || o.ctr_code || '').trim());
+      if (!match) return;
+      const d = o.order_date || '';
+      if (!d) return;
+      const amt = convOrder(o);
+      if (d >= winFrom && d <= winTo) baAmt[p].after += amt;
+    });
+    // BEFORE (prior period for YoY/QoQ comparison) — orders + preOrders
+    _baPrevSource.forEach(o => {
       const match = (mb === 'customer')
         ? custSet.has((o.customer || '').trim())
         : skuSet.has((o.sku || o.ctr_code || '').trim());
@@ -5955,8 +5968,7 @@ function renderPromoChart(fOrders, fMkt) {
       const amt = (o.amount_usd != null && o[PRE_ORDER_MARK])
         ? Number(o.amount_usd) * usdToDisplay()
         : convOrder(o);
-      if (d >= winFrom && d <= winTo)             baAmt[p].after  += amt;
-      else if (d >= prevFrom && d <= prevTo)      baAmt[p].before += amt;
+      if (d >= prevFrom && d <= prevTo) baAmt[p].before += amt;
     });
   });
   // Attach onto each summary row (so the table can show them).
@@ -6517,18 +6529,19 @@ function renderPromoChart(fOrders, fMkt) {
       if (!e.region) e.region = (o.region || '').trim();
       if (!e.country) e.country = (o.country || '').trim();
     });
-    // Baseline contribution to ORDER AMT (same entity, post-owner-campaign).
+    // Baseline contribution to PRIOR ORDER AMT only (preOrders = previous-year comparison).
+    // preOrders must NOT be added to current orderAmt — orders.csv is the single source
+    // of truth for current-year order amounts.
     if (state.preOrdersEnabled && Array.isArray(state.preOrders)) {
       state.preOrders.forEach(o => {
         const key = dim === 'sku' ? (o.sku||'').trim() : (o.customer||'').trim();
         if (!key) return;
         const owner = dim === 'sku' ? skuToPromo[key] : custToPromo[key];
         if (!owner) return;
-        const e = ensureE(key);
-        if (!e.ownerPromo) e.ownerPromo = owner;
-        if (!promoStart[owner] || (o.order_date && o.order_date >= promoStart[owner])) {
-          e.orderAmt += Number(o.amount_usd || 0) * _dispMul;
-        }
+        ensureE(key);   // ensure entry exists; do NOT add to orderAmt
+        if (!out[key].ownerPromo) out[key].ownerPromo = owner;
+        // Only contribute to prevAmt (before window)
+        out[key].prevAmt = (out[key].prevAmt || 0) + Number(o.amount_usd || 0) * _dispMul;
       });
     }
     // Before/After using each entity's owner-campaign window.
