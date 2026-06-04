@@ -2928,10 +2928,13 @@ const normalizeRegion = v => {
 // region. Prevents rows from showing up as '–' in Plan vs Execution etc.
 // when the CSV simply omits the region cell.
 const COUNTRY_TO_REGION = {
-  // CIS (구소련권 — Russia는 별도 RUS region)
-  'KAZAKHSTAN':'CIS','UZBEKISTAN':'CIS','BELARUS':'CIS','UKRAINE':'CIS',
-  'AZERBAIJAN':'CIS','GEORGIA':'CIS','ARMENIA':'CIS','KYRGYZSTAN':'CIS','TAJIKISTAN':'CIS',
-  'TURKMENISTAN':'CIS','MOLDOVA':'CIS','MONGOLIA':'CIS',
+  // CIS (구소련권 — Russia는 별도 RUS; Ukraine/Georgia/Armenia는 2026부터 EUROPE으로 재분류)
+  'KAZAKHSTAN':'CIS','UZBEKISTAN':'CIS','BELARUS':'CIS',
+  'KYRGYZSTAN':'CIS','TAJIKISTAN':'CIS','TURKMENISTAN':'CIS',
+  'AZERBAIJAN':'CIS','MOLDOVA':'CIS','MONGOLIA':'CIS',
+  // Ukraine/Georgia/Armenia: pre-2026 = CIS (handled by date-aware resolveRegion);
+  // 2026+ = EUROPE. Listed here as CIS for pre-2026 fallback.
+  'UKRAINE':'CIS','GEORGIA':'CIS','ARMENIA':'CIS',
   // RUS (Russia — its own region, not folded into CIS)
   'RUSSIA':'RUS',
   // MENA (Middle East + Africa folded)
@@ -2940,9 +2943,10 @@ const COUNTRY_TO_REGION = {
   'OMAN':'MENA','LEBANON':'MENA','SYRIA':'MENA','YEMEN':'MENA','ALGERIA':'MENA',
   'MOROCCO':'MENA','TUNISIA':'MENA','LIBYA':'MENA','SUDAN':'MENA','ETHIOPIA':'MENA',
   'NIGERIA':'MENA','KENYA':'MENA','SOUTH AFRICA':'MENA',
-  // NA
-  'USA':'NA','CANADA':'NA','MEXICO':'NA',
-  // LATAM (Mexico is debatable — keep NA per existing convention; LATAM = south of Mexico)
+  // NA (Mexico는 LATAM으로 분류)
+  'USA':'NA','CANADA':'NA',
+  // LATAM
+  'MEXICO':'LATAM',
   'BRAZIL':'LATAM','ARGENTINA':'LATAM','CHILE':'LATAM','COLOMBIA':'LATAM','PERU':'LATAM',
   'ECUADOR':'LATAM','VENEZUELA':'LATAM','URUGUAY':'LATAM','PARAGUAY':'LATAM','BOLIVIA':'LATAM',
   'GUATEMALA':'LATAM','PANAMA':'LATAM','COSTA RICA':'LATAM','HONDURAS':'LATAM',
@@ -2964,11 +2968,19 @@ const inferRegionFromCountry = (country) => {
   const c = String(country).trim().toUpperCase();
   return COUNTRY_TO_REGION[c] || '';
 };
-// Resolve final region: use provided region if present, else infer from country.
-const resolveRegion = (rawRegion, rawCountry) => {
+// Resolve final region: business rules first, then provided region, then country fallback.
+// `rawDate` enables date-aware re-classification (e.g. Ukraine/Georgia/Armenia
+// moved from CIS to EUROPE from 2026 onwards).
+const RECLASSIFIED_TO_EUROPE_2026 = new Set(['UKRAINE','GEORGIA','ARMENIA']);
+const resolveRegion = (rawRegion, rawCountry, rawDate) => {
+  const c = normalizeCountry(rawCountry);
+  // Business rule: from 2026, Ukraine/Georgia/Armenia are classified as EUROPE.
+  // Overrides whatever the CSV says in the region cell.
+  if (rawDate && String(rawDate) >= '2026-01-01' && RECLASSIFIED_TO_EUROPE_2026.has(c)) {
+    return 'EUROPE';
+  }
   const r = normalizeRegion(rawRegion);
   if (r) return r;
-  const c = normalizeCountry(rawCountry);
   return inferRegionFromCountry(c);
 };
 
@@ -3230,7 +3242,7 @@ async function parseOrderCSV(file) {
           order_id: str(pick(r,'CTR Code','CTR_Code','ctr_code','ctr code','order_id','order id')),
           ctr_code: str(pick(r,'CTR Code','CTR_Code','ctr_code','ctr code')),
           order_date: str(pick(r,'order date','order_date','date')),
-          region: resolveRegion(pick(r,'region'), pick(r,'country')),
+          region: resolveRegion(pick(r,'region'), pick(r,'country'), str(pick(r,'order date','order_date','date'))),
           country: normalizeCountry(pick(r,'country')),
           promotion_category: promCat || '(unspecified)',
           category: normalizeCategory(promCat),
@@ -3281,7 +3293,7 @@ async function parseMarketingCSV(file) {
         return {
           activity_id: str(pick(r,'activity_id')) || `MKT-${Date.now()}-${i}`,
           date: str(pick(r,'execution_date','date')),
-          region: resolveRegion(pick(r,'region'), pick(r,'country')),
+          region: resolveRegion(pick(r,'region'), pick(r,'country'), str(pick(r,'execution_date','date'))),
           country: normalizeCountry(pick(r,'country')),
           promotion_category: promCat || '(unspecified)',
           category: normalizeCategory(tgtProd || promCat),
