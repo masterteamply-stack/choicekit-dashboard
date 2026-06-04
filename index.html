@@ -2894,7 +2894,9 @@ const normalizeRegion = v => {
     'EUROPE':      'EUROPE',
     'EU':          'EUROPE',
     'CIS':         'CIS',
-    'RUS':         'CIS',             // legacy RUS folded into CIS
+    'RUS':         'RUS',             // Russia kept as its own region (NOT part of CIS)
+    'RUSSIA':      'RUS',
+    'RUSSIAN_FEDERATION': 'RUS',
     'RUSSIA':      'CIS',
     'LATAM':       'LATAM',
     'LATIN_AMERICA':'LATAM',
@@ -2926,10 +2928,12 @@ const normalizeRegion = v => {
 // region. Prevents rows from showing up as '–' in Plan vs Execution etc.
 // when the CSV simply omits the region cell.
 const COUNTRY_TO_REGION = {
-  // CIS
-  'RUSSIA':'CIS','KAZAKHSTAN':'CIS','UZBEKISTAN':'CIS','BELARUS':'CIS','UKRAINE':'CIS',
+  // CIS (구소련권 — Russia는 별도 RUS region)
+  'KAZAKHSTAN':'CIS','UZBEKISTAN':'CIS','BELARUS':'CIS','UKRAINE':'CIS',
   'AZERBAIJAN':'CIS','GEORGIA':'CIS','ARMENIA':'CIS','KYRGYZSTAN':'CIS','TAJIKISTAN':'CIS',
   'TURKMENISTAN':'CIS','MOLDOVA':'CIS','MONGOLIA':'CIS',
+  // RUS (Russia — its own region, not folded into CIS)
+  'RUSSIA':'RUS',
   // MENA (Middle East + Africa folded)
   'IRAQ':'MENA','SAUDI ARABIA':'MENA','UAE':'MENA','IRAN':'MENA','TURKEY':'MENA',
   'EGYPT':'MENA','JORDAN':'MENA','KUWAIT':'MENA','QATAR':'MENA','BAHRAIN':'MENA',
