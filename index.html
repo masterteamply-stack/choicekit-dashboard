@@ -2922,6 +2922,52 @@ const normalizeRegion = v => {
   return ALIAS[s] || s;
 };
 
+// Fallback: when a row has an empty region but a known country, infer the
+// region. Prevents rows from showing up as '–' in Plan vs Execution etc.
+// when the CSV simply omits the region cell.
+const COUNTRY_TO_REGION = {
+  // CIS
+  'RUSSIA':'CIS','KAZAKHSTAN':'CIS','UZBEKISTAN':'CIS','BELARUS':'CIS','UKRAINE':'CIS',
+  'AZERBAIJAN':'CIS','GEORGIA':'CIS','ARMENIA':'CIS','KYRGYZSTAN':'CIS','TAJIKISTAN':'CIS',
+  'TURKMENISTAN':'CIS','MOLDOVA':'CIS','MONGOLIA':'CIS',
+  // MENA (Middle East + Africa folded)
+  'IRAQ':'MENA','SAUDI ARABIA':'MENA','UAE':'MENA','IRAN':'MENA','TURKEY':'MENA',
+  'EGYPT':'MENA','JORDAN':'MENA','KUWAIT':'MENA','QATAR':'MENA','BAHRAIN':'MENA',
+  'OMAN':'MENA','LEBANON':'MENA','SYRIA':'MENA','YEMEN':'MENA','ALGERIA':'MENA',
+  'MOROCCO':'MENA','TUNISIA':'MENA','LIBYA':'MENA','SUDAN':'MENA','ETHIOPIA':'MENA',
+  'NIGERIA':'MENA','KENYA':'MENA','SOUTH AFRICA':'MENA',
+  // NA
+  'USA':'NA','CANADA':'NA','MEXICO':'NA',
+  // LATAM (Mexico is debatable — keep NA per existing convention; LATAM = south of Mexico)
+  'BRAZIL':'LATAM','ARGENTINA':'LATAM','CHILE':'LATAM','COLOMBIA':'LATAM','PERU':'LATAM',
+  'ECUADOR':'LATAM','VENEZUELA':'LATAM','URUGUAY':'LATAM','PARAGUAY':'LATAM','BOLIVIA':'LATAM',
+  'GUATEMALA':'LATAM','PANAMA':'LATAM','COSTA RICA':'LATAM','HONDURAS':'LATAM',
+  // OCEANIA
+  'AUSTRALIA':'OCEANIA','NEW ZEALAND':'OCEANIA',
+  // KOREA
+  'KOREA':'KOREA','SOUTH KOREA':'KOREA',
+  // ASIA
+  'JAPAN':'ASIA','CHINA':'ASIA','TAIWAN':'ASIA','HONG KONG':'ASIA','VIETNAM':'ASIA',
+  'THAILAND':'ASIA','SINGAPORE':'ASIA','MALAYSIA':'ASIA','INDONESIA':'ASIA','PHILIPPINES':'ASIA',
+  'MYANMAR':'ASIA','CAMBODIA':'ASIA','LAOS':'ASIA','INDIA':'ASIA','PAKISTAN':'ASIA',
+  'BANGLADESH':'ASIA','SRI LANKA':'ASIA','NEPAL':'ASIA',
+  // EUROPE
+  'GERMANY':'EUROPE','FRANCE':'EUROPE','ITALY':'EUROPE','SPAIN':'EUROPE','UK':'EUROPE',
+  'POLAND':'EUROPE','NETHERLANDS':'EUROPE','BELGIUM':'EUROPE','SWITZERLAND':'EUROPE',
+};
+const inferRegionFromCountry = (country) => {
+  if (!country) return '';
+  const c = String(country).trim().toUpperCase();
+  return COUNTRY_TO_REGION[c] || '';
+};
+// Resolve final region: use provided region if present, else infer from country.
+const resolveRegion = (rawRegion, rawCountry) => {
+  const r = normalizeRegion(rawRegion);
+  if (r) return r;
+  const c = normalizeCountry(rawCountry);
+  return inferRegionFromCountry(c);
+};
+
 // Customer-identity normalizer.
 // Goal: ensure orders from baseline (which often only carry a numeric VendorCode
 // like '288357') and current orders (which carry both 'customer' name and
@@ -3180,7 +3226,7 @@ async function parseOrderCSV(file) {
           order_id: str(pick(r,'CTR Code','CTR_Code','ctr_code','ctr code','order_id','order id')),
           ctr_code: str(pick(r,'CTR Code','CTR_Code','ctr_code','ctr code')),
           order_date: str(pick(r,'order date','order_date','date')),
-          region: normalizeRegion(pick(r,'region')),
+          region: resolveRegion(pick(r,'region'), pick(r,'country')),
           country: normalizeCountry(pick(r,'country')),
           promotion_category: promCat || '(unspecified)',
           category: normalizeCategory(promCat),
@@ -3231,7 +3277,7 @@ async function parseMarketingCSV(file) {
         return {
           activity_id: str(pick(r,'activity_id')) || `MKT-${Date.now()}-${i}`,
           date: str(pick(r,'execution_date','date')),
-          region: normalizeRegion(pick(r,'region')),
+          region: resolveRegion(pick(r,'region'), pick(r,'country')),
           country: normalizeCountry(pick(r,'country')),
           promotion_category: promCat || '(unspecified)',
           category: normalizeCategory(tgtProd || promCat),
