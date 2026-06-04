@@ -4434,9 +4434,15 @@ function buildPlanExecNodes(fOrders, fMkt) {
     return A;
   };
   // Walk all leaves under a region (tree[r] → countries → promos → customers).
+  // Excludes '–' promotion bucket (preOrders rows not attributable to any campaign).
   const leavesUnderRegion = (r) => {
     const out = [];
-    Object.values(tree[r]||{}).forEach(cm => Object.values(cm).forEach(pm => Object.values(pm).forEach(l => out.push(l))));
+    Object.values(tree[r]||{}).forEach(cm =>
+      Object.entries(cm).forEach(([p, pm]) => {
+        if (p === '–') return;
+        Object.values(pm).forEach(l => out.push(l));
+      })
+    );
     return out;
   };
   const regionNodes = Object.keys(tree).sort().map(r => {
@@ -4460,9 +4466,12 @@ function getPlanExecLevelData(model, path) {
   if (path.length === 1) {
     if (!tree[r]) return { level:'country', items: [] };
     const items = Object.keys(tree[r]).sort().map(c => {
-      // Walk all leaves under this country (promos → customers)
+      // Walk all leaves under this country (promos → customers), excluding '–' promo bucket
       const leaves = [];
-      Object.values(tree[r][c]||{}).forEach(pm => Object.values(pm).forEach(l => leaves.push(l)));
+      Object.entries(tree[r][c]||{}).forEach(([p, pm]) => {
+        if (p === '–') return;  // skip unattributed baseline rows
+        Object.values(pm).forEach(l => leaves.push(l));
+      });
       const a = aggLeaves(leaves);
       const regNode = regionNodes.find(x=>x.name===r);
       const regSum = regNode ? regNode.orderAmt : 0;
@@ -4475,14 +4484,17 @@ function getPlanExecLevelData(model, path) {
   const c = path[1];
   if (path.length === 2) {
     if (!tree[r] || !tree[r][c]) return { level:'promotion', items: [] };
-    const items = Object.keys(tree[r][c]).sort().map(p => {
-      const leaves = Object.values(tree[r][c][p]||{});
-      const a = aggLeaves(leaves);
-      const tUSD = getRegionPromoOrderTargetUSD(r, p, derived);
-      a.orderTarget = tUSD * usdToDisp;
-      a.achv = a.orderTarget>0 ? (a.orderAmt/a.orderTarget)*100 : null;
-      return { level:'promotion', key:p, name:p, parent:`${r} / ${c}`, ...a };
-    });
+    const items = Object.keys(tree[r][c]).sort()
+      // '–' = preOrders rows that couldn't be attributed to any campaign; exclude them.
+      .filter(p => p !== '–')
+      .map(p => {
+        const leaves = Object.values(tree[r][c][p]||{});
+        const a = aggLeaves(leaves);
+        const tUSD = getRegionPromoOrderTargetUSD(r, p, derived);
+        a.orderTarget = tUSD * usdToDisp;
+        a.achv = a.orderTarget>0 ? (a.orderAmt/a.orderTarget)*100 : null;
+        return { level:'promotion', key:p, name:p, parent:`${r} / ${c}`, ...a };
+      });
     return { level:'promotion', items };
   }
   // path.length === 3 → CUSTOMER level
