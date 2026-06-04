@@ -2774,7 +2774,8 @@ const COUNTRY_MAP = {
   '아제르바이잔':'AZERBAIJAN',
   '조지아':'GEORGIA','그루지아':'GEORGIA',
   '아르메니아':'ARMENIA',
-  '키르기스스탄':'KYRGYZSTAN','키르기즈':'KYRGYZSTAN',
+  '키르기스스탄':'KYRGYZSTAN','키르기즈':'KYRGYZSTAN','키르기즈공화국':'KYRGYZSTAN','키르기즈스탄':'KYRGYZSTAN',
+  'KYRGYZ REPUBLIC':'KYRGYZSTAN','KYRGYZ_REPUBLIC':'KYRGYZSTAN','KIRGHIZIA':'KYRGYZSTAN','KYRGYZ':'KYRGYZSTAN',
   '타지키스탄':'TAJIKISTAN',
   '투르크메니스탄':'TURKMENISTAN','투르크멘':'TURKMENISTAN',
   '몰도바':'MOLDOVA',
@@ -2828,7 +2829,7 @@ const COUNTRY_MAP = {
   '뉴질랜드':'NEW ZEALAND',
   '한국':'KOREA','대한민국':'KOREA','남한':'KOREA','SOUTH KOREA':'KOREA','KOREA, REPUBLIC OF':'KOREA','REPUBLIC OF KOREA':'KOREA',
   '일본':'JAPAN',
-  '중국':'CHINA',
+  '중국':'CHINA','중국(가)':'CHINA','중국(나)':'CHINA','中国':'CHINA','CHINA (PROVISIONAL)':'CHINA','CHINA_PROVISIONAL':'CHINA',
   '대만':'TAIWAN','타이완':'TAIWAN',
   '홍콩':'HONG KONG',
   '베트남':'VIETNAM','월남':'VIETNAM',
@@ -2875,6 +2876,10 @@ const normalizeCountry = v => {
   const s = str(v).trim();
   if (!s) return '';
   const upper = s.toUpperCase();
+  // If the value is actually a region name (CIS, MENA, EUROPE, etc.), it's not a country.
+  // Return empty so the region field takes precedence.
+  const REGION_VALUES = new Set(['CIS','MENA','EUROPE','NA','LATAM','ASIA','RUS','OCEANIA','KOREA','EMEA','APAC']);
+  if (REGION_VALUES.has(upper)) return '';
   if (COUNTRY_MAP[s]) return COUNTRY_MAP[s];
   if (COUNTRY_MAP[upper]) return COUNTRY_MAP[upper];
   // 이미 영어면 대문자화
@@ -4385,8 +4390,11 @@ function buildPlanExecNodes(fOrders, fMkt) {
       const cust = (o.customer || '–').trim() || '–';
       // Determine owning promotion: customer→promo, fallback SKU→promo, else '–'
       const promoForCust = _custToPromo[cust] || _skuToPromo[(o.sku||'').trim()] || '–';
-      // Normalize country (한/영 통합) so 수리남/SURINAME collapse to one row.
-      const country = normalizeCountry(o.country || '') || (o.country||'–');
+      // Normalize country (한/영 통합). normalizeCountry returns '' for region
+      // values (CIS, MENA, etc.) that were mistakenly placed in the country cell,
+      // so fall back to '–' rather than echoing the region name as a fake country.
+      const rawCountry = (o.country || '').trim();
+      const country = normalizeCountry(rawCountry) || (rawCountry && !['CIS','MENA','EUROPE','NA','LATAM','ASIA','RUS','OCEANIA','KOREA'].includes(rawCountry.toUpperCase()) ? rawCountry.toUpperCase() : '–');
       const x = ensure(reg||'–', country, promoForCust, cust);
       const yr = String(o.order_date||'').slice(0,4);
       const amt = Number(o.amount_usd||0) * usdToDisp;
