@@ -3131,7 +3131,14 @@ const krwToUsd = () => {
   return FALLBACK_TO_USD.KRW;
 };
 const usdToKrw = () => 1 / krwToUsd();
-const convOrder = o => num(o.amount) * rateToUsd(ymOf(o.order_date), o.currency) * usdToDisplay();
+const convOrder = o => {
+  // Baseline rows carry amount_usd (already in USD) instead of amount + currency.
+  // Detect via PRE_ORDER_MARK and convert USD → display currency.
+  if (o && o[PRE_ORDER_MARK] && o.amount_usd != null) {
+    return Number(o.amount_usd) * usdToDisplay();
+  }
+  return num(o.amount) * rateToUsd(ymOf(o.order_date), o.currency) * usdToDisplay();
+};
 const convMkt = m => num(m.cost) * rateToUsd(ymOf(m.date), m.currency) * usdToDisplay();
 // Today's date as 'YYYY-MM-DD' for future-row safeguards (computed lazily).
 function _todayStr() {
@@ -7729,19 +7736,35 @@ function renderSkuYearly(annualSeries, opts) {
 function buildBaStats(orders, startDate) {
   const isPerPromo = startDate && typeof startDate === 'object' && startDate.byPromo;
   const promoMap = isPerPromo ? startDate.byPromo : null;
+  const today = _todayStr();
+  // Shift a 'YYYY-MM-DD' string back exactly 1 year.
+  const shift1y = (s) => {
+    if (!s) return '';
+    const y = parseInt(s.slice(0,4),10);
+    return `${y-1}${s.slice(4)}`;
+  };
   let beforeAmt=0, afterAmt=0, beforeQty=0, afterQty=0, beforeOrds=0, afterOrds=0;
   orders.forEach(o => {
     const anchor = isPerPromo
       ? promoMap[o.promotion_category || '–']
       : startDate;
     if (!anchor) return;                          // no campaign anchor → drop
+    // After window  = [anchor, today]
+    // Before window = same length, one year earlier
+    const afterFrom  = anchor;
+    const afterTo    = today;
+    const beforeFrom = shift1y(anchor);
+    const beforeTo   = shift1y(today);
+    const d = o.order_date || '';
+    if (!d) return;
     const amt = convOrder(o);
     const q = Number(o.qty) || 0;
-    if (o.order_date < anchor) {
-      beforeAmt += amt; beforeQty += q; beforeOrds++;
-    } else {
+    if (d >= afterFrom && d <= afterTo) {
       afterAmt  += amt; afterQty  += q; afterOrds++;
+    } else if (d >= beforeFrom && d <= beforeTo) {
+      beforeAmt += amt; beforeQty += q; beforeOrds++;
     }
+    // Orders outside both windows are silently ignored.
   });
   return { beforeAmt, afterAmt, beforeQty, afterQty, beforeOrds, afterOrds };
 }
@@ -8396,8 +8419,16 @@ function renderSkuAggregate(fOrders) {
 
   const promo = state.skuAggPromo || '__all__';
 
-  // ── 데이터 소스: state.orders 전체 (날짜 필터 무관, 올해+작년 통합) ──
-  const allOrd = (state.orders || []).filter(o => o && o.sku);
+  // ── 데이터 소스: state.orders + baseline (state.preOrders) ──
+  // Include baseline so YoY-period Before window has real data. orders.csv
+  // typically holds only the current year; the prior-year comparison can only
+  // come from the baseline bundle. Each baseline row carries amount_usd and
+  // PRE_ORDER_MARK so convOrder handles the conversion transparently.
+  const ordersCsv = (state.orders || []).filter(o => o && o.sku);
+  const baselineSrc = (state.preOrdersEnabled && Array.isArray(state.preOrders))
+    ? state.preOrders.filter(o => o && o.sku)
+    : [];
+  const allOrd = ordersCsv.concat(baselineSrc);
   if (!allOrd.length) {
     if (meta) meta.textContent = 'No orders loaded — click 🔄 Shared to load data';
     clearSkuPanels(); return;
@@ -8468,14 +8499,39 @@ function renderSkuAggregate(fOrders) {
   }
   const startDate = displayStartDate; // backward-compat alias for downstream code
 
+  // For __all__ mode, build SKU/customer→owner-campaign maps so baseline rows
+  // (which lack a campaign tag) can be attributed to the right campaign's
+  // start date for the YoY Before/After window.
+  const cfg = state.campaignTargetSkus || {};
+  const skuToPromo = {}, custToPromo = {};
+  Object.keys(cfg).forEach(p => {
+    const c = cfg[p] || {};
+    if ((c.match_by || 'sku') === 'customer') {
+      (c.target_customers || []).forEach(x => { custToPromo[String(x).trim()] = p; });
+    } else {
+      (c.target_skus || []).forEach(x => { skuToPromo[String(x).trim()] = p; });
+    }
+  });
+
   // Per-SKU: allOrd 전체 기간 기준 (Before/After 계산을 위해)
   const perSku = skus.map(sku => {
     const ords = allOrd.filter(o => o.sku === sku);
+    // Resolve anchor:
+    //   - specific promo:  baStartDate is the single anchor string
+    //   - __all__ mode:    look up via SKU→owner-campaign in cfg
+    let anchor = baStartDate;
+    if (baStartDate && typeof baStartDate === 'object' && baStartDate.byPromo) {
+      const ownerPromo = skuToPromo[sku]
+        || custToPromo[(ords[0]?.customer || '').trim()]
+        || (ords[0]?.promotion_category)
+        || null;
+      anchor = ownerPromo ? baStartDate.byPromo[ownerPromo] : null;
+    }
     return {
       sku,
       product: (ords[0] && ords[0].product) || '',
       orders: ords,
-      ba: buildBaStats(ords, baStartDate),
+      ba: buildBaStats(ords, anchor),
       total: {
         amt: ords.reduce((s,o)=>s+convOrder(o),0),
         qty: ords.reduce((s,o)=>s+(Number(o.qty)||0),0),
