@@ -2161,7 +2161,16 @@ header .mono b.t-orange {
         <div id="promoInsight" class="label-mono" style="margin-bottom:10px;font-size:11px;color:#525257"></div>
         <div id="promoCmpKpis" style="display:none;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px"></div>
         <div class="chart-wrap" style="height:360px"><canvas id="chPromo"></canvas></div>
-        <div style="overflow:auto;margin-top:12px"><table id="tblPromo"></table></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap">
+          <span class="label-mono muted" style="font-size:11px">Group by:</span>
+          <select id="promoTableDimSel" style="font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface)">
+            <option value="promotion">Promotion Category</option>
+            <option value="sku">SKU</option>
+            <option value="customer">Customer</option>
+          </select>
+          <span class="label-mono muted" style="font-size:11px" id="promoTableNote"></span>
+        </div>
+        <div style="overflow:auto;margin-top:8px"><table id="tblPromo"></table></div>
       </div>
 
       <!-- Choice Kit Impact — Dormant Activation -->
@@ -2594,6 +2603,7 @@ let state = {
   promoPerfPeriod: localStorage.getItem('ck_promo_perf_period') || 'month',
   promoDim: localStorage.getItem('ck_promo_dim') || 'promotion',
   promoCmp: localStorage.getItem('ck_promo_cmp') || 'off',
+  promoTableDim: localStorage.getItem('ck_promo_table_dim') || 'promotion',
   ckiPromo: localStorage.getItem('ck_cki_promo') || 'Asian vehicle',
   ckiThreshold: parseFloat(localStorage.getItem('ck_cki_threshold') || '5000'),
   ckiCompare: localStorage.getItem('ck_cki_compare') || 'mom',
@@ -5496,13 +5506,29 @@ function periodLabelOf(period) {
 function renderPromoChart(fOrders, fMkt) {
   const period = state.promoPerfPeriod || 'month';
 
+  // ── Marketing start date per promotion (earliest execution_date).
+  // Computed FIRST because ORDER AMT now uses this to filter to post-campaign.
+  // Uses state.marketing (full set) so it stays stable regardless of filters.
+  const promoStart = {};
+  (state.marketing || []).forEach(m => {
+    const p = m.promotion_category || m.promotion_id || '–';
+    const d = (m.date || '').trim();
+    if (d && (!promoStart[p] || d < promoStart[p])) promoStart[p] = d;
+  });
+
   // 요약(전체 누적): orders, orderAmt, actualCost, expectedCost, activities, ROI
+  // ORDER AMT now excludes orders dated BEFORE the campaign's first marketing
+  // activity — only post-campaign-start orders are counted.
   const sum = {};
   const ensureSum = k => sum[k] = sum[k] || {orders:0, orderAmt:0, actual:0, expected:0, activities:0, byPeriod:{}};
   fOrders.forEach(o => {
     const k = o.promotion_category||o.promotion_id||'–';
     const s = ensureSum(k);
-    s.orders++; s.orderAmt += convOrder(o);
+    s.orders++;   // ORDERS count keeps all tagged orders
+    // ORDER AMT: only orders on/after the campaign's first marketing date
+    if (!promoStart[k] || (o.order_date && o.order_date >= promoStart[k])) {
+      s.orderAmt += convOrder(o);
+    }
   });
   fMkt.forEach(m => {
     const k = m.promotion_category||m.promotion_id||'–';
@@ -5523,18 +5549,7 @@ function renderPromoChart(fOrders, fMkt) {
     burn: v.expected>0 ? (v.actual/v.expected)*100 : null,
   })).sort((a,b)=>b.orderAmt-a.orderAmt);
 
-  // ── Compute the marketing start date per promotion category (earliest
-  // execution_date among the marketing activities). Used to split each
-  // campaign's TARGET-SKU orders into "before" vs "after" buckets.
-  //
-  // IMPORTANT: We use state.marketing (full set) — NOT fMkt — so the start
-  // date stays consistent regardless of region filters.
-  const promoStart = {};
-  (state.marketing || []).forEach(m => {
-    const p = m.promotion_category || m.promotion_id || '–';
-    const d = (m.date || '').trim();
-    if (d && (!promoStart[p] || d < promoStart[p])) promoStart[p] = d;
-  });
+  // (promoStart was already built above for ORDER AMT filtering)
 
   // Target-SKU derivation per campaign:
   //   target_skus(promo) = ALL SKUs that have EVER been tagged with this
@@ -6152,65 +6167,151 @@ function renderPromoChart(fOrders, fMkt) {
   // periods are still used by the right-side period × promotion table columns.
   const periods = Array.from(new Set(fOrders.map(o=>periodKey(o.order_date, period)).filter(Boolean))).sort();
 
-  // ── 상세 테이블: Promotion Category × Period (Activities + Executed Cost + ROI 합산 표기) ──
+  // ── 상세 테이블: dimension toggle (Promotion / SKU / Customer) ──
+  // Sync the dropdown to state and read the current dimension.
+  const tableDim = state.promoTableDim || 'promotion';
+  const tableDimSel = document.getElementById('promoTableDimSel');
+  if (tableDimSel) tableDimSel.value = tableDim;
+  const noteEl = document.getElementById('promoTableNote');
+  if (noteEl) noteEl.textContent = tableDim === 'promotion'
+    ? ''
+    : `Top 100 ${tableDim==='sku'?'SKUs':'customers'} (in any campaign target list) by post-campaign ORDER AMT.`;
+
+  // Build a SKU/Customer-grouped summary if needed. This reuses the
+  // campaign-level windows (baAmt[ownerPromo]) for each row's before/after.
+  function buildEntitySummary(dim) {
+    const out = {};
+    const ensureE = k => out[k] = out[k] || {
+      key: k, orders:0, orderAmt:0, qty:0, ownerPromo:null,
+      model:'', region:'', country:'',
+      beforeAmt:0, afterAmt:0,
+    };
+    fOrders.forEach(o => {
+      const key = dim === 'sku' ? (o.sku||'').trim() : (o.customer||'').trim();
+      if (!key) return;
+      const owner = dim === 'sku' ? skuToPromo[key] : custToPromo[key];
+      if (!owner) return; // skip entities not in any campaign target
+      const e = ensureE(key);
+      e.ownerPromo = owner;
+      e.orders++;
+      // ORDER AMT: post-campaign-start only (relative to owner campaign).
+      if (!promoStart[owner] || (o.order_date && o.order_date >= promoStart[owner])) {
+        e.orderAmt += convOrder(o);
+      }
+      e.qty += Number(o.qty || 0);
+      if (!e.model && dim === 'sku') e.model = (o.make_model || '').trim();
+      if (!e.region) e.region = (o.region || '').trim();
+      if (!e.country) e.country = (o.country || '').trim();
+    });
+    // Before/After using each entity's owner-campaign window.
+    _baScanSource.forEach(o => {
+      const key = dim === 'sku' ? (o.sku||'').trim() : (o.customer||'').trim();
+      if (!key || !out[key]) return;
+      const win = baAmt[out[key].ownerPromo];
+      if (!win) return;
+      const d = o.order_date || '';
+      if (!d) return;
+      const amt = (o.amount_usd != null && o[PRE_ORDER_MARK])
+        ? Number(o.amount_usd) * usdToDisplay()
+        : convOrder(o);
+      if (d >= win.winFrom && d <= win.winTo)             out[key].afterAmt  += amt;
+      else if (d >= win.prevFrom && d <= win.prevTo)      out[key].beforeAmt += amt;
+    });
+    return Object.values(out)
+      .map(e => ({
+        key: e.key, promotion: e.ownerPromo, model: e.model, region: e.region, country: e.country,
+        orders: e.orders, orderAmt: e.orderAmt, qty: e.qty,
+        beforeAmt: e.beforeAmt, afterAmt: e.afterAmt,
+        baDeltaPct: e.beforeAmt > 0 ? ((e.afterAmt - e.beforeAmt)/e.beforeAmt)*100 : null,
+        baStart: promoStart[e.ownerPromo] || null,
+        baCmpMode: tableCmpMode,
+        baWindow: baAmt[e.ownerPromo] ? `${baAmt[e.ownerPromo].winFrom}~${baAmt[e.ownerPromo].winTo}` : '',
+        baPrevWindow: baAmt[e.ownerPromo] ? `${baAmt[e.ownerPromo].prevFrom}~${baAmt[e.ownerPromo].prevTo}` : '',
+        activities: null, actual: null, expected: null, roi: null, burn: null, byPeriod: {},
+      }))
+      .sort((a,b) => b.orderAmt - a.orderAmt)
+      .slice(0, 100);
+  }
+
+  const tableRows = (tableDim === 'promotion') ? summary : buildEntitySummary(tableDim);
+
+  // periods are still used by the right-side period × promotion table columns.
+  const periods = Array.from(new Set(fOrders.map(o=>periodKey(o.order_date, period)).filter(Boolean))).sort();
   const periodLabel = period==='year'?'Year':(period==='quarter'?'Quarter':'Month');
-  // Pivot: each row = promotion. Columns: each period (activities | actual). Plus aggregate columns.
+  const showMktCols = (tableDim === 'promotion');  // ACT/MKT/EXEC/BURN/ROI only meaningful per-promotion
+  const firstColLabel = tableDim === 'sku' ? 'SKU' : (tableDim === 'customer' ? 'CUSTOMER' : 'PROMOTION CATEGORY');
+
   const head = `
     <thead>
       <tr>
-        <th rowspan="2">PROMOTION CATEGORY</th>
-        <th rowspan="2" class="text-right">ACTIVITIES</th>
+        <th rowspan="2">${firstColLabel}</th>
+        ${tableDim !== 'promotion' ? '<th rowspan="2">OWNER PROMOTION</th>' : ''}
+        ${tableDim === 'sku' ? '<th rowspan="2">MAKE / MODEL</th>' : ''}
+        ${tableDim === 'customer' ? '<th rowspan="2">REGION / COUNTRY</th>' : ''}
+        ${showMktCols ? '<th rowspan="2" class="text-right">ACTIVITIES</th>' : ''}
         <th rowspan="2" class="text-right">ORDERS</th>
-        <th rowspan="2" class="text-right">ORDER AMT</th>
-        <th rowspan="2" class="text-right" title="동일 길이의 이전 기간(YoY/QoQ/MoM, 비교 설정에 따름) 동안의 매출">전년 동기<br><span class="muted" style="font-size:9px;font-weight:500">집행기간 = 이전</span></th>
-        <th rowspan="2" class="text-right" title="캠페인 집행 기간(첫 ~ 마지막 마케팅 활동) 동안의 매출">현재<br><span class="muted" style="font-size:9px;font-weight:500">집행기간</span></th>
-        <th rowspan="2" class="text-right" title="(After − Before) ÷ Before × 100">Δ%</th>
-        <th rowspan="2" class="text-right">MKT BUDGET</th>
-        <th rowspan="2" class="text-right" title="Sum of actual_cost on activities executed up to today (future-dated activities count as 0).">EXECUTED COST<br><span class="muted" style="font-size:9px;font-weight:500">현재까지 집행</span></th>
-        <th rowspan="2" class="text-right" title="Executed Cost ÷ Marketing Budget (현재까지 집행된 비용 / 예산)">BUDGET USED %</th>
-        <th rowspan="2" class="text-right" title="(Order Amount − Executed Cost) ÷ Executed Cost × 100. 현재까지 집행된 비용만 분모로 사용 — 미래 계획된 비용은 제외.">ROI<br><span class="muted" style="font-size:9px;font-weight:500">현재 기준</span></th>
-        ${periods.length ? `<th colspan="${periods.length}" class="text-center" style="border-left:2px solid var(--border)">${periodLabel.toUpperCase()} · ACT (n) / COST</th>` : ''}
+        <th rowspan="2" class="text-right" title="캠페인 첫 마케팅 활동일 이후의 주문 금액 합계 (해당 promotion_category 태그 또는 target SKU/customer 매칭)">ORDER AMT<br><span class="muted" style="font-size:9px;font-weight:500">캠페인 후</span></th>
+        <th rowspan="2" class="text-right" title="동일 길이의 이전 기간(YoY/QoQ/MoM)">전년 동기<br><span class="muted" style="font-size:9px;font-weight:500">집행기간 = 이전</span></th>
+        <th rowspan="2" class="text-right" title="캠페인 집행 기간(첫 마케팅 ~ 오늘)">현재<br><span class="muted" style="font-size:9px;font-weight:500">집행기간</span></th>
+        <th rowspan="2" class="text-right">Δ%</th>
+        ${showMktCols ? '<th rowspan="2" class="text-right">MKT BUDGET</th>' : ''}
+        ${showMktCols ? '<th rowspan="2" class="text-right" title="Sum of actual_cost on activities executed up to today.">EXECUTED COST<br><span class="muted" style="font-size:9px;font-weight:500">현재까지 집행</span></th>' : ''}
+        ${showMktCols ? '<th rowspan="2" class="text-right">BUDGET USED %</th>' : ''}
+        ${showMktCols ? '<th rowspan="2" class="text-right" title="(Order Amount − Executed Cost) ÷ Executed Cost × 100">ROI<br><span class="muted" style="font-size:9px;font-weight:500">현재 기준</span></th>' : ''}
+        ${showMktCols && periods.length ? `<th colspan="${periods.length}" class="text-center" style="border-left:2px solid var(--border)">${periodLabel.toUpperCase()} · ACT (n) / COST</th>` : ''}
       </tr>
-      <tr>${periods.map((pk,i)=>`<th class="text-right mono" style="font-size:11px;${i===0?'border-left:2px solid var(--border)':''}">${pk}</th>`).join('')}</tr>
+      <tr>${showMktCols ? periods.map((pk,i)=>`<th class="text-right mono" style="font-size:11px;${i===0?'border-left:2px solid var(--border)':''}">${pk}</th>`).join('') : ''}</tr>
     </thead>`;
-  const body = `<tbody>${summary.map(p => {
-    const cells = periods.map((pk,i) => {
+  const body = `<tbody>${tableRows.map(p => {
+    const cells = showMktCols ? periods.map((pk,i) => {
       const c = (sum[p.promotion]?.byPeriod||{})[pk];
       if (!c) return `<td class="text-right mono muted" style="${i===0?'border-left:2px solid var(--border)':''}">–</td>`;
       return `<td class="text-right mono" style="${i===0?'border-left:2px solid var(--border)':''}"><span class="t-blue">${c.activities}</span> · <span class="t-orange">${fmtMoney(c.actual)}</span></td>`;
-    }).join('');
+    }).join('') : '';
     const roiTxt = p.roi==null?'–':fmtPct(p.roi);
     const burnTxt = p.burn==null?'–':p.burn.toFixed(0)+'%';
     const pBurnCls = p.burn==null ? 'muted' : (p.burn > 100 ? 't-red' : 't-orange');
     const pRoiCls  = p.roi==null  ? 'muted' : (p.roi  < 0   ? 't-red' : 't-orange');
-    // Show the exact numerator/denominator so the user can verify at a glance.
     const roiTooltip = p.roi == null
-      ? `ROI 계산 불가 — 현재까지 집행된 actual_cost가 0입니다.\n(orderAmt=${fmtMoney(p.orderAmt)}, executed=${fmtMoney(p.actual)})`
-      : `ROI = (${fmtMoney(p.orderAmt)} − ${fmtMoney(p.actual)}) ÷ ${fmtMoney(p.actual)} × 100 = ${fmtPct(p.roi)}\n· 분모: 현재까지 집행된 actual_cost만 사용\n· 분자: 해당 promotion_category의 전체 주문 amount`;
+      ? `ROI 계산 불가 — actual_cost = 0`
+      : `ROI = (${fmtMoney(p.orderAmt)} − ${fmtMoney(p.actual)}) ÷ ${fmtMoney(p.actual)} × 100`;
     const burnTooltip = p.burn == null
-      ? `BUDGET USED 계산 불가 — expected_cost (예산) = 0`
-      : `BUDGET USED = ${fmtMoney(p.actual)} ÷ ${fmtMoney(p.expected)} × 100 = ${p.burn.toFixed(1)}%`;
+      ? `BUDGET USED 계산 불가 — expected_cost = 0`
+      : `BUDGET USED = ${fmtMoney(p.actual)} ÷ ${fmtMoney(p.expected)} × 100`;
     const modeKo = { yoy:'전년 동기', qoq:'전분기', mom:'전월' }[p.baCmpMode || 'yoy'] || '이전';
     const baTooltip = p.baStart
-      ? `캠페인 집행 기간: ${p.baWindow || p.baStart}\n${modeKo} 동일 기간: ${p.baPrevWindow || '–'}\nTarget ${p.baMatchBy==='customer'?'고객':'SKU'}: ${p.baMatchBy==='customer'?p.baCustCount:p.baSkuCount}\n현재 (집행기간): ${fmtMoney(p.afterAmt)}\n${modeKo}: ${fmtMoney(p.beforeAmt)}`
+      ? `캠페인 집행 기간: ${p.baWindow || p.baStart}\n${modeKo} 동일 기간: ${p.baPrevWindow || '–'}\n현재 (집행기간): ${fmtMoney(p.afterAmt)}\n${modeKo}: ${fmtMoney(p.beforeAmt)}`
       : `매칭되는 마케팅 활동이 없음`;
     const dPctTag = p.baDeltaPct == null
       ? '<span class="t-muted">–</span>'
       : p.baDeltaPct >= 0
         ? `<span class="t-green">▲ ${p.baDeltaPct.toFixed(1)}%</span>`
         : `<span class="t-red">▼ ${Math.abs(p.baDeltaPct).toFixed(1)}%</span>`;
+    const firstCol = (tableDim === 'promotion')
+      ? `<td><b>${p.promotion}</b></td>`
+      : `<td><b>${p.key}</b></td>`;
+    const ownerCol = (tableDim !== 'promotion')
+      ? `<td class="muted" style="font-size:12px">${p.promotion || '–'}</td>`
+      : '';
+    const extraInfoCol = (tableDim === 'sku')
+      ? `<td class="muted" style="font-size:12px">${p.model || '–'}</td>`
+      : (tableDim === 'customer'
+          ? `<td class="muted" style="font-size:12px">${p.region || '–'}${p.country?' / '+p.country:''}</td>`
+          : '');
     return `<tr>
-      <td><b>${p.promotion}</b></td>
-      <td class="text-right mono t-blue">${fmtNum(p.activities)}</td>
+      ${firstCol}
+      ${ownerCol}
+      ${extraInfoCol}
+      ${showMktCols ? `<td class="text-right mono t-blue">${fmtNum(p.activities)}</td>` : ''}
       <td class="text-right mono">${fmtNum(p.orders)}</td>
       <td class="text-right mono t-green">${fmtMoney(p.orderAmt)}</td>
       <td class="text-right mono muted" title="${baTooltip.replace(/"/g,'&quot;')}">${fmtMoney(p.beforeAmt)}</td>
       <td class="text-right mono t-orange" title="${baTooltip.replace(/"/g,'&quot;')}">${fmtMoney(p.afterAmt)}</td>
       <td class="text-right mono" title="${baTooltip.replace(/"/g,'&quot;')}">${dPctTag}</td>
-      <td class="text-right mono t-yellow">${fmtMoney(p.expected)}</td>
-      <td class="text-right mono t-orange" title="${(p.actual>0?'현재까지 집행된 actual_cost':'아직 집행된 actual_cost 없음').replace(/"/g,'&quot;')}">${fmtMoney(p.actual)}</td>
-      <td class="text-right mono ${pBurnCls}" style="font-weight:700" title="${burnTooltip.replace(/"/g,'&quot;')}">${burnTxt}</td>
-      <td class="text-right mono ${pRoiCls}" style="font-weight:700" title="${roiTooltip.replace(/"/g,'&quot;')}">${roiTxt}</td>
+      ${showMktCols ? `<td class="text-right mono t-yellow">${fmtMoney(p.expected)}</td>` : ''}
+      ${showMktCols ? `<td class="text-right mono t-orange" title="${(p.actual>0?'현재까지 집행된 actual_cost':'아직 집행된 actual_cost 없음').replace(/"/g,'&quot;')}">${fmtMoney(p.actual)}</td>` : ''}
+      ${showMktCols ? `<td class="text-right mono ${pBurnCls}" style="font-weight:700" title="${burnTooltip.replace(/"/g,'&quot;')}">${burnTxt}</td>` : ''}
+      ${showMktCols ? `<td class="text-right mono ${pRoiCls}" style="font-weight:700" title="${roiTooltip.replace(/"/g,'&quot;')}">${roiTxt}</td>` : ''}
       ${cells}
     </tr>`;
   }).join('')}</tbody>`;
@@ -9044,6 +9145,11 @@ document.addEventListener('change', e => {
   if (e.target.id === 'promoDimSel') {
     state.promoDim = e.target.value;
     try { localStorage.setItem('ck_promo_dim', state.promoDim); } catch(_){}
+    renderAll(); return;
+  }
+  if (e.target.id === 'promoTableDimSel') {
+    state.promoTableDim = e.target.value;
+    try { localStorage.setItem('ck_promo_table_dim', state.promoTableDim); } catch(_){}
     renderAll(); return;
   }
   if (e.target.id === 'promoCmpSel') {
