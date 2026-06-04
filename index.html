@@ -2602,7 +2602,7 @@ let state = {
   planExecSort: localStorage.getItem('ck_planexec_sort') || 'orderAmt',
   promoPerfPeriod: localStorage.getItem('ck_promo_perf_period') || 'month',
   promoDim: localStorage.getItem('ck_promo_dim') || 'promotion',
-  promoCmp: localStorage.getItem('ck_promo_cmp') || 'off',
+  promoCmp: localStorage.getItem('ck_promo_cmp') || 'yoy',
   promoTableDim: localStorage.getItem('ck_promo_table_dim') || 'promotion',
   ckiPromo: localStorage.getItem('ck_cki_promo') || 'Asian vehicle',
   ckiThreshold: parseFloat(localStorage.getItem('ck_cki_threshold') || '5000'),
@@ -6468,6 +6468,11 @@ function renderPromoChart(fOrders, fMkt) {
   const showMktCols = (tableDim === 'promotion');  // ACT/MKT/EXEC/BURN/ROI only meaningful per-promotion
   const firstColLabel = tableDim === 'sku' ? 'SKU' : (tableDim === 'customer' ? 'CUSTOMER' : 'PROMOTION CATEGORY');
 
+  // Dynamic comparison label based on current mode
+  const _cmpModeNow = state.promoCmp || 'yoy';
+  const _prevColLabel = { yoy:'전년 동기', qoq:'전분기', mom:'전월', off:'전년 동기' }[_cmpModeNow] || '전년 동기';
+  const _prevColSub   = { yoy:'YoY 비교', qoq:'QoQ 비교', mom:'MoM 비교' }[_cmpModeNow] || '집행기간 = 이전';
+
   const head = `
     <thead>
       <tr>
@@ -6478,7 +6483,7 @@ function renderPromoChart(fOrders, fMkt) {
         ${showMktCols ? '<th rowspan="2" class="text-right">ACTIVITIES</th>' : ''}
         <th rowspan="2" class="text-right">ORDERS</th>
         <th rowspan="2" class="text-right" title="캠페인 첫 마케팅 활동일 이후의 주문 금액 합계 (해당 promotion_category 태그 또는 target SKU/customer 매칭)">ORDER AMT<br><span class="muted" style="font-size:9px;font-weight:500">캠페인 후</span></th>
-        <th rowspan="2" class="text-right" title="동일 길이의 이전 기간(YoY/QoQ/MoM)">전년 동기<br><span class="muted" style="font-size:9px;font-weight:500">집행기간 = 이전</span></th>
+        <th rowspan="2" class="text-right" title="현재 비교 모드(${_cmpModeNow.toUpperCase()})에 따른 이전 기간 매출">${_prevColLabel}<br><span class="muted" style="font-size:9px;font-weight:500">${_prevColSub}</span></th>
         <th rowspan="2" class="text-right" title="캠페인 집행 기간(첫 마케팅 ~ 오늘)">현재<br><span class="muted" style="font-size:9px;font-weight:500">집행기간</span></th>
         <th rowspan="2" class="text-right">Δ%</th>
         ${showMktCols ? '<th rowspan="2" class="text-right">MKT BUDGET</th>' : ''}
@@ -9382,7 +9387,19 @@ document.addEventListener('change', e => {
   if (e.target.id === 'promoCmpSel') {
     state.promoCmp = e.target.value;
     try { localStorage.setItem('ck_promo_cmp', state.promoCmp); } catch(_){}
-    renderAll(); return;
+    // Auto-sync period scale to match the comparison mode.
+    //   MoM → month / QoQ → quarter / YoY → year
+    const cmpToPeriod = { mom: 'month', qoq: 'quarter', yoy: 'year' };
+    const newPeriod = cmpToPeriod[state.promoCmp];
+    if (newPeriod) {
+      state.promoPerfPeriod = newPeriod;
+      try { localStorage.setItem('ck_promo_perf_period', newPeriod); } catch(_){}
+      // Reflect into the segment buttons
+      document.querySelectorAll('#segPromoPerf button').forEach(b => {
+        b.classList.toggle('active', b.dataset.v === newPeriod);
+      });
+    }
+    persist(); renderAll(); return;
   }
   if (e.target.id === 'selTrendDim') renderAll();
   if (e.target.id === 'selPromoCtrFilter') {
@@ -9524,7 +9541,21 @@ document.addEventListener('click', e => {
       persist(); renderAll();
     }
     else if (id==='segPromoCtrMetric'){ state.promoCtrMetric = v; persist(); renderAll(); }
-    else if (id==='segPromoPerf'){ state.promoPerfPeriod = v; persist(); renderAll(); }
+    else if (id==='segPromoPerf'){
+      state.promoPerfPeriod = v;
+      // Auto-sync the comparison mode to the period scale:
+      //   Month   → 전월 (MoM)
+      //   Quarter → 전분기 (QoQ)
+      //   Year    → 전년 (YoY)
+      const periodToCmp = { month: 'mom', quarter: 'qoq', year: 'yoy' };
+      const newCmp = periodToCmp[v] || 'yoy';
+      state.promoCmp = newCmp;
+      try { localStorage.setItem('ck_promo_cmp', newCmp); } catch(_){}
+      // Reflect into the dropdown
+      const sel = document.getElementById('promoCmpSel');
+      if (sel) sel.value = newCmp;
+      persist(); renderAll();
+    }
     else if (id==='segRegionMetric'){ state.regionMetric = v; persist(); renderAll(); }
     else if (id==='segCustTrendGrain'){ state.custTrendGrain = v; persist(); renderAll(); }
     else if (id==='segCustProdMode'){ state.custTrendProductMode = v; persist(); renderAll(); }
