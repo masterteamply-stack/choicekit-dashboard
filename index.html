@@ -4210,49 +4210,114 @@ function planExecHealth(burn, roi) {
 function buildPlanExecNodes(fOrders, fMkt) {
   const usdToDisp = usdToDisplay();
   const derived = deriveOrderTargets(fMkt);
-  const tree = {};
-  const ensure = (r,c,p) => {
+  const tree = {};   // tree[r][c][p][cust] = leaf node
+  const today = _todayStr();
+  const currYear = String(today).slice(0,4);          // e.g. '2026'
+  const prevYearStr = String(parseInt(currYear,10)-1); // e.g. '2025'
+
+  // Build customer→promo / sku→promo maps so baseline rows (which lack
+  // promotion_category) can be attributed to the right campaign.
+  const cfgAll = state.campaignTargetSkus || {};
+  const _custToPromo = {}, _skuToPromo = {};
+  Object.keys(cfgAll).forEach(p => {
+    const c = cfgAll[p] || {};
+    if ((c.match_by||'sku') === 'customer') {
+      (c.target_customers||[]).forEach(x => { _custToPromo[String(x).trim()] = p; });
+    } else {
+      (c.target_skus||[]).forEach(x => { _skuToPromo[String(x).trim()] = p; });
+    }
+  });
+
+  const ensure = (r,c,p,cust) => {
     tree[r] = tree[r] || {};
     tree[r][c] = tree[r][c] || {};
-    if (!tree[r][c][p]) tree[r][c][p] = {
-      r, c, p, orderAmt:0, costActual:0, costExpected:0, costBudget:0, qty:0, ords:0,
+    tree[r][c][p] = tree[r][c][p] || {};
+    if (!tree[r][c][p][cust]) tree[r][c][p][cust] = {
+      r, c, p, cust,
+      // current-year metrics
+      orderAmt:0, costActual:0, costExpected:0, costBudget:0, qty:0, ords:0,
+      // prev-year metrics (for YoY comparison)
+      orderAmtPrev:0, costActualPrev:0, costExpectedPrev:0,
       sellTypes:new Set(), earliestExec:null,
     };
-    return tree[r][c][p];
+    return tree[r][c][p][cust];
   };
   fOrders.forEach(o => {
     if (!isRegionVisible(o.region)) return;
-    const x = ensure(o.region||'–', o.country||'–', o.promotion_category||'–');
-    x.orderAmt += convOrder(o); x.qty += Number(o.qty)||0; x.ords += 1;
+    const cust = (o.customer || '–').trim() || '–';
+    const x = ensure(o.region||'–', o.country||'–', o.promotion_category||'–', cust);
+    const yr = String(o.order_date||'').slice(0,4);
+    const amt = convOrder(o);
+    if (yr === currYear) {
+      x.orderAmt += amt; x.qty += Number(o.qty)||0; x.ords += 1;
+    } else if (yr === prevYearStr) {
+      x.orderAmtPrev += amt;
+    }
     if (o.sell_type) x.sellTypes.add(o.sell_type);
   });
+  // Baseline (pre_orders) — primarily contributes prev-year order amounts
+  // since orders.csv typically only has the current year.
+  if (state.preOrdersEnabled && Array.isArray(state.preOrders)) {
+    state.preOrders.forEach(o => {
+      const reg = normalizeRegion(o.region || '');
+      if (!isRegionVisible(reg)) return;
+      const cust = (o.customer || '–').trim() || '–';
+      // Determine owning promotion: customer→promo, fallback SKU→promo, else '–'
+      const promoForCust = _custToPromo[cust] || _skuToPromo[(o.sku||'').trim()] || '–';
+      const x = ensure(reg||'–', o.country||'–', promoForCust, cust);
+      const yr = String(o.order_date||'').slice(0,4);
+      const amt = Number(o.amount_usd||0) * usdToDisp;
+      if (yr === currYear) x.orderAmt += amt;
+      else if (yr === prevYearStr) x.orderAmtPrev += amt;
+    });
+  }
   fMkt.forEach(m => {
     if (!isRegionVisible(m.region)) return;
-    const x = ensure(m.region||'–', m.country||'–', m.promotion_category||'–');
-    x.costActual += convMktActual(m);
-    x.costExpected += convMktExpected(m);
-    x.costBudget += convMktBudget(m);
+    const cust = (m.target_customer || m.customer || '–').trim() || '–';
+    const x = ensure(m.region||'–', m.country||'–', m.promotion_category||'–', cust);
+    const yr = String(m.date||'').slice(0,4);
+    const actCost = convMktActual(m);
+    const expCost = convMktExpected(m);
+    const budCost = convMktBudget(m);
+    if (yr === currYear) {
+      x.costActual += actCost; x.costExpected += expCost; x.costBudget += budCost;
+    } else if (yr === prevYearStr) {
+      x.costActualPrev += actCost; x.costExpectedPrev += expCost;
+    }
     if (m.sell_type) x.sellTypes.add(m.sell_type);
     const d = (m.date||'').trim();
     if (d && (!x.earliestExec || d < x.earliestExec)) x.earliestExec = d;
   });
   const aggLeaves = (ls) => {
-    const A = { orderAmt:0, costActual:0, costExpected:0, costBudget:0, qty:0, ords:0, sellTypes:new Set(), earliestExec:null };
+    const A = {
+      orderAmt:0, costActual:0, costExpected:0, costBudget:0, qty:0, ords:0,
+      orderAmtPrev:0, costActualPrev:0, costExpectedPrev:0,
+      sellTypes:new Set(), earliestExec:null,
+    };
     ls.forEach(l => {
       A.orderAmt+=l.orderAmt; A.costActual+=l.costActual; A.costExpected+=l.costExpected; A.costBudget+=(l.costBudget||0);
+      A.orderAmtPrev+=l.orderAmtPrev; A.costActualPrev+=l.costActualPrev; A.costExpectedPrev+=l.costExpectedPrev;
       A.qty+=l.qty; A.ords+=l.ords;
       l.sellTypes.forEach(s=>A.sellTypes.add(s));
       if (l.earliestExec && (!A.earliestExec || l.earliestExec<A.earliestExec)) A.earliestExec=l.earliestExec;
     });
-    // Prefer CSV `budget` column over expected_cost (backward compat: if no budget col, fall back to expected)
     A.mktBudget = A.costBudget>0 ? A.costBudget : A.costExpected;
+    A.mktBudgetPrev = A.costExpectedPrev;
     A.burn = A.mktBudget>0 ? (A.costActual/A.mktBudget)*100 : null;
     A.roi  = A.costActual>0 ? ((A.orderAmt-A.costActual)/A.costActual)*100 : null;
+    A.roiPrev = A.costActualPrev>0 ? ((A.orderAmtPrev-A.costActualPrev)/A.costActualPrev)*100 : null;
+    // YoY % for cost (actual vs prev actual)
+    A.costYoYPct = A.costActualPrev>0 ? ((A.costActual-A.costActualPrev)/A.costActualPrev)*100 : null;
     return A;
   };
+  // Walk all leaves under a region (tree[r] → countries → promos → customers).
+  const leavesUnderRegion = (r) => {
+    const out = [];
+    Object.values(tree[r]||{}).forEach(cm => Object.values(cm).forEach(pm => Object.values(pm).forEach(l => out.push(l))));
+    return out;
+  };
   const regionNodes = Object.keys(tree).sort().map(r => {
-    const leaves = []; Object.values(tree[r]).forEach(cm => Object.values(cm).forEach(p => leaves.push(p)));
-    const a = aggLeaves(leaves);
+    const a = aggLeaves(leavesUnderRegion(r));
     const targetUSD = getRegionOrderTargetUSD(r, derived);
     a.orderTarget = targetUSD * usdToDisp;
     a.achv = a.orderTarget>0 ? (a.orderAmt/a.orderTarget)*100 : null;
@@ -4263,7 +4328,7 @@ function buildPlanExecNodes(fOrders, fMkt) {
     }
     return { level:'region', key:r, name:r, parent:null, ...a };
   });
-  return { tree, regionNodes, derived, usdToDisp, aggLeaves };
+  return { tree, regionNodes, derived, usdToDisp, aggLeaves, leavesUnderRegion, currYear, prevYearStr };
 }
 function getPlanExecLevelData(model, path) {
   const { tree, regionNodes, derived, usdToDisp, aggLeaves } = model;
@@ -4272,7 +4337,9 @@ function getPlanExecLevelData(model, path) {
   if (path.length === 1) {
     if (!tree[r]) return { level:'country', items: [] };
     const items = Object.keys(tree[r]).sort().map(c => {
-      const leaves = Object.values(tree[r][c]);
+      // Walk all leaves under this country (promos → customers)
+      const leaves = [];
+      Object.values(tree[r][c]||{}).forEach(pm => Object.values(pm).forEach(l => leaves.push(l)));
       const a = aggLeaves(leaves);
       const regNode = regionNodes.find(x=>x.name===r);
       const regSum = regNode ? regNode.orderAmt : 0;
@@ -4283,23 +4350,29 @@ function getPlanExecLevelData(model, path) {
     return { level:'country', items };
   }
   const c = path[1];
-  if (!tree[r] || !tree[r][c]) return { level:'promotion', items: [] };
-  const items = Object.keys(tree[r][c]).sort().map(p => {
-    const l = tree[r][c][p];
-    const a = {
-      orderAmt:l.orderAmt, costActual:l.costActual, costExpected:l.costExpected, costBudget:(l.costBudget||0),
-      qty:l.qty, ords:l.ords,
-      sellTypes:l.sellTypes, earliestExec:l.earliestExec,
-      mktBudget: (l.costBudget>0 ? l.costBudget : l.costExpected),
-    };
-    a.burn = a.mktBudget>0 ? (a.costActual/a.mktBudget)*100 : null;
-    a.roi  = a.costActual>0 ? ((a.orderAmt-a.costActual)/a.costActual)*100 : null;
-    const tUSD = getRegionPromoOrderTargetUSD(r, p, derived);
-    a.orderTarget = tUSD * usdToDisp;
-    a.achv = a.orderTarget>0 ? (a.orderAmt/a.orderTarget)*100 : null;
-    return { level:'promotion', key:p, name:p, parent:`${r} / ${c}`, ...a };
+  if (path.length === 2) {
+    if (!tree[r] || !tree[r][c]) return { level:'promotion', items: [] };
+    const items = Object.keys(tree[r][c]).sort().map(p => {
+      const leaves = Object.values(tree[r][c][p]||{});
+      const a = aggLeaves(leaves);
+      const tUSD = getRegionPromoOrderTargetUSD(r, p, derived);
+      a.orderTarget = tUSD * usdToDisp;
+      a.achv = a.orderTarget>0 ? (a.orderAmt/a.orderTarget)*100 : null;
+      return { level:'promotion', key:p, name:p, parent:`${r} / ${c}`, ...a };
+    });
+    return { level:'promotion', items };
+  }
+  // path.length === 3 → CUSTOMER level
+  const p = path[2];
+  if (!tree[r] || !tree[r][c] || !tree[r][c][p]) return { level:'customer', items: [] };
+  const items = Object.keys(tree[r][c][p]).sort().map(cust => {
+    const l = tree[r][c][p][cust];
+    const a = aggLeaves([l]);
+    a.orderTarget = 0;  // no per-customer target
+    a.achv = null;
+    return { level:'customer', key:cust, name:cust, parent:`${r} / ${c} / ${p}`, ...a };
   });
-  return { level:'promotion', items };
+  return { level:'customer', items };
 }
 function sortPlanExec(items, key) {
   const get = (x) => {
@@ -4314,7 +4387,7 @@ function sortPlanExec(items, key) {
 }
 function renderPlanExec(fOrders, fMkt) {
   const model = buildPlanExecNodes(fOrders, fMkt);
-  const path = (state.planExecPath || []).slice(0, 2);
+  const path = (state.planExecPath || []).slice(0, 3);
   const { level, items } = getPlanExecLevelData(model, path);
   const sorted = sortPlanExec(items, state.planExecSort || 'orderAmt');
 
@@ -4329,20 +4402,20 @@ function renderPlanExec(fOrders, fMkt) {
       const isLast = i===path.length-1;
       parts.push(`<span class="badge-tag" data-planexec-crumb="${i+1}" style="cursor:${isLast?'default':'pointer'};${isLast?'background:rgba(143,232,170,.15);border-color:#0A0A0A;color:#0A0A0A':''}">${p}</span>`);
     });
-    const levelLabel = level==='region'?'Region':level==='country'?'Country':'Promotion';
+    const levelLabel = level==='region'?'Region':level==='country'?'Country':level==='promotion'?'Promotion':'Customer';
     parts.push(`<span class="muted" style="margin-left:8px">· viewing <b>${levelLabel}</b> level (${items.length})</span>`);
     crumbEl.innerHTML = parts.join(' ');
   }
 
-  // Needs Attention
+  // Needs Attention — walk all leaves under all (region, country, promo, customer)
   const allLeaves = [];
-  Object.values(model.tree).forEach(cm => Object.values(cm).forEach(pm => Object.values(pm).forEach(l => {
+  Object.values(model.tree).forEach(cm => Object.values(cm).forEach(pm => Object.values(pm).forEach(custMap => Object.values(custMap).forEach(l => {
     const burn = l.costExpected>0 ? (l.costActual/l.costExpected)*100 : null;
     const roi  = l.costActual>0 ? ((l.orderAmt-l.costActual)/l.costActual)*100 : null;
     if ((burn != null && burn > 100) || (roi != null && roi < 0)) {
-      allLeaves.push({ r:l.r, c:l.c, p:l.p, burn, roi });
+      allLeaves.push({ r:l.r, c:l.c, p:l.p, cust:l.cust, burn, roi });
     }
-  })));
+  }))));
   allLeaves.sort((a,b) => {
     const sa = (a.burn!=null && a.burn>100 ? a.burn-100 : 0) + (a.roi!=null && a.roi<0 ? -a.roi : 0);
     const sb = (b.burn!=null && b.burn>100 ? b.burn-100 : 0) + (b.roi!=null && b.roi<0 ? -b.roi : 0);
@@ -4355,7 +4428,7 @@ function renderPlanExec(fOrders, fMkt) {
     } else {
       const chips = allLeaves.slice(0,6).map(x => {
         const tag = (x.burn!=null && x.burn>100) ? `🔴 budget used ${x.burn.toFixed(0)}%` : `🔴 ROI ${fmtPct(x.roi)}`;
-        return `<span class="badge-tag" data-planexec-jump="${x.r}|||${x.c}" style="cursor:pointer;background:rgba(255,107,107,.12);border-color:#C8102E;color:#C8102E;margin:2px 3px">${tag} · ${x.r}/${x.c}/${x.p}</span>`;
+        return `<span class="badge-tag" data-planexec-jump="${x.r}|||${x.c}" style="cursor:pointer;background:rgba(255,107,107,.12);border-color:#C8102E;color:#C8102E;margin:2px 3px">${tag} · ${x.r}/${x.c}/${x.p}${x.cust&&x.cust!=='–'?' · '+x.cust:''}</span>`;
       }).join('');
       attentionEl.innerHTML = `<div style="background:rgba(255,107,107,.06);border:1px solid rgba(255,107,107,.25);border-radius:8px;padding:8px 12px"><span class="label-mono" style="font-size:11px;color:#C8102E;margin-right:8px">⚠ NEEDS ATTENTION (${allLeaves.length})</span>${chips}${allLeaves.length>6?`<span class="muted" style="margin-left:6px">+${allLeaves.length-6} more</span>`:''}</div>`;
     }
@@ -4363,7 +4436,7 @@ function renderPlanExec(fOrders, fMkt) {
 
   // Cards
   const cardsEl = document.getElementById('planExecCards');
-  const drillable = level !== 'promotion';
+  const drillable = level !== 'customer';
   if (cardsEl) {
     if (sorted.length === 0) {
       cardsEl.innerHTML = `<div class="muted" style="padding:20px;text-align:center">No data at this level</div>`;
@@ -4438,20 +4511,30 @@ function renderPlanExecChart(items, level) {
 function renderPlanExecDetail(items, level) {
   const tbl = document.getElementById('tblPlanExecDetail');
   if (!tbl) return;
-  const headerLabel = level==='region' ? 'REGION' : level==='country' ? 'COUNTRY' : 'PROMOTION';
+  const headerLabel = level==='region' ? 'REGION' : level==='country' ? 'COUNTRY' : level==='promotion' ? 'PROMOTION' : 'CUSTOMER';
+  // Derive current/prev year labels from the today's date string.
+  const _curYr = (new Date()).getFullYear();
+  const _prevYr = _curYr - 1;
+  const yoyTag = (curr, prev) => {
+    if (prev == null || prev === 0) return curr > 0 ? '<span class="t-green" style="font-weight:700">▲ NEW</span>' : '<span class="muted">–</span>';
+    const pct = ((curr - prev) / prev) * 100;
+    if (pct >= 0) return `<span class="t-green" style="font-weight:700">▲ ${pct.toFixed(0)}%</span>`;
+    return `<span class="t-red" style="font-weight:700">▼ ${Math.abs(pct).toFixed(0)}%</span>`;
+  };
   const rows = items.map(x => {
     const h = planExecHealth(x.burn, x.roi);
-    // KPI emphasis: orange-strong for headline metrics; red only when truly at risk.
     const burnCls = x.burn==null ? 'muted' : (x.burn > 100 ? 't-red' : 't-orange');
     const roiCls  = x.roi==null  ? 'muted' : (x.roi  < 0   ? 't-red' : 't-orange');
-    // Per-row tooltips — show numerator/denominator so the "current-basis"
-    // ROI computation can be verified at a glance.
+    const roiPrevCls = x.roiPrev==null ? 'muted' : (x.roiPrev < 0 ? 't-red' : 't-blue');
     const roiTooltip = x.roi == null
-      ? `ROI 계산 불가 — 현재까지 집행된 actual_cost가 0입니다.\n(orderAmt=${fmtMoney(x.orderAmt)}, executed=${fmtMoney(x.costActual)})`
-      : `ROI = (${fmtMoney(x.orderAmt)} − ${fmtMoney(x.costActual)}) ÷ ${fmtMoney(x.costActual)} × 100 = ${fmtPct(x.roi)}\n· 분모: 현재까지 집행된 actual_cost만 사용 (미래 계획 비용 제외)\n· 분자: 해당 단위(${headerLabel})의 전체 주문 amount`;
+      ? `ROI 계산 불가 — actual_cost = 0`
+      : `ROI(${_curYr}) = (${fmtMoney(x.orderAmt)} − ${fmtMoney(x.costActual)}) ÷ ${fmtMoney(x.costActual)} × 100 = ${fmtPct(x.roi)}`;
+    const roiPrevTooltip = x.roiPrev == null
+      ? `ROI(${_prevYr}) 계산 불가 — 전년 actual_cost 또는 매출 데이터 없음`
+      : `ROI(${_prevYr}) = (${fmtMoney(x.orderAmtPrev)} − ${fmtMoney(x.costActualPrev)}) ÷ ${fmtMoney(x.costActualPrev)} × 100 = ${fmtPct(x.roiPrev)}`;
     const burnTooltip = x.burn == null
-      ? `BUDGET USED 계산 불가 — 예산(MKT BUDGET)이 0`
-      : `BUDGET USED = ${fmtMoney(x.costActual)} ÷ ${fmtMoney(x.mktBudget)} × 100 = ${x.burn.toFixed(1)}%\n· 분자: 현재까지 집행된 actual_cost`;
+      ? `BUDGET USED 계산 불가 — MKT BUDGET = 0`
+      : `BUDGET USED = ${fmtMoney(x.costActual)} ÷ ${fmtMoney(x.mktBudget)} × 100 = ${x.burn.toFixed(1)}%`;
     const achvTooltip = x.achv == null
       ? `ACHV 계산 불가 — Order Target이 설정되지 않음`
       : `ACHV = ${fmtMoney(x.orderAmt)} ÷ ${fmtMoney(x.orderTarget)} × 100 = ${x.achv.toFixed(1)}%`;
@@ -4459,24 +4542,30 @@ function renderPlanExecDetail(items, level) {
       <td>${h.dot} <b>${x.name}</b></td>
       <td class="text-right mono t-orange">${fmtMoney(x.mktBudget)}</td>
       <td class="text-right mono t-yellow" title="현재까지 집행된 actual_cost">${fmtMoney(x.costActual)}</td>
+      <td class="text-right mono muted" title="${_prevYr} executed cost">${x.costActualPrev>0?fmtMoney(x.costActualPrev):'–'}</td>
+      <td class="text-right mono" title="${_curYr} vs ${_prevYr} cost change">${yoyTag(x.costActual, x.costActualPrev)}</td>
       <td class="text-right mono ${burnCls}" style="font-weight:700" title="${burnTooltip.replace(/"/g,'&quot;')}">${x.burn==null?'–':x.burn.toFixed(0)+'%'}</td>
       <td class="text-right mono t-purple">${x.orderTarget>0?fmtMoney(x.orderTarget):'–'}</td>
       <td class="text-right mono t-green">${fmtMoney(x.orderAmt)}</td>
       <td class="text-right mono ${x.achv==null?'muted':(x.achv>=100?'t-green':x.achv>=70?'t-yellow':'t-red')}" title="${achvTooltip.replace(/"/g,'&quot;')}">${x.achv==null?'–':x.achv.toFixed(0)+'%'}</td>
       <td class="text-right mono ${roiCls}" style="font-weight:700" title="${roiTooltip.replace(/"/g,'&quot;')}">${x.roi==null?'–':fmtPct(x.roi)}</td>
+      <td class="text-right mono ${roiPrevCls}" title="${roiPrevTooltip.replace(/"/g,'&quot;')}">${x.roiPrev==null?'–':fmtPct(x.roiPrev)}</td>
       <td class="mono ${x.earliestExec?'t-blue':'muted'}">${x.earliestExec||'–'}</td>
     </tr>`;
-  }).join('') || `<tr><td colspan="9" class="muted" style="text-align:center;padding:12px">No data</td></tr>`;
+  }).join('') || `<tr><td colspan="12" class="muted" style="text-align:center;padding:12px">No data</td></tr>`;
   tbl.innerHTML = `
     <thead><tr>
       <th>${headerLabel}</th>
-      <th class="text-right">MKT BUDGET</th>
-      <th class="text-right" title="Sum of actual_cost on activities executed up to today (future-dated activities count as 0).">EXECUTED<br><span class="muted" style="font-size:9px;font-weight:500">현재까지 집행</span></th>
-      <th class="text-right" title="Executed Cost ÷ MKT Budget · 현재까지 집행된 비용 기준">BUDGET USED %</th>
+      <th class="text-right">MKT BUDGET<br><span class="muted" style="font-size:9px;font-weight:500">${_curYr}</span></th>
+      <th class="text-right" title="Sum of actual_cost on activities executed up to today.">EXECUTED<br><span class="muted" style="font-size:9px;font-weight:500">${_curYr}</span></th>
+      <th class="text-right" title="Sum of actual_cost in the previous year">PREV COST<br><span class="muted" style="font-size:9px;font-weight:500">${_prevYr}</span></th>
+      <th class="text-right" title="Year-over-year cost change">COST YoY</th>
+      <th class="text-right" title="Executed ÷ MKT Budget · 현재까지 집행된 비용 기준">BUDGET USED %</th>
       <th class="text-right">ORDER TARGET</th>
-      <th class="text-right">ORDER AMT</th>
+      <th class="text-right">ORDER AMT<br><span class="muted" style="font-size:9px;font-weight:500">${_curYr}</span></th>
       <th class="text-right">ACHV %</th>
-      <th class="text-right" title="(Order Amount − Executed Cost) ÷ Executed Cost × 100. 현재까지 집행된 비용만 분모로 사용 — 미래 계획된 비용은 제외.">ROI<br><span class="muted" style="font-size:9px;font-weight:500">현재 기준</span></th>
+      <th class="text-right" title="(Order Amount − Executed Cost) ÷ Executed Cost × 100">ROI<br><span class="muted" style="font-size:9px;font-weight:500">${_curYr}</span></th>
+      <th class="text-right" title="Previous year ROI for comparison">PREV ROI<br><span class="muted" style="font-size:9px;font-weight:500">${_prevYr}</span></th>
       <th>EXEC. START</th>
     </tr></thead>
     <tbody>${rows}</tbody>`;
@@ -9256,7 +9345,7 @@ document.addEventListener('click', e => {
   const peCard = e.target.closest('[data-planexec-pick]');
   if (peCard) {
     const path = (state.planExecPath || []).slice();
-    if (path.length < 2) {
+    if (path.length < 3) {
       path.push(peCard.dataset.planexecPick);
       state.planExecPath = path;
       persist(); renderAll();
