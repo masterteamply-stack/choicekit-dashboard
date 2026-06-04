@@ -4388,8 +4388,24 @@ function buildPlanExecNodes(fOrders, fMkt) {
       const reg = normalizeRegion(o.region || '');
       if (!isRegionVisible(reg)) return;
       const cust = (o.customer || '–').trim() || '–';
-      // Determine owning promotion: customer→promo, fallback SKU→promo, else '–'
-      const promoForCust = _custToPromo[cust] || _skuToPromo[(o.sku||'').trim()] || '–';
+      // Determine owning promotion: customer→promo, fallback SKU→promo.
+      // REGION GATE: only attribute a baseline row to a campaign when the
+      // row's region matches the campaign's configured region. This prevents
+      // e.g. CIS-only Asian/European vehicle SKUs from showing up under
+      // CANADA (NA region) in Plan vs Execution.
+      const _resolvePromoWithRegionGate = (candidate) => {
+        if (!candidate) return '';
+        const cfg = cfgAll[candidate];
+        if (!cfg) return candidate; // no config → no region constraint
+        const campaignRegions = Array.isArray(cfg.region)
+          ? cfg.region.map(r => normalizeRegion(r))
+          : (cfg.region ? [normalizeRegion(cfg.region)] : []);
+        if (!campaignRegions.length) return candidate; // no region configured → allow all
+        return campaignRegions.includes(reg) ? candidate : '';
+      };
+      const promoForCust = _resolvePromoWithRegionGate(_custToPromo[cust])
+        || _resolvePromoWithRegionGate(_skuToPromo[(o.sku||'').trim()])
+        || '–';
       // Normalize country (한/영 통합). normalizeCountry returns '' for region
       // values (CIS, MENA, etc.) that were mistakenly placed in the country cell,
       // so fall back to '–' rather than echoing the region name as a fake country.
