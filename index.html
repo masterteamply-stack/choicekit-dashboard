@@ -5679,12 +5679,17 @@ function renderPromoChart(fOrders, fMkt) {
       (c.target_skus||[]).forEach(x => { _skuToPromoSum[String(x).trim()] = p; });
     }
   });
+  // Set of REAL campaign IDs — only these can be keys in `sum`. This prevents
+  // baseline categorical labels (PRE_ORDER, STANDARD, (none), etc.) from
+  // creating phantom rows when they show up in baseline's promotion_category.
+  const _validCampaigns = new Set(Object.keys(_cfgAll));
   // Returns the set of campaigns a given row matches (tag + SKU + customer).
-  // Each row contributes once to each matched campaign (Set dedup).
+  // Tag only counts if it's a registered campaign; SKU/customer counts via
+  // target list lookup. Each row contributes once per matched campaign.
   const matchedCampaigns = (o) => {
     const set = new Set();
     const tag = o.promotion_category || o.promotion_id || '';
-    if (tag && tag !== '–') set.add(tag);
+    if (tag && tag !== '–' && _validCampaigns.has(tag)) set.add(tag);
     const sku = (o.sku || '').trim();
     if (sku && _skuToPromoSum[sku]) set.add(_skuToPromoSum[sku]);
     const cust = (o.customer || '').trim();
