@@ -6164,9 +6164,6 @@ function renderPromoChart(fOrders, fMkt) {
   } catch (e) { console.warn('promo insight failed:', e); }
 
 
-  // periods are still used by the right-side period × promotion table columns.
-  const periods = Array.from(new Set(fOrders.map(o=>periodKey(o.order_date, period)).filter(Boolean))).sort();
-
   // ── 상세 테이블: dimension toggle (Promotion / SKU / Customer) ──
   // Sync the dropdown to state and read the current dimension.
   const tableDim = state.promoTableDim || 'promotion';
