@@ -2989,12 +2989,24 @@ const inferRegionFromCountry = (country) => {
   const c = String(country).trim().toUpperCase();
   return COUNTRY_TO_REGION[c] || '';
 };
+// Hard country→region overrides. These countries are ALWAYS classified as
+// the specified region regardless of what the source data says. Used to fix
+// inconsistencies like baseline rows tagging Mexico as N_AMERICA when it
+// should be LATAM, or Russia historically being folded into CIS.
+const HARD_COUNTRY_REGION_OVERRIDES = {
+  'MEXICO': 'LATAM',
+  'RUSSIA': 'RUS',
+};
 // Resolve final region: business rules first, then provided region, then country fallback.
 // `rawDate` enables date-aware re-classification (e.g. Ukraine/Georgia/Armenia
 // moved from CIS to EUROPE from 2026 onwards).
 const RECLASSIFIED_TO_EUROPE_2026 = new Set(['UKRAINE','GEORGIA','ARMENIA']);
 const resolveRegion = (rawRegion, rawCountry, rawDate) => {
   const c = normalizeCountry(rawCountry);
+  // Hard country override — Mexico is always LATAM, Russia is always RUS.
+  if (c && HARD_COUNTRY_REGION_OVERRIDES[c]) {
+    return HARD_COUNTRY_REGION_OVERRIDES[c];
+  }
   // Business rule: from 2026, Ukraine/Georgia/Armenia are classified as EUROPE.
   // Overrides whatever the CSV says in the region cell.
   if (rawDate && String(rawDate) >= '2026-01-01' && RECLASSIFIED_TO_EUROPE_2026.has(c)) {
@@ -8664,7 +8676,7 @@ function clearAll() {
   state.orders = []; state.marketing = [];
   state.regionBudgets = {}; state.regionTargets = {}; state.promoBudgets = {};
   // Also drop the pre-orders IndexedDB cache so a fresh session re-downloads
-  try { idbDelete('preOrdersCache'); } catch (e) {}
+  try { idbDelete('preOrdersCache_v2'); } catch (e) {}
   persist(); rebuildAll();
   renderDataTimestamps();
   showToast('🗑️ 데이터가 초기화됐습니다');
@@ -9857,8 +9869,12 @@ function slimPreOrderRow(o) {
     const k = PRE_ORDER_SLIM_FIELDS[i];
     if (o[k] !== undefined) r[k] = o[k];
   }
-  r.region = normalizeRegion(r.region);
   r.country = normalizeCountry(r.country);
+  // Resolve region with country override applied — fixes baseline rows that
+  // were tagged with the wrong region (e.g. Mexico baseline mistakenly tagged
+  // 'N_AMERICA' → forced to 'LATAM'; Russia → 'RUS'). Date-aware re-classification
+  // (Ukraine/Georgia/Armenia → EUROPE from 2026) also applies via resolveRegion.
+  r.region = resolveRegion(r.region, r.country, r.order_date);
   // category is derived from promotion_category by callers via promoKeyOfOrder
   r[PRE_ORDER_MARK] = true;
   return r;
@@ -9899,8 +9915,10 @@ function decodeV2Bundle(bundle) {
       const v = p.arr[i];
       if (v !== null && v !== undefined) o[p.longK] = v;
     }
-    o.region = normalizeRegion(o.region);
     o.country = normalizeCountry(o.country);
+    // Resolve region with country override applied — fixes baseline rows that
+    // were tagged with the wrong region. See slimPreOrderRow for full rationale.
+    o.region = resolveRegion(o.region, o.country, o.order_date);
     o[PRE_ORDER_MARK] = true;
     out[i] = o;
   }
@@ -9996,7 +10014,7 @@ async function fetchPreOrdersOnce() {
   if (bundleResult && !bundleError) {
     // Check IndexedDB cache against bundle.n (auto-invalidates when bundle regen)
     setBtnLabel('Checking cache…');
-    const cachedB = await idbGet('preOrdersCache');
+    const cachedB = await idbGet('preOrdersCache_v2');
     if (cachedB && cachedB.version === bundleResult.version && Array.isArray(cachedB.rows) && cachedB.rows.length) {
       console.log(`[pre-orders] ⚡ IndexedDB cache hit (bundle path): ${cachedB.rows.length.toLocaleString()} rows`);
       const restoredB = cachedB.rows.map(o => (o[PRE_ORDER_MARK] ? o : { ...o, [PRE_ORDER_MARK]: true }));
@@ -10008,7 +10026,7 @@ async function fetchPreOrdersOnce() {
     state.preOrdersMeta = { source: 'github-bundle', count: bundleResult.rows.length, version: bundleResult.version };
     try {
       setBtnLabel('Caching…');
-      await idbSet('preOrdersCache', { rows: bundleResult.rows, version: bundleResult.version, savedAt: new Date().toISOString() });
+      await idbSet('preOrdersCache_v2', { rows: bundleResult.rows, version: bundleResult.version, savedAt: new Date().toISOString() });
       console.log(`[pre-orders] 💾 cached ${bundleResult.rows.length} rows to IndexedDB (version ${bundleResult.version})`);
     } catch (e) {
       console.warn('[pre-orders] IndexedDB cache save failed (non-fatal):', e);
@@ -10042,7 +10060,7 @@ async function fetchPreOrdersOnce() {
   // insert new rows, total_records changes → cache auto-invalidates.) ──
   if (totalExpected > 0) {
     setBtnLabel('Checking cache…');
-    const cached = await idbGet('preOrdersCache');
+    const cached = await idbGet('preOrdersCache_v2');
     if (cached && cached.version === totalExpected && Array.isArray(cached.rows) && cached.rows.length) {
       console.log(`[pre-orders] ⚡ IndexedDB cache hit: ${cached.rows.length.toLocaleString()} rows (version ${totalExpected})`);
       // Re-tag PRE_ORDER_MARK in case it was stripped during serialization
@@ -10128,7 +10146,7 @@ async function fetchPreOrdersOnce() {
   if (!failed.length && totalExpected > 0) {
     try {
       setBtnLabel('Caching…');
-      await idbSet('preOrdersCache', { rows: allRows, version: totalExpected, savedAt: new Date().toISOString() });
+      await idbSet('preOrdersCache_v2', { rows: allRows, version: totalExpected, savedAt: new Date().toISOString() });
       console.log(`[pre-orders] 💾 cached ${allRows.length} rows to IndexedDB (version ${totalExpected})`);
     } catch (e) {
       // Quota exceeded or browser refuses storage — non-fatal, in-memory copy still works
