@@ -4421,11 +4421,39 @@ function buildPlanExecNodes(fOrders, fMkt) {
   fMkt.forEach(m => {
     if (!isRegionVisible(m.region)) return;
     const cust = (m.target_customer || m.customer || '–').trim() || '–';
-    const x = ensure(m.region||'–', m.country||'–', m.promotion_category||'–', cust);
+    // If country is blank or equals the region name (e.g. "CIS"), this is a
+    // region-wide activity. Distribute its cost evenly across all countries
+    // that already exist in the tree for this region. If no countries exist
+    // yet, skip — the cost will be picked up once specific-country rows
+    // create tree entries. Avoids the phantom "–" country card.
+    const mktCountryRaw = normalizeCountry(m.country || '') || '';
+    const mktCountryIsRegion = !mktCountryRaw;  // normalizeCountry returns '' for region values
     const yr = String(m.date||'').slice(0,4);
     const actCost = convMktActual(m);
     const expCost = convMktExpected(m);
     const budCost = convMktBudget(m);
+    if (mktCountryIsRegion) {
+      // Region-wide activity: spread cost to all existing countries in this region
+      const reg = normalizeRegion(m.region || '');
+      const existingCountries = tree[reg] ? Object.keys(tree[reg]).filter(c => c !== '–') : [];
+      if (existingCountries.length > 0) {
+        const n = existingCountries.length;
+        existingCountries.forEach(c => {
+          const x = ensure(reg, c, m.promotion_category||'–', cust);
+          if (yr === currYear) {
+            x.costActual += actCost/n; x.costExpected += expCost/n; x.costBudget += budCost/n;
+          } else if (yr === prevYearStr) {
+            x.costActualPrev += actCost/n; x.costExpectedPrev += expCost/n;
+          }
+          if (m.sell_type) x.sellTypes.add(m.sell_type);
+          const d = (m.date||'').trim();
+          if (d && (!x.earliestExec || d < x.earliestExec)) x.earliestExec = d;
+        });
+      }
+      // else: no existing country entries yet — skip this row
+      return;  // handled above; skip normal processing
+    }
+    const x = ensure(m.region||'–', mktCountryRaw||'–', m.promotion_category||'–', cust);
     if (yr === currYear) {
       x.costActual += actCost; x.costExpected += expCost; x.costBudget += budCost;
     } else if (yr === prevYearStr) {
