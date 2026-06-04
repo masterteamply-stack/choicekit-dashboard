@@ -5667,20 +5667,65 @@ function renderPromoChart(fOrders, fMkt) {
     if (d && (!promoStart[p] || d < promoStart[p])) promoStart[p] = d;
   });
 
-  // 요약(전체 누적): orders, orderAmt, actualCost, expectedCost, activities, ROI
-  // ORDER AMT now excludes orders dated BEFORE the campaign's first marketing
-  // activity — only post-campaign-start orders are counted.
+  // Build campaign target maps so ORDER AMT can attribute orders via
+  // (tag) OR (target SKU) OR (target customer) — broader than tag-only.
+  const _cfgAll = state.campaignTargetSkus || {};
+  const _skuToPromoSum = {}, _custToPromoSum = {};
+  Object.keys(_cfgAll).forEach(p => {
+    const c = _cfgAll[p] || {};
+    if ((c.match_by||'sku') === 'customer') {
+      (c.target_customers||[]).forEach(x => { _custToPromoSum[String(x).trim()] = p; });
+    } else {
+      (c.target_skus||[]).forEach(x => { _skuToPromoSum[String(x).trim()] = p; });
+    }
+  });
+  // Returns the set of campaigns a given row matches (tag + SKU + customer).
+  // Each row contributes once to each matched campaign (Set dedup).
+  const matchedCampaigns = (o) => {
+    const set = new Set();
+    const tag = o.promotion_category || o.promotion_id || '';
+    if (tag && tag !== '–') set.add(tag);
+    const sku = (o.sku || '').trim();
+    if (sku && _skuToPromoSum[sku]) set.add(_skuToPromoSum[sku]);
+    const cust = (o.customer || '').trim();
+    if (cust && _custToPromoSum[cust]) set.add(_custToPromoSum[cust]);
+    return set;
+  };
+
+  // 요약(전체 누적):
+  // - ORDERS: tag-based count (matches the row's own promotion_category tag)
+  // - ORDER AMT: BROADER scope — includes any row (orders.csv + baseline)
+  //   matched by (tag OR target SKU OR target customer), filtered to
+  //   order_date >= campaign first marketing day.
+  //   This guarantees ORDER AMT >= 현재 (which uses target-only match).
   const sum = {};
   const ensureSum = k => sum[k] = sum[k] || {orders:0, orderAmt:0, actual:0, expected:0, activities:0, byPeriod:{}};
   fOrders.forEach(o => {
     const k = o.promotion_category||o.promotion_id||'–';
-    const s = ensureSum(k);
-    s.orders++;   // ORDERS count keeps all tagged orders
-    // ORDER AMT: only orders on/after the campaign's first marketing date
-    if (!promoStart[k] || (o.order_date && o.order_date >= promoStart[k])) {
-      s.orderAmt += convOrder(o);
-    }
+    ensureSum(k).orders++;   // ORDERS count keeps tag-based
+    // ORDER AMT: contribute to every campaign matched by tag/SKU/customer
+    const amt = convOrder(o);
+    matchedCampaigns(o).forEach(p => {
+      const start = promoStart[p];
+      if (!start || (o.order_date && o.order_date >= start)) {
+        ensureSum(p).orderAmt += amt;
+      }
+    });
   });
+  // Baseline contributes to ORDER AMT via SKU/customer matching (baseline
+  // rows have no promotion_category tag). Only counted in post-campaign window.
+  if (state.preOrdersEnabled && Array.isArray(state.preOrders)) {
+    const _dispMul = usdToDisplay();
+    state.preOrders.forEach(o => {
+      const amt = Number(o.amount_usd || 0) * _dispMul;
+      matchedCampaigns(o).forEach(p => {
+        const start = promoStart[p];
+        if (!start || (o.order_date && o.order_date >= start)) {
+          ensureSum(p).orderAmt += amt;
+        }
+      });
+    });
+  }
   fMkt.forEach(m => {
     const k = m.promotion_category||m.promotion_id||'–';
     const s = ensureSum(k);
@@ -6327,8 +6372,12 @@ function renderPromoChart(fOrders, fMkt) {
 
   // Build a SKU/Customer-grouped summary if needed. This reuses the
   // campaign-level windows (baAmt[ownerPromo]) for each row's before/after.
+  //
+  // ORDER AMT scope (broader, consistent with the promotion-level table):
+  //   sum of (orders.csv + baseline) for this entity, post-owner-campaign-start.
   function buildEntitySummary(dim) {
     const out = {};
+    const _dispMul = usdToDisplay();
     const ensureE = k => out[k] = out[k] || {
       key: k, orders:0, orderAmt:0, qty:0, ownerPromo:null,
       model:'', region:'', country:'',
@@ -6351,6 +6400,22 @@ function renderPromoChart(fOrders, fMkt) {
       if (!e.region) e.region = (o.region || '').trim();
       if (!e.country) e.country = (o.country || '').trim();
     });
+    // Baseline contribution to ORDER AMT (same entity, post-owner-campaign).
+    // This is what makes ORDER AMT (per-SKU/customer) consistent with the
+    // promotion-level row's broader scope.
+    if (state.preOrdersEnabled && Array.isArray(state.preOrders)) {
+      state.preOrders.forEach(o => {
+        const key = dim === 'sku' ? (o.sku||'').trim() : (o.customer||'').trim();
+        if (!key) return;
+        const owner = dim === 'sku' ? skuToPromo[key] : custToPromo[key];
+        if (!owner) return;
+        const e = ensureE(key);
+        if (!e.ownerPromo) e.ownerPromo = owner;
+        if (!promoStart[owner] || (o.order_date && o.order_date >= promoStart[owner])) {
+          e.orderAmt += Number(o.amount_usd || 0) * _dispMul;
+        }
+      });
+    }
     // Before/After using each entity's owner-campaign window.
     _baScanSource.forEach(o => {
       const key = dim === 'sku' ? (o.sku||'').trim() : (o.customer||'').trim();
