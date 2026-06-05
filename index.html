@@ -3005,6 +3005,8 @@ const normalizeRegion = v => {
     '한국':        'KOREA',
     '대한민국':    'KOREA',
     'OCEANIA':     'OCEANIA',
+    'OCEANIA_PACIFIC': 'OCEANIA',
+    '오세아니아':  'OCEANIA',
   };
   return ALIAS[s] || s;
 };
@@ -3060,6 +3062,14 @@ const inferRegionFromCountry = (country) => {
 const HARD_COUNTRY_REGION_OVERRIDES = {
   'MEXICO': 'LATAM',
   'RUSSIA': 'RUS',
+  // Asia & Pacific umbrella → ASIA, except Australia/New Zealand which belong
+  // to OCEANIA. baseline has ~256 AUSTRALIA + ~210 NEW ZEALAND rows tagged
+  // ASIA_PACIFIC; without this override they'd fold into ASIA.
+  'AUSTRALIA':   'OCEANIA',
+  'NEW ZEALAND': 'OCEANIA',
+  'NEW_ZEALAND': 'OCEANIA',
+  '호주':        'OCEANIA',
+  '뉴질랜드':    'OCEANIA',
 };
 // Resolve final region: business rules first, then provided region, then country fallback.
 // `rawDate` enables date-aware re-classification (e.g. Ukraine/Georgia/Armenia
@@ -9582,7 +9592,7 @@ function clearAll() {
   state.orders = []; state.marketing = [];
   state.regionBudgets = {}; state.regionTargets = {}; state.promoBudgets = {};
   // Also drop the pre-orders IndexedDB cache so a fresh session re-downloads
-  try { idbDelete('preOrdersCache_v2'); } catch (e) {}
+  try { idbDelete('preOrdersCache_v3'); } catch (e) {}
   persist(); rebuildAll();
   renderDataTimestamps();
   showToast('🗑️ 데이터가 초기화됐습니다');
@@ -10987,7 +10997,7 @@ async function fetchPreOrdersOnce() {
   if (bundleResult && !bundleError) {
     // Check IndexedDB cache against bundle.n (auto-invalidates when bundle regen)
     setBtnLabel('Checking cache…');
-    const cachedB = await idbGet('preOrdersCache_v2');
+    const cachedB = await idbGet('preOrdersCache_v3');
     if (cachedB && cachedB.version === bundleResult.version && Array.isArray(cachedB.rows) && cachedB.rows.length) {
       console.log(`[pre-orders] ⚡ IndexedDB cache hit (bundle path): ${cachedB.rows.length.toLocaleString()} rows`);
       const restoredB = cachedB.rows.map(o => (o[PRE_ORDER_MARK] ? o : { ...o, [PRE_ORDER_MARK]: true }));
@@ -10999,7 +11009,7 @@ async function fetchPreOrdersOnce() {
     state.preOrdersMeta = { source: 'github-bundle', count: bundleResult.rows.length, version: bundleResult.version };
     try {
       setBtnLabel('Caching…');
-      await idbSet('preOrdersCache_v2', { rows: bundleResult.rows, version: bundleResult.version, savedAt: new Date().toISOString() });
+      await idbSet('preOrdersCache_v3', { rows: bundleResult.rows, version: bundleResult.version, savedAt: new Date().toISOString() });
       console.log(`[pre-orders] 💾 cached ${bundleResult.rows.length} rows to IndexedDB (version ${bundleResult.version})`);
     } catch (e) {
       console.warn('[pre-orders] IndexedDB cache save failed (non-fatal):', e);
@@ -11033,7 +11043,7 @@ async function fetchPreOrdersOnce() {
   // insert new rows, total_records changes → cache auto-invalidates.) ──
   if (totalExpected > 0) {
     setBtnLabel('Checking cache…');
-    const cached = await idbGet('preOrdersCache_v2');
+    const cached = await idbGet('preOrdersCache_v3');
     if (cached && cached.version === totalExpected && Array.isArray(cached.rows) && cached.rows.length) {
       console.log(`[pre-orders] ⚡ IndexedDB cache hit: ${cached.rows.length.toLocaleString()} rows (version ${totalExpected})`);
       // Re-tag PRE_ORDER_MARK in case it was stripped during serialization
@@ -11119,7 +11129,7 @@ async function fetchPreOrdersOnce() {
   if (!failed.length && totalExpected > 0) {
     try {
       setBtnLabel('Caching…');
-      await idbSet('preOrdersCache_v2', { rows: allRows, version: totalExpected, savedAt: new Date().toISOString() });
+      await idbSet('preOrdersCache_v3', { rows: allRows, version: totalExpected, savedAt: new Date().toISOString() });
       console.log(`[pre-orders] 💾 cached ${allRows.length} rows to IndexedDB (version ${totalExpected})`);
     } catch (e) {
       // Quota exceeded or browser refuses storage — non-fatal, in-memory copy still works
@@ -11367,6 +11377,12 @@ function parseCustomerCostsCSV(text) {
     const yr = date.slice(0,4);
     const customerNo = String(r['Customer_No']||'').replace(/\.0$/,'').trim();
     if (!customerNo) return;
+    const rawRegion  = String(r['Region']||'').trim();
+    const rawCountry = String(r['Country']||'').trim();
+    // Normalize via the same pipeline as orders.csv / baseline so widgets
+    // join correctly. "Asia & Pacific" → "ASIA"; "Middle East" → "MENA";
+    // "N.America" → "NA"; Australia/NZ rows → "OCEANIA" via hard override.
+    const region = resolveRegion(rawRegion, rawCountry, date) || rawRegion;
     out.push({
       date, year: yr, customer_no: customerNo,
       customer_name: String(r['Buyer']||'').trim(),
@@ -11375,8 +11391,8 @@ function parseCustomerCostsCSV(text) {
       campaign_name: String(r['Campaign Name']||'').trim(),
       campaign_type: String(r['Campaign Type']||'').trim(),
       activity: String(r['Activity Name']||'').trim(),
-      region: String(r['Region']||'').trim(),
-      country: String(r['Country']||'').trim(),
+      region,                        // normalized
+      country: rawCountry,           // keep original spelling for display
       total_spend_krw: numCol(r,'Total Spend'),
       // 영역별 세부 비용 — Inventory Production은 데이터에 전혀 없어 제외
       offline_krw:           numCol(r,'Offline Spend'),
