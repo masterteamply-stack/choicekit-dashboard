@@ -5927,6 +5927,20 @@ function renderPromoChart(fOrders, fMkt) {
   // that match the same promotion target (SKU/customer).
   const _baPrevSource = _fPreOrders.length ? fOrders.concat(_fPreOrders) : fOrders;
   const baAmt = {};   // p → { before, after, skuCount, custCount, matchBy, winFrom, winTo, prevFrom, prevTo }
+
+  // ── AFTER (current ORDER AMT) ────────────────────────────────────────────
+  // Single source of truth: sum of fOrders rows whose promotion_category tag
+  // matches the campaign name — exactly the same as By Customers uses.
+  // No SKU/customer mapping, no date window filtering here; every tagged order
+  // in orders.csv counts. This ensures Promotion Performance ORDER AMT ==
+  // By Customers CK order AMT for the same campaign.
+  const _afterByPromo = {};
+  _baScanSource.forEach(o => {
+    const p = (o.promotion_category || '').trim();
+    if (!p) return;
+    _afterByPromo[p] = (_afterByPromo[p] || 0) + convOrder(o);
+  });
+
   summary.forEach(s => {
     const p = s.promotion;
     const start = promoStart[p];
@@ -5934,9 +5948,12 @@ function renderPromoChart(fOrders, fMkt) {
     const mb = promoMatchBy[p] || 'sku';
     const skuSet = promoTargetSkus[p];
     const custSet = promoTargetCust[p];
-    const promoRegion = _promoRegionForBA[p] || '';   // campaign's region (CIS/NA/...)
+    const promoRegion = _promoRegionForBA[p] || '';
     baAmt[p] = {
-      before: 0, after: 0, matchBy: mb,
+      // AFTER = promotion_category tag sum (same as By Customers)
+      after:  _afterByPromo[p] || 0,
+      before: 0,
+      matchBy: mb,
       skuCount: skuSet ? skuSet.size : 0,
       custCount: custSet ? custSet.size : 0,
       winFrom: start || '', winTo: end || '',
@@ -5944,22 +5961,12 @@ function renderPromoChart(fOrders, fMkt) {
       cmpMode: tableCmpMode,
       region: promoRegion,
     };
+    // ── BEFORE (prior-period comparison) — SKU/customer mapping + preOrders ──
+    // Keep the mapping-based approach for the historical before window so the
+    // YoY/QoQ delta is still meaningful (pre-campaign baseline via same SKUs).
     const hasTargets = mb === 'customer' ? (custSet && custSet.size) : (skuSet && skuSet.size);
     if (!start || !hasTargets) return;
-    const winFrom = baAmt[p].winFrom, winTo = baAmt[p].winTo;
     const prevFrom = baAmt[p].prevFrom, prevTo = baAmt[p].prevTo;
-    // AFTER (current campaign window) — orders.csv only, no preOrders
-    _baScanSource.forEach(o => {
-      const match = (mb === 'customer')
-        ? custSet.has((o.customer || '').trim())
-        : skuSet.has((o.sku || o.ctr_code || '').trim());
-      if (!match) return;
-      const d = o.order_date || '';
-      if (!d) return;
-      const amt = convOrder(o);
-      if (d >= winFrom && d <= winTo) baAmt[p].after += amt;
-    });
-    // BEFORE (prior period for YoY/QoQ comparison) — orders + preOrders
     _baPrevSource.forEach(o => {
       const match = (mb === 'customer')
         ? custSet.has((o.customer || '').trim())
