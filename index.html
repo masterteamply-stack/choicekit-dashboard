@@ -4125,28 +4125,9 @@ function renderAll() {
   // ACHIEVEMENT cache is order-set-dependent; clear on every full render.
   _orderMatchCache = new WeakMap();
 
-  // ── Pre-build preOrders index (once per renderAll) ────────────────────
-  // state.preOrders has 654K rows. Every widget that needs baseline data
-  // used to forEach the full array independently. Instead we build lookup
-  // maps here and attach them to state so each widget can do O(1) lookups.
-  // This reduces total baseline scans from 6 × 654K → 1 × 654K per render.
-  if (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length
-      && !state._preOrdersIndexed) {
-    const skuIdx = {};    // sku  → [{amount_usd, qty, order_date, region, ...}]
-    const custIdx = {};   // customer (normalized) → [...]
-    const dateIdx = {};   // YYYY-MM → [...]  (for date-range scans)
-    state.preOrders.forEach(o => {
-      const sku  = (o.sku || '').trim();
-      const cust = (o.customer || '').trim();
-      const ym   = (o.order_date || '').slice(0, 7);
-      if (sku)  { skuIdx[sku]   = skuIdx[sku]   || []; skuIdx[sku].push(o); }
-      if (cust) { custIdx[cust] = custIdx[cust] || []; custIdx[cust].push(o); }
-      if (ym)   { dateIdx[ym]   = dateIdx[ym]   || []; dateIdx[ym].push(o); }
-    });
-    state._preIdx = { skuIdx, custIdx, dateIdx };
-    state._preOrdersIndexed = true;
-  }
-  // Invalidate index when preOrders changes (toggled off/on or reloaded)
+  // ── Pre-build preOrders index OUTSIDE renderAll (async, once) ────────
+  // Index build happens in togglePreOrders / loadPreOrders callbacks,
+  // not here, to avoid blocking the render loop.
   if (!state.preOrdersEnabled || !state.preOrders || !state.preOrders.length) {
     state._preIdx = null;
     state._preOrdersIndexed = false;
@@ -4319,35 +4300,39 @@ function renderAll() {
   const elSkuSub = document.getElementById('kSkuSub');
   if (elSkuSub) elSkuSub.textContent = `${fmtNum(totalQty)} pcs total`;
 
-  // Plan vs Execution + Matrix
+  // ── Phase 1: critical path (KPI + lightweight charts) ──────────────────
   renderPlanExec(fOrders, fMkt);
-
-  // Charts
   renderRegionChart(fOrders, fMkt);
   renderActivityChart(fMkt);
   renderBudgetStatus(fMkt);
   renderCustomerTrend(fOrders, fMkt);
   renderTopInsights(fOrders);
   renderPromoCtrChart(fOrders);
-  renderPromoChart(fOrders, fMkt);
-
-  // ── Sync Marketing KPI Order Amount ──
-  if (_promoAfterTotal !== null) {
-    document.getElementById('kpiOrder').textContent = fmtMoney(_promoAfterTotal);
-    document.getElementById('ptCur').textContent    = fmtMoney(_promoAfterTotal);
-    document.getElementById('kpiOrderSub').textContent = `after campaign start · post-campaign total`;
-    const tgtPctUpd = orderTargetDisp > 0 ? (_promoAfterTotal / orderTargetDisp) * 100 : 0;
-    document.getElementById('kpiAchv').textContent = orderTargetDisp > 0 ? fmtPct(tgtPctUpd) : '–';
-    const roiUpd = mktCost > 0 ? ((_promoAfterTotal - mktCost) / mktCost) * 100 : 0;
-    document.getElementById('kpiRoi').textContent = mktCost > 0 ? fmtPct(roiUpd) : '–';
-    document.getElementById('kpiRoiCard').classList.toggle('neg', roiUpd < 0);
-  }
-
   renderSalesTrendCombined(fOrders);
   renderActivitiesTable(fMkt);
-  renderPromoOrderTrend(fOrders, fMkt);
-  renderChoiceKitImpact(fOrders, fMkt);
-  renderSkuExplorer(fOrders, fMkt);
+
+  // ── Phase 2: heavy widgets — deferred so browser can paint Phase 1 first
+  setTimeout(() => {
+    renderPromoChart(fOrders, fMkt);
+    // Sync KPI after renderPromoChart sets _promoAfterTotal
+    if (_promoAfterTotal !== null) {
+      document.getElementById('kpiOrder').textContent = fmtMoney(_promoAfterTotal);
+      document.getElementById('ptCur').textContent    = fmtMoney(_promoAfterTotal);
+      document.getElementById('kpiOrderSub').textContent = `after campaign start · post-campaign total`;
+      const tgtPctUpd = orderTargetDisp > 0 ? (_promoAfterTotal / orderTargetDisp) * 100 : 0;
+      document.getElementById('kpiAchv').textContent = orderTargetDisp > 0 ? fmtPct(tgtPctUpd) : '–';
+      const roiUpd = mktCost > 0 ? ((_promoAfterTotal - mktCost) / mktCost) * 100 : 0;
+      document.getElementById('kpiRoi').textContent = mktCost > 0 ? fmtPct(roiUpd) : '–';
+      document.getElementById('kpiRoiCard').classList.toggle('neg', roiUpd < 0);
+    }
+    renderPromoOrderTrend(fOrders, fMkt);
+  }, 0);
+
+  // ── Phase 3: heaviest widgets (preOrders scans) — further deferred ─────
+  setTimeout(() => {
+    renderChoiceKitImpact(fOrders, fMkt);
+    renderSkuExplorer(fOrders, fMkt);
+  }, 0);
 }
 
 /* ===== Plan vs Execution — Drill-down Explorer (Region → Country → Promotion) ===== */
@@ -8835,8 +8820,6 @@ function renderSkuAggregate(fOrders) {
 }
 
 /* =================== ACTIONS =================== */
-// Debounce rebuildAll so rapid filter changes (multi-select, keyboard) don't
-// trigger a full re-render for every intermediate state.
 let _rebuildTimer = null;
 async function rebuildAll() {
   if (_rebuildTimer) clearTimeout(_rebuildTimer);
@@ -8845,6 +8828,27 @@ async function rebuildAll() {
     buildFilterBar();
     renderAll();
   }, 120);
+}
+
+// Build SKU/customer lookup index from preOrders so widgets can do
+// O(1) target lookups instead of scanning 654K rows each time.
+// Called once after preOrders loads, runs in a deferred setTimeout
+// so it never blocks the initial render or filter response.
+function _buildPreOrdersIndex() {
+  if (!state.preOrdersEnabled || !Array.isArray(state.preOrders) || !state.preOrders.length) {
+    state._preIdx = null; state._preOrdersIndexed = false; return;
+  }
+  if (state._preOrdersIndexed) return;  // already built
+  const skuIdx = {}, custIdx = {};
+  state.preOrders.forEach(o => {
+    const sku  = (o.sku  || '').trim();
+    const cust = (o.customer || '').trim();
+    if (sku)  { (skuIdx[sku]   = skuIdx[sku]   || []).push(o); }
+    if (cust) { (custIdx[cust] = custIdx[cust] || []).push(o); }
+  });
+  state._preIdx = { skuIdx, custIdx };
+  state._preOrdersIndexed = true;
+  console.log(`[preIdx] built — ${Object.keys(skuIdx).length} SKUs, ${Object.keys(custIdx).length} customers`);
 }
 
 document.getElementById('curToggle').addEventListener('click', e => {
@@ -10424,8 +10428,7 @@ async function togglePreOrders() {
     state.preOrders = [];
     state.preOrdersMeta = null;
     state.preOrdersEnabled = false;
-    state._preIdx = null;
-    state._preOrdersIndexed = false;
+    state._preIdx = null; state._preOrdersIndexed = false;
     try { localStorage.setItem('ck_pre_orders_on', '0'); } catch(e){}
     updatePreOrderBadge();
     rebuildAll();   // re-render KPI panels without the baseline
@@ -10441,7 +10444,9 @@ async function togglePreOrders() {
     const rows = await fetchPreOrdersOnce();
     state.preOrdersEnabled = true;
     try { localStorage.setItem('ck_pre_orders_on', '1'); } catch(e){}
-    rebuildAll();   // re-render KPI panels with baseline now available
+    // Build lookup index asynchronously so the main thread isn't blocked
+    setTimeout(() => _buildPreOrdersIndex(), 0);
+    rebuildAll();
     try { showToast(`✅ Pre-order baseline loaded — ${fmtNum(rows.length)} rows`); } catch(_){}
   } catch (err) {
     console.error('[pre-orders] toggle failed:', err);
@@ -10473,6 +10478,8 @@ async function maybeAutoLoadPreOrders() {
     await fetchPreOrdersOnce();
     state.preOrdersEnabled = true;
     try { localStorage.setItem('ck_pre_orders_on', '1'); } catch(e){}
+    // Build index in background — doesn't block initial render
+    setTimeout(() => _buildPreOrdersIndex(), 0);
     // Tiny celebratory toast on FIRST load only (no toast for cached repeat loads).
     if (want == null) {
       try {
