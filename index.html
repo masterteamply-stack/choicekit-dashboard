@@ -4416,9 +4416,14 @@ function buildPlanExecNodes(fOrders, fMkt) {
     };
     return tree[r][c][p][cust];
   };
+  // Sentinel key for marketing/order rows without a specific customer.
+  // (e.g. Catalog production, regional Events — campaign-wide marketing
+  // that isn't attributable to one customer.) Surfaced in detail tables
+  // with a clear label instead of confusing "-".
+  const GENERAL_CUST_KEY = '(General · 캠페인 전체)';
   fOrders.forEach(o => {
     if (!isRegionVisible(o.region)) return;
-    const cust = (o.customer || '–').trim() || '–';
+    const cust = (o.customer || '').trim() || GENERAL_CUST_KEY;
     const x = ensure(o.region||'–', o.country||'–', o.promotion_category||'–', cust);
     const yr = String(o.order_date||'').slice(0,4);
     const amt = convOrder(o);
@@ -4435,7 +4440,7 @@ function buildPlanExecNodes(fOrders, fMkt) {
     state.preOrders.forEach(o => {
       const reg = normalizeRegion(o.region || '');
       if (!isRegionVisible(reg)) return;
-      const cust = (o.customer || '–').trim() || '–';
+      const cust = (o.customer || '').trim() || GENERAL_CUST_KEY;
       // Determine owning promotion: customer→promo, fallback SKU→promo.
       // REGION GATE: only attribute a baseline row to a campaign when the
       // row's region matches the campaign's configured region. This prevents
@@ -4469,7 +4474,7 @@ function buildPlanExecNodes(fOrders, fMkt) {
   }
   fMkt.forEach(m => {
     if (!isRegionVisible(m.region)) return;
-    const cust = (m.target_customer || m.customer || '–').trim() || '–';
+    const cust = (m.target_customer || m.customer || '').trim() || GENERAL_CUST_KEY;
     // If country is blank or equals the region name (e.g. "CIS"), this is a
     // region-wide activity. Distribute its cost evenly across all countries
     // that already exist in the tree for this region. If no countries exist
