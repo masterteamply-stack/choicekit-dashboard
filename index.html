@@ -4292,39 +4292,61 @@ function renderAll() {
   const elSkuSub = document.getElementById('kSkuSub');
   if (elSkuSub) elSkuSub.textContent = `${fmtNum(totalQty)} pcs total`;
 
+  // ── Safe render helper — catches and logs errors per widget ──────────────
+  // Each widget renders independently: one failure must not block the rest.
+  const _errs = [];
+  function _safe(name, fn) {
+    try { fn(); }
+    catch (e) {
+      _errs.push(name);
+      console.error(`[renderAll] ${name} failed:`, e);
+    }
+  }
+
   // Plan vs Execution + Matrix
-  renderPlanExec(fOrders, fMkt);
+  _safe('renderPlanExec',           () => renderPlanExec(fOrders, fMkt));
 
   // Charts
-  renderRegionChart(fOrders, fMkt);
-  renderActivityChart(fMkt);
-  renderBudgetStatus(fMkt);
-  renderCustomerTrend(fOrders, fMkt);
-  renderTopInsights(fOrders);
-  renderPromoCtrChart(fOrders);
-  renderPromoChart(fOrders, fMkt);
+  _safe('renderRegionChart',        () => renderRegionChart(fOrders, fMkt));
+  _safe('renderActivityChart',      () => renderActivityChart(fMkt));
+  _safe('renderBudgetStatus',       () => renderBudgetStatus(fMkt));
+  _safe('renderCustomerTrend',      () => renderCustomerTrend(fOrders, fMkt));
+  _safe('renderTopInsights',        () => renderTopInsights(fOrders));
+  _safe('renderPromoCtrChart',      () => renderPromoCtrChart(fOrders));
+  _safe('renderPromoChart',         () => renderPromoChart(fOrders, fMkt));
+
   // ── Sync Marketing KPI Order Amount with the canonical post-campaign total ──
-  // renderPromoChart sets _promoAfterTotal (sum of baAmt.after across all promotions).
-  // Override the tag-based estimate computed earlier so all three displays agree:
-  //   • Marketing KPI "Order Amount" card  (kpiOrder / ptCur)
-  //   • Promotion Performance table ORDER AMT column  (= each row's afterAmt)
-  //   • Promotion Performance chart 현재 합계 KPI card
   if (_promoAfterTotal !== null) {
-    document.getElementById('kpiOrder').textContent = fmtMoney(_promoAfterTotal);
-    document.getElementById('ptCur').textContent    = fmtMoney(_promoAfterTotal);
-    document.getElementById('kpiOrderSub').textContent = `after campaign start · post-campaign total`;
-    const tgtPctUpd = orderTargetDisp > 0 ? (_promoAfterTotal / orderTargetDisp) * 100 : 0;
-    document.getElementById('kpiAchv').textContent = orderTargetDisp > 0 ? fmtPct(tgtPctUpd) : '–';
-    const roiUpd = mktCost > 0 ? ((_promoAfterTotal - mktCost) / mktCost) * 100 : 0;
-    document.getElementById('kpiRoi').textContent = mktCost > 0 ? fmtPct(roiUpd) : '–';
-    document.getElementById('kpiRoiCard').classList.toggle('neg', roiUpd < 0);
+    try {
+      document.getElementById('kpiOrder').textContent = fmtMoney(_promoAfterTotal);
+      document.getElementById('ptCur').textContent    = fmtMoney(_promoAfterTotal);
+      document.getElementById('kpiOrderSub').textContent = `after campaign start · post-campaign total`;
+      const tgtPctUpd = orderTargetDisp > 0 ? (_promoAfterTotal / orderTargetDisp) * 100 : 0;
+      document.getElementById('kpiAchv').textContent = orderTargetDisp > 0 ? fmtPct(tgtPctUpd) : '–';
+      const roiUpd = mktCost > 0 ? ((_promoAfterTotal - mktCost) / mktCost) * 100 : 0;
+      document.getElementById('kpiRoi').textContent = mktCost > 0 ? fmtPct(roiUpd) : '–';
+      document.getElementById('kpiRoiCard').classList.toggle('neg', roiUpd < 0);
+    } catch(e) { console.error('[renderAll] KPI sync failed:', e); }
   }
-  renderSalesTrendCombined(fOrders);
-  renderActivitiesTable(fMkt);
-  // New widgets (promotion-context narrative)
-  renderPromoOrderTrend(fOrders, fMkt);
-  renderChoiceKitImpact(fOrders, fMkt);
-  renderSkuExplorer(fOrders, fMkt);
+
+  _safe('renderSalesTrendCombined', () => renderSalesTrendCombined(fOrders));
+  _safe('renderActivitiesTable',    () => renderActivitiesTable(fMkt));
+  _safe('renderPromoOrderTrend',    () => renderPromoOrderTrend(fOrders, fMkt));
+  _safe('renderChoiceKitImpact',    () => renderChoiceKitImpact(fOrders, fMkt));
+  _safe('renderSkuExplorer',        () => renderSkuExplorer(fOrders, fMkt));
+
+  // Surface any widget errors as a dismissible banner (dev/debug aid)
+  if (_errs.length) {
+    const existing = document.getElementById('_renderErrBanner');
+    if (existing) existing.remove();
+    const banner = document.createElement('div');
+    banner.id = '_renderErrBanner';
+    banner.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:9999;background:#C8102E;color:#fff;padding:10px 20px;border-radius:8px;font-family:monospace;font-size:12px;max-width:90vw;cursor:pointer';
+    banner.textContent = `⚠ 렌더링 오류 (${_errs.length}): ${_errs.join(', ')} — 콘솔(F12) 확인`;
+    banner.onclick = () => banner.remove();
+    document.body.appendChild(banner);
+    setTimeout(() => banner && banner.remove(), 15000);
+  }
 }
 
 /* ===== Plan vs Execution — Drill-down Explorer (Region → Country → Promotion) ===== */
