@@ -4124,6 +4124,33 @@ let categoryPeriod = 'month'; // month | quarter | year
 function renderAll() {
   // ACHIEVEMENT cache is order-set-dependent; clear on every full render.
   _orderMatchCache = new WeakMap();
+
+  // ── Pre-build preOrders index (once per renderAll) ────────────────────
+  // state.preOrders has 654K rows. Every widget that needs baseline data
+  // used to forEach the full array independently. Instead we build lookup
+  // maps here and attach them to state so each widget can do O(1) lookups.
+  // This reduces total baseline scans from 6 × 654K → 1 × 654K per render.
+  if (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length
+      && !state._preOrdersIndexed) {
+    const skuIdx = {};    // sku  → [{amount_usd, qty, order_date, region, ...}]
+    const custIdx = {};   // customer (normalized) → [...]
+    const dateIdx = {};   // YYYY-MM → [...]  (for date-range scans)
+    state.preOrders.forEach(o => {
+      const sku  = (o.sku || '').trim();
+      const cust = (o.customer || '').trim();
+      const ym   = (o.order_date || '').slice(0, 7);
+      if (sku)  { skuIdx[sku]   = skuIdx[sku]   || []; skuIdx[sku].push(o); }
+      if (cust) { custIdx[cust] = custIdx[cust] || []; custIdx[cust].push(o); }
+      if (ym)   { dateIdx[ym]   = dateIdx[ym]   || []; dateIdx[ym].push(o); }
+    });
+    state._preIdx = { skuIdx, custIdx, dateIdx };
+    state._preOrdersIndexed = true;
+  }
+  // Invalidate index when preOrders changes (toggled off/on or reloaded)
+  if (!state.preOrdersEnabled || !state.preOrders || !state.preOrders.length) {
+    state._preIdx = null;
+    state._preOrdersIndexed = false;
+  }
   document.getElementById('cntOrders').textContent = state.orders.length;
   document.getElementById('cntMkt').textContent = state.marketing.length;
 
@@ -4292,61 +4319,35 @@ function renderAll() {
   const elSkuSub = document.getElementById('kSkuSub');
   if (elSkuSub) elSkuSub.textContent = `${fmtNum(totalQty)} pcs total`;
 
-  // ── Safe render helper — catches and logs errors per widget ──────────────
-  // Each widget renders independently: one failure must not block the rest.
-  const _errs = [];
-  function _safe(name, fn) {
-    try { fn(); }
-    catch (e) {
-      _errs.push(name);
-      console.error(`[renderAll] ${name} failed:`, e);
-    }
-  }
-
   // Plan vs Execution + Matrix
-  _safe('renderPlanExec',           () => renderPlanExec(fOrders, fMkt));
+  renderPlanExec(fOrders, fMkt);
 
   // Charts
-  _safe('renderRegionChart',        () => renderRegionChart(fOrders, fMkt));
-  _safe('renderActivityChart',      () => renderActivityChart(fMkt));
-  _safe('renderBudgetStatus',       () => renderBudgetStatus(fMkt));
-  _safe('renderCustomerTrend',      () => renderCustomerTrend(fOrders, fMkt));
-  _safe('renderTopInsights',        () => renderTopInsights(fOrders));
-  _safe('renderPromoCtrChart',      () => renderPromoCtrChart(fOrders));
-  _safe('renderPromoChart',         () => renderPromoChart(fOrders, fMkt));
+  renderRegionChart(fOrders, fMkt);
+  renderActivityChart(fMkt);
+  renderBudgetStatus(fMkt);
+  renderCustomerTrend(fOrders, fMkt);
+  renderTopInsights(fOrders);
+  renderPromoCtrChart(fOrders);
+  renderPromoChart(fOrders, fMkt);
 
-  // ── Sync Marketing KPI Order Amount with the canonical post-campaign total ──
+  // ── Sync Marketing KPI Order Amount ──
   if (_promoAfterTotal !== null) {
-    try {
-      document.getElementById('kpiOrder').textContent = fmtMoney(_promoAfterTotal);
-      document.getElementById('ptCur').textContent    = fmtMoney(_promoAfterTotal);
-      document.getElementById('kpiOrderSub').textContent = `after campaign start · post-campaign total`;
-      const tgtPctUpd = orderTargetDisp > 0 ? (_promoAfterTotal / orderTargetDisp) * 100 : 0;
-      document.getElementById('kpiAchv').textContent = orderTargetDisp > 0 ? fmtPct(tgtPctUpd) : '–';
-      const roiUpd = mktCost > 0 ? ((_promoAfterTotal - mktCost) / mktCost) * 100 : 0;
-      document.getElementById('kpiRoi').textContent = mktCost > 0 ? fmtPct(roiUpd) : '–';
-      document.getElementById('kpiRoiCard').classList.toggle('neg', roiUpd < 0);
-    } catch(e) { console.error('[renderAll] KPI sync failed:', e); }
+    document.getElementById('kpiOrder').textContent = fmtMoney(_promoAfterTotal);
+    document.getElementById('ptCur').textContent    = fmtMoney(_promoAfterTotal);
+    document.getElementById('kpiOrderSub').textContent = `after campaign start · post-campaign total`;
+    const tgtPctUpd = orderTargetDisp > 0 ? (_promoAfterTotal / orderTargetDisp) * 100 : 0;
+    document.getElementById('kpiAchv').textContent = orderTargetDisp > 0 ? fmtPct(tgtPctUpd) : '–';
+    const roiUpd = mktCost > 0 ? ((_promoAfterTotal - mktCost) / mktCost) * 100 : 0;
+    document.getElementById('kpiRoi').textContent = mktCost > 0 ? fmtPct(roiUpd) : '–';
+    document.getElementById('kpiRoiCard').classList.toggle('neg', roiUpd < 0);
   }
 
-  _safe('renderSalesTrendCombined', () => renderSalesTrendCombined(fOrders));
-  _safe('renderActivitiesTable',    () => renderActivitiesTable(fMkt));
-  _safe('renderPromoOrderTrend',    () => renderPromoOrderTrend(fOrders, fMkt));
-  _safe('renderChoiceKitImpact',    () => renderChoiceKitImpact(fOrders, fMkt));
-  _safe('renderSkuExplorer',        () => renderSkuExplorer(fOrders, fMkt));
-
-  // Surface any widget errors as a dismissible banner (dev/debug aid)
-  if (_errs.length) {
-    const existing = document.getElementById('_renderErrBanner');
-    if (existing) existing.remove();
-    const banner = document.createElement('div');
-    banner.id = '_renderErrBanner';
-    banner.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:9999;background:#C8102E;color:#fff;padding:10px 20px;border-radius:8px;font-family:monospace;font-size:12px;max-width:90vw;cursor:pointer';
-    banner.textContent = `⚠ 렌더링 오류 (${_errs.length}): ${_errs.join(', ')} — 콘솔(F12) 확인`;
-    banner.onclick = () => banner.remove();
-    document.body.appendChild(banner);
-    setTimeout(() => banner && banner.remove(), 15000);
-  }
+  renderSalesTrendCombined(fOrders);
+  renderActivitiesTable(fMkt);
+  renderPromoOrderTrend(fOrders, fMkt);
+  renderChoiceKitImpact(fOrders, fMkt);
+  renderSkuExplorer(fOrders, fMkt);
 }
 
 /* ===== Plan vs Execution — Drill-down Explorer (Region → Country → Promotion) ===== */
@@ -6561,19 +6562,27 @@ function renderPromoChart(fOrders, fMkt) {
       if (!e.country) e.country = (o.country || '').trim();
     });
     // Baseline contribution to PRIOR ORDER AMT only (preOrders = previous-year comparison).
-    // preOrders must NOT be added to current orderAmt — orders.csv is the single source
-    // of truth for current-year order amounts.
     if (state.preOrdersEnabled && Array.isArray(state.preOrders)) {
-      state.preOrders.forEach(o => {
+      const preIdx = state._preIdx;
+      const scanEntity = o => {
         const key = dim === 'sku' ? (o.sku||'').trim() : (o.customer||'').trim();
         if (!key) return;
         const owner = dim === 'sku' ? skuToPromo[key] : custToPromo[key];
         if (!owner) return;
-        ensureE(key);   // ensure entry exists; do NOT add to orderAmt
+        ensureE(key);
         if (!out[key].ownerPromo) out[key].ownerPromo = owner;
-        // Only contribute to prevAmt (before window)
         out[key].prevAmt = (out[key].prevAmt || 0) + Number(o.amount_usd || 0) * _dispMul;
-      });
+      };
+      if (preIdx) {
+        // Only scan entries that are actually in a campaign target
+        const targetKeys = dim === 'sku' ? Object.keys(skuToPromo) : Object.keys(custToPromo);
+        targetKeys.forEach(k => {
+          const rows = (dim === 'sku' ? preIdx.skuIdx[k] : preIdx.custIdx[k]) || [];
+          rows.forEach(scanEntity);
+        });
+      } else {
+        state.preOrders.forEach(scanEntity);
+      }
     }
     // Before/After using each entity's owner-campaign window.
     _baScanSource.forEach(o => {
@@ -8017,13 +8026,24 @@ function renderChoiceKitImpact(fOrders, fMkt) {
     const baseAmt = {}, baseQty = {};
     targetList.forEach(k => { baseAmt[k]=0; baseQty[k]=0; });
     if (state.preOrdersEnabled && Array.isArray(state.preOrders)) {
-      state.preOrders.forEach(o => {
+      // Use pre-built index if available (O(1) lookup per target vs O(n) full scan)
+      const preIdx = state._preIdx;
+      const scanFn = o => {
         const key = (matchBy === 'customer') ? normalizeCustomer(o) : (o.sku || '').trim();
         if (!targetSet.has(key)) return;
         const amt = Number(o.amount_usd || 0) * usdToDisplay();
         baseAmt[key] = (baseAmt[key] || 0) + amt;
         baseQty[key] = (baseQty[key] || 0) + Number(o.qty || 0);
-      });
+      };
+      if (preIdx) {
+        // Only scan rows for target keys, not the entire 654K array
+        targetList.forEach(k => {
+          const rows = (matchBy === 'customer' ? preIdx.custIdx[k] : preIdx.skuIdx[k]) || [];
+          rows.forEach(scanFn);
+        });
+      } else {
+        state.preOrders.forEach(scanFn);
+      }
     }
     // Post-campaign orders for this campaign.
     const postAmt = {}, postQty = {}, postOrders = {}, postOrderIds = {};
@@ -8051,7 +8071,8 @@ function renderChoiceKitImpact(fOrders, fMkt) {
       priorFrom = shiftDate(startDate, compareMode);
       priorTo   = shiftDate(_todayCki, compareMode);
       if (state.preOrdersEnabled && Array.isArray(state.preOrders)) {
-        state.preOrders.forEach(o => {
+        const preIdx = state._preIdx;
+        const scanPrior = o => {
           const d = (o.order_date || '');
           if (!d || d < priorFrom || d > priorTo) return;
           const key = (matchBy === 'customer') ? normalizeCustomer(o) : (o.sku || '').trim();
@@ -8061,7 +8082,15 @@ function renderChoiceKitImpact(fOrders, fMkt) {
           priorQty[key] = (priorQty[key] || 0) + Number(o.qty || 0);
           const oid = (o.order_id || '').trim();
           if (oid) priorOrderIds[key].add(oid);
-        });
+        };
+        if (preIdx) {
+          targetList.forEach(k => {
+            const rows = (matchBy === 'customer' ? preIdx.custIdx[k] : preIdx.skuIdx[k]) || [];
+            rows.forEach(scanPrior);
+          });
+        } else {
+          state.preOrders.forEach(scanPrior);
+        }
       }
     }
     // Classify into 2×2.
@@ -8806,7 +8835,17 @@ function renderSkuAggregate(fOrders) {
 }
 
 /* =================== ACTIONS =================== */
-async function rebuildAll() { buildFilterBar(); renderAll(); }
+// Debounce rebuildAll so rapid filter changes (multi-select, keyboard) don't
+// trigger a full re-render for every intermediate state.
+let _rebuildTimer = null;
+async function rebuildAll() {
+  if (_rebuildTimer) clearTimeout(_rebuildTimer);
+  _rebuildTimer = setTimeout(() => {
+    _rebuildTimer = null;
+    buildFilterBar();
+    renderAll();
+  }, 120);
+}
 
 document.getElementById('curToggle').addEventListener('click', e => {
   const b = e.target.closest('button[data-cur]'); if (!b) return;
@@ -10385,6 +10424,8 @@ async function togglePreOrders() {
     state.preOrders = [];
     state.preOrdersMeta = null;
     state.preOrdersEnabled = false;
+    state._preIdx = null;
+    state._preOrdersIndexed = false;
     try { localStorage.setItem('ck_pre_orders_on', '0'); } catch(e){}
     updatePreOrderBadge();
     rebuildAll();   // re-render KPI panels without the baseline
@@ -10442,6 +10483,8 @@ async function maybeAutoLoadPreOrders() {
   } catch (err) {
     console.warn('Pre-order baseline auto-restore failed:', err);
     state.preOrdersEnabled = false;
+    state._preIdx = null;
+    state._preOrdersIndexed = false;
   }
   updatePreOrderBadge();
 }
