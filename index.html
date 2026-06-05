@@ -5781,9 +5781,92 @@ function renderByCustomers(fOrders) {
     const y = parseInt(s.slice(0,4),10);
     return `${y-1}${s.slice(4)}`;
   };
+  const todayStr = (typeof _todayStr === 'function') ? _todayStr() : new Date().toISOString().slice(0,10);
+
+  // ── Override anchor using marketing.csv promoStart (Promotion Performance source of truth) ──
+  // Promotion Performance computes ORDER AMT as the sum over orders+baseline matched by the
+  // campaign's match_by (SKU/customer) within window [campaign.promoStart, today]. To make
+  // By Customers' CK ORDER AMT add up to the same totals when grouped over a campaign's
+  // target customers, we replace the Cost_customer.csv anchor with the marketing.csv-based
+  // anchor whenever we can attribute a customer to a campaign.
+  //
+  //   - customer-based campaign (e.g. Trade promotion): cno matches via cnoByName lookup
+  //     against target_customers
+  //   - SKU-based campaign     (e.g. Asian vehicle):   cno ordered any target_sku at all
+  //                                                    (across orders.csv or baseline)
+  // For each matched campaign we take min(promoStart) — earliest applicable campaign wins.
+  const promoStartFromMarketing = {};
+  (state.marketing || []).forEach(m => {
+    const p = m.promotion_category || m.promotion_id || '';
+    const d = (m.date || '').trim();
+    if (!p || !d) return;
+    if (!promoStartFromMarketing[p] || d < promoStartFromMarketing[p]) {
+      promoStartFromMarketing[p] = d;
+    }
+  });
+  // Reverse map customer name → cno (loose, case-insensitive trim)
+  const cnoByName = {};
+  Object.entries(nameByCust).forEach(([cno, nm]) => {
+    if (nm) cnoByName[String(nm).toUpperCase().trim()] = cno;
+  });
+  // SKU → owning campaign (SKU-based campaigns only)
+  const cfgAll = state.campaignTargetSkus || {};
+  const skuToCampaignBcust = {};
+  Object.keys(cfgAll).forEach(p => {
+    const c = cfgAll[p] || {};
+    if ((c.match_by || 'sku') === 'customer') {
+      (c.target_customers || []).forEach(name => {
+        const cno = cnoByName[String(name).toUpperCase().trim()];
+        const start = promoStartFromMarketing[p];
+        if (cno && start) {
+          if (!ckAnchorByCust[cno] || start < ckAnchorByCust[cno] ||
+              // Cost_customer fallback comes from BEFORE this block; marketing-based
+              // is now considered the canonical anchor, so overwrite regardless of
+              // whether it's earlier or later (but if multiple marketing campaigns
+              // touch the same customer, use the earliest).
+              !ckAnchorByCust[`_mkt:${cno}`] || start < ckAnchorByCust[`_mkt:${cno}`]) {
+            ckAnchorByCust[`_mkt:${cno}`] = start;
+          }
+        }
+      });
+    } else {
+      (c.target_skus || []).forEach(s => { skuToCampaignBcust[String(s).trim()] = p; });
+    }
+  });
+  // SKU-based: find which customers ordered any target SKU (orders.csv + baseline)
+  const _custOrderedSku = Object.create(null);  // cno → Set<campaign>
+  (state.orders || []).forEach(o => {
+    const sku = (o.sku || '').trim();
+    const p = skuToCampaignBcust[sku];
+    if (!p) return;
+    const cno = String(o.Customer_No || o.customer_no || '').replace(/\.0$/,'').trim();
+    if (!cno) return;
+    (_custOrderedSku[cno] = _custOrderedSku[cno] || new Set()).add(p);
+  });
+  // For perf, scan preOrders SKU sample lightly: only consider customer→SKU pairs we already
+  // saw in orders.csv to avoid an extra forEach over 650k baseline rows.
+  // (Marketing-aligned anchor is what we care about; baseline SKU evidence is secondary.)
+  Object.keys(_custOrderedSku).forEach(cno => {
+    _custOrderedSku[cno].forEach(p => {
+      const start = promoStartFromMarketing[p];
+      if (!start) return;
+      if (!ckAnchorByCust[`_mkt:${cno}`] || start < ckAnchorByCust[`_mkt:${cno}`]) {
+        ckAnchorByCust[`_mkt:${cno}`] = start;
+      }
+    });
+  });
+  // Promote marketing-based anchor over the Cost_customer.csv default, when present.
+  Object.keys(ckAnchorByCust).forEach(k => {
+    if (k.startsWith('_mkt:')) {
+      const cno = k.slice(5);
+      ckAnchorByCust[cno] = ckAnchorByCust[k];
+      delete ckAnchorByCust[k];
+    }
+  });
 
   // ── Current-year orders aggregate from state.orders (small).
-  // Split into TOTAL (all orders) vs CK (only orders >= customer's anchor).
+  // Split into TOTAL (all orders) vs CK (only orders >= customer's anchor AND <= today).
+  // Today-bound matches Promotion Performance's [promoStart, today] window.
   const totalOrderAmtByCust = {};   // all orders, per year
   const ckOrderAmtByCust = {};      // anchor-filtered orders, per year
   const totalOrdCntByCust = {};
@@ -5819,11 +5902,14 @@ function renderByCustomers(fOrders) {
       const yrShift = orderYr - anchorYr;            // 0 = current cohort, -1 = year before, etc.
       const effectiveAnchor = (yrShift === 0)
         ? anchor
-        : (yrShift > 0 ? anchor /* future-of-anchor still counts */ : (function(){
-            // shift forward by negative amount: 2024 + anchor(2025-04-09) → 2024-04-09 for prev-year window
-            return `${anchorYr + yrShift}${anchor.slice(4)}`;
-          })());
-      if (d >= effectiveAnchor) {
+        : (yrShift > 0 ? anchor
+            : `${anchorYr + yrShift}${anchor.slice(4)}`);
+      // Upper bound: today for current year, shift1y(today) for prev-year window.
+      const effectiveEnd = (yrShift === 0)
+        ? todayStr
+        : (yrShift > 0 ? todayStr
+            : shift1y(todayStr));
+      if (d >= effectiveAnchor && d <= effectiveEnd) {
         ckOrderAmtByCust[cno] = ckOrderAmtByCust[cno] || {};
         ckOrdCntByCust[cno] = ckOrdCntByCust[cno] || {};
         ckOrderAmtByCust[cno][yr] = (ckOrderAmtByCust[cno][yr]||0) + amt;
@@ -5854,7 +5940,7 @@ function renderByCustomers(fOrders) {
         totalOrdCntByCust[cno] = totalOrdCntByCust[cno] || {};
         totalOrderAmtByCust[cno][yr] = (totalOrderAmtByCust[cno][yr]||0) + (cell.amt * dispMul);
         totalOrdCntByCust[cno][yr] = (totalOrdCntByCust[cno][yr]||0) + cell.ords;
-        // CK — anchor-windowed using month-level index
+        // CK — anchor-windowed using month-level index, today-bounded
         if (anchor) {
           const orderYr = parseInt(yr, 10);
           const anchorYr = parseInt(anchor.slice(0,4), 10);
@@ -5863,23 +5949,29 @@ function renderByCustomers(fOrders) {
             ? anchor
             : `${anchorYr + yrShift}${anchor.slice(4)}`;
           const startMon = effectiveAnchor.slice(5,7);
-          const startDay = effectiveAnchor.slice(8,10);
-          // For yrShift < 0: only orders within yr that are >= effectiveAnchor (which is in yr) count
-          // For yrShift >= 0: all of yr counts (since anchor is in or before yr)
+          // Upper bound: today's month for current cohort, shift1y(today) month for prev cohort
+          const todayShifted = (yrShift === 0) ? todayStr
+                              : (yrShift > 0  ? todayStr
+                                              : shift1y(todayStr));
+          const endYr = todayShifted.slice(0,4);
+          const endMon = todayShifted.slice(5,7);
           const months = (idx.byCustYearMonth[cno] || {})[yr] || {};
           let ckAmt = 0, ckOrds = 0;
+          const startMonNum = parseInt(startMon,10);
+          const endMonNum   = parseInt(endMon,10);
           Object.keys(months).forEach(mon => {
-            // Compare month → if yr is anchor-year (yrShift==0) we need day-precision
-            // but baseline only has yr-month granularity → approximate as month-level
-            const monNum = parseInt(mon,10), startMonNum = parseInt(startMon,10);
+            const monNum = parseInt(mon,10);
+            // Skip if this year is past the effective end-year
+            if (yr > endYr) return;
+            // For yrShift > 0 (orders dated after anchor year): include all unless beyond endYr/endMon
             if (yrShift > 0) {
-              ckAmt += months[mon].amt; ckOrds += months[mon].ords;
-            } else {
-              // yrShift === 0 OR yrShift < 0 (both mean compare against same start month within yr)
-              if (monNum > startMonNum) {
+              if (yr < endYr || monNum <= endMonNum) {
                 ckAmt += months[mon].amt; ckOrds += months[mon].ords;
-              } else if (monNum === startMonNum) {
-                // Half-month approximation: include the whole month (slight over-count)
+              }
+            } else {
+              // yrShift === 0 (anchor year) OR yrShift < 0 (prev-year shifted window).
+              // Window = [startMon, endMon] inclusive within this yr (approximate; baseline lacks day precision).
+              if (monNum >= startMonNum && monNum <= endMonNum) {
                 ckAmt += months[mon].amt; ckOrds += months[mon].ords;
               }
             }
