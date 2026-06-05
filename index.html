@@ -2080,9 +2080,11 @@ header .mono b.t-orange {
         <div id="byCustDetailView" style="display:none">
           <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:14px">
             <div class="chart-wrap" style="height:280px"><canvas id="chByCustYears"></canvas></div>
-            <div class="chart-wrap" style="height:280px"><canvas id="chByCustPrograms"></canvas></div>
+            <div class="chart-wrap" style="height:280px"><canvas id="chByCustCategory"></canvas></div>
           </div>
-          <p class="label-mono" style="font-size:11px;margin-bottom:6px">PROGRAMS · activity-level breakdown for the selected year</p>
+          <p class="label-mono" style="font-size:11px;margin-bottom:6px">CAMPAIGNS · per-program spend summary for the selected year</p>
+          <div style="overflow:auto;max-height:280px;margin-bottom:14px"><table id="tblByCustCampaigns" style="font-size:12px"></table></div>
+          <p class="label-mono" style="font-size:11px;margin-bottom:6px">ACTIVITIES · all line items for the selected year (sorted by spend desc)</p>
           <div style="overflow:auto;max-height:380px"><table id="tblByCustPrograms" style="font-size:12px"></table></div>
         </div>
       </div>
@@ -5595,7 +5597,19 @@ function renderByCustomers(fOrders) {
 
   // ── Build per-customer × year aggregates ──
   // spendByCust[customerNo][year] = sum_total_spend_krw → display
+  // categoryByCust[customerNo][year][catKey] = sum_krw  (영역별 cost split)
+  const CATEGORIES = [
+    {key:'offline_krw',          label:'Offline Spend',                color:'#E8A33D'},
+    {key:'cust_marketing_krw',   label:'Customer Marketing Support',   color:'#5FE08A'},
+    {key:'promo_material_krw',   label:'Promotional Material Support', color:'#6AB6FF'},
+    {key:'campaign_prod_krw',    label:'Campaign Production',          color:'#A78BFA'},
+    {key:'program_op_krw',       label:'Program Operation',            color:'#F472B6'},
+    {key:'content_media_krw',    label:'Content & Media',              color:'#FBBF24'},
+    {key:'incentive_reward_krw', label:'Incentive & Reward',           color:'#FB923C'},
+    {key:'digital_krw',          label:'Digital Spend',                color:'#06B6D4'},
+  ];
   const spendByCust = {};
+  const categoryByCust = {};
   const programsByCust = {};
   const nameByCust = {};
   const regionByCust = {};
@@ -5603,6 +5617,13 @@ function renderByCustomers(fOrders) {
     const cno = r.customer_no;
     spendByCust[cno] = spendByCust[cno] || {};
     spendByCust[cno][r.year] = (spendByCust[cno][r.year]||0) + (r.total_spend_krw||0);
+    // Per-category accumulation
+    categoryByCust[cno] = categoryByCust[cno] || {};
+    categoryByCust[cno][r.year] = categoryByCust[cno][r.year] || {};
+    CATEGORIES.forEach(cat => {
+      const v = r[cat.key] || 0;
+      if (v) categoryByCust[cno][r.year][cat.key] = (categoryByCust[cno][r.year][cat.key]||0) + v;
+    });
     if (r.customer_name && !nameByCust[cno]) nameByCust[cno] = r.customer_name;
     if (r.region && !regionByCust[cno]) regionByCust[cno] = `${r.region} / ${r.country||''}`;
     // Per-program tracking
@@ -5616,7 +5637,15 @@ function renderByCustomers(fOrders) {
     }
     const pg = programsByCust[cno][pkey];
     pg.byYear[r.year] = (pg.byYear[r.year]||0) + (r.total_spend_krw||0);
-    pg.activities.push({ date: r.date, year: r.year, name: r.activity, spend_krw: r.total_spend_krw||0, status: r.status });
+    pg.activities.push({
+      date: r.date, year: r.year, name: r.activity,
+      spend_krw: r.total_spend_krw||0, status: r.status,
+      // Per-activity category split (largest non-zero used as label)
+      offline: r.offline_krw||0, cust_marketing: r.cust_marketing_krw||0,
+      promo_material: r.promo_material_krw||0, campaign_prod: r.campaign_prod_krw||0,
+      program_op: r.program_op_krw||0, content_media: r.content_media_krw||0,
+      incentive_reward: r.incentive_reward_krw||0, digital: r.digital_krw||0,
+    });
   });
 
   // Order amount per customer per year (orders.csv + baseline)
@@ -5684,7 +5713,7 @@ function renderByCustomers(fOrders) {
     if (listView) listView.style.display = 'none';
     if (detailView) detailView.style.display = '';
     return renderByCustomersDetail(state.byCustomerPick, {
-      spendByCust, programsByCust, nameByCust, regionByCust,
+      spendByCust, categoryByCust, CATEGORIES, programsByCust, nameByCust, regionByCust,
       orderAmtByCust, ordCountByCust, krwToDisp, pickedYear, prevYear, yearList,
     });
   }
@@ -5784,7 +5813,7 @@ function renderByCustomers(fOrders) {
 
 // Detail view for a single customer.
 function renderByCustomersDetail(cno, ctx) {
-  const { spendByCust, programsByCust, nameByCust, regionByCust,
+  const { spendByCust, categoryByCust, CATEGORIES, programsByCust, nameByCust, regionByCust,
           orderAmtByCust, ordCountByCust, krwToDisp, pickedYear, prevYear, yearList } = ctx;
   const name = nameByCust[cno] || cno;
 
@@ -5833,32 +5862,91 @@ function renderByCustomersDetail(cno, ctx) {
     });
   }
 
-  // ── Programs chart for picked year (per-program spend) ──
-  const programs = programsByCust[cno] || {};
-  const pgRows = Object.values(programs).map(pg => {
-    const pgSpend = krwToDisp(pg.byYear[pickedYear]||0);
-    const pgSpendPrev = krwToDisp(pg.byYear[prevYear]||0);
-    return { ...pg, pgSpend, pgSpendPrev, pgRoi: null /* per-program ROI not computable without per-program orders */ };
-  }).sort((a,b) => b.pgSpend - a.pgSpend);
-  const cvP = document.getElementById('chByCustPrograms');
-  if (cvP) {
-    if (charts.byCustPrograms) charts.byCustPrograms.destroy();
-    const top = pgRows.filter(p => p.pgSpend > 0).slice(0, 8);
-    charts.byCustPrograms = new Chart(cvP, {
+  // ── 영역별 (Category) breakdown chart for pickedYear ──
+  const cvCat = document.getElementById('chByCustCategory');
+  if (cvCat) {
+    if (charts.byCustCategory) charts.byCustCategory.destroy();
+    const catTotals = (categoryByCust[cno]||{})[pickedYear] || {};
+    const catTotalsPrev = (categoryByCust[cno]||{})[prevYear] || {};
+    const usedCats = CATEGORIES.filter(c => (catTotals[c.key]||0) > 0 || (catTotalsPrev[c.key]||0) > 0);
+    const labels = usedCats.map(c => c.label);
+    const curr = usedCats.map(c => krwToDisp(catTotals[c.key]||0));
+    const prev = usedCats.map(c => krwToDisp(catTotalsPrev[c.key]||0));
+    charts.byCustCategory = new Chart(cvCat, {
       type:'bar',
-      data:{ labels: top.map(p => p.name), datasets:[
-        { label:`Spend ${pickedYear}`, data: top.map(p=>p.pgSpend), backgroundColor:'#E8A33D', borderRadius:4 },
-        { label:`Spend ${prevYear}`,   data: top.map(p=>p.pgSpendPrev), backgroundColor:'#A1A1A6', borderRadius:4 },
+      data:{ labels, datasets:[
+        { label:`${pickedYear}`, data: curr, backgroundColor: usedCats.map(c=>c.color), borderRadius:4 },
+        { label:`${prevYear}`,   data: prev, backgroundColor: '#A1A1A6',                 borderRadius:4 },
       ]},
       options:{ ...chartOpts(true), indexAxis:'y',
         plugins:{ ...chartOpts(true).plugins, datalabels:{display:false},
-          title:{display:true, text:`Programs — ${pickedYear} vs ${prevYear}`, color:'#1D1D1F', font:{size:13,weight:'700'}} },
+          title:{display:true, text:`영역별 Marketing Spend — ${pickedYear} vs ${prevYear}`, color:'#1D1D1F', font:{size:13,weight:'700'}},
+          tooltip:{ ...chartOpts(true).plugins.tooltip,
+            callbacks:{ label: c => `${c.dataset.label}: ${fmtMoney(c.parsed.x)}` }}
+        },
         scales:{ x:{ ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v} } }
       }
     });
   }
 
-  // Program table (activity-level breakdown for picked year)
+  // ── Per-campaign summary table ──
+  const programs = programsByCust[cno] || {};
+  const pgRows = Object.values(programs).map(pg => {
+    const pgSpend = krwToDisp(pg.byYear[pickedYear]||0);
+    const pgSpendPrev = krwToDisp(pg.byYear[prevYear]||0);
+    // Activity count for this year
+    const actsYear = (pg.activities||[]).filter(a => a.year === pickedYear);
+    const actsPrev = (pg.activities||[]).filter(a => a.year === prevYear);
+    return { ...pg, pgSpend, pgSpendPrev, actsYear: actsYear.length, actsPrev: actsPrev.length };
+  })
+  .filter(p => p.pgSpend > 0 || p.pgSpendPrev > 0)
+  .sort((a,b) => b.pgSpend - a.pgSpend);
+
+  const totalSpendCurr = pgRows.reduce((s,p) => s + p.pgSpend, 0);
+  const totalSpendPrev = pgRows.reduce((s,p) => s + p.pgSpendPrev, 0);
+
+  const yoyTag = (curr, prev) => {
+    if (prev == null || prev === 0) return curr > 0 ? '<span class="t-green" style="font-weight:700">▲ NEW</span>' : '<span class="muted">–</span>';
+    const pct = ((curr - prev) / prev) * 100;
+    return pct >= 0
+      ? `<span class="t-green" style="font-weight:700">▲ ${pct.toFixed(0)}%</span>`
+      : `<span class="t-red" style="font-weight:700">▼ ${Math.abs(pct).toFixed(0)}%</span>`;
+  };
+
+  const cTbl = document.getElementById('tblByCustCampaigns');
+  if (cTbl) {
+    const rowHtml = pgRows.map(p => {
+      const pctOfTotal = totalSpendCurr > 0 ? (p.pgSpend/totalSpendCurr*100) : 0;
+      return `<tr>
+        <td><b>${p.name}</b><br><span class="muted" style="font-size:10px">${p.type||p.key}</span></td>
+        <td class="text-right mono t-blue">${p.actsYear}</td>
+        <td class="text-right mono t-yellow">${fmtMoney(p.pgSpend)}</td>
+        <td class="text-right mono muted">${p.pgSpendPrev>0?fmtMoney(p.pgSpendPrev):'–'}</td>
+        <td class="text-right mono">${yoyTag(p.pgSpend, p.pgSpendPrev)}</td>
+        <td class="text-right mono">${pctOfTotal>=1?pctOfTotal.toFixed(1)+'%':'–'}</td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="6" class="muted" style="text-align:center;padding:12px">No campaign data for ${pickedYear}</td></tr>`;
+    cTbl.innerHTML = `
+      <thead><tr>
+        <th>CAMPAIGN / PROGRAM</th>
+        <th class="text-right">ACTS<br><span class="muted" style="font-size:9px;font-weight:500">${pickedYear}</span></th>
+        <th class="text-right">SPEND<br><span class="muted" style="font-size:9px;font-weight:500">${pickedYear}</span></th>
+        <th class="text-right">PREV SPEND<br><span class="muted" style="font-size:9px;font-weight:500">${prevYear}</span></th>
+        <th class="text-right">YoY</th>
+        <th class="text-right">% OF SPEND</th>
+      </tr></thead>
+      <tbody>${rowHtml}</tbody>
+      <tfoot><tr style="border-top:2px solid #333;font-weight:700">
+        <td>TOTAL · ${pgRows.length} programs</td>
+        <td class="text-right mono">${pgRows.reduce((s,p)=>s+p.actsYear,0)}</td>
+        <td class="text-right mono t-yellow">${fmtMoney(totalSpendCurr)}</td>
+        <td class="text-right mono muted">${fmtMoney(totalSpendPrev)}</td>
+        <td class="text-right mono">${yoyTag(totalSpendCurr, totalSpendPrev)}</td>
+        <td class="text-right mono">100%</td>
+      </tr></tfoot>`;
+  }
+
+  // ── Activity-level table (line items for picked year) ──
   const tbl = document.getElementById('tblByCustPrograms');
   if (tbl) {
     const acts = [];
@@ -5868,17 +5956,28 @@ function renderByCustomersDetail(cno, ctx) {
       });
     });
     acts.sort((a,b) => (b.spend_krw||0) - (a.spend_krw||0));
+    // Largest-category label per activity
+    const catLabelByKey = { offline:'Offline', cust_marketing:'Cust Mktg', promo_material:'Promo Mat', campaign_prod:'Camp Prod', program_op:'Prog Op', content_media:'Content', incentive_reward:'Incentive', digital:'Digital' };
+    const dominantCategory = (a) => {
+      const arr = Object.keys(catLabelByKey).map(k => ({k, v: a[k]||0})).filter(x => x.v > 0);
+      if (!arr.length) return '–';
+      arr.sort((x,y) => y.v - x.v);
+      const top = arr[0];
+      const share = a.spend_krw > 0 ? (top.v / a.spend_krw * 100) : 0;
+      return `${catLabelByKey[top.k]}${share<99?` (${share.toFixed(0)}%)`:''}`;
+    };
     const rowHtml = acts.map(a => `
       <tr>
         <td class="mono muted">${a.date}</td>
         <td><b>${a.program}</b><br><span class="muted" style="font-size:10px">${a.type}</span></td>
         <td>${a.name}</td>
+        <td class="mono muted" style="font-size:11px">${dominantCategory(a)}</td>
         <td class="mono ${(a.status||'').toLowerCase().includes('complete')?'t-green':'t-yellow'}">${a.status||'–'}</td>
         <td class="text-right mono t-yellow">${fmtMoney(krwToDisp(a.spend_krw||0))}</td>
-      </tr>`).join('') || `<tr><td colspan="5" class="muted" style="text-align:center;padding:12px">No programs for ${pickedYear}</td></tr>`;
+      </tr>`).join('') || `<tr><td colspan="6" class="muted" style="text-align:center;padding:12px">No activities for ${pickedYear}</td></tr>`;
     tbl.innerHTML = `
       <thead><tr>
-        <th>DATE</th><th>PROGRAM</th><th>ACTIVITY</th><th>STATUS</th><th class="text-right">SPEND</th>
+        <th>DATE</th><th>PROGRAM</th><th>ACTIVITY</th><th>TOP CATEGORY</th><th>STATUS</th><th class="text-right">SPEND</th>
       </tr></thead>
       <tbody>${rowHtml}</tbody>`;
   }
@@ -10934,24 +11033,36 @@ function parseCustomerCostsCSV(text) {
     });
   }
   const out = [];
+  const numCol = (r, key) => {
+    const raw = String(r[key]||'').replace(/,/g,'').trim();
+    return Number(raw) || 0;
+  };
   rows.forEach(r => {
     const date = String(r['Date']||'').trim();
     if (!date) return;
     const yr = date.slice(0,4);
     const customerNo = String(r['Customer_No']||'').replace(/\.0$/,'').trim();
     if (!customerNo) return;
-    const totalSpendRaw = String(r['Total Spend']||'').replace(/,/g,'').trim();
-    const totalSpend = Number(totalSpendRaw)||0;
     out.push({
       date, year: yr, customer_no: customerNo,
       customer_name: String(r['Buyer']||'').trim(),
+      buyer_no: String(r['Buyer_No']||'').trim(),
       campaign_key: String(r['Campaign Key']||'').trim(),
       campaign_name: String(r['Campaign Name']||'').trim(),
       campaign_type: String(r['Campaign Type']||'').trim(),
       activity: String(r['Activity Name']||'').trim(),
       region: String(r['Region']||'').trim(),
       country: String(r['Country']||'').trim(),
-      total_spend_krw: totalSpend,
+      total_spend_krw: numCol(r,'Total Spend'),
+      // 영역별 세부 비용 — Inventory Production은 데이터에 전혀 없어 제외
+      offline_krw:           numCol(r,'Offline Spend'),
+      content_media_krw:     numCol(r,'Content & Media Cost'),
+      program_op_krw:        numCol(r,'Program Operation Cost'),
+      campaign_prod_krw:     numCol(r,'Campaign Production Cost'),
+      promo_material_krw:    numCol(r,'Promotional Material Support Cost'),
+      cust_marketing_krw:    numCol(r,'Customer Marketing Support Cost'),
+      incentive_reward_krw:  numCol(r,'Incentive & Reward Cost'),
+      digital_krw:           numCol(r,'Digital Spend'),
       status: String(r['Status']||'').trim(),
     });
   });
