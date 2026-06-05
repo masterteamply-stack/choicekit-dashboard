@@ -8765,11 +8765,19 @@ function renderSkuAggregate(fOrders) {
       }).join('')}</tbody>`;
   }
 
-  // ── Period Comparison KPIs (scoped to all orders in this promotion; current range starts at promotion launch) ──
+  // ── Period Comparison KPIs ──
+  // Pass orders.csv-only rows so that fillCompareKpis current-period ORDER AMOUNT
+  // is never inflated by preOrders. preOrders are added internally for previous
+  // period only (fillCompareKpis already calls state.preOrders for prevSource).
   const cmpScope = (promo && promo !== '__all__')
     ? ((o) => o && promoKeyOfOrder(o) === promo)
     : null;
-  renderSkuCompareKpis(useOrders, cmpScope, startDate);
+  // ordersCsv = orders.csv only (no baseline). Filter same way useOrders was filtered
+  // but without the baseline rows so current ORDER AMOUNT = orders.csv only.
+  const cmpOrders = promo === '__all__'
+    ? ordersCsv
+    : ordersCsv.filter(o => promoKeyOfOrder(o) === promo);
+  renderSkuCompareKpis(cmpOrders, cmpScope, startDate);
 }
 
 /* =================== ACTIONS =================== */
