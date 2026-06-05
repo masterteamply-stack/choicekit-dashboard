@@ -1695,6 +1695,7 @@ header .mono b.t-orange {
       <option value="promoOrderTrend">Order Trends</option>
       <option value="promoctr">Promo × CTR</option>
       <option value="topinsights">Top Insights</option>
+      <option value="byCustomers">By Customers</option>
       <option value="customertrend">Customer Trend</option>
       <option value="region">Region</option>
       <option value="promo">Promotion Performance</option>
@@ -2048,8 +2049,43 @@ header .mono b.t-orange {
         </div>
       </div>
 
-      <!-- Monthly Trend was merged into Promotion Category — Sales Trend (widget id: category) -->
-
+      <!-- By Customers — per-customer marketing investment + ROI drill-in -->
+      <div class="panel widget" data-widget-id="byCustomers">
+        <div class="widget-head">
+          <div>
+            <h3 class="h-section">By Customers — Marketing Spend · Orders · ROI</h3>
+            <p class="label-mono" style="margin-top:4px">Per-customer year-over-year marketing investment vs. order revenue. Click a customer to drill into program-level ROI. Spend data sourced from Cost_customer.csv (matched by Customer_No).</p>
+          </div>
+          <div class="chart-tools">
+            <span class="label-mono" style="font-size:11px">SORT</span>
+            <div class="seg" id="segByCustSort">
+              <button data-v="roi" class="active">ROI</button>
+              <button data-v="spend">Spend</button>
+              <button data-v="orderAmt">Order Amt</button>
+              <button data-v="name">Name</button>
+            </div>
+            <span class="label-mono" style="font-size:11px;margin-left:6px">YEAR</span>
+            <select id="selByCustYear" style="min-width:90px;height:30px;font-size:12px"></select>
+            <div class="widget-order-controls"></div>
+          </div>
+        </div>
+        <div id="byCustCrumb" style="margin-bottom:10px;font-size:12px"></div>
+        <!-- KPI strip -->
+        <div id="byCustKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px"></div>
+        <!-- List view (when no customer picked) -->
+        <div id="byCustListView">
+          <div style="overflow:auto;max-height:540px"><table id="tblByCustList" style="font-size:12px"></table></div>
+        </div>
+        <!-- Drill-in view -->
+        <div id="byCustDetailView" style="display:none">
+          <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:14px">
+            <div class="chart-wrap" style="height:280px"><canvas id="chByCustYears"></canvas></div>
+            <div class="chart-wrap" style="height:280px"><canvas id="chByCustPrograms"></canvas></div>
+          </div>
+          <p class="label-mono" style="font-size:11px;margin-bottom:6px">PROGRAMS · activity-level breakdown for the selected year</p>
+          <div style="overflow:auto;max-height:380px"><table id="tblByCustPrograms" style="font-size:12px"></table></div>
+        </div>
+      </div>
 
       <!-- Promotion Performance (split widget) -->
       <div class="panel widget" data-widget-id="customertrend">
@@ -2554,11 +2590,11 @@ function colorForCampaign(name) {
 // re-enabled in Settings.
 const DEFAULT_WIDGET_ORDER = [
   'promo','choicekitImpact','skuExplorer',
-  'planexec','promoctr','topinsights',
+  'planexec','promoctr','topinsights','byCustomers',
   'customertrend','budgetstatus','region','activities'
 ];
 const DEFAULT_HIDDEN_WIDGETS = ['category','promoOrderTrend'];
-const WIDGET_ORDER_VERSION = 'v27.0'; // bump → existing users get the new default once
+const WIDGET_ORDER_VERSION = 'v28.0'; // bump → existing users get the new default once
 
 let state = {
   orders: JSON.parse(localStorage.getItem('ck_orders') || '[]'),
@@ -2648,6 +2684,15 @@ let state = {
   preOrders: [],
   preOrdersMeta: null,
   preOrdersEnabled: false,
+
+  // — Customer marketing cost (Cost_customer.csv) — per-customer multi-year marketing investment
+  customerCosts: [],         // array of {date, year, customer_no, customer_name, campaign_key, campaign_name, campaign_type, activity, region, country, total_spend_krw}
+  customerCostsMeta: null,   // {loadedAt, count}
+
+  // — By Customers widget state
+  byCustomerPick: localStorage.getItem('ck_bycust_pick') || null,      // selected customer_no for drill-in (null = list view)
+  byCustomerSort: localStorage.getItem('ck_bycust_sort') || 'roi',     // roi | spend | orderAmt | name
+  byCustomerYear: localStorage.getItem('ck_bycust_year') || null,      // selected year (null = default to current)
 };
 const charts = {};
 // Shared: total ORDER AMT (post-campaign) computed by renderPromoChart.
@@ -4301,6 +4346,7 @@ function renderAll() {
   renderBudgetStatus(fMkt);
   renderCustomerTrend(fOrders, fMkt);
   renderTopInsights(fOrders);
+  renderByCustomers(fOrders);
   renderPromoCtrChart(fOrders);
   renderPromoChart(fOrders, fMkt);
   // ── Sync Marketing KPI Order Amount with the canonical post-campaign total ──
@@ -5520,6 +5566,321 @@ function renderTopInsights(fOrders) {
         <td class="text-right mono ${metric==='qty'?'t-blue':''}">${fmtNum(r.qty)}</td>
         <td class="text-right mono ${metric==='amount'?'t-green':''}">${fmtMoney(r.amount)}</td>
       </tr>`).join('') || '<tr><td colspan="7" class="muted" style="text-align:center;padding:12px">No data</td></tr>'}</tbody>`;
+  }
+}
+
+
+/* =================== By Customers — per-customer marketing investment + ROI ===================
+   Data sources:
+     - state.customerCosts  (from Cost_customer.csv, matched by Customer_No)
+     - state.orders         (orders.csv with Customer_No)
+     - state.preOrders      (baseline for prev-year orders)
+   Math:
+     - spend[year]  = sum(Total Spend KRW) → display USD (krwToUsd × usdToDisplay)
+     - orders[year] = sum of (orders.csv + baseline) for this customer in that year
+     - ROI[year]    = (orders[year] - spend[year]) / spend[year] × 100
+================================================================ */
+function renderByCustomers(fOrders) {
+  const wrap = document.querySelector('[data-widget-id="byCustomers"]');
+  if (!wrap) return;
+  if (!state.customerCosts || !state.customerCosts.length) {
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = '';
+
+  const krwUsd = krwToUsd();
+  const dispMul = usdToDisplay();
+  const krwToDisp = (krw) => Number(krw||0) * krwUsd * dispMul;
+
+  // ── Build per-customer × year aggregates ──
+  // spendByCust[customerNo][year] = sum_total_spend_krw → display
+  const spendByCust = {};
+  const programsByCust = {};
+  const nameByCust = {};
+  const regionByCust = {};
+  state.customerCosts.forEach(r => {
+    const cno = r.customer_no;
+    spendByCust[cno] = spendByCust[cno] || {};
+    spendByCust[cno][r.year] = (spendByCust[cno][r.year]||0) + (r.total_spend_krw||0);
+    if (r.customer_name && !nameByCust[cno]) nameByCust[cno] = r.customer_name;
+    if (r.region && !regionByCust[cno]) regionByCust[cno] = `${r.region} / ${r.country||''}`;
+    // Per-program tracking
+    programsByCust[cno] = programsByCust[cno] || {};
+    const pkey = r.campaign_key || r.campaign_name || '(unnamed)';
+    if (!programsByCust[cno][pkey]) {
+      programsByCust[cno][pkey] = {
+        key: pkey, name: r.campaign_name||pkey, type: r.campaign_type||'',
+        byYear: {}, activities: [],
+      };
+    }
+    const pg = programsByCust[cno][pkey];
+    pg.byYear[r.year] = (pg.byYear[r.year]||0) + (r.total_spend_krw||0);
+    pg.activities.push({ date: r.date, year: r.year, name: r.activity, spend_krw: r.total_spend_krw||0, status: r.status });
+  });
+
+  // Order amount per customer per year (orders.csv + baseline)
+  const orderAmtByCust = {};
+  const ordCountByCust = {};
+  (state.orders || []).forEach(o => {
+    const cno = String(o.Customer_No || o.customer_no || '').replace(/\.0$/,'').trim();
+    if (!cno) return;
+    const yr = String(o.order_date||'').slice(0,4);
+    if (!yr) return;
+    orderAmtByCust[cno] = orderAmtByCust[cno] || {};
+    ordCountByCust[cno] = ordCountByCust[cno] || {};
+    orderAmtByCust[cno][yr] = (orderAmtByCust[cno][yr]||0) + convOrder(o);
+    ordCountByCust[cno][yr] = (ordCountByCust[cno][yr]||0) + 1;
+  });
+  if (state.preOrdersEnabled && Array.isArray(state.preOrders)) {
+    state.preOrders.forEach(o => {
+      const cno = String(o.Customer_No || o.customer_no || '').replace(/\.0$/,'').trim();
+      if (!cno) return;
+      const yr = String(o.order_date||'').slice(0,4);
+      if (!yr) return;
+      orderAmtByCust[cno] = orderAmtByCust[cno] || {};
+      ordCountByCust[cno] = ordCountByCust[cno] || {};
+      orderAmtByCust[cno][yr] = (orderAmtByCust[cno][yr]||0) + (Number(o.amount_usd||0) * dispMul);
+      ordCountByCust[cno][yr] = (ordCountByCust[cno][yr]||0) + 1;
+    });
+  }
+
+  // ── Year selector ──
+  const allYears = new Set();
+  Object.values(spendByCust).forEach(m => Object.keys(m).forEach(y => allYears.add(y)));
+  Object.values(orderAmtByCust).forEach(m => Object.keys(m).forEach(y => allYears.add(y)));
+  const yearList = Array.from(allYears).sort().reverse();
+  const yearSel = document.getElementById('selByCustYear');
+  const currentYear = String(new Date().getFullYear());
+  const pickedYear = state.byCustomerYear || (yearList.includes(currentYear) ? currentYear : yearList[0]);
+  if (yearSel) {
+    yearSel.innerHTML = yearList.map(y => `<option value="${y}" ${y===pickedYear?'selected':''}>${y}</option>`).join('');
+  }
+  state.byCustomerYear = pickedYear;
+  const prevYear = String(parseInt(pickedYear,10)-1);
+
+  // ── Crumb ──
+  const crumb = document.getElementById('byCustCrumb');
+  if (crumb) {
+    if (state.byCustomerPick) {
+      const nm = nameByCust[state.byCustomerPick] || state.byCustomerPick;
+      crumb.innerHTML = `<span class="badge-tag" data-bycust-crumb="0" style="cursor:pointer;background:rgba(106,182,255,.15);border-color:#A1A1A6;color:#A1A1A6">All Customers</span>` +
+        ` <span class="muted">›</span> ` +
+        `<span class="badge-tag" style="background:rgba(143,232,170,.15);border-color:#0A0A0A;color:#0A0A0A"><b>${nm}</b> · ${state.byCustomerPick}</span>` +
+        ` <span class="muted" style="margin-left:8px">${regionByCust[state.byCustomerPick]||''}</span>`;
+    } else {
+      crumb.innerHTML = `<span class="muted">Showing all customers · click a row to drill-in</span>`;
+    }
+  }
+
+  // ── Active sort ──
+  const sort = state.byCustomerSort || 'roi';
+  document.querySelectorAll('#segByCustSort button').forEach(b => b.classList.toggle('active', b.dataset.v === sort));
+
+  // ── Show appropriate view ──
+  const listView = document.getElementById('byCustListView');
+  const detailView = document.getElementById('byCustDetailView');
+  if (state.byCustomerPick) {
+    if (listView) listView.style.display = 'none';
+    if (detailView) detailView.style.display = '';
+    return renderByCustomersDetail(state.byCustomerPick, {
+      spendByCust, programsByCust, nameByCust, regionByCust,
+      orderAmtByCust, ordCountByCust, krwToDisp, pickedYear, prevYear, yearList,
+    });
+  }
+  if (listView) listView.style.display = '';
+  if (detailView) detailView.style.display = 'none';
+
+  // ── Build per-customer rows for list view ──
+  const cnoSet = new Set([...Object.keys(spendByCust), ...Object.keys(orderAmtByCust)]);
+  const rows = [];
+  cnoSet.forEach(cno => {
+    const spend = krwToDisp((spendByCust[cno]||{})[pickedYear]||0);
+    const spendPrev = krwToDisp((spendByCust[cno]||{})[prevYear]||0);
+    const orderAmt = (orderAmtByCust[cno]||{})[pickedYear]||0;
+    const orderAmtPrev = (orderAmtByCust[cno]||{})[prevYear]||0;
+    const ords = (ordCountByCust[cno]||{})[pickedYear]||0;
+    const roi = spend > 0 ? ((orderAmt - spend) / spend) * 100 : null;
+    const roiPrev = spendPrev > 0 ? ((orderAmtPrev - spendPrev) / spendPrev) * 100 : null;
+    rows.push({
+      cno, name: nameByCust[cno]||'(unknown)', region: regionByCust[cno]||'',
+      spend, spendPrev, orderAmt, orderAmtPrev, ords, roi, roiPrev,
+    });
+  });
+  // Sort
+  rows.sort((a,b) => {
+    if (sort === 'name') return a.name.localeCompare(b.name);
+    if (sort === 'spend') return (b.spend||0) - (a.spend||0);
+    if (sort === 'orderAmt') return (b.orderAmt||0) - (a.orderAmt||0);
+    // 'roi': nulls last
+    if (a.roi == null && b.roi == null) return 0;
+    if (a.roi == null) return 1;
+    if (b.roi == null) return -1;
+    return b.roi - a.roi;
+  });
+
+  // KPI strip — totals for the picked year
+  const totalSpend = rows.reduce((s,r) => s + (r.spend||0), 0);
+  const totalOrder = rows.reduce((s,r) => s + (r.orderAmt||0), 0);
+  const totalSpendPrev = rows.reduce((s,r) => s + (r.spendPrev||0), 0);
+  const totalOrderPrev = rows.reduce((s,r) => s + (r.orderAmtPrev||0), 0);
+  const overallRoi = totalSpend > 0 ? ((totalOrder - totalSpend) / totalSpend) * 100 : null;
+  const overallRoiPrev = totalSpendPrev > 0 ? ((totalOrderPrev - totalSpendPrev) / totalSpendPrev) * 100 : null;
+  const kpiEl = document.getElementById('byCustKpis');
+  if (kpiEl) {
+    const kpiBox = (lbl, val, sub, cls) => `
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.10);border-radius:8px;padding:10px 12px">
+        <div class="label-mono muted" style="font-size:10px">${lbl}</div>
+        <div style="font-size:18px;font-weight:800" class="${cls||''}">${val}</div>
+        <div class="label-mono muted" style="font-size:11px">${sub}</div>
+      </div>`;
+    kpiEl.innerHTML =
+      kpiBox(`MARKETING SPEND · ${pickedYear}`, fmtMoney(totalSpend), `prev ${prevYear}: ${fmtMoney(totalSpendPrev)}`, 't-yellow') +
+      kpiBox(`ORDER AMT · ${pickedYear}`, fmtMoney(totalOrder), `prev ${prevYear}: ${fmtMoney(totalOrderPrev)}`, 't-green') +
+      kpiBox(`OVERALL ROI · ${pickedYear}`, overallRoi==null?'–':fmtPct(overallRoi), `prev ${prevYear}: ${overallRoiPrev==null?'–':fmtPct(overallRoiPrev)}`, overallRoi==null?'muted':(overallRoi>=0?'t-green':'t-red')) +
+      kpiBox(`CUSTOMERS WITH SPEND`, fmtNum(rows.filter(r=>r.spend>0).length), `of ${rows.length} total`, 't-blue');
+  }
+
+  // Table
+  const tbl = document.getElementById('tblByCustList');
+  if (tbl) {
+    const yoyTag = (curr, prev) => {
+      if (prev == null || prev === 0) return curr > 0 ? '<span class="t-green" style="font-weight:700">▲ NEW</span>' : '<span class="muted">–</span>';
+      const pct = ((curr - prev) / prev) * 100;
+      return pct >= 0
+        ? `<span class="t-green" style="font-weight:700">▲ ${pct.toFixed(0)}%</span>`
+        : `<span class="t-red" style="font-weight:700">▼ ${Math.abs(pct).toFixed(0)}%</span>`;
+    };
+    const rowHtml = rows.map(r => {
+      const roiCls = r.roi == null ? 'muted' : (r.roi < 0 ? 't-red' : 't-green');
+      const roiPrevCls = r.roiPrev == null ? 'muted' : (r.roiPrev < 0 ? 't-red' : 't-blue');
+      return `<tr data-bycust-pick="${r.cno}" style="cursor:pointer">
+        <td><b>${r.name}</b><br><span class="muted" style="font-size:10px">${r.cno}</span></td>
+        <td class="muted" style="font-size:11px">${r.region}</td>
+        <td class="text-right mono t-yellow">${fmtMoney(r.spend)}</td>
+        <td class="text-right mono muted">${r.spendPrev>0?fmtMoney(r.spendPrev):'–'}</td>
+        <td class="text-right mono">${yoyTag(r.spend, r.spendPrev)}</td>
+        <td class="text-right mono t-green">${fmtMoney(r.orderAmt)}</td>
+        <td class="text-right mono muted">${r.orderAmtPrev>0?fmtMoney(r.orderAmtPrev):'–'}</td>
+        <td class="text-right mono ${roiCls}" style="font-weight:700">${r.roi==null?'–':fmtPct(r.roi)}</td>
+        <td class="text-right mono ${roiPrevCls}">${r.roiPrev==null?'–':fmtPct(r.roiPrev)}</td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="9" class="muted" style="text-align:center;padding:12px">No customer data</td></tr>`;
+    tbl.innerHTML = `
+      <thead><tr>
+        <th>CUSTOMER</th>
+        <th>REGION / COUNTRY</th>
+        <th class="text-right">SPEND<br><span class="muted" style="font-size:9px;font-weight:500">${pickedYear}</span></th>
+        <th class="text-right">PREV SPEND<br><span class="muted" style="font-size:9px;font-weight:500">${prevYear}</span></th>
+        <th class="text-right">SPEND YoY</th>
+        <th class="text-right">ORDER AMT<br><span class="muted" style="font-size:9px;font-weight:500">${pickedYear}</span></th>
+        <th class="text-right">PREV ORDER AMT<br><span class="muted" style="font-size:9px;font-weight:500">${prevYear}</span></th>
+        <th class="text-right">ROI<br><span class="muted" style="font-size:9px;font-weight:500">${pickedYear}</span></th>
+        <th class="text-right">PREV ROI<br><span class="muted" style="font-size:9px;font-weight:500">${prevYear}</span></th>
+      </tr></thead>
+      <tbody>${rowHtml}</tbody>`;
+  }
+}
+
+// Detail view for a single customer.
+function renderByCustomersDetail(cno, ctx) {
+  const { spendByCust, programsByCust, nameByCust, regionByCust,
+          orderAmtByCust, ordCountByCust, krwToDisp, pickedYear, prevYear, yearList } = ctx;
+  const name = nameByCust[cno] || cno;
+
+  // KPI strip for this customer in pickedYear
+  const spend = krwToDisp((spendByCust[cno]||{})[pickedYear]||0);
+  const spendPrev = krwToDisp((spendByCust[cno]||{})[prevYear]||0);
+  const orderAmt = (orderAmtByCust[cno]||{})[pickedYear]||0;
+  const orderAmtPrev = (orderAmtByCust[cno]||{})[prevYear]||0;
+  const ords = (ordCountByCust[cno]||{})[pickedYear]||0;
+  const roi = spend > 0 ? ((orderAmt - spend) / spend) * 100 : null;
+  const roiPrev = spendPrev > 0 ? ((orderAmtPrev - spendPrev) / spendPrev) * 100 : null;
+
+  const kpiEl = document.getElementById('byCustKpis');
+  if (kpiEl) {
+    const kpiBox = (lbl, val, sub, cls) => `
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.10);border-radius:8px;padding:10px 12px">
+        <div class="label-mono muted" style="font-size:10px">${lbl}</div>
+        <div style="font-size:18px;font-weight:800" class="${cls||''}">${val}</div>
+        <div class="label-mono muted" style="font-size:11px">${sub}</div>
+      </div>`;
+    kpiEl.innerHTML =
+      kpiBox(`SPEND · ${pickedYear}`, fmtMoney(spend), `prev ${prevYear}: ${fmtMoney(spendPrev)}`, 't-yellow') +
+      kpiBox(`ORDER AMT · ${pickedYear}`, fmtMoney(orderAmt), `prev ${prevYear}: ${fmtMoney(orderAmtPrev)}`, 't-green') +
+      kpiBox(`ROI · ${pickedYear}`, roi==null?'–':fmtPct(roi), `prev ${prevYear}: ${roiPrev==null?'–':fmtPct(roiPrev)}`, roi==null?'muted':(roi>=0?'t-green':'t-red')) +
+      kpiBox(`ORDERS · ${pickedYear}`, fmtNum(ords), `${regionByCust[cno]||''}`, 't-blue');
+  }
+
+  // ── Years chart (bar: spend vs order amt across years) ──
+  const cvA = document.getElementById('chByCustYears');
+  if (cvA) {
+    if (charts.byCustYears) charts.byCustYears.destroy();
+    const yrs = yearList.slice().reverse();   // chronological
+    const spendVals = yrs.map(y => krwToDisp((spendByCust[cno]||{})[y]||0));
+    const orderVals = yrs.map(y => (orderAmtByCust[cno]||{})[y]||0);
+    charts.byCustYears = new Chart(cvA, {
+      type:'bar',
+      data:{ labels: yrs, datasets:[
+        { label:'Marketing Spend', data: spendVals, backgroundColor:'#E8A33D', borderRadius:4 },
+        { label:'Order Amount',   data: orderVals, backgroundColor:'#5FE08A', borderRadius:4 },
+      ]},
+      options:{ ...chartOpts(true),
+        plugins:{ ...chartOpts(true).plugins, datalabels:{display:false},
+          title:{display:true, text:`${name} — Multi-year Spend vs Orders`, color:'#1D1D1F', font:{size:13,weight:'700'}} },
+        scales:{ y:{ ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v} } }
+      }
+    });
+  }
+
+  // ── Programs chart for picked year (per-program spend) ──
+  const programs = programsByCust[cno] || {};
+  const pgRows = Object.values(programs).map(pg => {
+    const pgSpend = krwToDisp(pg.byYear[pickedYear]||0);
+    const pgSpendPrev = krwToDisp(pg.byYear[prevYear]||0);
+    return { ...pg, pgSpend, pgSpendPrev, pgRoi: null /* per-program ROI not computable without per-program orders */ };
+  }).sort((a,b) => b.pgSpend - a.pgSpend);
+  const cvP = document.getElementById('chByCustPrograms');
+  if (cvP) {
+    if (charts.byCustPrograms) charts.byCustPrograms.destroy();
+    const top = pgRows.filter(p => p.pgSpend > 0).slice(0, 8);
+    charts.byCustPrograms = new Chart(cvP, {
+      type:'bar',
+      data:{ labels: top.map(p => p.name), datasets:[
+        { label:`Spend ${pickedYear}`, data: top.map(p=>p.pgSpend), backgroundColor:'#E8A33D', borderRadius:4 },
+        { label:`Spend ${prevYear}`,   data: top.map(p=>p.pgSpendPrev), backgroundColor:'#A1A1A6', borderRadius:4 },
+      ]},
+      options:{ ...chartOpts(true), indexAxis:'y',
+        plugins:{ ...chartOpts(true).plugins, datalabels:{display:false},
+          title:{display:true, text:`Programs — ${pickedYear} vs ${prevYear}`, color:'#1D1D1F', font:{size:13,weight:'700'}} },
+        scales:{ x:{ ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v} } }
+      }
+    });
+  }
+
+  // Program table (activity-level breakdown for picked year)
+  const tbl = document.getElementById('tblByCustPrograms');
+  if (tbl) {
+    const acts = [];
+    pgRows.forEach(pg => {
+      (pg.activities || []).forEach(a => {
+        if (a.year === pickedYear) acts.push({ ...a, program: pg.name, type: pg.type });
+      });
+    });
+    acts.sort((a,b) => (b.spend_krw||0) - (a.spend_krw||0));
+    const rowHtml = acts.map(a => `
+      <tr>
+        <td class="mono muted">${a.date}</td>
+        <td><b>${a.program}</b><br><span class="muted" style="font-size:10px">${a.type}</span></td>
+        <td>${a.name}</td>
+        <td class="mono ${(a.status||'').toLowerCase().includes('complete')?'t-green':'t-yellow'}">${a.status||'–'}</td>
+        <td class="text-right mono t-yellow">${fmtMoney(krwToDisp(a.spend_krw||0))}</td>
+      </tr>`).join('') || `<tr><td colspan="5" class="muted" style="text-align:center;padding:12px">No programs for ${pickedYear}</td></tr>`;
+    tbl.innerHTML = `
+      <thead><tr>
+        <th>DATE</th><th>PROGRAM</th><th>ACTIVITY</th><th>STATUS</th><th class="text-right">SPEND</th>
+      </tr></thead>
+      <tbody>${rowHtml}</tbody>`;
   }
 }
 
@@ -9596,6 +9957,9 @@ document.addEventListener('change', e => {
   if (e.target.id === 'selPromoCtrPromo') {
     state.promoCtrPromo = e.target.value; persist(); renderAll();
   }
+  if (e.target.id === 'selByCustYear') {
+    state.byCustomerYear = e.target.value; persist(); renderAll();
+  }
   if (e.target.id === 'inpPromoCtrFrom') {
     state.promoCtrFrom = e.target.value; persist();
     if (state.promoCtrPeriod === 'custom') renderAll();
@@ -9673,6 +10037,22 @@ document.addEventListener('click', e => {
     }
     return;
   }
+  // By Customers — row click drills into that customer
+  const bcRow = e.target.closest('[data-bycust-pick]');
+  if (bcRow) {
+    state.byCustomerPick = bcRow.dataset.bycustPick;
+    try { localStorage.setItem('ck_bycust_pick', state.byCustomerPick); } catch(_){}
+    renderAll();
+    return;
+  }
+  // By Customers — crumb "All Customers" click returns to list
+  const bcCrumb = e.target.closest('[data-bycust-crumb]');
+  if (bcCrumb) {
+    state.byCustomerPick = null;
+    try { localStorage.removeItem('ck_bycust_pick'); } catch(_){}
+    renderAll();
+    return;
+  }
   // PlanExec attention chip → jump to that region/country
   const peJump = e.target.closest('[data-planexec-jump]');
   if (peJump) {
@@ -9729,6 +10109,11 @@ document.addEventListener('click', e => {
     else if (id==='segPotMetric'){ state.potMetric = v; persist(); renderAll(); }
     else if (id==='segTopInsightsPeriod'){ state.topInsightsPeriod = v; persist(); renderAll(); }
     else if (id==='segPromoCtrPeriod'){    state.promoCtrPeriod    = v; persist(); renderAll(); }
+    else if (id==='segByCustSort'){
+      state.byCustomerSort = v;
+      try { localStorage.setItem('ck_bycust_sort', v); } catch(_){}
+      renderAll();
+    }
     return;
   }
   // Marketing Cost Breakdown Region 탭
@@ -9853,6 +10238,7 @@ const WIDGET_LABELS = {
   'activities':'Marketing Activities',
   'promoctr':'Promotion Category × Top CTR Sales',
   'topinsights':'Top Insights — Vehicle Models · Products · CTR Codes',
+  'byCustomers':'By Customers — Marketing Spend · Orders · ROI',
 };
 function applyWidgetOrder() {
   const area = document.getElementById('widgetArea');
@@ -10524,8 +10910,74 @@ const SHARED_CSV_URLS = {
   orders:    `${GH_REPO_BASE}/orders.csv`,
   marketing: `${GH_REPO_BASE}/marketing.csv`,
   budgets:   `${GH_REPO_BASE}/budgets.csv`,
+  customerCosts: `${GH_REPO_BASE}/Cost_customer.csv`,
 };
 const CAMPAIGN_TARGET_SKUS_URL = `${GH_REPO_BASE}/campaign_target_skus.json`;
+
+// Parse Cost_customer.csv → array of {date, year, customer_no, customer_name,
+// campaign_key, campaign_name, campaign_type, activity, region, country, total_spend_krw}.
+function parseCustomerCostsCSV(text) {
+  if (!text) return [];
+  // Use papaparse if available; fallback to a tiny CSV reader.
+  let rows = [];
+  try {
+    const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+    rows = parsed.data || [];
+  } catch (e) {
+    // Fallback splitter (best effort)
+    const lines = text.split(/\r?\n/).filter(Boolean);
+    const headers = lines[0].split(',');
+    rows = lines.slice(1).map(line => {
+      const cells = line.split(',');
+      const o = {}; headers.forEach((h,i) => { o[h.trim()] = cells[i]; });
+      return o;
+    });
+  }
+  const out = [];
+  rows.forEach(r => {
+    const date = String(r['Date']||'').trim();
+    if (!date) return;
+    const yr = date.slice(0,4);
+    const customerNo = String(r['Customer_No']||'').replace(/\.0$/,'').trim();
+    if (!customerNo) return;
+    const totalSpendRaw = String(r['Total Spend']||'').replace(/,/g,'').trim();
+    const totalSpend = Number(totalSpendRaw)||0;
+    out.push({
+      date, year: yr, customer_no: customerNo,
+      customer_name: String(r['Buyer']||'').trim(),
+      campaign_key: String(r['Campaign Key']||'').trim(),
+      campaign_name: String(r['Campaign Name']||'').trim(),
+      campaign_type: String(r['Campaign Type']||'').trim(),
+      activity: String(r['Activity Name']||'').trim(),
+      region: String(r['Region']||'').trim(),
+      country: String(r['Country']||'').trim(),
+      total_spend_krw: totalSpend,
+      status: String(r['Status']||'').trim(),
+    });
+  });
+  return out;
+}
+
+async function loadCustomerCosts() {
+  if (location.protocol === 'file:') return false;
+  try {
+    const res = await fetch(SHARED_CSV_URLS.customerCosts, { cache: 'no-cache' });
+    if (!res.ok) {
+      if (res.status !== 404) console.warn(`[customer-costs] HTTP ${res.status}`);
+      return false;
+    }
+    const buf = await res.arrayBuffer();
+    const text = decodeCsvBuffer(buf);
+    const rows = parseCustomerCostsCSV(text);
+    state.customerCosts = rows;
+    state.customerCostsMeta = { loadedAt: new Date().toISOString(), count: rows.length };
+    console.log(`[customer-costs] ✅ loaded ${rows.length} rows`);
+    return true;
+  } catch (e) {
+    console.warn('[customer-costs] load failed:', e);
+    return false;
+  }
+}
 
 // Load explicit per-campaign target SKU lists (e.g. Portfolio Expansion's
 // SA_list). Populates state.campaignTargetSkus = { promo: {region, target_skus[]} }.
@@ -11157,6 +11609,8 @@ window.publishSnapshot = publishSnapshot;
   try { await loadSharedData(false); } catch (e) { console.warn('Shared data load skipped:', e); }
   // Load explicit per-campaign target SKU lists (SA_list etc.) — best-effort.
   try { await loadCampaignTargetSkus(); } catch (e) { console.warn('target SKU load skipped:', e); }
+  // Load per-customer marketing cost (Cost_customer.csv) — best-effort.
+  try { await loadCustomerCosts(); } catch (e) { console.warn('customer costs load skipped:', e); }
   // CTR-Model map + auto CSV refresh still require network — only attempt over http(s).
   if (location.protocol === 'http:' || location.protocol === 'https:') {
     try { await loadCtrModelMap(); } catch(e) { console.warn('CTR map load skipped:', e); }
