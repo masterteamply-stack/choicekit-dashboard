@@ -5653,12 +5653,27 @@ function renderByCustomers(fOrders) {
     });
   });
 
-  // Order amount per customer per year (orders.csv + baseline)
+  // Order amount per customer per year (orders.csv + baseline).
+  // While iterating, also enrich nameByCust + regionByCust as a fallback —
+  // many Customer_Nos appear in orders.csv but not in Cost_customer.csv
+  // (e.g. AVTOKOM LLC 200456, GTB 200770, ROSSKO KZ 287584), so without
+  // this enrichment they'd render as "(unknown)" in the list view.
   const orderAmtByCust = {};
   const ordCountByCust = {};
   (state.orders || []).forEach(o => {
     const cno = String(o.Customer_No || o.customer_no || '').replace(/\.0$/,'').trim();
     if (!cno) return;
+    // Backfill identity if missing — Cost_customer.csv takes priority since
+    // it carries the canonical Buyer name; orders.csv just fills gaps.
+    if (!nameByCust[cno]) {
+      const nm = (o.customer || '').trim();
+      if (nm) nameByCust[cno] = nm;
+    }
+    if (!regionByCust[cno]) {
+      const reg = (o.region || '').trim();
+      const cnt = (o.country || '').trim();
+      if (reg || cnt) regionByCust[cno] = `${reg} / ${cnt}`;
+    }
     const yr = String(o.order_date||'').slice(0,4);
     if (!yr) return;
     orderAmtByCust[cno] = orderAmtByCust[cno] || {};
@@ -5670,6 +5685,16 @@ function renderByCustomers(fOrders) {
     state.preOrders.forEach(o => {
       const cno = String(o.Customer_No || o.customer_no || '').replace(/\.0$/,'').trim();
       if (!cno) return;
+      // Same fallback as orders.csv loop above
+      if (!nameByCust[cno]) {
+        const nm = (o.customer || '').trim();
+        if (nm) nameByCust[cno] = nm;
+      }
+      if (!regionByCust[cno]) {
+        const reg = (o.region || '').trim();
+        const cnt = (o.country || '').trim();
+        if (reg || cnt) regionByCust[cno] = `${reg} / ${cnt}`;
+      }
       const yr = String(o.order_date||'').slice(0,4);
       if (!yr) return;
       orderAmtByCust[cno] = orderAmtByCust[cno] || {};
