@@ -7853,7 +7853,6 @@ function buildBaStats(orders, startDate) {
   const isPerPromo = startDate && typeof startDate === 'object' && startDate.byPromo;
   const promoMap = isPerPromo ? startDate.byPromo : null;
   const today = _todayStr();
-  // Shift a 'YYYY-MM-DD' string back exactly 1 year.
   const shift1y = (s) => {
     if (!s) return '';
     const y = parseInt(s.slice(0,4),10);
@@ -7864,23 +7863,23 @@ function buildBaStats(orders, startDate) {
     const anchor = isPerPromo
       ? promoMap[o.promotion_category || '–']
       : startDate;
-    if (!anchor) return;                          // no campaign anchor → drop
-    // After window  = [anchor, today]
-    // Before window = same length, one year earlier
+    if (!anchor) return;
     const afterFrom  = anchor;
     const afterTo    = today;
     const beforeFrom = shift1y(anchor);
     const beforeTo   = shift1y(today);
     const d = o.order_date || '';
     if (!d) return;
-    const amt = convOrder(o);
+    const isBaseline = !!o[PRE_ORDER_MARK];
+    const amt = isBaseline ? Number(o.amount_usd || 0) * usdToDisplay() : convOrder(o);
     const q = Number(o.qty) || 0;
-    if (d >= afterFrom && d <= afterTo) {
+    if (!isBaseline && d >= afterFrom && d <= afterTo) {
+      // AFTER: orders.csv only — preOrders must never inflate current ORDER AMT
       afterAmt  += amt; afterQty  += q; afterOrds++;
     } else if (d >= beforeFrom && d <= beforeTo) {
+      // BEFORE: both orders.csv and preOrders contribute to prior-period baseline
       beforeAmt += amt; beforeQty += q; beforeOrds++;
     }
-    // Orders outside both windows are silently ignored.
   });
   return { beforeAmt, afterAmt, beforeQty, afterQty, beforeOrds, afterOrds };
 }
@@ -8629,29 +8628,33 @@ function renderSkuAggregate(fOrders) {
     }
   });
 
-  // Per-SKU: allOrd 전체 기간 기준 (Before/After 계산을 위해)
+  // Per-SKU stats.
+  // IMPORTANT: current ORDER AMT (after window) must use orders.csv only.
+  // preOrders contain 2026-04-xx dates which fall inside the "after" window
+  // and massively inflate afterAmt. We build two order sets per SKU:
+  //   - skuOrdsCsv  : orders.csv only  → used for after / charts / totals
+  //   - skuOrdsAll  : csv + preOrders  → passed to buildBaStats so "before"
+  //                   window can draw on the full baseline history
   const perSku = skus.map(sku => {
-    const ords = allOrd.filter(o => o.sku === sku);
-    // Resolve anchor:
-    //   - specific promo:  baStartDate is the single anchor string
-    //   - __all__ mode:    look up via SKU→owner-campaign in cfg
+    const skuOrdsCsv = ordersCsv.filter(o => o.sku === sku);   // orders.csv only
+    const skuOrdsAll = allOrd.filter(o => o.sku === sku);      // + preOrders (for before)
     let anchor = baStartDate;
     if (baStartDate && typeof baStartDate === 'object' && baStartDate.byPromo) {
       const ownerPromo = skuToPromo[sku]
-        || custToPromo[(ords[0]?.customer || '').trim()]
-        || (ords[0]?.promotion_category)
+        || custToPromo[(skuOrdsCsv[0]?.customer || '').trim()]
+        || (skuOrdsCsv[0]?.promotion_category)
         || null;
       anchor = ownerPromo ? baStartDate.byPromo[ownerPromo] : null;
     }
     return {
       sku,
-      product: (ords[0] && ords[0].product) || '',
-      orders: ords,
-      ba: buildBaStats(ords, anchor),
+      product: (skuOrdsCsv[0] && skuOrdsCsv[0].product) || '',
+      orders: skuOrdsCsv,           // charts / totals use orders.csv only
+      ba: buildBaStats(skuOrdsAll, anchor),   // before uses full set incl. preOrders
       total: {
-        amt: ords.reduce((s,o)=>s+convOrder(o),0),
-        qty: ords.reduce((s,o)=>s+(Number(o.qty)||0),0),
-        ords: ords.length,
+        amt:  skuOrdsCsv.reduce((s,o)=>s+convOrder(o),0),
+        qty:  skuOrdsCsv.reduce((s,o)=>s+(Number(o.qty)||0),0),
+        ords: skuOrdsCsv.length,
       }
     };
   });
