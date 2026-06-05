@@ -6127,40 +6127,47 @@ function renderPromoChart(fOrders, fMkt) {
   //    both the target (SKU/customer) AND the campaign region match — so e.g.
   //    Asian vehicle (CIS) excludes the same SKUs' EUROPE / NA sales.
   if (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length) {
-    state.preOrders.forEach(o => {
+    const preIdx = state._preIdx;
+    const processBaseline = (o) => {
       const pk = periodKey(o.order_date, period);
       if (!pk) return;
       const amt = Number(o.amount_usd || 0) * usdToDisplay();
       if (!amt) return;
       const custRaw = (o.customer || '').trim();
-      const cust = normalizeCustomer(o);   // fold numeric VendorCode → known name
+      const cust = normalizeCustomer(o);
       const sku  = (o.sku || '').trim();
       const oRegion = normalizeRegion(o.region || '');
-      // Resolve the owning campaign with region constraint.
-      // Try customer mapping first (normalized then raw), then SKU mapping.
-      // For each candidate, the row's region must match the campaign's region.
       let ownerPromo = '';
       const tryPromos = [custToPromo[cust], custToPromo[custRaw], skuToPromo[sku]].filter(Boolean);
       for (const p of tryPromos) {
-        const r = promoToRegion[p];           // array of valid regions or undefined
+        const r = promoToRegion[p];
         if (!r || r.length === 0 || r.includes(oRegion)) { ownerPromo = p; break; }
       }
-      // Promotion filter: when a single campaign is selected, only rows of
-      // that campaign's region pass — and (for customer/region dims) only
-      // rows that hit the campaign's target lists.
       if (promoFilter !== '__all__') {
         if (!baselineMatchesPromo(o, promoFilter)) return;
         if (ownerPromo !== promoFilter) ownerPromo = promoFilter;
       }
       if (dim === 'promotion') {
-        if (!ownerPromo) return;        // unaffiliated baseline rows don't fit any promotion line
+        if (!ownerPromo) return;
         add(ownerPromo, pk, amt);
       } else if (dim === 'customer') {
-        if (cust) add(cust, pk, amt);   // skip empty → no '(unknown)' line
+        if (cust) add(cust, pk, amt);
       } else if (dim === 'region') {
         add(oRegion || '(none)', pk, amt);
       }
-    });
+    };
+    // Use preOrders index when available — only iterate campaign-target rows
+    // instead of scanning all 654K baseline rows.
+    if (preIdx && dim !== 'region') {
+      const targetMap = dim === 'customer' ? custToPromo : skuToPromo;
+      Object.keys(targetMap).forEach(k => {
+        const rows = (dim === 'customer' ? preIdx.custIdx[k] : preIdx.skuIdx[k]) || [];
+        rows.forEach(processBaseline);
+      });
+    } else {
+      // region dim or no index — full scan (rare path)
+      state.preOrders.forEach(processBaseline);
+    }
     // Re-collect period buckets from the combined series (baseline adds older buckets).
     const allPks = new Set(periodBuckets);
     Object.values(series).forEach(m => Object.keys(m).forEach(pk => allPks.add(pk)));
@@ -6263,9 +6270,34 @@ function renderPromoChart(fOrders, fMkt) {
     const baselineRows = (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length)
       ? state.preOrders : [];
     const knownPromos = Object.keys(state.campaignTargetSkus || {});
-    const scopedBaseline = (promoFilter === '__all__')
-      ? baselineRows.filter(o => knownPromos.some(p => baselineMatchesPromo(o, p)))
-      : baselineRows.filter(o => baselineMatchesPromo(o, promoFilter));
+    // Use index for fast per-target lookup instead of scanning all 654K rows
+    const preIdx = state._preIdx;
+    let scopedBaseline;
+    if (preIdx && baselineRows.length) {
+      const targetMap = (promoFilter === '__all__') ? {...skuToPromo, ...custToPromo} : {};
+      if (promoFilter !== '__all__') {
+        // Single promo: only rows matching that campaign's targets
+        const cfg = (state.campaignTargetSkus || {})[promoFilter] || {};
+        const mb = (cfg.match_by || 'sku').toLowerCase();
+        const targets = mb === 'customer' ? (cfg.target_customers||[]) : (cfg.target_skus||[]);
+        const rows = [];
+        targets.forEach(k => {
+          const idx = mb === 'customer' ? preIdx.custIdx[k] : preIdx.skuIdx[k];
+          if (idx) rows.push(...idx);
+        });
+        scopedBaseline = rows.filter(o => baselineMatchesPromo(o, promoFilter));
+      } else {
+        // All promos: only rows in any campaign target
+        const rows = [];
+        Object.keys(skuToPromo).forEach(k => { if (preIdx.skuIdx[k]) rows.push(...preIdx.skuIdx[k]); });
+        Object.keys(custToPromo).forEach(k => { if (preIdx.custIdx[k]) rows.push(...preIdx.custIdx[k]); });
+        scopedBaseline = rows.filter(o => knownPromos.some(p => baselineMatchesPromo(o, p)));
+      }
+    } else {
+      scopedBaseline = (promoFilter === '__all__')
+        ? baselineRows.filter(o => knownPromos.some(p => baselineMatchesPromo(o, p)))
+        : baselineRows.filter(o => baselineMatchesPromo(o, promoFilter));
+    }
     const srcAll = (fOrdersScoped || []).concat(scopedBaseline);
     srcAll.forEach(o => {
       const pk = periodKey(o.order_date, period);
