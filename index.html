@@ -3164,6 +3164,7 @@ function getPreOrderIndex() {
 
   const t0 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
   const byCustYear = Object.create(null);
+  const byCustYearMonth = Object.create(null);  // cno → yr → mon('01'..'12') → {amt, ords}
   const byRegionYear = Object.create(null);
   const byCountryYear = Object.create(null);
   const byPromoYear = Object.create(null);
@@ -3178,6 +3179,7 @@ function getPreOrderIndex() {
     const o = pre[i]; if (!o) continue;
     const date = o.order_date || ''; if (!date) continue;
     const yr = date.slice(0,4);
+    const mon = date.slice(5,7);
     const amt = Number(o.amount_usd || 0);
     const cno = String(o.Customer_No || o.customer_no || '').replace(/\.0$/,'').trim();
     const reg = (o.region || '').trim();
@@ -3185,15 +3187,22 @@ function getPreOrderIndex() {
     const promo = (o.promotion_category || '').trim();
     if (cno) {
       bump(byCustYear, cno, yr, amt);
+      // Month-level for anchor-windowed sums (CK ORDER AMT)
+      let m = byCustYearMonth[cno];
+      if (!m) m = byCustYearMonth[cno] = Object.create(null);
+      let m2 = m[yr];
+      if (!m2) m2 = m[yr] = Object.create(null);
+      let m3 = m2[mon];
+      if (!m3) m3 = m2[mon] = { amt:0, ords:0 };
+      m3.amt += amt; m3.ords += 1;
       if (!byCustMeta[cno]) {
         const nm = (o.customer || '').trim();
         byCustMeta[cno] = { name: nm, region: reg, country: cnt };
       } else {
-        // Fill blanks only — don't overwrite once we have data
-        const m = byCustMeta[cno];
-        if (!m.name)    { const nm = (o.customer || '').trim(); if (nm) m.name = nm; }
-        if (!m.region)  m.region = reg || m.region;
-        if (!m.country) m.country = cnt || m.country;
+        const mm = byCustMeta[cno];
+        if (!mm.name)    { const nm = (o.customer || '').trim(); if (nm) mm.name = nm; }
+        if (!mm.region)  mm.region = reg || mm.region;
+        if (!mm.country) mm.country = cnt || mm.country;
       }
     }
     if (reg) bump(byRegionYear, reg, yr, amt);
@@ -3207,7 +3216,7 @@ function getPreOrderIndex() {
   }
   const t1 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
   console.log(`[preOrders index] built in ${Math.round(t1-t0)}ms · ${pre.length} rows`);
-  _preOrderIdxCache = { byCustYear, byRegionYear, byCountryYear, byPromoYear, hierarchy, byCustMeta, total: pre.length };
+  _preOrderIdxCache = { byCustYear, byCustYearMonth, byRegionYear, byCountryYear, byPromoYear, hierarchy, byCustMeta, total: pre.length };
   _preOrderIdxKey = key;
   return _preOrderIdxCache;
 }
@@ -5705,6 +5714,10 @@ function renderByCustomers(fOrders) {
   ];
 
   // ── Build per-customer × year aggregates from customerCosts (small, ~174 rows) ──
+  // Also compute ckAnchorByCust = earliest marketing activity date per customer.
+  // This is the "campaign start" for that customer — CK ORDER AMT only counts
+  // orders dated on/after this anchor (since prior orders weren't affected
+  // by any marketing investment from us).
   const spendByCust = {};
   const categoryByCust = {};
   const programsByCust = {};
@@ -5712,10 +5725,15 @@ function renderByCustomers(fOrders) {
   const regionByCust = {};       // display string "REGION / COUNTRY"
   const regionByCustRaw = {};    // just region code
   const countryByCustRaw = {};   // just country
+  const ckAnchorByCust = {};     // customer_no → earliest activity date 'YYYY-MM-DD'
   state.customerCosts.forEach(r => {
     const cno = r.customer_no;
     spendByCust[cno] = spendByCust[cno] || {};
     spendByCust[cno][r.year] = (spendByCust[cno][r.year]||0) + (r.total_spend_krw||0);
+    // anchor = earliest date seen for this customer in marketing data
+    if (r.date && (!ckAnchorByCust[cno] || r.date < ckAnchorByCust[cno])) {
+      ckAnchorByCust[cno] = r.date;
+    }
     categoryByCust[cno] = categoryByCust[cno] || {};
     categoryByCust[cno][r.year] = categoryByCust[cno][r.year] || {};
     CATEGORIES.forEach(cat => {
@@ -5746,13 +5764,23 @@ function renderByCustomers(fOrders) {
     });
   });
 
-  // ── Current-year orders aggregate from state.orders (small) ──
-  const orderAmtByCust = {};
-  const ordCountByCust = {};
+  // Helper: shift anchor date back one year (for prev-year window).
+  // 2025-04-09 → 2024-04-09. Used for CK order prev computation.
+  const shift1y = (s) => {
+    if (!s) return '';
+    const y = parseInt(s.slice(0,4),10);
+    return `${y-1}${s.slice(4)}`;
+  };
+
+  // ── Current-year orders aggregate from state.orders (small).
+  // Split into TOTAL (all orders) vs CK (only orders >= customer's anchor).
+  const totalOrderAmtByCust = {};   // all orders, per year
+  const ckOrderAmtByCust = {};      // anchor-filtered orders, per year
+  const totalOrdCntByCust = {};
+  const ckOrdCntByCust = {};
   (state.orders || []).forEach(o => {
     const cno = String(o.Customer_No || o.customer_no || '').replace(/\.0$/,'').trim();
     if (!cno) return;
-    // Backfill identity
     if (!nameByCust[cno]) {
       const nm = (o.customer || '').trim(); if (nm) nameByCust[cno] = nm;
     }
@@ -5762,20 +5790,44 @@ function renderByCustomers(fOrders) {
       const r = (o.region || '').trim(), c = (o.country || '').trim();
       if (r || c) regionByCust[cno] = `${r} / ${c}`;
     }
-    const yr = String(o.order_date||'').slice(0,4);
+    const d = String(o.order_date||'');
+    const yr = d.slice(0,4);
     if (!yr) return;
-    orderAmtByCust[cno] = orderAmtByCust[cno] || {};
-    ordCountByCust[cno] = ordCountByCust[cno] || {};
-    orderAmtByCust[cno][yr] = (orderAmtByCust[cno][yr]||0) + convOrder(o);
-    ordCountByCust[cno][yr] = (ordCountByCust[cno][yr]||0) + 1;
+    const amt = convOrder(o);
+    totalOrderAmtByCust[cno] = totalOrderAmtByCust[cno] || {};
+    totalOrdCntByCust[cno] = totalOrdCntByCust[cno] || {};
+    totalOrderAmtByCust[cno][yr] = (totalOrderAmtByCust[cno][yr]||0) + amt;
+    totalOrdCntByCust[cno][yr] = (totalOrdCntByCust[cno][yr]||0) + 1;
+    // CK split — current year uses anchor; previous year uses anchor shifted 1y back
+    const anchor = ckAnchorByCust[cno];
+    if (anchor) {
+      // For the order's own year, compare against the appropriate anchor:
+      //   current year → anchor
+      //   prev year    → anchor shifted 1y back (same calendar offset)
+      const orderYr = parseInt(yr, 10);
+      const anchorYr = parseInt(anchor.slice(0,4), 10);
+      const yrShift = orderYr - anchorYr;            // 0 = current cohort, -1 = year before, etc.
+      const effectiveAnchor = (yrShift === 0)
+        ? anchor
+        : (yrShift > 0 ? anchor /* future-of-anchor still counts */ : (function(){
+            // shift forward by negative amount: 2024 + anchor(2025-04-09) → 2024-04-09 for prev-year window
+            return `${anchorYr + yrShift}${anchor.slice(4)}`;
+          })());
+      if (d >= effectiveAnchor) {
+        ckOrderAmtByCust[cno] = ckOrderAmtByCust[cno] || {};
+        ckOrdCntByCust[cno] = ckOrdCntByCust[cno] || {};
+        ckOrderAmtByCust[cno][yr] = (ckOrderAmtByCust[cno][yr]||0) + amt;
+        ckOrdCntByCust[cno][yr] = (ckOrdCntByCust[cno][yr]||0) + 1;
+      }
+    }
   });
 
-  // ── Baseline (preOrders) via INDEX — O(1) lookup, no forEach over 650k rows ──
+  // ── Baseline (preOrders) via INDEX. We need anchor-windowed sums per
+  // customer per year, so we use byCustYearMonth.
   if (state.preOrdersEnabled) {
     const idx = getPreOrderIndex();
     Object.keys(idx.byCustYear).forEach(cno => {
       const yrs = idx.byCustYear[cno];
-      // Identity backfill from index meta
       const meta = idx.byCustMeta[cno];
       if (meta) {
         if (!nameByCust[cno]    && meta.name)    nameByCust[cno] = meta.name;
@@ -5785,12 +5837,50 @@ function renderByCustomers(fOrders) {
           regionByCust[cno] = `${meta.region||''} / ${meta.country||''}`;
         }
       }
+      const anchor = ckAnchorByCust[cno];
       Object.keys(yrs).forEach(yr => {
         const cell = yrs[yr];
-        orderAmtByCust[cno] = orderAmtByCust[cno] || {};
-        ordCountByCust[cno] = ordCountByCust[cno] || {};
-        orderAmtByCust[cno][yr] = (orderAmtByCust[cno][yr]||0) + (cell.amt * dispMul);
-        ordCountByCust[cno][yr] = (ordCountByCust[cno][yr]||0) + cell.ords;
+        totalOrderAmtByCust[cno] = totalOrderAmtByCust[cno] || {};
+        totalOrdCntByCust[cno] = totalOrdCntByCust[cno] || {};
+        totalOrderAmtByCust[cno][yr] = (totalOrderAmtByCust[cno][yr]||0) + (cell.amt * dispMul);
+        totalOrdCntByCust[cno][yr] = (totalOrdCntByCust[cno][yr]||0) + cell.ords;
+        // CK — anchor-windowed using month-level index
+        if (anchor) {
+          const orderYr = parseInt(yr, 10);
+          const anchorYr = parseInt(anchor.slice(0,4), 10);
+          const yrShift = orderYr - anchorYr;
+          const effectiveAnchor = (yrShift >= 0)
+            ? anchor
+            : `${anchorYr + yrShift}${anchor.slice(4)}`;
+          const startMon = effectiveAnchor.slice(5,7);
+          const startDay = effectiveAnchor.slice(8,10);
+          // For yrShift < 0: only orders within yr that are >= effectiveAnchor (which is in yr) count
+          // For yrShift >= 0: all of yr counts (since anchor is in or before yr)
+          const months = (idx.byCustYearMonth[cno] || {})[yr] || {};
+          let ckAmt = 0, ckOrds = 0;
+          Object.keys(months).forEach(mon => {
+            // Compare month → if yr is anchor-year (yrShift==0) we need day-precision
+            // but baseline only has yr-month granularity → approximate as month-level
+            const monNum = parseInt(mon,10), startMonNum = parseInt(startMon,10);
+            if (yrShift > 0) {
+              ckAmt += months[mon].amt; ckOrds += months[mon].ords;
+            } else {
+              // yrShift === 0 OR yrShift < 0 (both mean compare against same start month within yr)
+              if (monNum > startMonNum) {
+                ckAmt += months[mon].amt; ckOrds += months[mon].ords;
+              } else if (monNum === startMonNum) {
+                // Half-month approximation: include the whole month (slight over-count)
+                ckAmt += months[mon].amt; ckOrds += months[mon].ords;
+              }
+            }
+          });
+          if (ckAmt > 0 || ckOrds > 0) {
+            ckOrderAmtByCust[cno] = ckOrderAmtByCust[cno] || {};
+            ckOrdCntByCust[cno] = ckOrdCntByCust[cno] || {};
+            ckOrderAmtByCust[cno][yr] = (ckOrderAmtByCust[cno][yr]||0) + (ckAmt * dispMul);
+            ckOrdCntByCust[cno][yr] = (ckOrdCntByCust[cno][yr]||0) + ckOrds;
+          }
+        }
       });
     });
   }
@@ -5798,7 +5888,7 @@ function renderByCustomers(fOrders) {
   // ── Year selector ──
   const allYears = new Set();
   Object.values(spendByCust).forEach(m => Object.keys(m).forEach(y => allYears.add(y)));
-  Object.values(orderAmtByCust).forEach(m => Object.keys(m).forEach(y => allYears.add(y)));
+  Object.values(totalOrderAmtByCust).forEach(m => Object.keys(m).forEach(y => allYears.add(y)));
   const yearList = Array.from(allYears).sort().reverse();
   const yearSel = document.getElementById('selByCustYear');
   const currentYear = String(new Date().getFullYear());
@@ -5810,7 +5900,7 @@ function renderByCustomers(fOrders) {
   const prevYear = String(parseInt(pickedYear,10)-1);
 
   // ── Resolve path: if single-element legacy path [cno], expand to [region, country, cno] ──
-  if (path.length === 1 && spendByCust[path[0]] !== undefined || (path.length === 1 && orderAmtByCust[path[0]])) {
+  if ((path.length === 1) && (spendByCust[path[0]] !== undefined || totalOrderAmtByCust[path[0]])) {
     const cno = path[0];
     const reg = regionByCustRaw[cno] || '';
     const cnt = countryByCustRaw[cno] || '';
@@ -5854,29 +5944,47 @@ function renderByCustomers(fOrders) {
     if (detailView) detailView.style.display = '';
     return renderByCustomersDetail(pathNow[2], {
       spendByCust, categoryByCust, CATEGORIES, programsByCust, nameByCust, regionByCust,
-      orderAmtByCust, ordCountByCust, krwToDisp, pickedYear, prevYear, yearList,
+      // Detail view uses CK as the primary "order amount" (since the detail is
+      // explicitly about post-marketing performance), and gets TOTAL for the
+      // chart's totals comparison.
+      orderAmtByCust: ckOrderAmtByCust,
+      ordCountByCust: ckOrdCntByCust,
+      totalOrderAmtByCust, totalOrdCntByCust,
+      ckAnchorByCust,
+      krwToDisp, pickedYear, prevYear, yearList,
     });
   }
   if (listView) listView.style.display = '';
   if (detailView) detailView.style.display = 'none';
 
   // ── Helper to compute aggregate row (used by region/country/customer levels) ──
+  // Produces both CK (post-marketing) and TOTAL (all-orders) sums.
+  // ROI is computed from CK since that's the marketing-attributable revenue.
   const aggRow = (label, cnos, extraMeta) => {
-    let spend=0, spendPrev=0, orderAmt=0, orderAmtPrev=0, ords=0;
+    let spend=0, spendPrev=0;
+    let ckAmt=0, ckAmtPrev=0, ckOrds=0;
+    let totAmt=0, totAmtPrev=0, totOrds=0;
     cnos.forEach(cno => {
       spend       += krwToDisp((spendByCust[cno]||{})[pickedYear]||0);
       spendPrev   += krwToDisp((spendByCust[cno]||{})[prevYear]||0);
-      orderAmt    += (orderAmtByCust[cno]||{})[pickedYear]||0;
-      orderAmtPrev+= (orderAmtByCust[cno]||{})[prevYear]||0;
-      ords        += (ordCountByCust[cno]||{})[pickedYear]||0;
+      ckAmt       += (ckOrderAmtByCust[cno]||{})[pickedYear]||0;
+      ckAmtPrev   += (ckOrderAmtByCust[cno]||{})[prevYear]||0;
+      ckOrds      += (ckOrdCntByCust[cno]||{})[pickedYear]||0;
+      totAmt      += (totalOrderAmtByCust[cno]||{})[pickedYear]||0;
+      totAmtPrev  += (totalOrderAmtByCust[cno]||{})[prevYear]||0;
+      totOrds     += (totalOrdCntByCust[cno]||{})[pickedYear]||0;
     });
-    const roi = spend > 0 ? ((orderAmt - spend) / spend) * 100 : null;
-    const roiPrev = spendPrev > 0 ? ((orderAmtPrev - spendPrev) / spendPrev) * 100 : null;
-    return { label, cnos, spend, spendPrev, orderAmt, orderAmtPrev, ords, roi, roiPrev, ...(extraMeta||{}) };
+    const roi = spend > 0 ? ((ckAmt - spend) / spend) * 100 : null;
+    const roiPrev = spendPrev > 0 ? ((ckAmtPrev - spendPrev) / spendPrev) * 100 : null;
+    return { label, cnos,
+      spend, spendPrev,
+      ckAmt, ckAmtPrev, ckOrds,
+      totAmt, totAmtPrev, totOrds,
+      roi, roiPrev, ...(extraMeta||{}) };
   };
 
   // ── Group all customers by region/country ──
-  const allCnos = new Set([...Object.keys(spendByCust), ...Object.keys(orderAmtByCust)]);
+  const allCnos = new Set([...Object.keys(spendByCust), ...Object.keys(totalOrderAmtByCust)]);
   const custsByRegion = {};      // reg → Set<cno>
   const custsByRegionCountry = {}; // reg → { cnt → Set<cno> }
   allCnos.forEach(cno => {
@@ -5892,7 +6000,7 @@ function renderByCustomers(fOrders) {
     rs.sort((a,b) => {
       if (sort === 'name') return String(a.label).localeCompare(String(b.label));
       if (sort === 'spend') return (b.spend||0) - (a.spend||0);
-      if (sort === 'orderAmt') return (b.orderAmt||0) - (a.orderAmt||0);
+      if (sort === 'orderAmt') return (b.ckAmt||0) - (a.ckAmt||0);
       if (a.roi == null && b.roi == null) return 0;
       if (a.roi == null) return 1;
       if (b.roi == null) return -1;
@@ -5916,7 +6024,6 @@ function renderByCustomers(fOrders) {
   let labelColTitle = '';
 
   if (level === 0) {
-    // Region overview
     labelColTitle = 'REGION';
     drillAttr = 'data-bycust-drill-region';
     Object.keys(custsByRegion).forEach(reg => {
@@ -5925,7 +6032,6 @@ function renderByCustomers(fOrders) {
       rows.push(aggRow(reg, cnos, { drillVal: reg, sub: `${countries} 국가 · ${cnos.length} 고객` }));
     });
   } else if (level === 1) {
-    // Country cards in path[0]
     labelColTitle = 'COUNTRY';
     drillAttr = 'data-bycust-drill-country';
     const reg = pathNow[0];
@@ -5934,7 +6040,6 @@ function renderByCustomers(fOrders) {
       rows.push(aggRow(cnt, cnos, { drillVal: cnt, sub: `${reg} · ${cnos.length} 고객` }));
     });
   } else {
-    // Customer rows in path[0]/path[1]
     labelColTitle = 'CUSTOMER';
     drillAttr = 'data-bycust-drill-customer';
     const reg = pathNow[0], cnt = pathNow[1];
@@ -5947,12 +6052,14 @@ function renderByCustomers(fOrders) {
   sortRows(rows);
 
   // ── KPI strip — totals at this level ──
-  const totalSpend = rows.reduce((s,r) => s + (r.spend||0), 0);
-  const totalOrder = rows.reduce((s,r) => s + (r.orderAmt||0), 0);
+  const totalSpend     = rows.reduce((s,r) => s + (r.spend||0), 0);
   const totalSpendPrev = rows.reduce((s,r) => s + (r.spendPrev||0), 0);
-  const totalOrderPrev = rows.reduce((s,r) => s + (r.orderAmtPrev||0), 0);
-  const overallRoi = totalSpend > 0 ? ((totalOrder - totalSpend) / totalSpend) * 100 : null;
-  const overallRoiPrev = totalSpendPrev > 0 ? ((totalOrderPrev - totalSpendPrev) / totalSpendPrev) * 100 : null;
+  const totalCkAmt     = rows.reduce((s,r) => s + (r.ckAmt||0), 0);
+  const totalCkAmtPrev = rows.reduce((s,r) => s + (r.ckAmtPrev||0), 0);
+  const totalAllAmt    = rows.reduce((s,r) => s + (r.totAmt||0), 0);
+  const totalAllAmtPrev= rows.reduce((s,r) => s + (r.totAmtPrev||0), 0);
+  const overallRoi = totalSpend > 0 ? ((totalCkAmt - totalSpend) / totalSpend) * 100 : null;
+  const overallRoiPrev = totalSpendPrev > 0 ? ((totalCkAmtPrev - totalSpendPrev) / totalSpendPrev) * 100 : null;
   const kpiEl = document.getElementById('byCustKpis');
   if (kpiEl) {
     const kpiBox = (lbl, val, sub, cls) => `
@@ -5963,10 +6070,10 @@ function renderByCustomers(fOrders) {
       </div>`;
     const scopeLbl = level===0?'ALL REGIONS' : level===1?`REGION · ${pathNow[0]}` : `${pathNow[0]} / ${pathNow[1]}`;
     kpiEl.innerHTML =
-      kpiBox(`SPEND · ${pickedYear} · ${scopeLbl}`, fmtMoney(totalSpend), `prev ${prevYear}: ${fmtMoney(totalSpendPrev)}`, 't-yellow') +
-      kpiBox(`ORDER AMT · ${pickedYear}`, fmtMoney(totalOrder), `prev ${prevYear}: ${fmtMoney(totalOrderPrev)}`, 't-green') +
-      kpiBox(`OVERALL ROI · ${pickedYear}`, overallRoi==null?'–':fmtPct(overallRoi), `prev ${prevYear}: ${overallRoiPrev==null?'–':fmtPct(overallRoiPrev)}`, overallRoi==null?'muted':(overallRoi>=0?'t-green':'t-red')) +
-      kpiBox(level===0?`REGIONS`:level===1?`COUNTRIES`:`CUSTOMERS`, fmtNum(rows.length), level===0?`with data`:level===1?`in ${pathNow[0]}`:`in ${pathNow[1]}`, 't-blue');
+      kpiBox(`MKT SPEND · ${pickedYear} · ${scopeLbl}`, fmtMoney(totalSpend), `prev ${prevYear}: ${fmtMoney(totalSpendPrev)}`, 't-yellow') +
+      kpiBox(`CK ORDER AMT · ${pickedYear}`, fmtMoney(totalCkAmt), `prev ${prevYear}: ${fmtMoney(totalCkAmtPrev)} · 캠페인 이후`, 't-green') +
+      kpiBox(`TOTAL ORDER · ${pickedYear}`, fmtMoney(totalAllAmt), `prev ${prevYear}: ${fmtMoney(totalAllAmtPrev)} · 전체`, 't-blue') +
+      kpiBox(`ROI (CK) · ${pickedYear}`, overallRoi==null?'–':fmtPct(overallRoi), `prev ${prevYear}: ${overallRoiPrev==null?'–':fmtPct(overallRoiPrev)}`, overallRoi==null?'muted':(overallRoi>=0?'t-green':'t-red'));
   }
 
   // ── Table ──
@@ -5979,22 +6086,24 @@ function renderByCustomers(fOrders) {
         <td><b>${r.label}</b><br><span class="muted" style="font-size:10px">${r.sub||''}</span></td>
         <td class="text-right mono t-yellow">${fmtMoney(r.spend)}</td>
         <td class="text-right mono muted">${r.spendPrev>0?fmtMoney(r.spendPrev):'–'}</td>
-        <td class="text-right mono">${yoyTag(r.spend, r.spendPrev)}</td>
-        <td class="text-right mono t-green">${fmtMoney(r.orderAmt)}</td>
-        <td class="text-right mono muted">${r.orderAmtPrev>0?fmtMoney(r.orderAmtPrev):'–'}</td>
+        <td class="text-right mono t-green" style="font-weight:600">${fmtMoney(r.ckAmt)}</td>
+        <td class="text-right mono muted">${r.ckAmtPrev>0?fmtMoney(r.ckAmtPrev):'–'}</td>
+        <td class="text-right mono" style="color:#6E6E73">${fmtMoney(r.totAmt)}</td>
+        <td class="text-right mono muted">${r.totAmtPrev>0?fmtMoney(r.totAmtPrev):'–'}</td>
         <td class="text-right mono ${roiCls}" style="font-weight:700">${r.roi==null?'–':fmtPct(r.roi)}</td>
         <td class="text-right mono ${roiPrevCls}">${r.roiPrev==null?'–':fmtPct(r.roiPrev)}</td>
       </tr>`;
-    }).join('') || `<tr><td colspan="8" class="muted" style="text-align:center;padding:12px">No data</td></tr>`;
+    }).join('') || `<tr><td colspan="9" class="muted" style="text-align:center;padding:12px">No data</td></tr>`;
     tbl.innerHTML = `
       <thead><tr>
         <th>${labelColTitle}</th>
-        <th class="text-right">SPEND<br><span class="muted" style="font-size:9px;font-weight:500">${pickedYear}</span></th>
+        <th class="text-right">MKT SPEND<br><span class="muted" style="font-size:9px;font-weight:500">${pickedYear}</span></th>
         <th class="text-right">PREV SPEND<br><span class="muted" style="font-size:9px;font-weight:500">${prevYear}</span></th>
-        <th class="text-right">SPEND YoY</th>
-        <th class="text-right">ORDER AMT<br><span class="muted" style="font-size:9px;font-weight:500">${pickedYear}</span></th>
-        <th class="text-right">PREV ORDER AMT<br><span class="muted" style="font-size:9px;font-weight:500">${prevYear}</span></th>
-        <th class="text-right">ROI<br><span class="muted" style="font-size:9px;font-weight:500">${pickedYear}</span></th>
+        <th class="text-right" title="해당 고객의 첫 마케팅 활동일 이후 주문 합계 (마케팅 영향 분 = ROI 산정 기준)">CK ORDER AMT<br><span class="muted" style="font-size:9px;font-weight:500">${pickedYear} · 캠페인 이후</span></th>
+        <th class="text-right" title="작년 동일 anchor 기준 윈도우의 주문 합계">CK PREV<br><span class="muted" style="font-size:9px;font-weight:500">${prevYear} · 동일 윈도우</span></th>
+        <th class="text-right" title="해당 고객의 모든 주문 합계 (참고용)">TOTAL ORDER<br><span class="muted" style="font-size:9px;font-weight:500">${pickedYear} · 전체</span></th>
+        <th class="text-right">TOTAL PREV<br><span class="muted" style="font-size:9px;font-weight:500">${prevYear} · 전체</span></th>
+        <th class="text-right" title="(CK Order Amt − MKT Spend) / MKT Spend × 100">ROI<br><span class="muted" style="font-size:9px;font-weight:500">${pickedYear} · CK 기준</span></th>
         <th class="text-right">PREV ROI<br><span class="muted" style="font-size:9px;font-weight:500">${prevYear}</span></th>
       </tr></thead>
       <tbody>${rowHtml}</tbody>`;
@@ -6004,17 +6113,24 @@ function renderByCustomers(fOrders) {
 // Detail view for a single customer.
 function renderByCustomersDetail(cno, ctx) {
   const { spendByCust, categoryByCust, CATEGORIES, programsByCust, nameByCust, regionByCust,
-          orderAmtByCust, ordCountByCust, krwToDisp, pickedYear, prevYear, yearList } = ctx;
+          orderAmtByCust, ordCountByCust,
+          totalOrderAmtByCust, totalOrdCntByCust, ckAnchorByCust,
+          krwToDisp, pickedYear, prevYear, yearList } = ctx;
   const name = nameByCust[cno] || cno;
+  const anchor = ckAnchorByCust && ckAnchorByCust[cno];
 
   // KPI strip for this customer in pickedYear
   const spend = krwToDisp((spendByCust[cno]||{})[pickedYear]||0);
   const spendPrev = krwToDisp((spendByCust[cno]||{})[prevYear]||0);
-  const orderAmt = (orderAmtByCust[cno]||{})[pickedYear]||0;
-  const orderAmtPrev = (orderAmtByCust[cno]||{})[prevYear]||0;
-  const ords = (ordCountByCust[cno]||{})[pickedYear]||0;
-  const roi = spend > 0 ? ((orderAmt - spend) / spend) * 100 : null;
-  const roiPrev = spendPrev > 0 ? ((orderAmtPrev - spendPrev) / spendPrev) * 100 : null;
+  // ctx.orderAmtByCust here points to CK (set by caller above).
+  const ckAmt = (orderAmtByCust[cno]||{})[pickedYear]||0;
+  const ckAmtPrev = (orderAmtByCust[cno]||{})[prevYear]||0;
+  const totAmt = (totalOrderAmtByCust[cno]||{})[pickedYear]||0;
+  const totAmtPrev = (totalOrderAmtByCust[cno]||{})[prevYear]||0;
+  const ckOrds = (ordCountByCust[cno]||{})[pickedYear]||0;
+  const totOrds = (totalOrdCntByCust[cno]||{})[pickedYear]||0;
+  const roi = spend > 0 ? ((ckAmt - spend) / spend) * 100 : null;
+  const roiPrev = spendPrev > 0 ? ((ckAmtPrev - spendPrev) / spendPrev) * 100 : null;
 
   const kpiEl = document.getElementById('byCustKpis');
   if (kpiEl) {
@@ -6025,24 +6141,26 @@ function renderByCustomersDetail(cno, ctx) {
         <div class="label-mono muted" style="font-size:11px">${sub}</div>
       </div>`;
     kpiEl.innerHTML =
-      kpiBox(`SPEND · ${pickedYear}`, fmtMoney(spend), `prev ${prevYear}: ${fmtMoney(spendPrev)}`, 't-yellow') +
-      kpiBox(`ORDER AMT · ${pickedYear}`, fmtMoney(orderAmt), `prev ${prevYear}: ${fmtMoney(orderAmtPrev)}`, 't-green') +
-      kpiBox(`ROI · ${pickedYear}`, roi==null?'–':fmtPct(roi), `prev ${prevYear}: ${roiPrev==null?'–':fmtPct(roiPrev)}`, roi==null?'muted':(roi>=0?'t-green':'t-red')) +
-      kpiBox(`ORDERS · ${pickedYear}`, fmtNum(ords), `${regionByCust[cno]||''}`, 't-blue');
+      kpiBox(`MKT SPEND · ${pickedYear}`, fmtMoney(spend), `prev ${prevYear}: ${fmtMoney(spendPrev)}${anchor?` · anchor ${anchor}`:''}`, 't-yellow') +
+      kpiBox(`CK ORDER AMT · ${pickedYear}`, fmtMoney(ckAmt), `prev ${prevYear}: ${fmtMoney(ckAmtPrev)} · ${ckOrds} 건 (캠페인 이후)`, 't-green') +
+      kpiBox(`TOTAL ORDER · ${pickedYear}`, fmtMoney(totAmt), `prev ${prevYear}: ${fmtMoney(totAmtPrev)} · ${totOrds} 건 (전체)`, 't-blue') +
+      kpiBox(`ROI (CK) · ${pickedYear}`, roi==null?'–':fmtPct(roi), `prev ${prevYear}: ${roiPrev==null?'–':fmtPct(roiPrev)}`, roi==null?'muted':(roi>=0?'t-green':'t-red'));
   }
 
-  // ── Years chart (bar: spend vs order amt across years) ──
+  // ── Years chart (bar: spend vs CK order vs TOTAL order across years) ──
   const cvA = document.getElementById('chByCustYears');
   if (cvA) {
     if (charts.byCustYears) charts.byCustYears.destroy();
     const yrs = yearList.slice().reverse();   // chronological
     const spendVals = yrs.map(y => krwToDisp((spendByCust[cno]||{})[y]||0));
-    const orderVals = yrs.map(y => (orderAmtByCust[cno]||{})[y]||0);
+    const ckVals = yrs.map(y => (orderAmtByCust[cno]||{})[y]||0);
+    const totalVals = yrs.map(y => (totalOrderAmtByCust[cno]||{})[y]||0);
     charts.byCustYears = new Chart(cvA, {
       type:'bar',
       data:{ labels: yrs, datasets:[
         { label:'Marketing Spend', data: spendVals, backgroundColor:'#E8A33D', borderRadius:4 },
-        { label:'Order Amount',   data: orderVals, backgroundColor:'#5FE08A', borderRadius:4 },
+        { label:'CK Order Amt',    data: ckVals, backgroundColor:'#5FE08A', borderRadius:4 },
+        { label:'Total Order',     data: totalVals, backgroundColor:'#A1A1A6', borderRadius:4 },
       ]},
       options:{ ...chartOpts(true),
         plugins:{ ...chartOpts(true).plugins, datalabels:{display:false},
