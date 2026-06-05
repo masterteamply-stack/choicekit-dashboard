@@ -2691,8 +2691,17 @@ let state = {
   customerCosts: [],         // array of {date, year, customer_no, customer_name, campaign_key, campaign_name, campaign_type, activity, region, country, total_spend_krw}
   customerCostsMeta: null,   // {loadedAt, count}
 
-  // — By Customers widget state
-  byCustomerPick: localStorage.getItem('ck_bycust_pick') || null,      // selected customer_no for drill-in (null = list view)
+  // — By Customers widget state — hierarchical drill-down
+  // Path is an array of crumbs: [] (root, region overview), [region],
+  // [region, country], [region, country, customer_no]. Stored as JSON
+  // in localStorage to survive reloads.
+  byCustomerPath: (function(){
+    try { return JSON.parse(localStorage.getItem('ck_bycust_path') || '[]') || []; }
+    catch(_) { return []; }
+  })(),
+  // Legacy single-pick key (kept for back-compat with bookmarks); when present
+  // it's interpreted as path = [..., customer_no] at boot below.
+  byCustomerPick: localStorage.getItem('ck_bycust_pick') || null,
   byCustomerSort: localStorage.getItem('ck_bycust_sort') || 'roi',     // roi | spend | orderAmt | name
   byCustomerYear: localStorage.getItem('ck_bycust_year') || null,      // selected year (null = default to current)
 };
@@ -3125,6 +3134,83 @@ function normalizeCustomer(o) {
 /* =================== FX RATES =================== */
 const FALLBACK_TO_USD = { USD:1, EUR:1.08, KRW:0.00073, RUB:0.011, AED:0.272, AUD:0.66, BRL:0.20, GBP:1.27, JPY:0.0067, CNY:0.14, INR:0.012, KZT:0.0021 };
 const FALLBACK_FROM_USD = { USD:1, KRW:1370, EUR:0.93, JPY:150, CNY:7.15 };
+
+/* =================== preOrders index (perf) ===================
+   state.preOrders has ~650k rows. Each widget that needs baseline data
+   was doing its own forEach over the full array (10+ such scans per
+   render). With the index we make a SINGLE pass once per data load and
+   look up O(1) afterwards. Invalidation: tied to preOrders array
+   identity — when state.preOrders is reassigned, the index is rebuilt
+   on next access.
+
+   Indices built:
+     byCustYear[cno][yr]  = { amt_usd, ords }              ← orders rollup
+     byRegionYear[reg][yr] = { amt_usd, ords }
+     byCountryYear[cnt][yr] = { amt_usd, ords }
+     byPromoYear[promo][yr] = { amt_usd, ords }
+     hierarchy[reg][cnt] = Set<cno>                        ← drill paths
+================================================================ */
+let _preOrderIdxCache = null;
+let _preOrderIdxKey = null;
+function getPreOrderIndex() {
+  const pre = state.preOrders;
+  if (!Array.isArray(pre) || !pre.length) {
+    _preOrderIdxCache = null; _preOrderIdxKey = null;
+    return { byCustYear:{}, byRegionYear:{}, byCountryYear:{}, byPromoYear:{}, hierarchy:{}, total:0 };
+  }
+  // Cheap identity check — array reference + length. If same → reuse cache.
+  const key = `${pre.length}::${pre[0]?.order_date||''}::${pre[pre.length-1]?.order_date||''}`;
+  if (_preOrderIdxCache && _preOrderIdxKey === key) return _preOrderIdxCache;
+
+  const t0 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+  const byCustYear = Object.create(null);
+  const byRegionYear = Object.create(null);
+  const byCountryYear = Object.create(null);
+  const byPromoYear = Object.create(null);
+  const hierarchy = Object.create(null);
+  const byCustMeta = Object.create(null);
+  const bump = (root, k1, k2, amt) => {
+    let a = root[k1]; if (!a) { a = root[k1] = Object.create(null); }
+    let b = a[k2];    if (!b) { b = a[k2] = { amt:0, ords:0 }; }
+    b.amt += amt; b.ords += 1;
+  };
+  for (let i = 0; i < pre.length; i++) {
+    const o = pre[i]; if (!o) continue;
+    const date = o.order_date || ''; if (!date) continue;
+    const yr = date.slice(0,4);
+    const amt = Number(o.amount_usd || 0);
+    const cno = String(o.Customer_No || o.customer_no || '').replace(/\.0$/,'').trim();
+    const reg = (o.region || '').trim();
+    const cnt = (o.country || '').trim();
+    const promo = (o.promotion_category || '').trim();
+    if (cno) {
+      bump(byCustYear, cno, yr, amt);
+      if (!byCustMeta[cno]) {
+        const nm = (o.customer || '').trim();
+        byCustMeta[cno] = { name: nm, region: reg, country: cnt };
+      } else {
+        // Fill blanks only — don't overwrite once we have data
+        const m = byCustMeta[cno];
+        if (!m.name)    { const nm = (o.customer || '').trim(); if (nm) m.name = nm; }
+        if (!m.region)  m.region = reg || m.region;
+        if (!m.country) m.country = cnt || m.country;
+      }
+    }
+    if (reg) bump(byRegionYear, reg, yr, amt);
+    if (cnt) bump(byCountryYear, cnt, yr, amt);
+    if (promo) bump(byPromoYear, promo, yr, amt);
+    if (reg && cnt && cno) {
+      let h = hierarchy[reg]; if (!h) h = hierarchy[reg] = Object.create(null);
+      let s = h[cnt];        if (!s) s = h[cnt] = new Set();
+      s.add(cno);
+    }
+  }
+  const t1 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+  console.log(`[preOrders index] built in ${Math.round(t1-t0)}ms · ${pre.length} rows`);
+  _preOrderIdxCache = { byCustYear, byRegionYear, byCountryYear, byPromoYear, hierarchy, byCustMeta, total: pre.length };
+  _preOrderIdxKey = key;
+  return _preOrderIdxCache;
+}
 
 async function loadFxRates() {
   const pairs = new Map();
@@ -5577,15 +5663,12 @@ function renderTopInsights(fOrders) {
 }
 
 
-/* =================== By Customers — per-customer marketing investment + ROI ===================
+/* =================== By Customers — hierarchical drill-down (Region → Country → Customer → Detail) ===================
    Data sources:
-     - state.customerCosts  (from Cost_customer.csv, matched by Customer_No)
-     - state.orders         (orders.csv with Customer_No)
-     - state.preOrders      (baseline for prev-year orders)
-   Math:
-     - spend[year]  = sum(Total Spend KRW) → display USD (krwToUsd × usdToDisplay)
-     - orders[year] = sum of (orders.csv + baseline) for this customer in that year
-     - ROI[year]    = (orders[year] - spend[year]) / spend[year] × 100
+     - state.customerCosts  (Cost_customer.csv) — marketing spend, customer name
+     - state.orders         (orders.csv) — current-year orders
+     - preOrders INDEX      (getPreOrderIndex) — pre-aggregated baseline orders
+       (replaces a per-render forEach over ~650k rows — see perf log in console)
 ================================================================ */
 function renderByCustomers(fOrders) {
   const wrap = document.querySelector('[data-widget-id="byCustomers"]');
@@ -5600,9 +5683,16 @@ function renderByCustomers(fOrders) {
   const dispMul = usdToDisplay();
   const krwToDisp = (krw) => Number(krw||0) * krwUsd * dispMul;
 
-  // ── Build per-customer × year aggregates ──
-  // spendByCust[customerNo][year] = sum_total_spend_krw → display
-  // categoryByCust[customerNo][year][catKey] = sum_krw  (영역별 cost split)
+  // ── Legacy bookmark migration (byCustomerPick → byCustomerPath) ──
+  if ((!state.byCustomerPath || !state.byCustomerPath.length) && state.byCustomerPick) {
+    state.byCustomerPath = [state.byCustomerPick]; // minimal — will resolve region/country at render
+    state.byCustomerPick = null;
+    try { localStorage.removeItem('ck_bycust_pick'); } catch(_){}
+  }
+  state.byCustomerPath = state.byCustomerPath || [];
+  const path = state.byCustomerPath;
+
+  // ── Category definitions (영역별) ──
   const CATEGORIES = [
     {key:'offline_krw',          label:'Offline Spend',                color:'#E8A33D'},
     {key:'cust_marketing_krw',   label:'Customer Marketing Support',   color:'#5FE08A'},
@@ -5613,16 +5703,19 @@ function renderByCustomers(fOrders) {
     {key:'incentive_reward_krw', label:'Incentive & Reward',           color:'#FB923C'},
     {key:'digital_krw',          label:'Digital Spend',                color:'#06B6D4'},
   ];
+
+  // ── Build per-customer × year aggregates from customerCosts (small, ~174 rows) ──
   const spendByCust = {};
   const categoryByCust = {};
   const programsByCust = {};
   const nameByCust = {};
-  const regionByCust = {};
+  const regionByCust = {};       // display string "REGION / COUNTRY"
+  const regionByCustRaw = {};    // just region code
+  const countryByCustRaw = {};   // just country
   state.customerCosts.forEach(r => {
     const cno = r.customer_no;
     spendByCust[cno] = spendByCust[cno] || {};
     spendByCust[cno][r.year] = (spendByCust[cno][r.year]||0) + (r.total_spend_krw||0);
-    // Per-category accumulation
     categoryByCust[cno] = categoryByCust[cno] || {};
     categoryByCust[cno][r.year] = categoryByCust[cno][r.year] || {};
     CATEGORIES.forEach(cat => {
@@ -5630,8 +5723,9 @@ function renderByCustomers(fOrders) {
       if (v) categoryByCust[cno][r.year][cat.key] = (categoryByCust[cno][r.year][cat.key]||0) + v;
     });
     if (r.customer_name && !nameByCust[cno]) nameByCust[cno] = r.customer_name;
-    if (r.region && !regionByCust[cno]) regionByCust[cno] = `${r.region} / ${r.country||''}`;
-    // Per-program tracking
+    if (r.region && !regionByCustRaw[cno])   regionByCustRaw[cno] = r.region;
+    if (r.country && !countryByCustRaw[cno]) countryByCustRaw[cno] = r.country;
+    if ((r.region || r.country) && !regionByCust[cno]) regionByCust[cno] = `${r.region||''} / ${r.country||''}`;
     programsByCust[cno] = programsByCust[cno] || {};
     const pkey = r.campaign_key || r.campaign_name || '(unnamed)';
     if (!programsByCust[cno][pkey]) {
@@ -5645,7 +5739,6 @@ function renderByCustomers(fOrders) {
     pg.activities.push({
       date: r.date, year: r.year, name: r.activity,
       spend_krw: r.total_spend_krw||0, status: r.status,
-      // Per-activity category split (largest non-zero used as label)
       offline: r.offline_krw||0, cust_marketing: r.cust_marketing_krw||0,
       promo_material: r.promo_material_krw||0, campaign_prod: r.campaign_prod_krw||0,
       program_op: r.program_op_krw||0, content_media: r.content_media_krw||0,
@@ -5653,26 +5746,21 @@ function renderByCustomers(fOrders) {
     });
   });
 
-  // Order amount per customer per year (orders.csv + baseline).
-  // While iterating, also enrich nameByCust + regionByCust as a fallback —
-  // many Customer_Nos appear in orders.csv but not in Cost_customer.csv
-  // (e.g. AVTOKOM LLC 200456, GTB 200770, ROSSKO KZ 287584), so without
-  // this enrichment they'd render as "(unknown)" in the list view.
+  // ── Current-year orders aggregate from state.orders (small) ──
   const orderAmtByCust = {};
   const ordCountByCust = {};
   (state.orders || []).forEach(o => {
     const cno = String(o.Customer_No || o.customer_no || '').replace(/\.0$/,'').trim();
     if (!cno) return;
-    // Backfill identity if missing — Cost_customer.csv takes priority since
-    // it carries the canonical Buyer name; orders.csv just fills gaps.
+    // Backfill identity
     if (!nameByCust[cno]) {
-      const nm = (o.customer || '').trim();
-      if (nm) nameByCust[cno] = nm;
+      const nm = (o.customer || '').trim(); if (nm) nameByCust[cno] = nm;
     }
+    if (!regionByCustRaw[cno]) regionByCustRaw[cno] = (o.region || '').trim();
+    if (!countryByCustRaw[cno]) countryByCustRaw[cno] = (o.country || '').trim();
     if (!regionByCust[cno]) {
-      const reg = (o.region || '').trim();
-      const cnt = (o.country || '').trim();
-      if (reg || cnt) regionByCust[cno] = `${reg} / ${cnt}`;
+      const r = (o.region || '').trim(), c = (o.country || '').trim();
+      if (r || c) regionByCust[cno] = `${r} / ${c}`;
     }
     const yr = String(o.order_date||'').slice(0,4);
     if (!yr) return;
@@ -5681,26 +5769,29 @@ function renderByCustomers(fOrders) {
     orderAmtByCust[cno][yr] = (orderAmtByCust[cno][yr]||0) + convOrder(o);
     ordCountByCust[cno][yr] = (ordCountByCust[cno][yr]||0) + 1;
   });
-  if (state.preOrdersEnabled && Array.isArray(state.preOrders)) {
-    state.preOrders.forEach(o => {
-      const cno = String(o.Customer_No || o.customer_no || '').replace(/\.0$/,'').trim();
-      if (!cno) return;
-      // Same fallback as orders.csv loop above
-      if (!nameByCust[cno]) {
-        const nm = (o.customer || '').trim();
-        if (nm) nameByCust[cno] = nm;
+
+  // ── Baseline (preOrders) via INDEX — O(1) lookup, no forEach over 650k rows ──
+  if (state.preOrdersEnabled) {
+    const idx = getPreOrderIndex();
+    Object.keys(idx.byCustYear).forEach(cno => {
+      const yrs = idx.byCustYear[cno];
+      // Identity backfill from index meta
+      const meta = idx.byCustMeta[cno];
+      if (meta) {
+        if (!nameByCust[cno]    && meta.name)    nameByCust[cno] = meta.name;
+        if (!regionByCustRaw[cno] && meta.region) regionByCustRaw[cno] = meta.region;
+        if (!countryByCustRaw[cno] && meta.country) countryByCustRaw[cno] = meta.country;
+        if (!regionByCust[cno]   && (meta.region || meta.country)) {
+          regionByCust[cno] = `${meta.region||''} / ${meta.country||''}`;
+        }
       }
-      if (!regionByCust[cno]) {
-        const reg = (o.region || '').trim();
-        const cnt = (o.country || '').trim();
-        if (reg || cnt) regionByCust[cno] = `${reg} / ${cnt}`;
-      }
-      const yr = String(o.order_date||'').slice(0,4);
-      if (!yr) return;
-      orderAmtByCust[cno] = orderAmtByCust[cno] || {};
-      ordCountByCust[cno] = ordCountByCust[cno] || {};
-      orderAmtByCust[cno][yr] = (orderAmtByCust[cno][yr]||0) + (Number(o.amount_usd||0) * dispMul);
-      ordCountByCust[cno][yr] = (ordCountByCust[cno][yr]||0) + 1;
+      Object.keys(yrs).forEach(yr => {
+        const cell = yrs[yr];
+        orderAmtByCust[cno] = orderAmtByCust[cno] || {};
+        ordCountByCust[cno] = ordCountByCust[cno] || {};
+        orderAmtByCust[cno][yr] = (orderAmtByCust[cno][yr]||0) + (cell.amt * dispMul);
+        ordCountByCust[cno][yr] = (ordCountByCust[cno][yr]||0) + cell.ords;
+      });
     });
   }
 
@@ -5718,31 +5809,50 @@ function renderByCustomers(fOrders) {
   state.byCustomerYear = pickedYear;
   const prevYear = String(parseInt(pickedYear,10)-1);
 
+  // ── Resolve path: if single-element legacy path [cno], expand to [region, country, cno] ──
+  if (path.length === 1 && spendByCust[path[0]] !== undefined || (path.length === 1 && orderAmtByCust[path[0]])) {
+    const cno = path[0];
+    const reg = regionByCustRaw[cno] || '';
+    const cnt = countryByCustRaw[cno] || '';
+    if (reg || cnt) { state.byCustomerPath = [reg, cnt, cno]; }
+  }
+  const pathNow = state.byCustomerPath;
+
+  // ── Determine view level ──
+  // 0: region cards · 1: country cards (in region) · 2: customer rows (in country)
+  // 3: customer detail (legacy detail view)
+  const level = pathNow.length;
+
   // ── Crumb ──
   const crumb = document.getElementById('byCustCrumb');
   if (crumb) {
-    if (state.byCustomerPick) {
-      const nm = nameByCust[state.byCustomerPick] || state.byCustomerPick;
-      crumb.innerHTML = `<span class="badge-tag" data-bycust-crumb="0" style="cursor:pointer;background:rgba(106,182,255,.15);border-color:#A1A1A6;color:#A1A1A6">All Customers</span>` +
-        ` <span class="muted">›</span> ` +
-        `<span class="badge-tag" style="background:rgba(143,232,170,.15);border-color:#0A0A0A;color:#0A0A0A"><b>${nm}</b> · ${state.byCustomerPick}</span>` +
-        ` <span class="muted" style="margin-left:8px">${regionByCust[state.byCustomerPick]||''}</span>`;
-    } else {
-      crumb.innerHTML = `<span class="muted">Showing all customers · click a row to drill-in</span>`;
+    const parts = [];
+    parts.push(`<span class="badge-tag ${level===0?'':'crumb-link'}" ${level===0?'':'data-bycust-go="0"'} style="cursor:${level===0?'default':'pointer'};background:rgba(106,182,255,.10);border-color:#A1A1A6;color:#6E6E73">All Regions</span>`);
+    if (level >= 1) parts.push(`<span class="muted">›</span><span class="badge-tag ${level===1?'':'crumb-link'}" ${level===1?'':'data-bycust-go="1"'} style="cursor:${level===1?'default':'pointer'};background:rgba(95,224,138,.15);border-color:#6AB6FF;color:#0A0A0A"><b>${pathNow[0]}</b></span>`);
+    if (level >= 2) parts.push(`<span class="muted">›</span><span class="badge-tag ${level===2?'':'crumb-link'}" ${level===2?'':'data-bycust-go="2"'} style="cursor:${level===2?'default':'pointer'};background:rgba(232,163,61,.15);border-color:#E8A33D;color:#0A0A0A"><b>${pathNow[1]}</b></span>`);
+    if (level >= 3) {
+      const cno = pathNow[2];
+      parts.push(`<span class="muted">›</span><span class="badge-tag" style="background:rgba(0,0,0,.05);border-color:#0A0A0A;color:#0A0A0A"><b>${nameByCust[cno]||cno}</b> · ${cno}</span>`);
     }
+    const hint = level===0?'Region overview · click a region to drill in'
+              : level===1?`Countries in ${pathNow[0]} · click to drill in`
+              : level===2?`Customers in ${pathNow[1]} · click a row to see details`
+              : '';
+    crumb.innerHTML = parts.join(' ') + (hint ? ` <span class="muted" style="margin-left:8px;font-size:11px">${hint}</span>` : '');
   }
 
   // ── Active sort ──
   const sort = state.byCustomerSort || 'roi';
   document.querySelectorAll('#segByCustSort button').forEach(b => b.classList.toggle('active', b.dataset.v === sort));
 
-  // ── Show appropriate view ──
+  // ── View routing ──
   const listView = document.getElementById('byCustListView');
   const detailView = document.getElementById('byCustDetailView');
-  if (state.byCustomerPick) {
+
+  if (level === 3) {
     if (listView) listView.style.display = 'none';
     if (detailView) detailView.style.display = '';
-    return renderByCustomersDetail(state.byCustomerPick, {
+    return renderByCustomersDetail(pathNow[2], {
       spendByCust, categoryByCust, CATEGORIES, programsByCust, nameByCust, regionByCust,
       orderAmtByCust, ordCountByCust, krwToDisp, pickedYear, prevYear, yearList,
     });
@@ -5750,35 +5860,93 @@ function renderByCustomers(fOrders) {
   if (listView) listView.style.display = '';
   if (detailView) detailView.style.display = 'none';
 
-  // ── Build per-customer rows for list view ──
-  const cnoSet = new Set([...Object.keys(spendByCust), ...Object.keys(orderAmtByCust)]);
-  const rows = [];
-  cnoSet.forEach(cno => {
-    const spend = krwToDisp((spendByCust[cno]||{})[pickedYear]||0);
-    const spendPrev = krwToDisp((spendByCust[cno]||{})[prevYear]||0);
-    const orderAmt = (orderAmtByCust[cno]||{})[pickedYear]||0;
-    const orderAmtPrev = (orderAmtByCust[cno]||{})[prevYear]||0;
-    const ords = (ordCountByCust[cno]||{})[pickedYear]||0;
+  // ── Helper to compute aggregate row (used by region/country/customer levels) ──
+  const aggRow = (label, cnos, extraMeta) => {
+    let spend=0, spendPrev=0, orderAmt=0, orderAmtPrev=0, ords=0;
+    cnos.forEach(cno => {
+      spend       += krwToDisp((spendByCust[cno]||{})[pickedYear]||0);
+      spendPrev   += krwToDisp((spendByCust[cno]||{})[prevYear]||0);
+      orderAmt    += (orderAmtByCust[cno]||{})[pickedYear]||0;
+      orderAmtPrev+= (orderAmtByCust[cno]||{})[prevYear]||0;
+      ords        += (ordCountByCust[cno]||{})[pickedYear]||0;
+    });
     const roi = spend > 0 ? ((orderAmt - spend) / spend) * 100 : null;
     const roiPrev = spendPrev > 0 ? ((orderAmtPrev - spendPrev) / spendPrev) * 100 : null;
-    rows.push({
-      cno, name: nameByCust[cno]||'(unknown)', region: regionByCust[cno]||'',
-      spend, spendPrev, orderAmt, orderAmtPrev, ords, roi, roiPrev,
-    });
-  });
-  // Sort
-  rows.sort((a,b) => {
-    if (sort === 'name') return a.name.localeCompare(b.name);
-    if (sort === 'spend') return (b.spend||0) - (a.spend||0);
-    if (sort === 'orderAmt') return (b.orderAmt||0) - (a.orderAmt||0);
-    // 'roi': nulls last
-    if (a.roi == null && b.roi == null) return 0;
-    if (a.roi == null) return 1;
-    if (b.roi == null) return -1;
-    return b.roi - a.roi;
+    return { label, cnos, spend, spendPrev, orderAmt, orderAmtPrev, ords, roi, roiPrev, ...(extraMeta||{}) };
+  };
+
+  // ── Group all customers by region/country ──
+  const allCnos = new Set([...Object.keys(spendByCust), ...Object.keys(orderAmtByCust)]);
+  const custsByRegion = {};      // reg → Set<cno>
+  const custsByRegionCountry = {}; // reg → { cnt → Set<cno> }
+  allCnos.forEach(cno => {
+    const reg = regionByCustRaw[cno] || '(Unknown Region)';
+    const cnt = countryByCustRaw[cno] || '(Unknown Country)';
+    (custsByRegion[reg] = custsByRegion[reg] || new Set()).add(cno);
+    custsByRegionCountry[reg] = custsByRegionCountry[reg] || {};
+    (custsByRegionCountry[reg][cnt] = custsByRegionCountry[reg][cnt] || new Set()).add(cno);
   });
 
-  // KPI strip — totals for the picked year
+  // ── Sort helper ──
+  const sortRows = (rs) => {
+    rs.sort((a,b) => {
+      if (sort === 'name') return String(a.label).localeCompare(String(b.label));
+      if (sort === 'spend') return (b.spend||0) - (a.spend||0);
+      if (sort === 'orderAmt') return (b.orderAmt||0) - (a.orderAmt||0);
+      if (a.roi == null && b.roi == null) return 0;
+      if (a.roi == null) return 1;
+      if (b.roi == null) return -1;
+      return b.roi - a.roi;
+    });
+    return rs;
+  };
+
+  // ── Format helpers ──
+  const yoyTag = (curr, prev) => {
+    if (prev == null || prev === 0) return curr > 0 ? '<span class="t-green" style="font-weight:700">▲ NEW</span>' : '<span class="muted">–</span>';
+    const pct = ((curr - prev) / prev) * 100;
+    return pct >= 0
+      ? `<span class="t-green" style="font-weight:700">▲ ${pct.toFixed(0)}%</span>`
+      : `<span class="t-red" style="font-weight:700">▼ ${Math.abs(pct).toFixed(0)}%</span>`;
+  };
+
+  // ── Build rows depending on level ──
+  let rows = [];
+  let drillAttr = '';      // data-attr used by click handler for drill-in
+  let labelColTitle = '';
+
+  if (level === 0) {
+    // Region overview
+    labelColTitle = 'REGION';
+    drillAttr = 'data-bycust-drill-region';
+    Object.keys(custsByRegion).forEach(reg => {
+      const cnos = Array.from(custsByRegion[reg]);
+      const countries = Object.keys(custsByRegionCountry[reg]||{}).length;
+      rows.push(aggRow(reg, cnos, { drillVal: reg, sub: `${countries} 국가 · ${cnos.length} 고객` }));
+    });
+  } else if (level === 1) {
+    // Country cards in path[0]
+    labelColTitle = 'COUNTRY';
+    drillAttr = 'data-bycust-drill-country';
+    const reg = pathNow[0];
+    Object.keys(custsByRegionCountry[reg]||{}).forEach(cnt => {
+      const cnos = Array.from(custsByRegionCountry[reg][cnt] || []);
+      rows.push(aggRow(cnt, cnos, { drillVal: cnt, sub: `${reg} · ${cnos.length} 고객` }));
+    });
+  } else {
+    // Customer rows in path[0]/path[1]
+    labelColTitle = 'CUSTOMER';
+    drillAttr = 'data-bycust-drill-customer';
+    const reg = pathNow[0], cnt = pathNow[1];
+    const cnos = Array.from(custsByRegionCountry[reg]?.[cnt] || []);
+    cnos.forEach(cno => {
+      const r = aggRow(nameByCust[cno]||'(unknown)', [cno], { drillVal: cno, sub: cno });
+      rows.push(r);
+    });
+  }
+  sortRows(rows);
+
+  // ── KPI strip — totals at this level ──
   const totalSpend = rows.reduce((s,r) => s + (r.spend||0), 0);
   const totalOrder = rows.reduce((s,r) => s + (r.orderAmt||0), 0);
   const totalSpendPrev = rows.reduce((s,r) => s + (r.spendPrev||0), 0);
@@ -5793,29 +5961,22 @@ function renderByCustomers(fOrders) {
         <div style="font-size:18px;font-weight:800" class="${cls||''}">${val}</div>
         <div class="label-mono muted" style="font-size:11px">${sub}</div>
       </div>`;
+    const scopeLbl = level===0?'ALL REGIONS' : level===1?`REGION · ${pathNow[0]}` : `${pathNow[0]} / ${pathNow[1]}`;
     kpiEl.innerHTML =
-      kpiBox(`MARKETING SPEND · ${pickedYear}`, fmtMoney(totalSpend), `prev ${prevYear}: ${fmtMoney(totalSpendPrev)}`, 't-yellow') +
+      kpiBox(`SPEND · ${pickedYear} · ${scopeLbl}`, fmtMoney(totalSpend), `prev ${prevYear}: ${fmtMoney(totalSpendPrev)}`, 't-yellow') +
       kpiBox(`ORDER AMT · ${pickedYear}`, fmtMoney(totalOrder), `prev ${prevYear}: ${fmtMoney(totalOrderPrev)}`, 't-green') +
       kpiBox(`OVERALL ROI · ${pickedYear}`, overallRoi==null?'–':fmtPct(overallRoi), `prev ${prevYear}: ${overallRoiPrev==null?'–':fmtPct(overallRoiPrev)}`, overallRoi==null?'muted':(overallRoi>=0?'t-green':'t-red')) +
-      kpiBox(`CUSTOMERS WITH SPEND`, fmtNum(rows.filter(r=>r.spend>0).length), `of ${rows.length} total`, 't-blue');
+      kpiBox(level===0?`REGIONS`:level===1?`COUNTRIES`:`CUSTOMERS`, fmtNum(rows.length), level===0?`with data`:level===1?`in ${pathNow[0]}`:`in ${pathNow[1]}`, 't-blue');
   }
 
-  // Table
+  // ── Table ──
   const tbl = document.getElementById('tblByCustList');
   if (tbl) {
-    const yoyTag = (curr, prev) => {
-      if (prev == null || prev === 0) return curr > 0 ? '<span class="t-green" style="font-weight:700">▲ NEW</span>' : '<span class="muted">–</span>';
-      const pct = ((curr - prev) / prev) * 100;
-      return pct >= 0
-        ? `<span class="t-green" style="font-weight:700">▲ ${pct.toFixed(0)}%</span>`
-        : `<span class="t-red" style="font-weight:700">▼ ${Math.abs(pct).toFixed(0)}%</span>`;
-    };
     const rowHtml = rows.map(r => {
       const roiCls = r.roi == null ? 'muted' : (r.roi < 0 ? 't-red' : 't-green');
       const roiPrevCls = r.roiPrev == null ? 'muted' : (r.roiPrev < 0 ? 't-red' : 't-blue');
-      return `<tr data-bycust-pick="${r.cno}" style="cursor:pointer">
-        <td><b>${r.name}</b><br><span class="muted" style="font-size:10px">${r.cno}</span></td>
-        <td class="muted" style="font-size:11px">${r.region}</td>
+      return `<tr ${drillAttr}="${r.drillVal}" style="cursor:pointer">
+        <td><b>${r.label}</b><br><span class="muted" style="font-size:10px">${r.sub||''}</span></td>
         <td class="text-right mono t-yellow">${fmtMoney(r.spend)}</td>
         <td class="text-right mono muted">${r.spendPrev>0?fmtMoney(r.spendPrev):'–'}</td>
         <td class="text-right mono">${yoyTag(r.spend, r.spendPrev)}</td>
@@ -5824,11 +5985,10 @@ function renderByCustomers(fOrders) {
         <td class="text-right mono ${roiCls}" style="font-weight:700">${r.roi==null?'–':fmtPct(r.roi)}</td>
         <td class="text-right mono ${roiPrevCls}">${r.roiPrev==null?'–':fmtPct(r.roiPrev)}</td>
       </tr>`;
-    }).join('') || `<tr><td colspan="9" class="muted" style="text-align:center;padding:12px">No customer data</td></tr>`;
+    }).join('') || `<tr><td colspan="8" class="muted" style="text-align:center;padding:12px">No data</td></tr>`;
     tbl.innerHTML = `
       <thead><tr>
-        <th>CUSTOMER</th>
-        <th>REGION / COUNTRY</th>
+        <th>${labelColTitle}</th>
         <th class="text-right">SPEND<br><span class="muted" style="font-size:9px;font-weight:500">${pickedYear}</span></th>
         <th class="text-right">PREV SPEND<br><span class="muted" style="font-size:9px;font-weight:500">${prevYear}</span></th>
         <th class="text-right">SPEND YoY</th>
@@ -10166,19 +10326,35 @@ document.addEventListener('click', e => {
     }
     return;
   }
-  // By Customers — row click drills into that customer
-  const bcRow = e.target.closest('[data-bycust-pick]');
-  if (bcRow) {
-    state.byCustomerPick = bcRow.dataset.bycustPick;
-    try { localStorage.setItem('ck_bycust_pick', state.byCustomerPick); } catch(_){}
+  // By Customers — region/country/customer drill-in via hierarchical path
+  const bcRegion = e.target.closest('[data-bycust-drill-region]');
+  if (bcRegion) {
+    state.byCustomerPath = [bcRegion.dataset.bycustDrillRegion];
+    try { localStorage.setItem('ck_bycust_path', JSON.stringify(state.byCustomerPath)); } catch(_){}
     renderAll();
     return;
   }
-  // By Customers — crumb "All Customers" click returns to list
-  const bcCrumb = e.target.closest('[data-bycust-crumb]');
-  if (bcCrumb) {
-    state.byCustomerPick = null;
-    try { localStorage.removeItem('ck_bycust_pick'); } catch(_){}
+  const bcCountry = e.target.closest('[data-bycust-drill-country]');
+  if (bcCountry) {
+    state.byCustomerPath = [(state.byCustomerPath||[])[0], bcCountry.dataset.bycustDrillCountry];
+    try { localStorage.setItem('ck_bycust_path', JSON.stringify(state.byCustomerPath)); } catch(_){}
+    renderAll();
+    return;
+  }
+  const bcCustomer = e.target.closest('[data-bycust-drill-customer]');
+  if (bcCustomer) {
+    const p = state.byCustomerPath || [];
+    state.byCustomerPath = [p[0], p[1], bcCustomer.dataset.bycustDrillCustomer];
+    try { localStorage.setItem('ck_bycust_path', JSON.stringify(state.byCustomerPath)); } catch(_){}
+    renderAll();
+    return;
+  }
+  // By Customers — breadcrumb "Go to level N" click
+  const bcGo = e.target.closest('[data-bycust-go]');
+  if (bcGo) {
+    const tgt = parseInt(bcGo.dataset.bycustGo, 10) || 0;
+    state.byCustomerPath = (state.byCustomerPath || []).slice(0, tgt);
+    try { localStorage.setItem('ck_bycust_path', JSON.stringify(state.byCustomerPath)); } catch(_){}
     renderAll();
     return;
   }
