@@ -6089,10 +6089,29 @@ function renderPromoChart(fOrders, fMkt) {
     const hasTargets = mb === 'customer' ? (custSet && custSet.size) : (skuSet && skuSet.size);
     if (!start || !hasTargets) return;
     const prevFrom = baAmt[p].prevFrom, prevTo = baAmt[p].prevTo;
+    const _preIdx = state._preIdx;
+    const _buyerMapBA = (_preIdx && _preIdx._buyerMap) || {};
+    const _PAT_PO_BA = /^PO-([^-]+)-(\d+)-\d+$/;
     _baPrevSource.forEach(o => {
-      const match = (mb === 'customer')
-        ? custSet.has((o.customer || '').trim())
-        : skuSet.has((o.sku || o.ctr_code || '').trim());
+      const oSku  = (o.sku  || '').trim();
+      const oCust = (o.customer || '').trim();
+      const oOid  = (o.order_id || '').trim();
+      let match = false;
+      if (mb === 'customer') {
+        match = custSet.has(oCust);
+        if (!match) {
+          // buyer_code 역추적
+          const pm = oOid.match(_PAT_PO_BA);
+          if (pm) { const mc = _buyerMapBA[pm[2]]; if (mc) match = custSet.has(mc); }
+        }
+      } else {
+        match = skuSet.has(oSku);
+        if (!match) {
+          // CTR code 역추적
+          const pm = oOid.match(_PAT_PO_BA);
+          if (pm) match = skuSet.has(pm[1]);
+        }
+      }
       if (!match) return;
       const d = o.order_date || '';
       if (!d) return;
@@ -6581,25 +6600,29 @@ function renderPromoChart(fOrders, fMkt) {
           data: {
             labels,
             datasets: [
-              { label: `${modeLabelKo}`, data: prvBars, backgroundColor:'#C8C8C8', hoverBackgroundColor:'#BBBBBB', borderColor:'#C8C8C8', hoverBorderColor:'#BBBBBB', borderWidth:0, borderRadius:3, maxBarThickness: 36 },
-              { label: '현재',          data: curBars, backgroundColor:'#1D1D1F', hoverBackgroundColor:'#333333', borderColor:'#1D1D1F', hoverBorderColor:'#333333', borderWidth:0, borderRadius:3, maxBarThickness: 36 },
+              { label: `${modeLabelKo}`, data: prvBars, backgroundColor:'#A1A1A6', hoverBackgroundColor:'#888', borderWidth:0, borderRadius:3, maxBarThickness:36 },
+              { label: '현재',          data: curBars, backgroundColor:'#C8102E', hoverBackgroundColor:'#a00', borderWidth:0, borderRadius:3, maxBarThickness:36 },
             ],
           },
           options: {
             responsive:true, maintainAspectRatio:false,
             plugins: {
               legend: { position:'top', labels:{ color:'#1D1D1F', font:{family:'IBM Plex Mono',weight:600,size:11}, boxWidth:14, padding:8 } },
-              datalabels: { display:false },
-              tooltip: {
-                callbacks: {
-                  label: c => `${c.dataset.label}: ${fmtMoney(c.parsed.y)}`,
-                  footer: items => {
-                    const i = items[0].dataIndex;
-                    const cur = curBars[i], prv = prvBars[i];
-                    const d = prv > 0 ? ((cur - prv) / prv) * 100 : null;
-                    return d == null ? '' : `Δ ${d >= 0 ? '+' : ''}${d.toFixed(1)}%`;
-                  },
+              datalabels: {
+                display: ctx => ctx.parsed.y > 0,
+                anchor: 'end', align: 'end', offset: 2,
+                color: ctx => ctx.datasetIndex === 1 ? '#C8102E' : '#888',
+                font: { family:'IBM Plex Mono', weight:700, size:10 },
+                formatter: (v, ctx) => {
+                  const money = v >= 1000 ? '$'+(v/1000).toFixed(1)+'k' : '$'+v.toLocaleString();
+                  if (ctx.datasetIndex === 1) {
+                    const prv = ctx.chart.data.datasets[0].data[ctx.dataIndex] || 0;
+                    if (prv > 0) { const d=((v-prv)/prv)*100; return [money,(d>=0?'▲':'▼')+Math.abs(d).toFixed(0)+'%']; }
+                    return money;
+                  }
+                  return money;
                 },
+                clip: false,
               },
             },
             scales: {
@@ -6634,15 +6657,35 @@ function renderPromoChart(fOrders, fMkt) {
         data: {
           labels: barLabels,
           datasets: [
-            { label: `${modeLabelKo}`, data: priorBars, backgroundColor:'#C8C8C8', hoverBackgroundColor:'#BBBBBB', borderColor:'#C8C8C8', hoverBorderColor:'#BBBBBB', borderWidth:0, borderRadius:3, maxBarThickness: 40 },
-            { label: '현재',          data: curBars,   backgroundColor:'#1D1D1F', hoverBackgroundColor:'#333333', borderColor:'#1D1D1F', hoverBorderColor:'#333333', borderWidth:0, borderRadius:3, maxBarThickness: 40 },
+            { label: `${modeLabelKo}`, data: priorBars, backgroundColor:'#A1A1A6', hoverBackgroundColor:'#888', borderWidth:0, borderRadius:3, maxBarThickness:40 },
+            { label: '현재',          data: curBars,   backgroundColor:'#C8102E', hoverBackgroundColor:'#a00', borderWidth:0, borderRadius:3, maxBarThickness:40 },
           ],
         },
         options: {
           responsive:true, maintainAspectRatio:false,
           plugins: {
-            legend: { position:'top', labels:{ color:'#1D1D1F', font:{family:'IBM Plex Mono',weight:600,size:11}, boxWidth:14, padding:8 } },
-            datalabels: { display:false },
+              legend: { position:'top', labels:{ color:'#1D1D1F', font:{family:'IBM Plex Mono',weight:600,size:11}, boxWidth:14, padding:8 } },
+              datalabels: {
+                display: ctx => ctx.parsed.y > 0,
+                anchor: 'end', align: 'end', offset: 2,
+                color: ctx => ctx.datasetIndex === 1 ? '#C8102E' : '#666',
+                font: { family:'IBM Plex Mono', weight:700, size:10 },
+                formatter: (v, ctx) => {
+                  const money = v >= 1000 ? (v/1000).toFixed(1)+'k' : '$'+v.toLocaleString();
+                  if (ctx.datasetIndex === 1) {
+                    // 현재 막대: 금액 + 증감%
+                    const prv = ctx.chart.data.datasets[0].data[ctx.dataIndex] || 0;
+                    if (prv > 0) {
+                      const d = ((v - prv) / prv) * 100;
+                      const sym = d >= 0 ? '▲' : '▼';
+                      return [money, sym + Math.abs(d).toFixed(0) + '%'];
+                    }
+                    return money;
+                  }
+                  return money;  // 전년 막대: 금액만
+                },
+                clip: false,
+              },
             tooltip: {
               callbacks: {
                 label: c => `${c.dataset.label}: ${fmtMoney(c.parsed.y)}`,
@@ -6685,15 +6728,33 @@ function renderPromoChart(fOrders, fMkt) {
       data: {
         labels: pairedLabels,
         datasets: [
-          { label: modeLabelKo, data: priorBarsAll, backgroundColor:'#C8C8C8', borderRadius:3, maxBarThickness:36 },
-          { label: '현재',      data: curBarsAll,   backgroundColor:'#1D1D1F', borderRadius:3, maxBarThickness:36 },
+          { label: modeLabelKo, data: priorBarsAll, backgroundColor:'#A1A1A6', borderRadius:3, maxBarThickness:36 },
+          { label: '현재',      data: curBarsAll,   backgroundColor:'#C8102E', borderRadius:3, maxBarThickness:36 },
         ],
       },
       options: {
         responsive:true, maintainAspectRatio:false,
         plugins: {
           legend: { position:'top', labels:{ color:'#1D1D1F', font:{family:'IBM Plex Mono',weight:600,size:11}, boxWidth:14, padding:8 } },
-          datalabels: { display:false },
+          datalabels: {
+            display: ctx => ctx.parsed.y > 0,
+            anchor: 'end', align: 'end', offset: 2,
+            color: ctx => ctx.datasetIndex === 1 ? '#C8102E' : '#888',
+            font: { family:'IBM Plex Mono', weight:700, size:10 },
+            formatter: (v, ctx) => {
+              const money = v >= 1000 ? '$'+(v/1000).toFixed(1)+'k' : '$'+v.toLocaleString();
+              if (ctx.datasetIndex === 1) {
+                const prv = ctx.chart.data.datasets[0].data[ctx.dataIndex] || 0;
+                if (prv > 0) {
+                  const d = ((v - prv) / prv) * 100;
+                  return [money, (d>=0?'▲':'▼')+Math.abs(d).toFixed(0)+'%'];
+                }
+                return money;
+              }
+              return money;
+            },
+            clip: false,
+          },
           tooltip: {
             callbacks: {
               label: c => `${c.dataset.label}: ${fmtMoney(c.parsed.y)}`,
