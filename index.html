@@ -5063,12 +5063,16 @@ function renderBudgetStatus(fMkt) {
 
   // ── Region → Country → Customer 3단계 아코디언 테이블 ──
   // 먼저 country / customer 레벨까지 집계
+  // m.country는 parseMarketingCSV에서 이미 normalizeCountry() 처리됨
+  const REGION_KEYS = new Set(['CIS','MENA','EUROPE','NA','LATAM','ASIA','RUS','OCEANIA','KOREA','EMEA','APAC']);
   const byRegionCountryCust = {};
   fMkt.forEach(m => {
     const r = m.region || '–';
     if (!isRegionVisible(r)) return;
-    const c = (normalizeCountry(m.country || '') || (m.country||'').toUpperCase() || '–');
-    const cust = (m.target_customer || m.customer || '–').trim() || '–';
+    // m.country가 이미 영문 정규화됨. 빈 문자열이거나 region명 자체인 경우 → (Region-wide)
+    const rawC = (m.country || '').trim();
+    const c = (!rawC || REGION_KEYS.has(rawC)) ? '(Region-wide)' : rawC;
+    const cust = (m.target_customer || m.customer || '').trim() || '–';
     byRegionCountryCust[r] = byRegionCountryCust[r] || {};
     byRegionCountryCust[r][c] = byRegionCountryCust[r][c] || {};
     byRegionCountryCust[r][c][cust] = byRegionCountryCust[r][c][cust] || { budget:0, expected:0, actual:0 };
@@ -5168,16 +5172,21 @@ function renderBudgetStatus(fMkt) {
 
       // ── CUSTOMER 행 ──
       const custKeys = Object.keys(custMap).sort();
-      custKeys.forEach(cust => {
+      // '–' 고객(미지정)이 유일한 경우 country 집계가 이미 보여주므로 별도 행 불필요
+      const meaningfulCusts = custKeys.filter(k => k !== '–');
+      const renderCusts = meaningfulCusts.length > 0 ? meaningfulCusts : custKeys;
+      renderCusts.forEach(cust => {
+        if (cust === '–' && meaningfulCusts.length > 0) return; // 유의미한 고객 있으면 미지정 행 숨김
         const v = custMap[cust];
         const vPct    = v.budget > 0 ? (v.actual / v.budget) * 100 : 0;
         const vRemain = v.budget - v.actual;
         const vAlloc  = cAgg.budget > 0 ? (v.budget / cAgg.budget) * 100 : 0;
         const vExecPct= v.budget > 0 ? (v.actual / v.budget) * 100 : 0;  // 자기 budget 대비 집행률
+        const custLabel = cust === '–' ? '(미지정)' : cust;
 
         bodyRows += `<tr style="background:rgba(0,0,0,0.035)" data-budget-cust-row>
           <td style="padding-left:52px;font-size:11px;color:#86868B;font-family:'IBM Plex Mono',monospace">
-            👤 ${cust}
+            👤 ${custLabel}
           </td>
           <td class="text-right mono" style="font-size:11px;color:#86868B">${v.budget>0?fmtMoney(v.budget):'–'}</td>
           <td class="text-right mono" style="font-size:11px;color:#86868B">${vAlloc>0?vAlloc.toFixed(1)+'%':'–'}</td>
