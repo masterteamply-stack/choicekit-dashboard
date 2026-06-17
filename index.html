@@ -6384,10 +6384,10 @@ function renderPromoChart(fOrders, fMkt) {
     // Use index for fast per-target lookup instead of scanning all 654K rows
     const preIdx = state._preIdx;
     let scopedBaseline;
+    // 직접 SKU/고객 기반 매칭 — baselineMatchesPromo(region gate) 제거
+    // preOrders의 promotion_category는 'PRE_ORDER'/'STANDARD'이므로 SKU/고객으로만 판별
     if (preIdx && baselineRows.length) {
-      const targetMap = (promoFilter === '__all__') ? {...skuToPromo, ...custToPromo} : {};
       if (promoFilter !== '__all__') {
-        // Single promo: only rows matching that campaign's targets
         const cfg = (state.campaignTargetSkus || {})[promoFilter] || {};
         const mb = (cfg.match_by || 'sku').toLowerCase();
         const targets = mb === 'customer' ? (cfg.target_customers||[]) : (cfg.target_skus||[]);
@@ -6396,18 +6396,31 @@ function renderPromoChart(fOrders, fMkt) {
           const idx = mb === 'customer' ? preIdx.custIdx[k] : preIdx.skuIdx[k];
           if (idx) rows.push(...idx);
         });
-        scopedBaseline = rows.filter(o => baselineMatchesPromo(o, promoFilter));
+        scopedBaseline = rows;
       } else {
-        // All promos: only rows in any campaign target
         const rows = [];
         Object.keys(skuToPromo).forEach(k => { if (preIdx.skuIdx[k]) rows.push(...preIdx.skuIdx[k]); });
         Object.keys(custToPromo).forEach(k => { if (preIdx.custIdx[k]) rows.push(...preIdx.custIdx[k]); });
-        scopedBaseline = rows.filter(o => knownPromos.some(p => baselineMatchesPromo(o, p)));
+        scopedBaseline = rows;
       }
     } else {
-      scopedBaseline = (promoFilter === '__all__')
-        ? baselineRows.filter(o => knownPromos.some(p => baselineMatchesPromo(o, p)))
-        : baselineRows.filter(o => baselineMatchesPromo(o, promoFilter));
+      // preIdx 없을 때: 전체 baselineRows에서 SKU/고객 직접 필터
+      const allSkus  = new Set(Object.keys(skuToPromo));
+      const allCusts = new Set(Object.keys(custToPromo));
+      if (promoFilter !== '__all__') {
+        const cfg = (state.campaignTargetSkus || {})[promoFilter] || {};
+        const mb = (cfg.match_by || 'sku').toLowerCase();
+        const targetSet = new Set(mb === 'customer' ? (cfg.target_customers||[]) : (cfg.target_skus||[]));
+        scopedBaseline = baselineRows.filter(o =>
+          mb === 'customer'
+            ? targetSet.has((o.customer||'').trim())
+            : targetSet.has((o.sku||'').trim())
+        );
+      } else {
+        scopedBaseline = baselineRows.filter(o =>
+          allSkus.has((o.sku||'').trim()) || allCusts.has((o.customer||'').trim())
+        );
+      }
     }
     // promoFilter === '__all__' 일 때: fOrders 전체(날짜 필터 무관) + baseline을 포함
     // promotion_category 태그가 있는 orders.csv rows를 연도 관계없이 모두 포함
@@ -6466,15 +6479,24 @@ function renderPromoChart(fOrders, fMkt) {
         <div style="background:rgba(0,0,0,0.02);border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:10px 12px">
           <div class="label-mono" style="font-size:10px;color:#86868B;letter-spacing:0.05em">${label}</div>
           <div style="font-size:18px;font-weight:800;margin-top:2px">${val}</div>
-          ${sub ? `<div class="label-mono muted" style="font-size:11px">${sub}</div>` : ''}
+          ${sub ? `<div class="label-mono muted" style="font-size:11px;margin-top:3px">${sub}</div>` : ''}
         </div>`;
+      // 기간 표기: kpiBuckets의 첫/마지막 bucket 표시
+      const _fmt = pk => pk ? pk.replace(/^20(\d\d)-(\d\d)$/, '\'$1.$2').replace(/^20(\d\d)-Q(\d)$/, '\'$1.Q$2').replace(/^(20\d\d)$/, '$1') : '';
+      const curFrom  = kpiBuckets.length ? _fmt(kpiBuckets[0]) : '';
+      const curTo    = kpiBuckets.length > 1 ? _fmt(kpiBuckets[kpiBuckets.length-1]) : '';
+      const curRange = curFrom ? (curTo && curTo !== curFrom ? `${curFrom} ~ ${curTo}` : curFrom) : '';
+      const priorFrom = kpiBuckets.length ? _fmt(shiftBucket(kpiBuckets[0], cmpMode, period)) : '';
+      const priorTo   = kpiBuckets.length > 1 ? _fmt(shiftBucket(kpiBuckets[kpiBuckets.length-1], cmpMode, period)) : '';
+      const priorRange = priorFrom ? (priorTo && priorTo !== priorFrom ? `${priorFrom} ~ ${priorTo}` : priorFrom) : '';
       const subWindow = (promoFilter !== '__all__')
-        ? `${promoFilter} · 캠페인 집행기간 합산`
-        : `전체 프로모션 캠페인 후 합계 (= 테이블 ORDER AMT 합산)`;
+        ? `${promoFilter}${curRange ? ' · ' + curRange : ''}`
+        : `전체 캠페인${curRange ? ' · ' + curRange : ''}`;
+      const subPrior = priorRange ? `${modeLabelKo} 동일기간 · ${priorRange}` : `${modeLabelKo} 동일 기간`;
       cmpKpiEl.style.display = 'grid';
       cmpKpiEl.innerHTML =
         card('현재 합계', fmtMoney(curTotal), subWindow) +
-        card(`${modeLabelKo} 합계`, fmtMoney(priorTotal), `${modeLabelKo} 동일 기간`) +
+        card(`${modeLabelKo} 합계`, fmtMoney(priorTotal), subPrior) +
         card('증감', tag, `현재 vs ${modeLabelKo}`);
     }
     // ── For single-promotion compare view, switch the chart to a grouped BAR ──
@@ -6514,8 +6536,8 @@ function renderPromoChart(fOrders, fMkt) {
           data: {
             labels,
             datasets: [
-              { label: `${modeLabelKo}`, data: prvBars, backgroundColor:'#A1A1A6', hoverBackgroundColor:'#A1A1A6', borderColor:'#A1A1A6', hoverBorderColor:'#A1A1A6', borderWidth:0, borderRadius:3, maxBarThickness: 36 },
-              { label: '현재',          data: curBars, backgroundColor:'#C8102E', hoverBackgroundColor:'#C8102E', borderColor:'#C8102E', hoverBorderColor:'#C8102E', borderWidth:0, borderRadius:3, maxBarThickness: 36 },
+              { label: `${modeLabelKo}`, data: prvBars, backgroundColor:'#C8C8C8', hoverBackgroundColor:'#BBBBBB', borderColor:'#C8C8C8', hoverBorderColor:'#BBBBBB', borderWidth:0, borderRadius:3, maxBarThickness: 36 },
+              { label: '현재',          data: curBars, backgroundColor:'#1D1D1F', hoverBackgroundColor:'#333333', borderColor:'#1D1D1F', hoverBorderColor:'#333333', borderWidth:0, borderRadius:3, maxBarThickness: 36 },
             ],
           },
           options: {
@@ -6561,8 +6583,8 @@ function renderPromoChart(fOrders, fMkt) {
         data: {
           labels: execBuckets,
           datasets: [
-            { label: `${modeLabelKo}`, data: priorBars, backgroundColor:'#A1A1A6', hoverBackgroundColor:'#A1A1A6', borderColor:'#A1A1A6', hoverBorderColor:'#A1A1A6', borderWidth:0, borderRadius:3, maxBarThickness: 40 },
-            { label: '현재',          data: curBars,   backgroundColor:'#C8102E', hoverBackgroundColor:'#C8102E', borderColor:'#C8102E', hoverBorderColor:'#C8102E', borderWidth:0, borderRadius:3, maxBarThickness: 40 },
+            { label: `${modeLabelKo}`, data: priorBars, backgroundColor:'#C8C8C8', hoverBackgroundColor:'#BBBBBB', borderColor:'#C8C8C8', hoverBorderColor:'#BBBBBB', borderWidth:0, borderRadius:3, maxBarThickness: 40 },
+            { label: '현재',          data: curBars,   backgroundColor:'#1D1D1F', hoverBackgroundColor:'#333333', borderColor:'#1D1D1F', hoverBorderColor:'#333333', borderWidth:0, borderRadius:3, maxBarThickness: 40 },
           ],
         },
         options: {
@@ -6612,8 +6634,8 @@ function renderPromoChart(fOrders, fMkt) {
       data: {
         labels: pairedLabels,
         datasets: [
-          { label: modeLabelKo, data: priorBarsAll, backgroundColor:'#A1A1A6', borderRadius:3, maxBarThickness:36 },
-          { label: '현재',      data: curBarsAll,   backgroundColor:'#525257', borderRadius:3, maxBarThickness:36 },
+          { label: modeLabelKo, data: priorBarsAll, backgroundColor:'#C8C8C8', borderRadius:3, maxBarThickness:36 },
+          { label: '현재',      data: curBarsAll,   backgroundColor:'#1D1D1F', borderRadius:3, maxBarThickness:36 },
         ],
       },
       options: {
