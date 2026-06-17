@@ -1836,7 +1836,7 @@ header .mono b.t-orange {
       <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:10px;margin-bottom:18px">
         <div>
           <h2 class="h-section">Marketing KPI · Order-based</h2>
-          <p class="label-mono" style="margin-top:5px">Marketing budget vs order amount · ROI · Display currency: <span id="curLabel">USD</span></p>
+          <p class="label-mono" style="margin-top:5px">Display currency: <span id="curLabel">USD</span></p>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
           <span class="label-mono">Order Target (<span class="curLabelSm">USD</span>)</span>
@@ -1910,7 +1910,7 @@ header .mono b.t-orange {
         <div class="widget-head">
           <div>
             <h3 class="h-section">Promotion Order Trends</h3>
-            <p class="label-mono" style="margin-top:4px">Order amount/qty by promotion · break down by Region / Year / Quarter / Month · SAP order data</p>
+            <p class="label-mono" style="margin-top:4px">SAP order data</p>
           </div>
           <div class="chart-tools">
             <span class="label-mono" style="font-size:11px">PERIOD</span>
@@ -1944,7 +1944,7 @@ header .mono b.t-orange {
         <div class="widget-head">
           <div>
             <h3 class="h-section">Promotion Category × Top CTR Sales</h3>
-            <p class="label-mono" style="margin-top:4px">CTR sales pivoted by Category, Region or Country. Drill into a row to see customer-level detail.<br><span style="color:#86868B;font-size:10px">These widget-level filters override the global filter bar for this widget only.</span></p>
+            <p class="label-mono" style="margin-top:4px">Drill into a row for customer detail</p>
           </div>
           <div class="chart-tools">
             <span class="label-mono" style="font-size:11px">PROMO</span>
@@ -1997,7 +1997,7 @@ header .mono b.t-orange {
         <div class="widget-head">
           <div>
             <h3 class="h-section">Top Insights — Vehicle Models · Products · CTR Codes</h3>
-            <p class="label-mono" style="margin-top:4px">Filter by Promotion, Date range, Region &amp; Country, then switch dimension to compare. Side panel shows Top 10 ranking with Qty &amp; Amount.<br><span style="color:#86868B;font-size:10px">These widget-level filters override the global filter bar for this widget only.</span></p>
+            <p class="label-mono" style="margin-top:4px">Top 10 ranking by Qty &amp; Amount</p>
           </div>
           <div class="chart-tools">
             <span class="label-mono" style="font-size:11px">PROMO</span>
@@ -2056,7 +2056,7 @@ header .mono b.t-orange {
           <div class="widget-head">
             <div>
               <h3 class="h-section">Top Customer Order Trend · by Campaign</h3>
-              <p class="label-mono" style="margin-top:4px">Top customer ranking by campaign + trend chart for the selected customer</p>
+              <p class="label-mono" style="margin-top:4px">Campaign별 Top 고객 · 트렌드</p>
             </div>
             <div class="chart-tools">
               <span class="label-mono" style="font-size:11px">CAMPAIGN</span>
@@ -2103,7 +2103,7 @@ header .mono b.t-orange {
         <div class="widget-head">
           <div>
             <h3 class="h-section">Region — Order, Marketing & Activity Breakdown</h3>
-            <p class="label-mono" style="margin-top:4px">Region-level Order vs Marketing comparison · use region tabs for Executed Cost / MKT Budget detail by activity type</p>
+            <p class="label-mono" style="margin-top:4px">Order vs Marketing · Activity breakdown</p>
           </div>
           <div class="chart-tools">
             <span class="label-mono" style="font-size:11px">METRIC</span>
@@ -2116,11 +2116,11 @@ header .mono b.t-orange {
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
           <div>
-            <p class="label-mono" style="font-size:11px;margin-bottom:6px;text-align:center">REGION COMPARISON (Executed vs Target / Budget)</p>
+            <p class="label-mono" style="font-size:11px;margin-bottom:6px;text-align:center">ORDER vs TARGET</p>
             <div class="chart-wrap" style="height:340px"><canvas id="chRegion"></canvas></div>
           </div>
           <div>
-            <p class="label-mono" style="font-size:11px;margin-bottom:6px;text-align:center">ACTIVITY-TYPE BREAKDOWN <span id="breakdownRegionLbl" class="t-blue">(All Regions)</span></p>
+            <p class="label-mono" style="font-size:11px;margin-bottom:6px;text-align:center">ACTIVITY 유형 <span id="breakdownRegionLbl" class="t-blue">(All)</span></p>
             <div id="breakdownTabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
             <div class="chart-wrap" style="height:240px"><canvas id="chActivity"></canvas></div>
             <div style="overflow:auto;margin-top:8px;max-height:160px"><table id="tblBreakdown" style="font-size:12px"></table></div>
@@ -2133,7 +2133,7 @@ header .mono b.t-orange {
         <div class="widget-head">
           <div>
             <h3 class="h-section">Promotion Performance</h3>
-            <p class="label-mono" style="margin-top:4px">Monthly order trend — by promotion, customer, or region</p>
+            <p class="label-mono" style="margin-top:4px">Order trend by promotion</p>
           </div>
           <div class="chart-tools">
             <div class="seg" id="segPromoPerf">
@@ -2178,7 +2178,7 @@ header .mono b.t-orange {
         <div class="widget-head">
           <div>
             <h3 class="h-section">Choice Kit Impact — Dormant Activation</h3>
-            <p class="label-mono" style="margin-top:4px;font-size:13px">How many dormant SKUs / customers were activated by the campaign</p>
+            <p class="label-mono" style="margin-top:4px;font-size:13px">Dormant → Active 전환</p>
           </div>
           <div class="chart-tools">
             <span class="label-mono muted">Campaign</span>
@@ -2231,7 +2231,7 @@ header .mono b.t-orange {
         <div class="widget-head">
           <div>
             <h3 class="h-section">SKU Analysis</h3>
-            <p class="label-mono" style="margin-top:4px">캠페인별 대상 SKU의 프로모션 전/후 오더 비교 · SAP order data<br><span style="color:#86868B;font-size:10px">날짜 필터는 무시됩니다 — 전체 SKU 이력을 봐야 전/후 효과가 보입니다. Region·country·customer 필터는 적용됩니다.</span></p>
+            <p class="label-mono" style="margin-top:4px">프로모션 전/후 SKU 오더 비교</p>
           </div>
           <div class="chart-tools">
             <span class="label-mono muted">Promotion</span>
@@ -2269,7 +2269,7 @@ header .mono b.t-orange {
         <div class="widget-head">
           <div>
             <h3 class="h-section">Campaign Plan vs Execution — Drill-down Explorer</h3>
-            <p class="label-mono" style="margin-top:4px">Region → Country → Promotion · click a card to drill down · health: 🟢 healthy · 🟡 watch · 🔴 over-budget or negative ROI</p>
+            <p class="label-mono" style="margin-top:4px">🟢 정상 &nbsp;🟡 주의 &nbsp;🔴 초과/손실</p>
           </div>
           <div class="chart-tools">
             <span class="label-mono" style="font-size:11px">SORT</span>
@@ -2335,7 +2335,7 @@ header .mono b.t-orange {
         <div class="widget-head">
           <div>
             <h3 class="h-section">Sales Trend — Promotion Category & Region</h3>
-            <p class="label-mono" style="margin-top:4px">Order Amount over time. Switch view between Promotion Category breakdown and Region/Country trend.</p>
+            <p class="label-mono" style="margin-top:4px">Promotion Category / Region 월별 추이</p>
           </div>
           <div class="chart-tools">
             <span class="label-mono" style="font-size:11px">VIEW</span>
@@ -2362,17 +2362,17 @@ header .mono b.t-orange {
          <div class="widget-head">
            <div>
              <h3 class="h-section">Marketing Budget — Allocation & Status by Region</h3>
-             <p class="label-mono" style="margin-top:4px">Regional budget allocation + execution progress (Executed Cost / MKT Budget). Click a region in ALLOCATION SHARE to filter EXECUTION SHARE.</p>
+             <p class="label-mono" style="margin-top:4px">Budget 배분 · 집행 현황</p>
            </div>
            <div class="widget-order-controls"></div>
          </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
             <div>
-              <p class="label-mono" style="font-size:11px;margin-bottom:6px;text-align:center">ALLOCATION SHARE % (MKT Budget)</p>
+              <p class="label-mono" style="font-size:11px;margin-bottom:6px;text-align:center">BUDGET 배분</p>
               <div class="chart-wrap" style="height:300px"><canvas id="chBudgetAlloc"></canvas></div>
             </div>
             <div>
-              <p class="label-mono" id="execShareLabel" style="font-size:11px;margin-bottom:6px;text-align:center">EXECUTION SHARE % (Executed Cost)</p>
+              <p class="label-mono" id="execShareLabel" style="font-size:11px;margin-bottom:6px;text-align:center">EXECUTION 비중</p>
               <div class="chart-wrap" style="height:300px"><canvas id="chBudgetExec"></canvas></div>
             </div>
           </div>
@@ -4700,12 +4700,12 @@ function renderPlanExecChart(items, level) {
     options: { ...chartOpts(true),
       plugins: { ...chartOpts(true).plugins,
         datalabels: { display:false },
-        title: { display:true, text:`${level.toUpperCase()} — Budget vs Executed vs Order Amount + ROI`, color:'#1D1D1F', font:{family:'IBM Plex Mono',weight:600,size:14} }
+        title: { display:false }
       },
       scales: {
         x: { ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:14}}, grid:{color:'rgba(0,0,0,0.06)'} },
-        y: { ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:12},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:true,text:'Amount',color:'#1D1D1F'} },
-        y2:{ position:'right', ticks:{color:'#A1A1A6',font:{family:'IBM Plex Mono',weight:600,size:12},callback:v=>v.toFixed(0)+'%'}, grid:{display:false}, title:{display:true,text:'ROI %',color:'#A1A1A6'} },
+        y: { ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:12},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:false} },
+        y2:{ position:'right', ticks:{color:'#A1A1A6',font:{family:'IBM Plex Mono',weight:600,size:12},callback:v=>v.toFixed(0)+'%'}, grid:{display:false}, title:{display:false} },
       }
     }
   });
@@ -5060,8 +5060,8 @@ function renderBudgetStatus(fMkt) {
   const execLblEl = document.getElementById('execShareLabel');
   if (execLblEl) {
     execLblEl.innerHTML = selectedRegion === '__all__'
-      ? 'EXECUTION SHARE % (Executed Cost)'
-      : `EXECUTION SHARE % — <span style="color:var(--blue)">${selectedRegion}</span> only · <button class="btn ghost" style="padding:2px 8px;font-size:10px;margin-left:6px" onclick="window.__clearBudgetExecFilter()">Clear</button>`;
+      ? 'EXECUTION 비중'
+      : `<span style="color:var(--blue)">${selectedRegion}</span> 집행 비중 · <button class="btn ghost" style="padding:2px 8px;font-size:10px;margin-left:6px" onclick="window.__clearBudgetExecFilter()">전체</button>`;
   }
 
   // ── Region → Country → Customer 3단계 아코디언 테이블 ──
@@ -5385,8 +5385,8 @@ function renderCustomerTrend(fOrders, fMkt) {
       },
       scales:{
         x:{ ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:14}}, grid:{color:'rgba(0,0,0,0.06)'} },
-        y:{ position:'left', ticks:{color:'#0A0A0A',font:{family:'IBM Plex Mono',weight:600,size:14},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:true,text:'Amount',color:'#0A0A0A'} },
-        y2:{ position:'right', ticks:{color:'#525257',font:{family:'IBM Plex Mono',weight:600,size:14}}, grid:{display:false}, title:{display:true,text:'Qty',color:'#525257'} },
+        y:{ position:'left', ticks:{color:'#0A0A0A',font:{family:'IBM Plex Mono',weight:600,size:14},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:false} },
+        y2:{ position:'right', ticks:{color:'#525257',font:{family:'IBM Plex Mono',weight:600,size:14}}, grid:{display:false}, title:{display:false} },
       }
     }
   });
@@ -5465,8 +5465,8 @@ function topChart(canvasId, fOrders, dim, primaryKey, colorAmt, colorQty) {
       options:{
         ...chartOpts(true), indexAxis:'y',
         scales:{
-          x:{ position:'top', ticks:{color:colorAmt,font:{family:'IBM Plex Mono',weight:600,size:14},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:true,text:'Amount',color:colorAmt} },
-          x2:{ position:'bottom', ticks:{color:colorQty,font:{family:'IBM Plex Mono',weight:600,size:14}}, grid:{display:false}, title:{display:true,text:'Qty',color:colorQty} },
+          x:{ position:'top', ticks:{color:colorAmt,font:{family:'IBM Plex Mono',weight:600,size:14},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:false} },
+          x2:{ position:'bottom', ticks:{color:colorQty,font:{family:'IBM Plex Mono',weight:600,size:14}}, grid:{display:false}, title:{display:false} },
           y:{ ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:14}}, grid:{color:'rgba(0,0,0,0.06)'} },
         }
       }
@@ -5511,7 +5511,7 @@ function topChart(canvasId, fOrders, dim, primaryKey, colorAmt, colorQty) {
         }
       },
       scales:{
-        x:{ ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:14},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:true,text:`Order Amount by ${dim==='region'?'Region':'Country'}`,color:'#1D1D1F'} },
+        x:{ ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:14},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:false} },
         y:{ ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:14}}, grid:{color:'rgba(0,0,0,0.06)'} },
       }
     }
@@ -5637,8 +5637,8 @@ function renderTopInsights(fOrders) {
               : `Amount: ${fmtMoney(c.parsed.x)}` } }
         },
         scales:{
-          x:{ position:'top', ticks:{color:colorMap[dim],font:{family:'IBM Plex Mono',weight:600,size:14},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:true,text:'Amount',color:colorMap[dim]} },
-          x2:{ position:'bottom', ticks:{color:colorQty[dim],font:{family:'IBM Plex Mono',weight:600,size:14}}, grid:{display:false}, title:{display:true,text:'Qty',color:colorQty[dim]} },
+          x:{ position:'top', ticks:{color:colorMap[dim],font:{family:'IBM Plex Mono',weight:600,size:14},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:false} },
+          x2:{ position:'bottom', ticks:{color:colorQty[dim],font:{family:'IBM Plex Mono',weight:600,size:14}}, grid:{display:false}, title:{display:false} },
           y:{ ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:14}}, grid:{color:'rgba(0,0,0,0.06)'} },
         }
       }
@@ -5776,7 +5776,7 @@ function renderPromoCtrChart(fOrders) {
         },
         scales:{
           x:{ stacked:true, ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:14},callback:v=>metric==='amount'?(v>=1000?(v/1000).toFixed(0)+'k':v):fmtNum(v)}, grid:{color:'rgba(0,0,0,0.06)'},
-              title:{display:true,text:metric==='amount'?'Order Amount':'Qty',color:'#1D1D1F'} },
+              title:{display:false} },
           y:{ stacked:true, ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:14}}, grid:{color:'rgba(0,0,0,0.06)'} },
         }
       }
@@ -6546,8 +6546,8 @@ function renderPromoChart(fOrders, fMkt) {
               },
             },
             scales: {
-              x: { ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:11},maxRotation:40,minRotation:0}, grid:{display:false}, title:{display:true,text:`${dimNoun}별 · ${xTitleSuffix}`,color:'#86868B'} },
-              y: { beginAtZero:true, ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',size:12},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:true,text:'Order Amount',color:'#1D1D1F'} },
+              x: { ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:11},maxRotation:40,minRotation:0}, grid:{display:false}, title:{display:false} },
+              y: { beginAtZero:true, ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',size:12},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:false} },
             },
           },
         });
@@ -6593,8 +6593,8 @@ function renderPromoChart(fOrders, fMkt) {
             },
           },
           scales: {
-            x: { ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:11},maxRotation:30,minRotation:0}, grid:{display:false}, title:{display:true,text:`${promoFilter} · 집행 ${periodLabelOf(period)}`,color:'#86868B'} },
-            y: { beginAtZero:true, ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',size:12},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:true,text:'Order Amount',color:'#1D1D1F'} },
+            x: { ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:11},maxRotation:30,minRotation:0}, grid:{display:false}, title:{display:false} },
+            y: { beginAtZero:true, ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',size:12},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:false} },
           },
         },
       });
@@ -6632,8 +6632,8 @@ function renderPromoChart(fOrders, fMkt) {
         tooltip: { callbacks: { label: c => `${c.dataset.label}: ${fmtMoney(c.parsed.y)}` } },
       },
       scales: {
-        x: { ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:11},maxRotation:30,minRotation:0}, grid:{display:false}, title:{display:true,text:periodLabelOf(period),color:'#86868B'} },
-        y: { beginAtZero:true, ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',size:12},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:true,text:'Order Amount',color:'#1D1D1F'} },
+        x: { ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:11},maxRotation:30,minRotation:0}, grid:{display:false}, title:{display:false} },
+        y: { beginAtZero:true, ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',size:12},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:false} },
       },
     },
   });
@@ -6937,8 +6937,8 @@ function renderCategoryChart(fOrders) {
       },
       scales:{
         x:{stacked:true,ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:14}},grid:{color:'rgba(0,0,0,0.06)'}},
-        y:{stacked:true,ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:14},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v},grid:{color:'rgba(0,0,0,0.06)'},title:{display:true,text:'Period Order Amount',color:'#1D1D1F'}},
-        y2:{position:'right',ticks:{color:'#525257',font:{family:'IBM Plex Mono',weight:600,size:14},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v},grid:{display:false},title:{display:true,text:'Cumulative',color:'#525257'}},
+        y:{stacked:true,ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:14},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v},grid:{color:'rgba(0,0,0,0.06)'},title:{display:false}},
+        y2:{position:'right',ticks:{color:'#525257',font:{family:'IBM Plex Mono',weight:600,size:14},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v},grid:{display:false},title:{display:false}},
       }
     }
   });
@@ -7613,7 +7613,7 @@ function renderPromoOrderTrend(fOrders, fMkt) {
           ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:14},
                  callback:v => metric==='qty' ? fmtNum(v) : (v>=1000?(v/1000).toFixed(0)+'k':v)},
           grid:{color:'rgba(0,0,0,0.06)'},
-          title:{display:true,text: metric==='qty'?'Quantity':'Order Amount',color:'#1D1D1F'} },
+          title:{display:false} },
       }
     }
   });
@@ -7810,7 +7810,7 @@ function renderSkuBeforeAfter(values, opts) {
         },
         scales: {
           x: { ticks:{color:'#1D1D1F'}, grid:{display:false} },
-          y: { beginAtZero:true, ticks:{color:'#1D1D1F', callback: compactTick}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:true, text:'Amount (USD)', color:'#86868B'} },
+          y: { beginAtZero:true, ticks:{color:'#1D1D1F', callback: compactTick}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:false} },
         },
       },
     });
@@ -7848,7 +7848,7 @@ function renderSkuBeforeAfter(values, opts) {
         },
         scales: {
           x: { ticks:{color:'#1D1D1F'}, grid:{display:false} },
-          y: { beginAtZero:true, ticks:{color:'#1D1D1F', callback: compactTick}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:true, text:isAvg?'Qty (avg/SKU)':'Qty (pcs)', color:'#86868B'} },
+          y: { beginAtZero:true, ticks:{color:'#1D1D1F', callback: compactTick}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:false} },
         },
       },
     });
@@ -7936,8 +7936,8 @@ function renderSkuMonthly(monthlySeries, opts) {
           x:{ ticks:{color:'#1D1D1F'},
               grid:{ color: ctx => ctx.tick && ctx.tick.label===startKey ? '#C8102E' : '#2a3142',
                      lineWidth: ctx => ctx.tick && ctx.tick.label===startKey ? 2 : 1 } },
-          y:{ beginAtZero:true, position:'left',  ticks:{color:'#A1A1A6', callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:true,text:`Amount${isAvg?' (avg/SKU)':''}`,color:'#A1A1A6'} },
-          y2:{beginAtZero:true, position:'right', ticks:{color:'#525257', callback:v=>fmtQ(v)}, grid:{drawOnChartArea:false}, title:{display:true,text:`Qty${isAvg?' (avg/SKU)':''}`,color:'#525257'} },
+          y:{ beginAtZero:true, position:'left',  ticks:{color:'#A1A1A6', callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:false} },
+          y2:{beginAtZero:true, position:'right', ticks:{color:'#525257', callback:v=>fmtQ(v)}, grid:{drawOnChartArea:false}, title:{display:false} },
         }
       }
     });
@@ -8008,8 +8008,8 @@ function renderSkuYearly(annualSeries, opts) {
         },
         scales:{
           x:{ ticks:{color:'#1D1D1F',font:{size:13,weight:600}}, grid:{color:'rgba(0,0,0,0.06)'} },
-          y:{ beginAtZero:true, position:'left',  ticks:{color:'#A1A1A6', callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:true,text:`Amount${isAvg?' (avg/SKU)':''}`,color:'#A1A1A6'} },
-          y2:{beginAtZero:true, position:'right', ticks:{color:'#525257', callback:v=>fmtQ(v)}, grid:{drawOnChartArea:false}, title:{display:true,text:`Qty${isAvg?' (avg/SKU)':''}`,color:'#525257'} },
+          y:{ beginAtZero:true, position:'left',  ticks:{color:'#A1A1A6', callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:false} },
+          y2:{beginAtZero:true, position:'right', ticks:{color:'#525257', callback:v=>fmtQ(v)}, grid:{drawOnChartArea:false}, title:{display:false} },
         }
       }
     });
