@@ -2236,14 +2236,18 @@ header .mono b.t-orange {
           <div class="chart-tools">
             <span class="label-mono muted">Promotion</span>
             <select id="selSkuAggPromo" style="min-width:220px"></select>
+            <span class="label-mono muted" style="margin-left:8px">비교</span>
+            <div class="seg" id="segSkuCmp">
+              <button data-v="off" class="active">없음</button>
+              <button data-v="yoy">전년</button>
+              <button data-v="qoq">전분기</button>
+              <button data-v="mom">전월</button>
+            </div>
             <div class="widget-order-controls"></div>
           </div>
         </div>
-        <div id="skuAggRow" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px">
-          <span class="label-mono muted" id="skuAggMeta" style="margin-left:auto">–</span>
-        </div>
         <div id="skuPanel-ba" class="sku-tab-panel">
-          <div id="skuCompareSlot" style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap"></div>
+          <div id="skuCompareKpis" style="display:none;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px"></div>
           <div id="skuBaSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px"></div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
             <div>
@@ -8644,13 +8648,13 @@ function renderChoiceKitImpact(fOrders, fMkt) {
 function renderSkuExplorer(fOrders, fMkt) {
   populateSkuUI(fOrders);
 
-  // Mount the period comparison controls into the BA panel header.
-  const slot = document.getElementById('skuCompareSlot');
-  if (slot) {
-    slot.innerHTML = renderCompareControls('sku') +
-      '<div id="skuCompareKpis" style="display:none;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;flex:1 1 100%;margin-top:8px"></div>';
-    bindCompareControls('#skuCompareSlot', 'sku', () => rebuildAll());
-  }
+  // segSkuCmp 버튼 상태 동기화
+  const skuCmpMode = getCmpState('sku').mode || 'off';
+  document.querySelectorAll('#segSkuCmp button').forEach(b => {
+    b.classList.toggle('active', b.dataset.v === skuCmpMode);
+  });
+
+  // skuCompareKpis는 renderSkuAggregate 내부에서 fillCompareKpis로 처리
   return renderSkuAggregate(fOrders);
 }
 
@@ -9979,6 +9983,10 @@ document.addEventListener('click', e => {
     else if (id==='segCustProdMode'){ state.custTrendProductMode = v; persist(); renderAll(); }
     else if (id==='segCategoryView'){ state.categoryView = v; persist(); renderAll(); }
     else if (id==='segPlanExecSort'){ state.planExecSort = v; persist(); renderAll(); }
+    else if (id==='segSkuCmp'){
+      setCmpState('sku', { mode: v, basis: 'auto' });
+      renderAll();
+    }
     // ── new widgets ──
     else if (id==='segPotPeriod'){ state.potPeriod = v; persist(); renderAll(); }
     else if (id==='segPotMetric'){ state.potMetric = v; persist(); renderAll(); }
