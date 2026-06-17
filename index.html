@@ -5960,6 +5960,7 @@ function renderPromoChart(fOrders, fMkt) {
     promotion:p, ...v,
     roi: null, burn: v.expected>0 ? (v.actual/v.expected)*100 : null,
   }));
+  window._lastPromoSummary = summary;  // renderPromoTable에서 참조
 
   // (promoStart was already built above for ORDER AMT filtering)
 
@@ -6494,6 +6495,7 @@ function renderPromoChart(fOrders, fMkt) {
       cmpSeries[key] = cmpSeries[key] || {};
       cmpSeries[key][pk] = (cmpSeries[key][pk] || 0) + amt;
     });
+    window._lastPromoCmpSeries = cmpSeries;  // renderPromoTable에서 참조
     // ── KPI cards: restrict the window to the campaign's execution buckets ──
     // For a single-promotion view, "현재 합계" and "전년 동기 합계" should sum
     // only over the campaign's actual months — not every period in the data.
@@ -6606,7 +6608,7 @@ function renderPromoChart(fOrders, fMkt) {
             },
           },
         });
-        return;  // skip everything below
+        renderPromoTable(); return;  // skip everything below
       }
     }
     // ── BAR CHART for single-promotion compare on dim=promotion ──
@@ -6659,7 +6661,7 @@ function renderPromoChart(fOrders, fMkt) {
           },
         },
       });
-      return;  // skip the default line chart below
+      renderPromoTable(); return;  // skip the default line chart below
     }
     // ── ALL promotions + compare on: grouped bar (전년/전분기/전월 x 월별 쌍) ──
     // x축: 각 period bucket의 현재+이전 쌍 → "25년 4월 / 26년 4월" 형태
@@ -6710,7 +6712,7 @@ function renderPromoChart(fOrders, fMkt) {
         },
       },
     });
-    return; // grouped bar 완료 — 아래 line chart 렌더링 생략
+    renderPromoTable(); return; // grouped bar 완료 — 아래 line chart 렌더링 생략
   } else if (cmpKpiEl) {
     cmpKpiEl.style.display = 'none';
     cmpKpiEl.innerHTML = '';
@@ -6866,152 +6868,153 @@ function renderPromoChart(fOrders, fMkt) {
       .slice(0, 100);
   }
 
-  const tableRows = (tableDim === 'promotion') ? summary : buildEntitySummary(tableDim);
-
-  // ── 월별 전년 비교 버킷 계산 ──────────────────────────────────────────────
-  // 현재 기간: execBuckets (single promo) 또는 periodBuckets (전체)
+  renderPromoTable();
+}
+function renderPromoTable() {
+  // tableDim, summary, buildEntitySummary, cmpSeries, period, shiftBucket 등은
+  // renderPromoChart 클로저 변수에 접근 불가 → 전역 state에서 직접 재계산
+  const tableDim = state.promoTableDim || 'promotion';
+  const period   = state.promoPerfPeriod || 'month';
   const _cmpModeNow = state.promoCmp || 'yoy';
   const _prevColLabel = { yoy:'전년 동기', qoq:'전분기', mom:'전월', off:'–' }[_cmpModeNow] || '전년 동기';
+  const fOrders = state.orders.filter(matchOrder).filter(o => isRegionVisible(o.region));
+  const fMkt    = state.marketing.filter(matchMkt).filter(m => isRegionVisible(m.region));
+  // 재사용: renderPromoChart 내 summary 접근 불가 → _lastPromoSummary 전역에서 읽기
+  const summary = window._lastPromoSummary || [];
+  const cmpSeries = window._lastPromoCmpSeries || {};
 
-  // 테이블에 표시할 period 버킷 (현재 연도 기준)
+  function shiftBucket(pk, mode, per) {
+    if (!pk) return '';
+    if (per === 'year') { return String(parseInt(pk,10)-(mode==='yoy'?1:1)); }
+    if (per === 'quarter') {
+      const [ys,qs]=pk.split('-Q'); let y=+ys,q=+qs;
+      if (mode==='yoy') return `${y-1}-Q${q}`;
+      q-=1; if(q<1){q=4;y-=1;} return `${y}-Q${q}`;
+    }
+    const [ys,ms]=pk.split('-'); let y=+ys,m=+ms;
+    if (mode==='yoy'){return `${y-1}-${String(m).padStart(2,'0')}`;}
+    if (mode==='qoq'){m-=3;while(m<1){m+=12;y-=1;}return `${y}-${String(m).padStart(2,'0')}`;}
+    m-=1;if(m<1){m=12;y-=1;}return `${y}-${String(m).padStart(2,'0')}`;
+  }
+
   const curPeriods = Array.from(new Set(
-    (state.orders || []).map(o => periodKey(o.order_date, period)).filter(Boolean)
+    (state.orders||[]).map(o=>periodKey(o.order_date,period)).filter(Boolean)
   )).sort();
 
-  // period별 현재/전년 금액 집계 (promotion 기준)
-  const periodCurByPromo  = {};  // promo → pk → amt
-  const periodPrvByPromo  = {};  // promo → ppk → amt (전년 버킷)
-  tableRows.forEach(p => {
-    const promo = p.promotion || p.key || '';
+  const periodCurByPromo = {}, periodPrvByPromo = {};
+  summary.forEach(p => {
+    const promo = p.promotion||p.key||'';
     periodCurByPromo[promo] = {};
     periodPrvByPromo[promo] = {};
   });
-
-  // 현재 oders에서 period별 집계
-  (state.orders || []).forEach(o => {
-    const promo = o.promotion_category || '';
+  (state.orders||[]).forEach(o => {
+    const promo = o.promotion_category||'';
     if (!periodCurByPromo[promo]) return;
     const pk = periodKey(o.order_date, period);
     if (!pk) return;
-    periodCurByPromo[promo][pk] = (periodCurByPromo[promo][pk] || 0) + convOrder(o);
+    periodCurByPromo[promo][pk] = (periodCurByPromo[promo][pk]||0) + convOrder(o);
   });
-
-  // cmpSeries에서 전년 버킷 집계 (이미 위에서 빌드됨)
   if (_cmpModeNow !== 'off') {
-    tableRows.forEach(p => {
-      const promo = p.promotion || p.key || '';
+    summary.forEach(p => {
+      const promo = p.promotion||p.key||'';
       curPeriods.forEach(pk => {
         const ppk = shiftBucket(pk, _cmpModeNow, period);
-        const prv = (cmpSeries[promo] && cmpSeries[promo][ppk]) || 0;
-        if (prv) periodPrvByPromo[promo][ppk] = (periodPrvByPromo[promo][ppk] || 0) + prv;
+        const prv = (cmpSeries[promo]&&cmpSeries[promo][ppk])||0;
+        if (prv) periodPrvByPromo[promo][ppk] = (periodPrvByPromo[promo][ppk]||0)+prv;
       });
     });
   }
 
-  // 전체 합계 행용 집계
-  const totalCur = tableRows.reduce((s, p) => s + (p.afterAmt || p.orderAmt || 0), 0);
-  const totalPrv = tableRows.reduce((s, p) => s + (p.beforeAmt || 0), 0);
-  const totalOrd = tableRows.reduce((s, p) => s + (p.orders || 0), 0);
-  const totalAct = tableRows.reduce((s, p) => s + (p.activities || 0), 0);
-  const totalBudget = tableRows.reduce((s, p) => s + (p.expected || 0), 0);
-  const totalExec   = tableRows.reduce((s, p) => s + (p.actual || 0), 0);
-  const totalDelta = totalPrv > 0 ? ((totalCur - totalPrv) / totalPrv) * 100 : null;
-
-  // 월별 현재/전년 전체 합계
-  const totalCurByPk = {}, totalPrvByPk = {};
-  curPeriods.forEach(pk => {
-    totalCurByPk[pk] = tableRows.reduce((s, p) => {
-      const promo = p.promotion || p.key || '';
-      return s + ((periodCurByPromo[promo] && periodCurByPromo[promo][pk]) || 0);
-    }, 0);
-    const ppk = shiftBucket(pk, _cmpModeNow, period);
-    totalPrvByPk[ppk] = tableRows.reduce((s, p) => {
-      const promo = p.promotion || p.key || '';
-      return s + ((periodPrvByPromo[promo] && periodPrvByPromo[promo][ppk]) || 0);
-    }, 0);
-  });
-
   const showMktCols = (tableDim === 'promotion');
-  const _fmtPk = pk => pk ? pk.replace(/^20(\d\d)-(\d\d)$/, '\'$1.$2').replace(/^20(\d\d)-Q(\d)$/, '\'$1.Q$2').replace(/^(20\d\d)$/, '$1') : '';
-  const dTag = (cur, prv) => {
-    const d = prv > 0 ? ((cur - prv) / prv) * 100 : null;
-    return d == null ? '<span class="muted">–</span>'
-      : d >= 0 ? `<span class="t-green" style="font-size:10px">▲${d.toFixed(0)}%</span>`
-               : `<span class="t-red" style="font-size:10px">▼${Math.abs(d).toFixed(0)}%</span>`;
+  const _fmtPk = pk => pk?pk.replace(/^20(\d\d)-(\d\d)$/,"'$1.$2").replace(/^20(\d\d)-Q(\d)$/,"'$1.Q$2").replace(/^(20\d\d)$/,'$1'):'';
+  const dTag = (cur,prv) => {
+    const d = prv>0?((cur-prv)/prv)*100:null;
+    return d==null?'<span class="muted">–</span>':d>=0?`<span class="t-green" style="font-size:10px">▲${d.toFixed(0)}%</span>`:`<span class="t-red" style="font-size:10px">▼${Math.abs(d).toFixed(0)}%</span>`;
   };
 
-  // 월별 컬럼 헤더: 현재월 / 전년월 쌍
-  const monthColsHead = curPeriods.map((pk, i) => {
-    const ppk = _cmpModeNow !== 'off' ? shiftBucket(pk, _cmpModeNow, period) : '';
-    const label = ppk ? `${_fmtPk(ppk)}<br><span style="color:var(--blue)">${_fmtPk(pk)}</span>` : _fmtPk(pk);
+  const totalCur = summary.reduce((s,p)=>s+(p.afterAmt||p.orderAmt||0),0);
+  const totalPrv = summary.reduce((s,p)=>s+(p.beforeAmt||0),0);
+  const totalOrd = summary.reduce((s,p)=>s+(p.orders||0),0);
+  const totalBudget = summary.reduce((s,p)=>s+(p.expected||0),0);
+  const totalExec   = summary.reduce((s,p)=>s+(p.actual||0),0);
+  const totalDelta  = totalPrv>0?((totalCur-totalPrv)/totalPrv)*100:null;
+  const totalCurByPk={}, totalPrvByPk={};
+  curPeriods.forEach(pk => {
+    totalCurByPk[pk] = summary.reduce((s,p)=>{
+      const promo=p.promotion||p.key||'';
+      return s+((periodCurByPromo[promo]&&periodCurByPromo[promo][pk])||0);
+    },0);
+    const ppk = shiftBucket(pk,_cmpModeNow,period);
+    totalPrvByPk[ppk] = summary.reduce((s,p)=>{
+      const promo=p.promotion||p.key||'';
+      return s+((periodPrvByPromo[promo]&&periodPrvByPromo[promo][ppk])||0);
+    },0);
+  });
+
+  const monthColsHead = curPeriods.map((pk,i)=>{
+    const ppk = _cmpModeNow!=='off'?shiftBucket(pk,_cmpModeNow,period):'';
+    const label = ppk?`${_fmtPk(ppk)}<br><span style="color:var(--blue)">${_fmtPk(pk)}</span>`:_fmtPk(pk);
     return `<th class="text-right mono" style="font-size:10px;${i===0?'border-left:2px solid var(--border)':''}">${label}</th>`;
   }).join('');
 
-  const head = `
-    <thead><tr>
-      <th>PROMOTION</th>
-      <th class="text-right">ORDERS</th>
-      <th class="text-right">현재 ORDER AMT</th>
-      ${_cmpModeNow !== 'off' ? `<th class="text-right">${_prevColLabel}</th>` : ''}
-      <th class="text-right">Δ%</th>
-      ${showMktCols ? '<th class="text-right">MKT BUDGET</th>' : ''}
-      ${showMktCols ? '<th class="text-right">EXECUTED</th>' : ''}
-      ${showMktCols ? '<th class="text-right">ROI</th>' : ''}
-      ${curPeriods.length ? `<th colspan="${curPeriods.length}" class="text-center" style="border-left:2px solid var(--border)">MONTH — <span style="color:#86868B">${_prevColLabel}</span> / <span style="color:var(--blue)">현재</span></th>` : ''}
-    </tr>
-    ${curPeriods.length ? `<tr style="background:rgba(0,0,0,0.02)">${monthColsHead}</tr>` : ''}
-    </thead>`;
+  const head = `<thead><tr>
+    <th>PROMOTION</th>
+    <th class="text-right">ORDERS</th>
+    <th class="text-right">현재 ORDER AMT</th>
+    ${_cmpModeNow!=='off'?`<th class="text-right">${_prevColLabel}</th>`:''}
+    <th class="text-right">Δ%</th>
+    ${showMktCols?'<th class="text-right">MKT BUDGET</th>':''}
+    ${showMktCols?'<th class="text-right">EXECUTED</th>':''}
+    ${showMktCols?'<th class="text-right">ROI</th>':''}
+    ${curPeriods.length?`<th colspan="${curPeriods.length}" class="text-center" style="border-left:2px solid var(--border)">MONTH — <span style="color:#86868B">${_prevColLabel}</span> / <span style="color:var(--blue)">현재</span></th>`:''}
+  </tr>${curPeriods.length?`<tr style="background:rgba(0,0,0,0.02)">${monthColsHead}</tr>`:''}</thead>`;
 
-  const body = `<tbody>${tableRows.map(p => {
-    const promo = p.promotion || p.key || '';
-    const dPctTag = p.baDeltaPct == null ? '<span class="muted">–</span>'
-      : p.baDeltaPct >= 0 ? `<span class="t-green">▲${p.baDeltaPct.toFixed(1)}%</span>`
-                          : `<span class="t-red">▼${Math.abs(p.baDeltaPct).toFixed(1)}%</span>`;
-    const roiTxt = p.roi == null ? '–' : fmtPct(p.roi);
-    const roiCls = p.roi == null ? 'muted' : (p.roi < 0 ? 't-red' : 't-green');
-
-    const monthCells = curPeriods.map((pk, i) => {
-      const cur = (periodCurByPromo[promo] && periodCurByPromo[promo][pk]) || 0;
-      const ppk = _cmpModeNow !== 'off' ? shiftBucket(pk, _cmpModeNow, period) : '';
-      const prv = ppk ? ((periodPrvByPromo[promo] && periodPrvByPromo[promo][ppk]) || 0) : 0;
-      const prvTxt = prv > 0 ? `<span class="muted" style="font-size:10px">${fmtMoney(prv)}</span><br>` : '';
-      const curTxt = cur > 0 ? `<span style="color:var(--blue);font-weight:700">${fmtMoney(cur)}</span>` : '<span class="muted">–</span>';
+  const body = `<tbody>${summary.map(p => {
+    const promo = p.promotion||p.key||'';
+    const dPctTag = p.baDeltaPct==null?'<span class="muted">–</span>':p.baDeltaPct>=0?`<span class="t-green">▲${p.baDeltaPct.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(p.baDeltaPct).toFixed(1)}%</span>`;
+    const roiTxt = p.roi==null?'–':fmtPct(p.roi);
+    const roiCls = p.roi==null?'muted':p.roi<0?'t-red':'t-green';
+    const monthCells = curPeriods.map((pk,i)=>{
+      const cur=(periodCurByPromo[promo]&&periodCurByPromo[promo][pk])||0;
+      const ppk=_cmpModeNow!=='off'?shiftBucket(pk,_cmpModeNow,period):'';
+      const prv=ppk?((periodPrvByPromo[promo]&&periodPrvByPromo[promo][ppk])||0):0;
+      const prvTxt=prv>0?`<span class="muted" style="font-size:10px">${fmtMoney(prv)}</span><br>`:'';
+      const curTxt=cur>0?`<span style="color:var(--blue);font-weight:700">${fmtMoney(cur)}</span>`:'<span class="muted">–</span>';
       return `<td class="text-right mono" style="font-size:11px;${i===0?'border-left:2px solid var(--border)':''}">${prvTxt}${curTxt}${cur>0&&prv>0?' '+dTag(cur,prv):''}</td>`;
     }).join('');
-
     return `<tr>
-      <td><b>${promo || '–'}</b>${p.baStart?`<br><span class="muted" style="font-size:10px">from ${p.baStart}</span>`:''}}</td>
+      <td><b>${promo||'–'}</b>${p.baStart?`<br><span class="muted" style="font-size:10px">from ${p.baStart}</span>`:''}</td>
       <td class="text-right mono">${fmtNum(p.orders)}</td>
-      <td class="text-right mono t-green" style="font-weight:700">${fmtMoney(p.afterAmt || p.orderAmt || 0)}</td>
-      ${_cmpModeNow !== 'off' ? `<td class="text-right mono muted">${fmtMoney(p.beforeAmt || 0)}</td>` : ''}
+      <td class="text-right mono t-green" style="font-weight:700">${fmtMoney(p.afterAmt||p.orderAmt||0)}</td>
+      ${_cmpModeNow!=='off'?`<td class="text-right mono muted">${fmtMoney(p.beforeAmt||0)}</td>`:''}
       <td class="text-right mono">${dPctTag}</td>
-      ${showMktCols ? `<td class="text-right mono t-yellow">${fmtMoney(p.expected||0)}</td>` : ''}
-      ${showMktCols ? `<td class="text-right mono t-orange">${fmtMoney(p.actual||0)}</td>` : ''}
-      ${showMktCols ? `<td class="text-right mono ${roiCls}" style="font-weight:700">${roiTxt}</td>` : ''}
+      ${showMktCols?`<td class="text-right mono t-yellow">${fmtMoney(p.expected||0)}</td>`:''}
+      ${showMktCols?`<td class="text-right mono t-orange">${fmtMoney(p.actual||0)}</td>`:''}
+      ${showMktCols?`<td class="text-right mono ${roiCls}" style="font-weight:700">${roiTxt}</td>`:''}
       ${monthCells}
     </tr>`;
   }).join('')}
   <tr style="border-top:2px solid var(--border);font-weight:800;background:rgba(0,0,0,0.03)">
-    <td>TOTAL (${tableRows.length}개 캠페인)</td>
+    <td>TOTAL (${summary.length}개 캠페인)</td>
     <td class="text-right mono">${fmtNum(totalOrd)}</td>
     <td class="text-right mono t-green" style="font-weight:800">${fmtMoney(totalCur)}</td>
-    ${_cmpModeNow !== 'off' ? `<td class="text-right mono muted">${fmtMoney(totalPrv)}</td>` : ''}
+    ${_cmpModeNow!=='off'?`<td class="text-right mono muted">${fmtMoney(totalPrv)}</td>`:''}
     <td class="text-right mono">${totalPrv>0?(totalDelta>=0?`<span class="t-green">▲${totalDelta.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(totalDelta).toFixed(1)}%</span>`):'–'}</td>
-    ${showMktCols ? `<td class="text-right mono t-yellow">${fmtMoney(totalBudget)}</td>` : ''}
-    ${showMktCols ? `<td class="text-right mono t-orange">${fmtMoney(totalExec)}</td>` : ''}
-    ${showMktCols ? `<td class="text-right mono">${totalExec>0?fmtPct((totalCur-totalExec)/totalExec*100):'–'}</td>` : ''}
-    ${curPeriods.map((pk, i) => {
-      const cur = totalCurByPk[pk] || 0;
-      const ppk = _cmpModeNow !== 'off' ? shiftBucket(pk, _cmpModeNow, period) : '';
-      const prv = ppk ? (totalPrvByPk[ppk] || 0) : 0;
-      const prvTxt = prv > 0 ? `<span class="muted" style="font-size:10px">${fmtMoney(prv)}</span><br>` : '';
-      const curTxt = cur > 0 ? `<span style="color:var(--blue);font-weight:700">${fmtMoney(cur)}</span>` : '<span class="muted">–</span>';
+    ${showMktCols?`<td class="text-right mono t-yellow">${fmtMoney(totalBudget)}</td>`:''}
+    ${showMktCols?`<td class="text-right mono t-orange">${fmtMoney(totalExec)}</td>`:''}
+    ${showMktCols?`<td class="text-right mono">${totalExec>0?fmtPct((totalCur-totalExec)/totalExec*100):'–'}</td>`:''}
+    ${curPeriods.map((pk,i)=>{
+      const cur=totalCurByPk[pk]||0;
+      const ppk=_cmpModeNow!=='off'?shiftBucket(pk,_cmpModeNow,period):'';
+      const prv=ppk?(totalPrvByPk[ppk]||0):0;
+      const prvTxt=prv>0?`<span class="muted" style="font-size:10px">${fmtMoney(prv)}</span><br>`:'';
+      const curTxt=cur>0?`<span style="color:var(--blue);font-weight:700">${fmtMoney(cur)}</span>`:'<span class="muted">–</span>';
       return `<td class="text-right mono" style="font-size:11px;${i===0?'border-left:2px solid var(--border)':''}">${prvTxt}${curTxt}${cur>0&&prv>0?' '+dTag(cur,prv):''}</td>`;
     }).join('')}
-  </tr>
-  </tbody>`;
+  </tr></tbody>`;
   document.getElementById('tblPromo').innerHTML = head + body;
 }
+
 
 /* Combined Sales Trend renderer — toggles between Promotion Category and Region/Country */
 function renderSalesTrendCombined(fOrders) {
