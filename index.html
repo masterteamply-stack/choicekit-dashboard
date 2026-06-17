@@ -2161,16 +2161,7 @@ header .mono b.t-orange {
         <div id="promoInsight" class="label-mono" style="margin-bottom:10px;font-size:11px;color:#525257"></div>
         <div id="promoCmpKpis" style="display:none;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px"></div>
         <div class="chart-wrap" style="height:360px"><canvas id="chPromo"></canvas></div>
-        <div style="display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap">
-          <span class="label-mono muted" style="font-size:11px">Group by:</span>
-          <select id="promoTableDimSel" style="font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface)">
-            <option value="promotion">Promotion Category</option>
-            <option value="sku">SKU</option>
-            <option value="customer">Customer</option>
-          </select>
-          <span class="label-mono muted" style="font-size:11px" id="promoTableNote"></span>
-        </div>
-        <div style="overflow:auto;margin-top:8px"><table id="tblPromo"></table></div>
+        <div style="overflow:auto;margin-top:14px"><table id="tblPromo"></table></div>
       </div>
 
       <!-- Choice Kit Impact — Dormant Activation -->
@@ -2563,7 +2554,7 @@ const DEFAULT_WIDGET_ORDER = [
 ];
 const DEFAULT_HIDDEN_WIDGETS = ['category','promoOrderTrend'];
 const WIDGET_ORDER_VERSION = 'v27.0'; // bump → existing users get the new default once
-const PROMO_DEFAULTS_VERSION = 'v1.0'; // bump → promo 기본값 리셋
+const PROMO_DEFAULTS_VERSION = 'v2.0'; // bump → promo 기본값 리셋
 const _promoDefaultsApplied = localStorage.getItem('ck_promo_defaults_v') === PROMO_DEFAULTS_VERSION;
 
 let state = {
@@ -2608,7 +2599,7 @@ let state = {
   planExecSort: localStorage.getItem('ck_planexec_sort') || 'orderAmt',
   promoPerfPeriod: _promoDefaultsApplied ? (localStorage.getItem('ck_promo_perf_period') || 'month') : 'month',
   promoDim: _promoDefaultsApplied ? (localStorage.getItem('ck_promo_dim') || 'promotion') : 'promotion',
-  promoCmp: _promoDefaultsApplied ? (localStorage.getItem('ck_promo_cmp') || 'mom') : 'mom',
+  promoCmp: _promoDefaultsApplied ? (localStorage.getItem('ck_promo_cmp') || 'yoy') : 'yoy',
   promoTableDim: _promoDefaultsApplied ? (localStorage.getItem('ck_promo_table_dim') || 'promotion') : 'promotion',
   ckiPromo: localStorage.getItem('ck_cki_promo') || 'Asian vehicle',
   ckiThreshold: parseFloat(localStorage.getItem('ck_cki_threshold') || '5000'),
@@ -6323,8 +6314,9 @@ function renderPromoChart(fOrders, fMkt) {
   const shownKeys = keys.slice(0, MAX_SERIES);
 
   const PALETTE = ['#C8102E','#0A84FF','#34C759','#FF9500','#AF52DE','#5AC8FA','#FF2D55','#A2845E','#1D1D1F','#30B0C7','#FFD60A','#BF5AF2'];
+  const LINE_PALETTE = ['#A1A1A6','#525257','#0A0A0A','#757575','#BCBCBC','#3a3a3a','#8a8a8a'];
   const lineDatasets = shownKeys.map((key, i) => {
-    const col = PALETTE[i % PALETTE.length];
+    const col = LINE_PALETTE[i % LINE_PALETTE.length];
     return {
       label: key,
       data: periodBuckets.map(pk => Math.round((series[key] && series[key][pk]) || 0)),
@@ -6604,20 +6596,56 @@ function renderPromoChart(fOrders, fMkt) {
       });
       return;  // skip the default line chart below
     }
-    // Otherwise (All promotions + compare on): overlay dashed prior lines on the line chart.
-    shownKeys.forEach((key, i) => {
-      const col = PALETTE[i % PALETTE.length];
-      const priorData = periodBuckets.map(pk => {
-        const ppk = shiftBucket(pk, cmpMode, period);
-        return Math.round((cmpSeries[key] && cmpSeries[key][ppk]) || 0);
-      });
-      lineDatasets.push({
-        label: `${key} · 이전`,
-        data: priorData,
-        borderColor: col, backgroundColor: 'transparent',
-        borderWidth: 1.5, borderDash: [4, 3], pointRadius: 0, pointHoverRadius: 4, tension: 0.25, fill: false,
-      });
+    // ── ALL promotions + compare on: grouped bar (전년/전분기/전월 x 월별 쌍) ──
+    // x축: 각 period bucket의 현재+이전 쌍 → "25년 4월 / 26년 4월" 형태
+    const windowBuckets = periodBuckets;
+    const curBarsAll  = windowBuckets.map(pk =>
+      Math.round(shownKeys.reduce((s, key) => s + ((series[key] && series[key][pk]) || 0), 0))
+    );
+    const priorBarsAll = windowBuckets.map(pk => {
+      const ppk = shiftBucket(pk, cmpMode, period);
+      return Math.round(shownKeys.reduce((s, key) => s + ((cmpSeries[key] && cmpSeries[key][ppk]) || 0), 0));
     });
+    // x축 레이블: "25.04 / 26.04" 형태
+    const pairedLabels = windowBuckets.map(pk => {
+      const ppk = shiftBucket(pk, cmpMode, period);
+      const fmt = s => s ? s.replace(/^20(\d\d)-(\d\d)$/, '$1.$2').replace(/^20(\d\d)-Q(\d)$/, '$1.Q$2').replace(/^(20\d\d)$/, '$1') : pk;
+      return `${fmt(ppk)} / ${fmt(pk)}`;
+    });
+    if (charts.promo) charts.promo.destroy();
+    charts.promo = new Chart(document.getElementById('chPromo'), {
+      type: 'bar',
+      data: {
+        labels: pairedLabels,
+        datasets: [
+          { label: modeLabelKo, data: priorBarsAll, backgroundColor:'#A1A1A6', borderRadius:3, maxBarThickness:36 },
+          { label: '현재',      data: curBarsAll,   backgroundColor:'#525257', borderRadius:3, maxBarThickness:36 },
+        ],
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins: {
+          legend: { position:'top', labels:{ color:'#1D1D1F', font:{family:'IBM Plex Mono',weight:600,size:11}, boxWidth:14, padding:8 } },
+          datalabels: { display:false },
+          tooltip: {
+            callbacks: {
+              label: c => `${c.dataset.label}: ${fmtMoney(c.parsed.y)}`,
+              footer: items => {
+                const i = items[0].dataIndex;
+                const cur = curBarsAll[i], prv = priorBarsAll[i];
+                const d = prv > 0 ? ((cur - prv) / prv) * 100 : null;
+                return d == null ? '' : `Δ ${d >= 0 ? '+' : ''}${d.toFixed(1)}%`;
+              },
+            },
+          },
+        },
+        scales: {
+          x: { ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:10},maxRotation:40,minRotation:0}, grid:{display:false} },
+          y: { beginAtZero:true, ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',size:12},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'} },
+        },
+      },
+    });
+    return; // grouped bar 완료 — 아래 line chart 렌더링 생략
   } else if (cmpKpiEl) {
     cmpKpiEl.style.display = 'none';
     cmpKpiEl.innerHTML = '';
