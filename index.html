@@ -6052,14 +6052,14 @@ function renderPromoChart(fOrders, fMkt) {
 
   // ── AFTER (current ORDER AMT) ────────────────────────────────────────────
   // Single source of truth: sum of fOrders rows whose promotion_category tag
-  // matches the campaign name — exactly the same as By Customers uses.
-  // No SKU/customer mapping, no date window filtering here; every tagged order
-  // in orders.csv counts. This ensures Promotion Performance ORDER AMT ==
-  // By Customers CK order AMT for the same campaign.
+  // AFTER = 각 캠페인의 promoStart 이후 주문만 합산
+  // 날짜 필터 없이 전체 합산하면 시작 전 주문까지 포함되어 과대계상됨
   const _afterByPromo = {};
   _baScanSource.forEach(o => {
     const p = (o.promotion_category || '').trim();
     if (!p) return;
+    const start = promoStart[p];
+    if (start && o.order_date < start) return;  // 캠페인 시작 전 주문 제외
     _afterByPromo[p] = (_afterByPromo[p] || 0) + convOrder(o);
   });
 
