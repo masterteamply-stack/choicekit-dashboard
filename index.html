@@ -2151,7 +2151,6 @@ header .mono b.t-orange {
         <div id="promoCmpKpis" style="display:none;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px"></div>
         <div class="chart-wrap" style="height:360px"><canvas id="chPromo"></canvas></div>
         <div style="overflow:auto;margin-top:14px"><table id="tblPromo"></table></div>
-      </div>
 
       <!-- Choice Kit Impact — Dormant Activation -->
       <div class="panel widget" data-widget-id="choicekitImpact">
@@ -6376,11 +6375,8 @@ function renderPromoChart(fOrders, fMkt) {
 
   if (cmpMode !== 'off') {
     // Aggregate current + baseline by the SAME dimension into prior buckets.
-    // Baseline scope rules:
-    //   • single promotion: rows must belong to that campaign (target + region)
-    //   • all promotions:   rows must belong to ANY known campaign (target +
-    //                       region) so prior-period totals reflect the same
-    //                       scope as the current orders, not unrelated traffic
+    // srcAll = 현재 orders (전체 연도 포함) + preOrders baseline
+    // preOrders가 없어도 fOrders 자체에 과거 연도 데이터가 있으면 활용
     const cmpSeries = {};   // key → { pk → amt }   (full history incl. baseline)
     const baselineRows = (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length)
       ? state.preOrders : [];
@@ -6413,14 +6409,31 @@ function renderPromoChart(fOrders, fMkt) {
         ? baselineRows.filter(o => knownPromos.some(p => baselineMatchesPromo(o, p)))
         : baselineRows.filter(o => baselineMatchesPromo(o, promoFilter));
     }
-    const srcAll = (fOrdersScoped || []).concat(scopedBaseline);
+    // promoFilter === '__all__' 일 때: fOrders 전체(날짜 필터 무관) + baseline을 포함
+    // promotion_category 태그가 있는 orders.csv rows를 연도 관계없이 모두 포함
+    const allOrdersForCmp = (promoFilter === '__all__')
+      ? (state.orders || []).filter(o => o.promotion_category && o.promotion_category !== '(none)' && o.promotion_category !== 'PRE_ORDER')
+      : fOrdersScoped || [];
+    const srcAll = allOrdersForCmp.concat(scopedBaseline);
     srcAll.forEach(o => {
       const pk = periodKey(o.order_date, period);
       if (!pk) return;
       const amt = (o.amount_usd != null && o[PRE_ORDER_MARK]) ? Number(o.amount_usd) * usdToDisplay() : convOrder(o);
       let key;
-      if (dim === 'promotion') key = (promoFilter !== '__all__') ? promoFilter : (o.promotion_category || '(none)');
-      else if (dim === 'customer') { key = normalizeCustomer(o); if (!key) return; }
+      if (dim === 'promotion') {
+        if (promoFilter !== '__all__') {
+          key = promoFilter;
+        } else if (o[PRE_ORDER_MARK]) {
+          // preOrders는 promotion_category가 'PRE_ORDER'/'STANDARD' — SKU/고객으로 역추적
+          const sk = (o.sku || '').trim();
+          const cu = (o.customer || '').trim();
+          key = skuToPromo[sk] || custToPromo[cu] || null;
+          if (!key) return;
+        } else {
+          key = o.promotion_category || null;
+          if (!key || key === '(none)') return;
+        }
+      } else if (dim === 'customer') { key = normalizeCustomer(o); if (!key) return; }
       else key = normalizeRegion(o.region || '') || '(none)';
       cmpSeries[key] = cmpSeries[key] || {};
       cmpSeries[key][pk] = (cmpSeries[key][pk] || 0) + amt;
