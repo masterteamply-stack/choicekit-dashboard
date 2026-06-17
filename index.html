@@ -2559,6 +2559,8 @@ const DEFAULT_WIDGET_ORDER = [
 ];
 const DEFAULT_HIDDEN_WIDGETS = ['category','promoOrderTrend'];
 const WIDGET_ORDER_VERSION = 'v27.0'; // bump → existing users get the new default once
+const PROMO_DEFAULTS_VERSION = 'v1.0'; // bump → promo 기본값 리셋
+const _promoDefaultsApplied = localStorage.getItem('ck_promo_defaults_v') === PROMO_DEFAULTS_VERSION;
 
 let state = {
   orders: JSON.parse(localStorage.getItem('ck_orders') || '[]'),
@@ -2600,10 +2602,10 @@ let state = {
   categoryView: localStorage.getItem('ck_category_view') || 'category',
   planExecPath: JSON.parse(localStorage.getItem('ck_planexec_path') || '[]'),
   planExecSort: localStorage.getItem('ck_planexec_sort') || 'orderAmt',
-  promoPerfPeriod: localStorage.getItem('ck_promo_perf_period') || 'month',
-  promoDim: localStorage.getItem('ck_promo_dim') || 'promotion',
-  promoCmp: localStorage.getItem('ck_promo_cmp') || 'yoy',
-  promoTableDim: localStorage.getItem('ck_promo_table_dim') || 'promotion',
+  promoPerfPeriod: _promoDefaultsApplied ? (localStorage.getItem('ck_promo_perf_period') || 'month') : 'month',
+  promoDim: _promoDefaultsApplied ? (localStorage.getItem('ck_promo_dim') || 'promotion') : 'promotion',
+  promoCmp: _promoDefaultsApplied ? (localStorage.getItem('ck_promo_cmp') || 'mom') : 'mom',
+  promoTableDim: _promoDefaultsApplied ? (localStorage.getItem('ck_promo_table_dim') || 'promotion') : 'promotion',
   ckiPromo: localStorage.getItem('ck_cki_promo') || 'Asian vehicle',
   ckiThreshold: parseFloat(localStorage.getItem('ck_cki_threshold') || '5000'),
   ckiCompare: localStorage.getItem('ck_cki_compare') || 'mom',
@@ -2701,6 +2703,7 @@ const persist = () => {
   localStorage.setItem('ck_planexec_path', JSON.stringify(state.planExecPath || []));
   localStorage.setItem('ck_planexec_sort', state.planExecSort || 'orderAmt');
   localStorage.setItem('ck_promo_perf_period', state.promoPerfPeriod);
+  localStorage.setItem('ck_promo_defaults_v', PROMO_DEFAULTS_VERSION);
   localStorage.setItem('ck_region_metric', state.regionMetric);
   localStorage.setItem('ck_breakdown_region', state.breakdownRegion);
   localStorage.setItem('ck_budget_exec_region', state.budgetExecRegion || '__all__');
