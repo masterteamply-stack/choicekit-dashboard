@@ -6383,43 +6383,63 @@ function renderPromoChart(fOrders, fMkt) {
     const knownPromos = Object.keys(state.campaignTargetSkus || {});
     // Use index for fast per-target lookup instead of scanning all 654K rows
     const preIdx = state._preIdx;
+    // buyer_code→customer 역매핑 (orders.csv Customer_No 기반)
+    const _buyerMap = {};
+    (state.orders || []).forEach(o => {
+      const bn = (o.customer_no || '').toString().trim();
+      const cn = (o.customer || '').trim();
+      if (bn && cn && !_buyerMap[bn]) _buyerMap[bn] = cn;
+    });
+    const _PAT_PO = /^PO-([^-]+)-(\d+)-\d+$/;
+    // preOrders row에서 CTR code / buyer_code 추출해 캠페인 매칭
+    const _resolvePreOrderPromo = (o) => {
+      const sku  = (o.sku  || '').trim();
+      const cust = (o.customer || '').trim();
+      const oid  = (o.order_id || '').trim();
+      if (sku  && skuToPromo[sku])  return skuToPromo[sku];
+      if (cust && custToPromo[cust]) return custToPromo[cust];
+      const pm = oid.match(_PAT_PO);
+      if (pm) {
+        if (skuToPromo[pm[1]]) return skuToPromo[pm[1]];  // CTR code
+        const mappedCust = _buyerMap[pm[2]];
+        if (mappedCust && custToPromo[mappedCust]) return custToPromo[mappedCust]; // buyer_code
+      }
+      return null;
+    };
     let scopedBaseline;
-    // 직접 SKU/고객 기반 매칭 — baselineMatchesPromo(region gate) 제거
-    // preOrders의 promotion_category는 'PRE_ORDER'/'STANDARD'이므로 SKU/고객으로만 판별
     if (preIdx && baselineRows.length) {
       if (promoFilter !== '__all__') {
         const cfg = (state.campaignTargetSkus || {})[promoFilter] || {};
         const mb = (cfg.match_by || 'sku').toLowerCase();
         const targets = mb === 'customer' ? (cfg.target_customers||[]) : (cfg.target_skus||[]);
-        const rows = [];
+        const rows = []; const seen = new Set();
+        const addR = (arr) => arr.forEach(o => { if (!seen.has(o)) { seen.add(o); rows.push(o); } });
         targets.forEach(k => {
-          const idx = mb === 'customer' ? preIdx.custIdx[k] : preIdx.skuIdx[k];
-          if (idx) rows.push(...idx);
+          if (mb === 'customer') { addR(preIdx.custIdx[k]||[]); addR(preIdx.buyerIdx[k]||[]); }
+          else                  { addR(preIdx.skuIdx[k] ||[]); addR(preIdx.ctrIdx[k]  ||[]); }
         });
         scopedBaseline = rows;
       } else {
-        const rows = [];
-        Object.keys(skuToPromo).forEach(k => { if (preIdx.skuIdx[k]) rows.push(...preIdx.skuIdx[k]); });
-        Object.keys(custToPromo).forEach(k => { if (preIdx.custIdx[k]) rows.push(...preIdx.custIdx[k]); });
+        const rows = []; const seen = new Set();
+        const addR = (arr) => arr.forEach(o => { if (!seen.has(o)) { seen.add(o); rows.push(o); } });
+        Object.keys(skuToPromo).forEach(k => { addR(preIdx.skuIdx[k]||[]); addR(preIdx.ctrIdx[k]||[]); });
+        Object.keys(custToPromo).forEach(k => { addR(preIdx.custIdx[k]||[]); addR(preIdx.buyerIdx[k]||[]); });
         scopedBaseline = rows;
       }
     } else {
-      // preIdx 없을 때: 전체 baselineRows에서 SKU/고객 직접 필터
-      const allSkus  = new Set(Object.keys(skuToPromo));
+      // preIdx 없을 때: 직접 필터 (CTR code + buyer_code 포함)
+      const allSkus = new Set(Object.keys(skuToPromo));
       const allCusts = new Set(Object.keys(custToPromo));
       if (promoFilter !== '__all__') {
         const cfg = (state.campaignTargetSkus || {})[promoFilter] || {};
         const mb = (cfg.match_by || 'sku').toLowerCase();
-        const targetSet = new Set(mb === 'customer' ? (cfg.target_customers||[]) : (cfg.target_skus||[]));
-        scopedBaseline = baselineRows.filter(o =>
-          mb === 'customer'
-            ? targetSet.has((o.customer||'').trim())
-            : targetSet.has((o.sku||'').trim())
-        );
+        const tset = new Set(mb === 'customer' ? (cfg.target_customers||[]) : (cfg.target_skus||[]));
+        scopedBaseline = baselineRows.filter(o => {
+          const promo = _resolvePreOrderPromo(o);
+          return promo === promoFilter;
+        });
       } else {
-        scopedBaseline = baselineRows.filter(o =>
-          allSkus.has((o.sku||'').trim()) || allCusts.has((o.customer||'').trim())
-        );
+        scopedBaseline = baselineRows.filter(o => !!_resolvePreOrderPromo(o));
       }
     }
     // promoFilter === '__all__' 일 때: fOrders 전체(날짜 필터 무관) + baseline을 포함
@@ -6437,10 +6457,8 @@ function renderPromoChart(fOrders, fMkt) {
         if (promoFilter !== '__all__') {
           key = promoFilter;
         } else if (o[PRE_ORDER_MARK]) {
-          // preOrders는 promotion_category가 'PRE_ORDER'/'STANDARD' — SKU/고객으로 역추적
-          const sk = (o.sku || '').trim();
-          const cu = (o.customer || '').trim();
-          key = skuToPromo[sk] || custToPromo[cu] || null;
+          // preOrders: SKU/고객/CTR code/buyer_code 순으로 역추적
+          key = _resolvePreOrderPromo(o);
           if (!key) return;
         } else {
           key = o.promotion_category || null;
@@ -9057,16 +9075,39 @@ function _buildPreOrdersIndex() {
     state._preIdx = null; state._preOrdersIndexed = false; return;
   }
   if (state._preOrdersIndexed) return;  // already built
-  const skuIdx = {}, custIdx = {};
+  const skuIdx = {}, custIdx = {}, ctrIdx = {}, buyerIdx = {};
+  // buyer_code→customer 역매핑: orders.csv의 Customer_No → customer 이름
+  const _buyerMap = {};
+  (state.orders || []).forEach(o => {
+    const bn = (o.customer_no || '').toString().trim();
+    const cn = (o.customer || '').trim();
+    if (bn && cn && !_buyerMap[bn]) _buyerMap[bn] = cn;
+  });
+  // order_id 파싱: "PO-{CTR}-{buyer_code}-{seq}"
+  const PAT_PO = /^PO-([^-]+)-(\d+)-\d+$/;
   state.preOrders.forEach(o => {
     const sku  = (o.sku  || '').trim();
     const cust = (o.customer || '').trim();
+    const oid  = (o.order_id || '').trim();
     if (sku)  { (skuIdx[sku]   = skuIdx[sku]   || []).push(o); }
     if (cust) { (custIdx[cust] = custIdx[cust] || []).push(o); }
+    // CTR code 및 buyer_code 인덱스
+    const m = oid.match(PAT_PO);
+    if (m) {
+      const ctr = m[1], buyer = m[2];
+      // CTR code → skuIdx 에도 등록 (campaign target_skus는 CTR code 형태)
+      if (ctr && !skuIdx[ctr]) { (ctrIdx[ctr] = ctrIdx[ctr] || []).push(o); }
+      else if (ctr)            { (ctrIdx[ctr] = ctrIdx[ctr] || []).push(o); }
+      // buyer_code → 고객명으로 변환 후 custIdx 에도 등록
+      if (buyer && _buyerMap[buyer]) {
+        const cn = _buyerMap[buyer];
+        (buyerIdx[cn] = buyerIdx[cn] || []).push(o);
+      }
+    }
   });
-  state._preIdx = { skuIdx, custIdx };
+  state._preIdx = { skuIdx, custIdx, ctrIdx, buyerIdx };
   state._preOrdersIndexed = true;
-  console.log(`[preIdx] built — ${Object.keys(skuIdx).length} SKUs, ${Object.keys(custIdx).length} customers`);
+  console.log(`[preIdx] built — ${Object.keys(skuIdx).length} SKUs, ${Object.keys(custIdx).length} custs, ${Object.keys(ctrIdx).length} CTRs, ${Object.keys(buyerIdx).length} buyers`);
 }
 
 document.getElementById('curToggle').addEventListener('click', e => {
@@ -10333,7 +10374,7 @@ async function idbDelete(key) {
 
 // Only these fields are needed downstream (fillCompareKpis usage). Stripping the
 // other ~30 columns from each pre-order row cuts memory & IndexedDB size by ~60%.
-const PRE_ORDER_SLIM_FIELDS = ['order_id','order_date','amount_usd','qty','sku','region','country','promotion_category'];
+const PRE_ORDER_SLIM_FIELDS = ['order_id','order_date','amount_usd','qty','sku','region','country','promotion_category','customer'];
 function slimPreOrderRow(o) {
   const r = {};
   for (let i = 0; i < PRE_ORDER_SLIM_FIELDS.length; i++) {
