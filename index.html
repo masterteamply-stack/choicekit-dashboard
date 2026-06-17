@@ -9686,10 +9686,10 @@ document.addEventListener('change', e => {
     state.promoCtrFilter = e.target.value; persist(); renderAll();
   }
   if (e.target.id === 'selCustTrendCamp') {
-    state.custTrendCampaign = e.target.value; persist(); renderCustomerTrend(state.orders.filter(matchOrder).filter(o=>isRegionVisible(o.region)));
+    state.custTrendCampaign = e.target.value; persist(); renderAll(); return;
   }
   if (e.target.id === 'selCustTrendN') {
-    state.custTrendN = Number(e.target.value)||5; persist(); renderCustomerTrend(state.orders.filter(matchOrder).filter(o=>isRegionVisible(o.region)));
+    state.custTrendN = Number(e.target.value)||5; persist(); renderAll(); return;
   }
   if (e.target.id === 'selTopInsightsRegion') {
     state.topInsightsRegion = e.target.value;
