@@ -9961,18 +9961,6 @@ document.addEventListener('change', e => {
   if (e.target.id === 'promoCmpSel') {
     state.promoCmp = e.target.value;
     try { localStorage.setItem('ck_promo_cmp', state.promoCmp); } catch(_){}
-    // Auto-sync period scale to match the comparison mode.
-    //   MoM → month / QoQ → quarter / YoY → year
-    const cmpToPeriod = { mom: 'month', qoq: 'quarter', yoy: 'year' };
-    const newPeriod = cmpToPeriod[state.promoCmp];
-    if (newPeriod) {
-      state.promoPerfPeriod = newPeriod;
-      try { localStorage.setItem('ck_promo_perf_period', newPeriod); } catch(_){}
-      // Reflect into the segment buttons
-      document.querySelectorAll('#segPromoPerf button').forEach(b => {
-        b.classList.toggle('active', b.dataset.v === newPeriod);
-      });
-    }
     persist(); renderAll(); return;
   }
   if (e.target.id === 'selTrendDim') renderAll();
@@ -10117,17 +10105,6 @@ document.addEventListener('click', e => {
     else if (id==='segPromoCtrMetric'){ state.promoCtrMetric = v; persist(); renderAll(); }
     else if (id==='segPromoPerf'){
       state.promoPerfPeriod = v;
-      // Auto-sync the comparison mode to the period scale:
-      //   Month   → 전월 (MoM)
-      //   Quarter → 전분기 (QoQ)
-      //   Year    → 전년 (YoY)
-      const periodToCmp = { month: 'mom', quarter: 'qoq', year: 'yoy' };
-      const newCmp = periodToCmp[v] || 'yoy';
-      state.promoCmp = newCmp;
-      try { localStorage.setItem('ck_promo_cmp', newCmp); } catch(_){}
-      // Reflect into the dropdown
-      const sel = document.getElementById('promoCmpSel');
-      if (sel) sel.value = newCmp;
       persist(); renderAll();
     }
     else if (id==='segRegionMetric'){ state.regionMetric = v; persist(); renderAll(); }
