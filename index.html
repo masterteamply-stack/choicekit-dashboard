@@ -2612,6 +2612,8 @@ let state = {
   regionMetric: localStorage.getItem('ck_region_metric') || 'order',
   breakdownRegion: localStorage.getItem('ck_breakdown_region') || '__all__',
   budgetExecRegion: localStorage.getItem('ck_budget_exec_region') || '__all__',
+  budgetExpandedRegions: JSON.parse(localStorage.getItem('ck_budget_exp_r') || '[]'),
+  budgetExpandedCountries: JSON.parse(localStorage.getItem('ck_budget_exp_c') || '[]'),
   custTrendProductMode: localStorage.getItem('ck_cust_trend_pmode') || 'amount',
   custTrendCampaign: localStorage.getItem('ck_cust_trend_camp') || '__all__',
   custTrendN: Number(localStorage.getItem('ck_cust_trend_n') || 5),
@@ -2702,6 +2704,8 @@ const persist = () => {
   localStorage.setItem('ck_region_metric', state.regionMetric);
   localStorage.setItem('ck_breakdown_region', state.breakdownRegion);
   localStorage.setItem('ck_budget_exec_region', state.budgetExecRegion || '__all__');
+  localStorage.setItem('ck_budget_exp_r', JSON.stringify(state.budgetExpandedRegions || []));
+  localStorage.setItem('ck_budget_exp_c', JSON.stringify(state.budgetExpandedCountries || []));
   localStorage.setItem('ck_cust_trend_pmode', state.custTrendProductMode || 'amount');
   localStorage.setItem('ck_cust_trend_camp', state.custTrendCampaign);
   localStorage.setItem('ck_cust_trend_n', String(state.custTrendN));
@@ -5057,56 +5061,164 @@ function renderBudgetStatus(fMkt) {
       : `EXECUTION SHARE % — <span style="color:var(--blue)">${selectedRegion}</span> only · <button class="btn ghost" style="padding:2px 8px;font-size:10px;margin-left:6px" onclick="window.__clearBudgetExecFilter()">Clear</button>`;
   }
 
-  const tbl = document.getElementById('tblBudgetStatus');
-  if (tbl) {
-    tbl.innerHTML = `
-      <thead><tr>
-        <th>REGION</th>
-        <th>MKT BUDGET</th>
-        <th>ALLOC %</th>
-        <th title="Sum of expected_cost from CSV (planned spend per region)">EXPECTED_COST</th>
-        <th title="Sum of actual_cost executed up to today">EXECUTED COST</th>
-        <th>EXEC %</th>
-        <th>REMAINING</th>
-        <th>PROGRESS</th>
-      </tr></thead>
-      <tbody>${rows.map(d => {
-        const alloc = totalBudget>0 ? (d.budget/totalBudget)*100 : 0;
-        const execShare = totalActual>0 ? (d.actual/totalActual)*100 : 0;
-        const remain = d.budget - d.actual;
-        // PROGRESS bar — executed portion always reads as RED so over/under
-        // spend is visually unambiguous. Deeper crimson when over budget.
-        const pctColor = d.pct >= 100 ? '#8B0000' : '#C8102E';
-        const barW = Math.min(100, d.pct);
-        const isSel = d.region === selectedRegion;
-        return `<tr style="${isSel?'background:#1d2940':''};cursor:pointer" onclick="window.__toggleBudgetExecFilter('${d.region.replace(/'/g,"\\'")}')">
-          <td><b>${d.region}</b>${isSel?' <span style="color:#0A0A0A">●</span>':''}</td>
-          <td>${fmtMoney(d.budget)}</td>
-          <td>${alloc.toFixed(1)}%</td>
-          <td class="t-yellow">${fmtMoney(d.expected)}</td>
-          <td>${fmtMoney(d.actual)}</td>
-          <td class="t-orange" style="font-weight:700">${execShare.toFixed(1)}%</td>
-          <td style="color:${remain<0?'#C8102E':'#6E6E73'}">${fmtMoney(remain)}</td>
-          <td style="min-width:160px">
-            <div style="background:#2a3142;border-radius:4px;overflow:hidden;height:14px;position:relative">
-              <div style="background:${pctColor};width:${barW}%;height:100%"></div>
-              <span style="position:absolute;top:0;left:6px;font-size:11px;color:#fff;line-height:14px;font-weight:700">${d.pct.toFixed(0)}%</span>
-            </div>
+  // ── Region → Country → Customer 3단계 아코디언 테이블 ──
+  // 먼저 country / customer 레벨까지 집계
+  const byRegionCountryCust = {};
+  fMkt.forEach(m => {
+    const r = m.region || '–';
+    if (!isRegionVisible(r)) return;
+    const c = (normalizeCountry(m.country || '') || (m.country||'').toUpperCase() || '–');
+    const cust = (m.target_customer || m.customer || '–').trim() || '–';
+    byRegionCountryCust[r] = byRegionCountryCust[r] || {};
+    byRegionCountryCust[r][c] = byRegionCountryCust[r][c] || {};
+    byRegionCountryCust[r][c][cust] = byRegionCountryCust[r][c][cust] || { budget:0, expected:0, actual:0 };
+    const node = byRegionCountryCust[r][c][cust];
+    node.budget   += convMktBudget(m) || convMktExpected(m);
+    node.expected += convMktExpected(m);
+    node.actual   += convMktActual(m);
+  });
+
+  const expR = new Set(state.budgetExpandedRegions || []);
+  const expC = new Set(state.budgetExpandedCountries || []);
+
+  const progressBar = (pct) => {
+    const color = pct >= 100 ? '#8B0000' : '#C8102E';
+    const w = Math.min(100, pct);
+    return `<div style="background:#2a3142;border-radius:4px;overflow:hidden;height:14px;position:relative;min-width:120px">
+      <div style="background:${color};width:${w}%;height:100%"></div>
+      <span style="position:absolute;top:0;left:6px;font-size:11px;color:#fff;line-height:14px;font-weight:700">${pct.toFixed(0)}%</span>
+    </div>`;
+  };
+
+  const THEAD = `<thead><tr>
+    <th style="min-width:180px">REGION / COUNTRY / CUSTOMER</th>
+    <th class="text-right">MKT BUDGET</th>
+    <th class="text-right">ALLOC %</th>
+    <th class="text-right" title="expected_cost">EXPECTED</th>
+    <th class="text-right" title="actual_cost">EXECUTED</th>
+    <th class="text-right">EXEC %</th>
+    <th class="text-right">REMAINING</th>
+    <th style="min-width:140px">PROGRESS</th>
+  </tr></thead>`;
+
+  let bodyRows = '';
+
+  rows.forEach(d => {
+    const alloc   = totalBudget > 0 ? (d.budget / totalBudget) * 100 : 0;
+    const execPct = totalActual > 0 ? (d.actual / totalActual) * 100 : 0;
+    const remain  = d.budget - d.actual;
+    const isSel   = d.region === selectedRegion;
+    const isExpR  = expR.has(d.region);
+    const safeR   = d.region.replace(/'/g,"\\'");
+
+    // ── REGION 행 ──
+    bodyRows += `<tr style="${isSel?'background:rgba(10,10,10,0.06)':''}" data-budget-region-row>
+      <td style="padding-left:6px">
+        <span onclick="window.__budgetToggleRegion('${safeR}')" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;user-select:none">
+          <span style="font-size:11px;transition:transform .15s;display:inline-block;transform:rotate(${isExpR?'90':'0'}deg)">▶</span>
+          <b style="font-size:13px">${d.region}</b>
+        </span>
+        <span onclick="window.__toggleBudgetExecFilter('${safeR}')" style="cursor:pointer;margin-left:8px;font-size:10px;color:#A1A1A6;font-family:'IBM Plex Mono',monospace" title="Filter execution chart">${isSel?'● SELECTED':'⊙'}</span>
+      </td>
+      <td class="text-right mono t-orange">${fmtMoney(d.budget)}</td>
+      <td class="text-right mono">${alloc.toFixed(1)}%</td>
+      <td class="text-right mono t-yellow">${fmtMoney(d.expected)}</td>
+      <td class="text-right mono">${fmtMoney(d.actual)}</td>
+      <td class="text-right mono t-orange" style="font-weight:700">${execPct.toFixed(1)}%</td>
+      <td class="text-right mono" style="color:${remain<0?'#C8102E':'#6E6E73'}">${fmtMoney(remain)}</td>
+      <td>${progressBar(d.pct)}</td>
+    </tr>`;
+
+    if (!isExpR) return;
+
+    // ── COUNTRY 행 ──
+    const countriesMap = byRegionCountryCust[d.region] || {};
+    const countryKeys = Object.keys(countriesMap).sort();
+
+    countryKeys.forEach(country => {
+      const custMap = countriesMap[country] || {};
+      const cAgg = Object.values(custMap).reduce((a, v) => {
+        a.budget += v.budget; a.expected += v.expected; a.actual += v.actual; return a;
+      }, { budget:0, expected:0, actual:0 });
+      const cPct    = cAgg.budget > 0 ? (cAgg.actual / cAgg.budget) * 100 : 0;
+      const cRemain = cAgg.budget - cAgg.actual;
+      const cAlloc  = d.budget > 0 ? (cAgg.budget / d.budget) * 100 : 0;
+      const cExecPct= d.actual > 0 ? (cAgg.actual / d.actual) * 100 : 0;
+      const ck      = d.region + '|||' + country;
+      const isExpC  = expC.has(ck);
+      const safeC   = ck.replace(/'/g,"\\'");
+
+      bodyRows += `<tr style="background:rgba(0,0,0,0.02)" data-budget-country-row>
+        <td style="padding-left:28px">
+          <span onclick="window.__budgetToggleCountry('${safeC}')" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;user-select:none">
+            <span style="font-size:10px;transition:transform .15s;display:inline-block;transform:rotate(${isExpC?'90':'0'}deg);color:#A1A1A6">▶</span>
+            <span style="font-size:12px;color:#525257">${country}</span>
+          </span>
+        </td>
+        <td class="text-right mono" style="font-size:12px;color:#525257">${fmtMoney(cAgg.budget)}</td>
+        <td class="text-right mono" style="font-size:12px;color:#525257">${cAlloc.toFixed(1)}%</td>
+        <td class="text-right mono" style="font-size:12px;color:#B8860B">${fmtMoney(cAgg.expected)}</td>
+        <td class="text-right mono" style="font-size:12px">${fmtMoney(cAgg.actual)}</td>
+        <td class="text-right mono" style="font-size:12px;color:#525257">${cExecPct.toFixed(1)}%</td>
+        <td class="text-right mono" style="font-size:12px;color:${cRemain<0?'#C8102E':'#6E6E73'}">${fmtMoney(cRemain)}</td>
+        <td>${progressBar(cPct)}</td>
+      </tr>`;
+
+      if (!isExpC) return;
+
+      // ── CUSTOMER 행 ──
+      const custKeys = Object.keys(custMap).sort();
+      custKeys.forEach(cust => {
+        const v = custMap[cust];
+        const vPct    = v.budget > 0 ? (v.actual / v.budget) * 100 : 0;
+        const vRemain = v.budget - v.actual;
+        const vAlloc  = cAgg.budget > 0 ? (v.budget / cAgg.budget) * 100 : 0;
+        const vExecPct= cAgg.actual > 0 ? (v.actual / cAgg.actual) * 100 : 0;
+
+        bodyRows += `<tr style="background:rgba(0,0,0,0.035)" data-budget-cust-row>
+          <td style="padding-left:52px;font-size:11px;color:#86868B;font-family:'IBM Plex Mono',monospace">
+            👤 ${cust}
           </td>
+          <td class="text-right mono" style="font-size:11px;color:#86868B">${v.budget>0?fmtMoney(v.budget):'–'}</td>
+          <td class="text-right mono" style="font-size:11px;color:#86868B">${vAlloc>0?vAlloc.toFixed(1)+'%':'–'}</td>
+          <td class="text-right mono" style="font-size:11px;color:#86868B">${v.expected>0?fmtMoney(v.expected):'–'}</td>
+          <td class="text-right mono" style="font-size:11px;color:#86868B">${v.actual>0?fmtMoney(v.actual):'–'}</td>
+          <td class="text-right mono" style="font-size:11px;color:#86868B">${vExecPct>0?vExecPct.toFixed(1)+'%':'–'}</td>
+          <td class="text-right mono" style="font-size:11px;color:${vRemain<0?'#C8102E':'#86868B'}">${fmtMoney(vRemain)}</td>
+          <td>${v.budget>0||v.actual>0 ? progressBar(vPct) : ''}</td>
         </tr>`;
-      }).join('')}
-      <tr style="border-top:2px solid #2a3142;font-weight:800">
-        <td>TOTAL</td>
-        <td>${fmtMoney(totalBudget)}</td>
-        <td>100%</td>
-        <td class="t-yellow">${fmtMoney(totalExpected)}</td>
-        <td>${fmtMoney(totalActual)}</td>
-        <td>100%</td>
-        <td>${fmtMoney(totalBudget-totalActual)}</td>
-        <td></td>
-      </tr>
-      </tbody>`;
-  }
+      });
+    });
+  });
+
+  // TOTAL 행
+  bodyRows += `<tr style="border-top:2px solid var(--border);font-weight:800">
+    <td style="padding-left:6px">TOTAL</td>
+    <td class="text-right mono">${fmtMoney(totalBudget)}</td>
+    <td class="text-right mono">100%</td>
+    <td class="text-right mono t-yellow">${fmtMoney(totalExpected)}</td>
+    <td class="text-right mono">${fmtMoney(totalActual)}</td>
+    <td class="text-right mono">100%</td>
+    <td class="text-right mono">${fmtMoney(totalBudget-totalActual)}</td>
+    <td></td>
+  </tr>`;
+
+  const tbl = document.getElementById('tblBudgetStatus');
+  if (tbl) tbl.innerHTML = THEAD + `<tbody>${bodyRows}</tbody>`;
+
+  // 아코디언 토글 핸들러
+  window.__budgetToggleRegion = (region) => {
+    const s = new Set(state.budgetExpandedRegions || []);
+    s.has(region) ? s.delete(region) : s.add(region);
+    state.budgetExpandedRegions = [...s];
+    persist(); renderAll();
+  };
+  window.__budgetToggleCountry = (ck) => {
+    const s = new Set(state.budgetExpandedCountries || []);
+    s.has(ck) ? s.delete(ck) : s.add(ck);
+    state.budgetExpandedCountries = [...s];
+    persist(); renderAll();
+  };
 }
 window.__toggleBudgetExecFilter = function(region) {
   state.budgetExecRegion = (state.budgetExecRegion === region) ? '__all__' : region;
