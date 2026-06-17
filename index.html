@@ -1889,17 +1889,6 @@ header .mono b.t-orange {
         <div class="kpi-card"><div class="head"><span class="dot" style="background:var(--green)"></span><span class="label-mono">SKU Items</span></div><div class="kpi-num" id="kSkuCnt">0</div><div class="sub" id="kSkuSub">0 pcs total</div></div>
       </div>
 
-      <!-- Order Target Progress 게이지 (이동됨) -->
-      <div class="progress-card" id="orderTargetPanel" style="margin:18px 0 0">
-        <div class="progress-row">
-          <div>
-            <div class="label-mono" style="margin-bottom:4px">Order Target Progress</div>
-            <div class="mono" style="font-size:15px"><span class="t-green" id="ptCur">$0</span> <span class="muted">/ <span id="ptTgt">$100,000</span></span></div>
-          </div>
-          <div class="progress-pct" id="ptPct">0.0%</div>
-        </div>
-        <div class="progress-bar" id="ptBar"><div style="width:0%"></div></div>
-      </div>
     </section>
 
     <!-- Sortable widget area -->
@@ -4280,13 +4269,6 @@ function renderAll() {
     subEl.textContent = '–';
   } 
 
-  document.getElementById('ptCur').textContent = fmtMoney(orderAmt);
-  document.getElementById('ptTgt').textContent = fmtMoney(orderTargetDisp);
-  document.getElementById('ptPct').textContent = fmtPct(tgtPct);
-  const ptBar = document.getElementById('ptBar');
-  ptBar.querySelector('div').style.width = Math.min(100, tgtPct) + '%';
-  ptBar.classList.toggle('done', tgtPct >= 100);
-
   // Secondary KPI row — based on after-campaign orders (same as Order/ROI cards).
   const engaged = new Set(); fOrdersAfter.forEach(o=>o.customer&&engaged.add(o.customer)); fMkt.forEach(m=>m.target_customer&&engaged.add(m.target_customer));
   const ordering = new Set(fOrdersAfter.map(o=>o.customer).filter(Boolean));
@@ -4319,7 +4301,6 @@ function renderAll() {
     // Sync KPI after renderPromoChart sets _promoAfterTotal
     if (_promoAfterTotal !== null) {
       document.getElementById('kpiOrder').textContent = fmtMoney(_promoAfterTotal);
-      document.getElementById('ptCur').textContent    = fmtMoney(_promoAfterTotal);
       document.getElementById('kpiOrderSub').textContent = `after campaign start · post-campaign total`;
       const tgtPctUpd = orderTargetDisp > 0 ? (_promoAfterTotal / orderTargetDisp) * 100 : 0;
       document.getElementById('kpiAchv').textContent = orderTargetDisp > 0 ? fmtPct(tgtPctUpd) : '–';
