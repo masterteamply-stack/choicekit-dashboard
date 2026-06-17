@@ -4807,7 +4807,21 @@ function renderRegionChart(fOrders, fMkt) {
         { label:'Marketing Budget', data: data.map(d=>d.budget), backgroundColor:'#525257', borderRadius:4 },
       ];
   charts.region = new Chart(document.getElementById('chRegion'), {
-    type:'bar', data:{ labels: data.map(d=>d.region), datasets }, options: chartOpts(true)
+    type:'bar', data:{ labels: data.map(d=>d.region), datasets }, options: {
+      ...chartOpts(true),
+      layout: { padding: { top: 28 } },
+      plugins: {
+        ...chartOpts(true).plugins,
+        legend: {
+          position: 'bottom',
+          labels: { color:'#1D1D1F', font:{ family:'IBM Plex Mono', weight:700, size:12 }, boxWidth:12, padding:14 }
+        },
+        datalabels: {
+          ...chartOpts(true).plugins.datalabels,
+          font: { family:'IBM Plex Mono', weight:700, size:10 },
+        },
+      },
+    }
   });
 }
 function renderActivityChart(fMkt) {
