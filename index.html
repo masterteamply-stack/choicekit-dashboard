@@ -5096,7 +5096,7 @@ function renderBudgetStatus(fMkt) {
     <th class="text-right">ALLOC %</th>
     <th class="text-right" title="expected_cost">EXPECTED</th>
     <th class="text-right" title="actual_cost">EXECUTED</th>
-    <th class="text-right">EXEC %</th>
+    <th class="text-right" title="각 행의 할당 예산(MKT Budget) 대비 집행 비용(Executed Cost) 비율 · TOTAL은 전체 budget 대비 전체 executed">EXEC %</th>
     <th class="text-right">REMAINING</th>
     <th style="min-width:140px">PROGRESS</th>
   </tr></thead>`;
@@ -5105,7 +5105,7 @@ function renderBudgetStatus(fMkt) {
 
   rows.forEach(d => {
     const alloc   = totalBudget > 0 ? (d.budget / totalBudget) * 100 : 0;
-    const execPct = totalActual > 0 ? (d.actual / totalActual) * 100 : 0;
+    const execPct = d.budget > 0 ? (d.actual / d.budget) * 100 : 0;  // 자기 budget 대비 집행률
     const remain  = d.budget - d.actual;
     const isSel   = d.region === selectedRegion;
     const isExpR  = expR.has(d.region);
@@ -5143,7 +5143,7 @@ function renderBudgetStatus(fMkt) {
       const cPct    = cAgg.budget > 0 ? (cAgg.actual / cAgg.budget) * 100 : 0;
       const cRemain = cAgg.budget - cAgg.actual;
       const cAlloc  = d.budget > 0 ? (cAgg.budget / d.budget) * 100 : 0;
-      const cExecPct= d.actual > 0 ? (cAgg.actual / d.actual) * 100 : 0;
+      const cExecPct= cAgg.budget > 0 ? (cAgg.actual / cAgg.budget) * 100 : 0;  // 자기 budget 대비 집행률
       const ck      = d.region + '|||' + country;
       const isExpC  = expC.has(ck);
       const safeC   = ck.replace(/'/g,"\\'");
@@ -5173,7 +5173,7 @@ function renderBudgetStatus(fMkt) {
         const vPct    = v.budget > 0 ? (v.actual / v.budget) * 100 : 0;
         const vRemain = v.budget - v.actual;
         const vAlloc  = cAgg.budget > 0 ? (v.budget / cAgg.budget) * 100 : 0;
-        const vExecPct= cAgg.actual > 0 ? (v.actual / cAgg.actual) * 100 : 0;
+        const vExecPct= v.budget > 0 ? (v.actual / v.budget) * 100 : 0;  // 자기 budget 대비 집행률
 
         bodyRows += `<tr style="background:rgba(0,0,0,0.035)" data-budget-cust-row>
           <td style="padding-left:52px;font-size:11px;color:#86868B;font-family:'IBM Plex Mono',monospace">
@@ -5198,7 +5198,7 @@ function renderBudgetStatus(fMkt) {
     <td class="text-right mono">100%</td>
     <td class="text-right mono t-yellow">${fmtMoney(totalExpected)}</td>
     <td class="text-right mono">${fmtMoney(totalActual)}</td>
-    <td class="text-right mono">100%</td>
+    <td class="text-right mono" style="font-weight:700">${totalBudget > 0 ? (totalActual / totalBudget * 100).toFixed(1) + '%' : '–'}</td>
     <td class="text-right mono">${fmtMoney(totalBudget-totalActual)}</td>
     <td></td>
   </tr>`;
