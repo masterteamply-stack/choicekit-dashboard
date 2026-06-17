@@ -5905,13 +5905,26 @@ function renderPromoChart(fOrders, fMkt) {
   const period = state.promoPerfPeriod || 'month';
 
   // ── Marketing start date per promotion (earliest execution_date).
-  // Computed FIRST because ORDER AMT now uses this to filter to post-campaign.
-  // Uses state.marketing (full set) so it stays stable regardless of filters.
+  // promoStart: kpi_metric='STARTED' 행의 최솟값 우선.
+  // STARTED 없는 캠페인은 execution_date 최솟값 fallback.
+  // 이 기준이 "캠페인 공식 시작일"이며 ORDER AMT 집계 기준일이 됨.
   const promoStart = {};
+  const promoStartAll = {};  // execution_date 최솟값 (fallback)
   (state.marketing || []).forEach(m => {
-    const p = m.promotion_category || m.promotion_id || '–';
-    const d = (m.date || '').trim();
-    if (d && (!promoStart[p] || d < promoStart[p])) promoStart[p] = d;
+    const p = (m.promotion_category || m.promotion_id || '').trim();
+    const d = (m.execution_date || m.date || '').trim();
+    const kpi = (m.kpi_metric || '').trim().toUpperCase();
+    if (!p || !d) return;
+    // fallback: execution_date 최솟값
+    if (!promoStartAll[p] || d < promoStartAll[p]) promoStartAll[p] = d;
+    // 우선: STARTED 기준 최솟값
+    if (kpi === 'STARTED') {
+      if (!promoStart[p] || d < promoStart[p]) promoStart[p] = d;
+    }
+  });
+  // STARTED 없는 캠페인은 execution_date fallback 사용
+  Object.keys(promoStartAll).forEach(p => {
+    if (!promoStart[p]) promoStart[p] = promoStartAll[p];
   });
 
   // Build campaign target maps so ORDER AMT can attribute orders via
