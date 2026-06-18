@@ -2148,8 +2148,8 @@ header .mono b.t-orange {
           </div>
         </div>
         <div id="promoInsight" class="label-mono" style="margin-bottom:10px;font-size:11px;color:#525257"></div>
-        <div id="promoCmpKpis" style="display:none;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px"></div>
-        <div class="chart-wrap" style="height:360px"><canvas id="chPromo"></canvas></div>
+        <div id="promoCmpKpis" style="display:none;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:12px;min-height:0"></div>
+        <div class="chart-wrap" style="height:360px;min-height:360px"><canvas id="chPromo"></canvas></div>
         <div style="overflow:auto;margin-top:14px"><table id="tblPromo"></table></div>
 
       <!-- Choice Kit Impact — Dormant Activation -->
@@ -6665,7 +6665,7 @@ function renderPromoChart(fOrders, fMkt) {
         return cmpMode !== 'off' ? `${_fmtPk(ppk)} / ${_fmtPk(pk)}` : _fmtPk(pk);
       });
       // Render and EXIT — skip the default line chart.
-      if (charts.promo) charts.promo.destroy();
+      try { if (charts.promo) { charts.promo.destroy(); charts.promo = null; } } catch(_) {}
       charts.promo = new Chart(document.getElementById('chPromo'), {
         type: 'bar',
         data: {
@@ -6721,8 +6721,9 @@ function renderPromoChart(fOrders, fMkt) {
       renderPromoTable(); return;  // skip the default line chart below
     }
     // ── ALL promotions + compare on: grouped bar (전년/전분기/전월 x 월별 쌍) ──
-    // x축: 각 period bucket의 현재+이전 쌍 → "25년 4월 / 26년 4월" 형태
-    const windowBuckets = periodBuckets;
+    const windowBuckets = periodBuckets.length ? periodBuckets
+      : Array.from(new Set((state.orders||[]).map(o=>periodKey(o.order_date,period)).filter(Boolean))).sort();
+    if (!windowBuckets.length) { renderPromoTable(); return; }
     const curBarsAll  = windowBuckets.map(pk =>
       Math.round(shownKeys.reduce((s, key) => s + ((series[key] && series[key][pk]) || 0), 0))
     );
@@ -6736,7 +6737,7 @@ function renderPromoChart(fOrders, fMkt) {
       const fmt = s => s ? s.replace(/^20(\d\d)-(\d\d)$/, '$1.$2').replace(/^20(\d\d)-Q(\d)$/, '$1.Q$2').replace(/^(20\d\d)$/, '$1') : pk;
       return `${fmt(ppk)} / ${fmt(pk)}`;
     });
-    if (charts.promo) charts.promo.destroy();
+    try { if (charts.promo) { charts.promo.destroy(); charts.promo = null; } } catch(_) {}
     charts.promo = new Chart(document.getElementById('chPromo'), {
       type: 'bar',
       data: {
@@ -6793,7 +6794,7 @@ function renderPromoChart(fOrders, fMkt) {
     cmpKpiEl.innerHTML = '';
   }
 
-  if (charts.promo) charts.promo.destroy();
+  try { if (charts.promo) { charts.promo.destroy(); charts.promo = null; } } catch(_) {}
   charts.promo = new Chart(document.getElementById('chPromo'), {
     type: 'line',
     data: { labels: periodBuckets, datasets: lineDatasets },
