@@ -5902,6 +5902,7 @@ function periodLabelOf(period) {
   return period === 'year' ? 'Year' : (period === 'quarter' ? 'Quarter' : 'Month');
 }
 function renderPromoChart(fOrders, fMkt) {
+  try {
   const period = state.promoPerfPeriod || 'month';
 
   // ── Marketing start date per promotion (earliest execution_date).
@@ -6943,8 +6944,10 @@ function renderPromoChart(fOrders, fMkt) {
   }
 
   renderPromoTable();
+  } catch(e) { console.error('[renderPromoChart]', e); renderPromoTable(); }
 }
 function renderPromoTable() {
+  try {
   // tableDim, summary, buildEntitySummary, cmpSeries, period, shiftBucket 등은
   // renderPromoChart 클로저 변수에 접근 불가 → 전역 state에서 직접 재계산
   const tableDim = state.promoTableDim || 'promotion';
@@ -7087,6 +7090,7 @@ function renderPromoTable() {
     }).join('')}
   </tr></tbody>`;
   document.getElementById('tblPromo').innerHTML = head + body;
+  } catch(e) { console.error('[renderPromoTable]', e); }
 }
 
 
