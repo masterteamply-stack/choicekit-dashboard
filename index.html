@@ -7012,29 +7012,6 @@ function renderPromoChart(fOrders, fMkt) {
   renderPromoTable();
   } catch(e) {
     console.error('[renderPromoChart]', e);
-    // 에러 메시지를 차트 영역에 표시
-    const errEl = document.getElementById('chPromo');
-    if (errEl && errEl.parentElement) {
-      errEl.parentElement.innerHTML = `<div style="padding:20px;color:#C8102E;font-family:'IBM Plex Mono',monospace;font-size:12px">
-        <b>Chart Error:</b><br>${e && e.message ? e.message : String(e)}<br>
-        <span style="color:#888;font-size:10px">${e && e.stack ? e.stack.split('\n')[1] : ''}</span>
-      </div>`;
-    }
-      if (charts.promo) { charts.promo.destroy(); charts.promo = null; }
-      const fOrdersFb = state.orders.filter(matchOrder).filter(o => isRegionVisible(o.region));
-      const pksFb = Array.from(new Set(fOrdersFb.map(o=>periodKey(o.order_date, state.promoPerfPeriod||'month')).filter(Boolean))).sort();
-      const promos = Array.from(new Set(fOrdersFb.map(o=>o.promotion_category).filter(Boolean)));
-      const datasets = promos.slice(0,8).map((p,i)=>({
-        label:p,
-        data: pksFb.map(pk=>Math.round(fOrdersFb.filter(o=>o.promotion_category===p&&periodKey(o.order_date,state.promoPerfPeriod||'month')===pk).reduce((s,o)=>s+convOrder(o),0))),
-        borderColor:['#C8102E','#0A84FF','#34C759','#FF9500','#AF52DE','#A1A1A6','#1D1D1F','#30B0C7'][i%8],
-        borderWidth:2, tension:0.25, fill:false, pointRadius:2,
-      }));
-      charts.promo = new Chart(document.getElementById('chPromo'), {
-        type:'line', data:{ labels:pksFb, datasets },
-        options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{position:'top'}, datalabels:{display:false} }, scales:{ x:{grid:{display:false}}, y:{beginAtZero:true} } }
-      });
-    } catch(e2) { console.error('[renderPromoChart fallback]', e2); }
     renderPromoTable();
   }
 }
