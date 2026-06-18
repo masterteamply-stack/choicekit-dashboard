@@ -6259,13 +6259,17 @@ function renderPromoChart(fOrders, fMkt) {
   }
 
   // 1) Aggregate the CURRENT orders (scoped to selected promotion if any).
+  //    캠페인 시작일 이전 주문 제외 (promoStart 기준)
   fOrdersScoped.forEach(o => {
+    const p = o.promotion_category || '(none)';
+    const start = promoStart[p];
+    if (start && (o.order_date || '') < start) return;  // 시작일 전 제외
     const pk = periodKey(o.order_date, period);
     const amt = convOrder(o);
-    if (dim === 'promotion') add(o.promotion_category || '(none)', pk, amt);
+    if (dim === 'promotion') add(p, pk, amt);
     else if (dim === 'customer') {
       const c = normalizeCustomer(o);
-      if (c) add(c, pk, amt);   // skip empties → no more '(unknown)' bucket
+      if (c) add(c, pk, amt);
     }
     else if (dim === 'region') add(normalizeRegion(o.region || '') || '(none)', pk, amt);
   });
@@ -6486,19 +6490,25 @@ function renderPromoChart(fOrders, fMkt) {
         scopedBaseline = rows;
       }
     } else {
-      // preIdx 없을 때: 직접 필터 (CTR code + buyer_code 포함)
-      const allSkus = new Set(Object.keys(skuToPromo));
-      const allCusts = new Set(Object.keys(custToPromo));
+      // preIdx 없을 때: Set 기반 빠른 필터 (O(1) 조회)
+      const allSkuSet  = new Set(Object.keys(skuToPromo));
+      const allCustSet = new Set(Object.keys(custToPromo));
+      const _fastResolve = (o) => {
+        const sku = (o.sku||'').trim(), cust = (o.customer||'').trim(), oid = (o.order_id||'').trim();
+        if (allSkuSet.has(sku))  return skuToPromo[sku];
+        if (allCustSet.has(cust)) return custToPromo[cust];
+        const pm = oid.match(_PAT_PO);
+        if (pm) {
+          if (allSkuSet.has(pm[1])) return skuToPromo[pm[1]];
+          const mc = _buyerMap[pm[2]] || '';
+          if (mc && allCustSet.has(mc)) return custToPromo[mc];
+        }
+        return null;
+      };
       if (promoFilter !== '__all__') {
-        const cfg = (state.campaignTargetSkus || {})[promoFilter] || {};
-        const mb = (cfg.match_by || 'sku').toLowerCase();
-        const tset = new Set(mb === 'customer' ? (cfg.target_customers||[]) : (cfg.target_skus||[]));
-        scopedBaseline = baselineRows.filter(o => {
-          const promo = _resolvePreOrderPromo(o);
-          return promo === promoFilter;
-        });
+        scopedBaseline = baselineRows.filter(o => _fastResolve(o) === promoFilter);
       } else {
-        scopedBaseline = baselineRows.filter(o => !!_resolvePreOrderPromo(o));
+        scopedBaseline = baselineRows.filter(o => !!_fastResolve(o));
       }
     }
     // promoFilter === '__all__' 일 때: fOrders 전체(날짜 필터 무관) + baseline을 포함
@@ -6945,7 +6955,27 @@ function renderPromoChart(fOrders, fMkt) {
   }
 
   renderPromoTable();
-  } catch(e) { console.error('[renderPromoChart]', e); renderPromoTable(); }
+  } catch(e) {
+    console.error('[renderPromoChart]', e);
+    // 에러 시 기본 라인 차트로 fallback
+    try {
+      if (charts.promo) { charts.promo.destroy(); charts.promo = null; }
+      const fOrdersFb = state.orders.filter(matchOrder).filter(o => isRegionVisible(o.region));
+      const pksFb = Array.from(new Set(fOrdersFb.map(o=>periodKey(o.order_date, state.promoPerfPeriod||'month')).filter(Boolean))).sort();
+      const promos = Array.from(new Set(fOrdersFb.map(o=>o.promotion_category).filter(Boolean)));
+      const datasets = promos.slice(0,8).map((p,i)=>({
+        label:p,
+        data: pksFb.map(pk=>Math.round(fOrdersFb.filter(o=>o.promotion_category===p&&periodKey(o.order_date,state.promoPerfPeriod||'month')===pk).reduce((s,o)=>s+convOrder(o),0))),
+        borderColor:['#C8102E','#0A84FF','#34C759','#FF9500','#AF52DE','#A1A1A6','#1D1D1F','#30B0C7'][i%8],
+        borderWidth:2, tension:0.25, fill:false, pointRadius:2,
+      }));
+      charts.promo = new Chart(document.getElementById('chPromo'), {
+        type:'line', data:{ labels:pksFb, datasets },
+        options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{position:'top'}, datalabels:{display:false} }, scales:{ x:{grid:{display:false}}, y:{beginAtZero:true} } }
+      });
+    } catch(e2) { console.error('[renderPromoChart fallback]', e2); }
+    renderPromoTable();
+  }
 }
 function renderPromoTable() {
   try {
@@ -10886,7 +10916,7 @@ async function maybeAutoLoadPreOrders() {
     state.preOrdersEnabled = true;
     try { localStorage.setItem('ck_pre_orders_on', '1'); } catch(e){}
     // Build index in background — doesn't block initial render
-    setTimeout(() => _buildPreOrdersIndex(), 0);
+    setTimeout(() => { _buildPreOrdersIndex(); rebuildAll(); }, 100);
     // Tiny celebratory toast on FIRST load only (no toast for cached repeat loads).
     if (want == null) {
       try {
