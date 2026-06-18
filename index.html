@@ -6280,24 +6280,52 @@ function renderPromoChart(fOrders, fMkt) {
   if (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length) {
     const preIdx = state._preIdx;
 
-    // preOrders row → 캠페인명 역추적 (4단계 fallback)
-    const _resolvePromo = (o) => {
-      const sku     = (o.sku      || '').trim();
-      const cust    = (o.customer || '').trim();
-      const oid     = (o.order_id || '').trim();
+    // ── SKU 기반 / Customer 기반 캠페인 분류 ──
+    const _cfg = state.campaignTargetSkus || {};
+    const skuBasedPromos = new Set(Object.keys(_cfg).filter(p => (_cfg[p].match_by||'sku').toLowerCase() !== 'customer'));
+    const custBasedPromos = new Set(Object.keys(_cfg).filter(p => (_cfg[p].match_by||'sku').toLowerCase() === 'customer'));
 
-      // 1) SKU 직접 매칭
-      if (sku && skuToPromo[sku]) return skuToPromo[sku];
-      // 2) customer 직접 매칭
-      if (cust && custToPromo[cust]) return custToPromo[cust];
-      // 3) order_id에서 CTR code 추출 → skuToPromo
-      const pm = oid.match(/^PO-([^-]+)-(\d+)-\d+$/);
-      if (pm) {
-        if (skuToPromo[pm[1]]) return skuToPromo[pm[1]];
-        // 4) buyer_code → customer명 → custToPromo
-        const mappedCust = (preIdx && preIdx._buyerMap && preIdx._buyerMap[pm[2]]) || '';
-        if (mappedCust && custToPromo[mappedCust]) return custToPromo[mappedCust];
-      }
+    // Customer 기반 캠페인: config target_customers + 실제 참여 고객(시작일 이후 오더) 합산
+    // 실제 참여 고객 빌드 (orders.csv에서 promoStart 이후 오더한 고객)
+    const promoActualCusts = {};  // promo → Set<customer>
+    custBasedPromos.forEach(p => {
+      promoActualCusts[p] = new Set((_cfg[p].target_customers||[]).map(c=>c.trim()));
+    });
+    (state.orders||[]).forEach(o => {
+      const p = (o.promotion_category||'').trim();
+      if (!custBasedPromos.has(p)) return;
+      const start = promoStart[p];
+      if (start && (o.order_date||'') < start) return;
+      const c = (o.customer||'').trim();
+      if (c) promoActualCusts[p].add(c);
+    });
+
+    // 확장된 custToPromo (실제 참여 고객 포함)
+    const custToPromoExt = { ...custToPromo };
+    custBasedPromos.forEach(p => {
+      (promoActualCusts[p]||new Set()).forEach(c => {
+        if (!custToPromoExt[c]) custToPromoExt[c] = p;
+      });
+    });
+
+    // preOrders row → 캠페인명 역추적
+    // SKU 기반: target_skus + CTR code 매칭만
+    // Customer 기반: 실제 참여 고객(확장) + buyer_code 매칭
+    const _resolvePromo = (o) => {
+      const sku  = (o.sku      || '').trim();
+      const cust = (o.customer || '').trim();
+      const oid  = (o.order_id || '').trim();
+      const pm   = oid.match(/^PO-([^-]+)-(\d+)-\d+$/);
+      const ctr  = pm ? pm[1] : '';
+      const buyerCust = pm ? ((preIdx && preIdx._buyerMap && preIdx._buyerMap[pm[2]]) || '') : '';
+
+      // SKU 기반 캠페인: SKU/CTR code 매칭만
+      if (sku && skuToPromo[sku] && skuBasedPromos.has(skuToPromo[sku])) return skuToPromo[sku];
+      if (ctr && skuToPromo[ctr] && skuBasedPromos.has(skuToPromo[ctr])) return skuToPromo[ctr];
+
+      // Customer 기반 캠페인: 실제 참여 고객 매칭 (전체 오더 포함)
+      if (cust && custToPromoExt[cust] && custBasedPromos.has(custToPromoExt[cust])) return custToPromoExt[cust];
+      if (buyerCust && custToPromoExt[buyerCust] && custBasedPromos.has(custToPromoExt[buyerCust])) return custToPromoExt[buyerCust];
       return '';
     };
 
@@ -6324,7 +6352,7 @@ function renderPromoChart(fOrders, fMkt) {
       }
     };
 
-    // 인덱스 활용: ctrIdx/buyerIdx 포함 모든 경로
+    // 인덱스 활용: SKU기반은 skuIdx+ctrIdx, Customer기반은 custIdx+buyerIdx(확장 고객 포함)
     if (preIdx && dim !== 'region') {
       const seen = new Set();
       const runRows = (rows) => rows.forEach(o => { if (!seen.has(o)) { seen.add(o); processBaseline(o); } });
@@ -6333,8 +6361,9 @@ function renderPromoChart(fOrders, fMkt) {
         runRows(preIdx.skuIdx[k] || []);
         runRows(preIdx.ctrIdx[k] || []);
       });
-      // 고객 기반 캠페인: custIdx + buyerIdx
-      Object.keys(custToPromo).forEach(k => {
+      // Customer 기반 캠페인: 확장된 고객 목록(target + 실제 참여) 기반
+      Object.keys(custToPromoExt).forEach(k => {
+        if (!custBasedPromos.has(custToPromoExt[k])) return;
         runRows(preIdx.custIdx[k] || []);
         runRows(preIdx.buyerIdx[k] || []);
       });
@@ -6452,21 +6481,39 @@ function renderPromoChart(fOrders, fMkt) {
       if (bn && cn && !_buyerMap[bn]) _buyerMap[bn] = cn;
     });
     const _PAT_PO = /^PO-([^-]+)-(\d+)-\d+$/;
-    // preOrders row → 캠페인명 역추적 (4단계 fallback)
+    // SKU기반/Customer기반 분류
+    const _cfgCmp = state.campaignTargetSkus || {};
+    const _skuBasedCmp = new Set(Object.keys(_cfgCmp).filter(p=>(_cfgCmp[p].match_by||'sku').toLowerCase()!=='customer'));
+    const _custBasedCmp = new Set(Object.keys(_cfgCmp).filter(p=>(_cfgCmp[p].match_by||'sku').toLowerCase()==='customer'));
+    // 실제 참여 고객 확장 (시작일 이후 오더한 고객)
+    const _cmpActualCusts = {};
+    _custBasedCmp.forEach(p => { _cmpActualCusts[p] = new Set((_cfgCmp[p].target_customers||[]).map(c=>c.trim())); });
+    (state.orders||[]).forEach(o => {
+      const p=(o.promotion_category||'').trim();
+      if (!_custBasedCmp.has(p)) return;
+      const start=promoStart[p];
+      if (start&&(o.order_date||'')<start) return;
+      const c=(o.customer||'').trim();
+      if (c) _cmpActualCusts[p].add(c);
+    });
+    const _custToPromoCmp = { ...custToPromo };
+    _custBasedCmp.forEach(p => { (_cmpActualCusts[p]||new Set()).forEach(c=>{ if(!_custToPromoCmp[c]) _custToPromoCmp[c]=p; }); });
+
+    // preOrders row → 캠페인명 역추적
     const _resolvePreOrderPromo = (o) => {
       const sku  = (o.sku  || '').trim();
       const cust = (o.customer || '').trim();
       const oid  = (o.order_id || '').trim();
-      if (sku  && skuToPromo[sku])   return skuToPromo[sku];
-      if (cust && custToPromo[cust]) return custToPromo[cust];
-      const pm = oid.match(_PAT_PO);
-      if (pm) {
-        if (skuToPromo[pm[1]]) return skuToPromo[pm[1]]; // CTR code
-        // buyer_code: preIdx._buyerMap 우선, 없으면 로컬 _buyerMap
-        const bm = (preIdx && preIdx._buyerMap) || _buyerMap;
-        const mappedCust = bm[pm[2]];
-        if (mappedCust && custToPromo[mappedCust]) return custToPromo[mappedCust];
-      }
+      const pm   = oid.match(_PAT_PO);
+      const ctr  = pm ? pm[1] : '';
+      const bm   = (preIdx && preIdx._buyerMap) || _buyerMap;
+      const buyerCust = pm ? (bm[pm[2]] || '') : '';
+      // SKU 기반: target SKU / CTR code만
+      if (sku && skuToPromo[sku] && _skuBasedCmp.has(skuToPromo[sku])) return skuToPromo[sku];
+      if (ctr && skuToPromo[ctr] && _skuBasedCmp.has(skuToPromo[ctr])) return skuToPromo[ctr];
+      // Customer 기반: 실제 참여 고객 전체 오더
+      if (cust && _custToPromoCmp[cust] && _custBasedCmp.has(_custToPromoCmp[cust])) return _custToPromoCmp[cust];
+      if (buyerCust && _custToPromoCmp[buyerCust] && _custBasedCmp.has(_custToPromoCmp[buyerCust])) return _custToPromoCmp[buyerCust];
       return null;
     };
     let scopedBaseline;
@@ -6481,12 +6528,21 @@ function renderPromoChart(fOrders, fMkt) {
           if (mb === 'customer') { addR(preIdx.custIdx[k]||[]); addR(preIdx.buyerIdx[k]||[]); }
           else                  { addR(preIdx.skuIdx[k] ||[]); addR(preIdx.ctrIdx[k]  ||[]); }
         });
+        // customer 기반 캠페인은 실제 참여 고객도 포함
+        if (mb === 'customer' && _cmpActualCusts[promoFilter]) {
+          _cmpActualCusts[promoFilter].forEach(k => { addR(preIdx.custIdx[k]||[]); addR(preIdx.buyerIdx[k]||[]); });
+        }
         scopedBaseline = rows;
       } else {
         const rows = []; const seen = new Set();
         const addR = (arr) => arr.forEach(o => { if (!seen.has(o)) { seen.add(o); rows.push(o); } });
+        // SKU 기반: target SKU + CTR code
         Object.keys(skuToPromo).forEach(k => { addR(preIdx.skuIdx[k]||[]); addR(preIdx.ctrIdx[k]||[]); });
-        Object.keys(custToPromo).forEach(k => { addR(preIdx.custIdx[k]||[]); addR(preIdx.buyerIdx[k]||[]); });
+        // Customer 기반: 확장된 고객 목록 전체
+        Object.keys(_custToPromoCmp).forEach(k => {
+          if (!_custBasedCmp.has(_custToPromoCmp[k])) return;
+          addR(preIdx.custIdx[k]||[]); addR(preIdx.buyerIdx[k]||[]);
+        });
         scopedBaseline = rows;
       }
     } else {
