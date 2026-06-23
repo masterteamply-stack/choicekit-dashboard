@@ -5906,6 +5906,10 @@ function renderPromoChart(fOrders, fMkt) {
   const period = state.promoPerfPeriod || 'month';
 
   // ── Marketing start date per promotion (earliest execution_date).
+  // promoBundleBuyers: preOrders 로드 전에도 안전하게 참조할 수 있도록 미리 초기화
+  // (preOrders 로드 후 processBaseline 내에서 채워짐)
+  let promoBundleBuyers = {};
+
   // promoStart: kpi_metric='STARTED' 행의 최솟값 우선.
   // STARTED 없는 캠페인은 execution_date 최솟값 fallback.
   // 이 기준이 "캠페인 공식 시작일"이며 ORDER AMT 집계 기준일이 됨.
@@ -6300,7 +6304,7 @@ function renderPromoChart(fOrders, fMkt) {
     })();
 
     // 각 캠페인 참여 고객의 bundle buyer_codes 수집
-    const promoBundleBuyers = {};
+    promoBundleBuyers = {};
     skuBasedPromos.forEach(p => { promoBundleBuyers[p] = new Set(); });
     (state.orders || []).forEach(o => {
       const p = (o.promotion_category || '').trim();
@@ -6352,7 +6356,7 @@ function renderPromoChart(fOrders, fMkt) {
       for (const p of skuBasedPromos) {
         const tSkus = new Set((_cfg[p].target_skus || []).map(s => s.trim()));
         const skuMatch = tSkus.has(sku) || tSkus.has(ctr);
-        const buyerMatch = promoBundleBuyers[p] && buyer && promoBundleBuyers[p].has(buyer);
+        const buyerMatch = promoBundleBuyers && promoBundleBuyers[p] && buyer && promoBundleBuyers[p].has(buyer);
         if (skuMatch && buyerMatch) return p;
       }
 
@@ -6556,7 +6560,7 @@ function renderPromoChart(fOrders, fMkt) {
       for (const p of _skuBasedCmp) {
         const tSkus = new Set((_cfgCmp[p].target_skus || []).map(s => s.trim()));
         const skuMatch = tSkus.has(sku) || tSkus.has(ctr);
-        const buyerMatch = promoBundleBuyers[p] && buyer && promoBundleBuyers[p].has(buyer);
+        const buyerMatch = promoBundleBuyers && promoBundleBuyers[p] && buyer && promoBundleBuyers[p].has(buyer);
         if (skuMatch && buyerMatch) return p;
       }
       // Customer 기반: 실제 참여 고객 전체 오더
