@@ -5904,6 +5904,15 @@ function periodLabelOf(period) {
 function renderPromoChart(fOrders, fMkt) {
   try {
   const period = state.promoPerfPeriod || 'month';
+  console.log('[renderPromoChart] START', {
+    ordersLen: fOrders.length,
+    mktLen: fMkt.length,
+    period,
+    cmpMode: state.promoCmp,
+    promoFilter: state.promoFilter,
+    preEnabled: state.preOrdersEnabled,
+    preLen: (state.preOrders||[]).length,
+  });
 
   // ── Marketing start date per promotion (earliest execution_date).
   // promoBundleBuyers: preOrders 로드 전에도 안전하게 참조할 수 있도록 미리 초기화
@@ -6212,6 +6221,7 @@ function renderPromoChart(fOrders, fMkt) {
   const periodBuckets = Array.from(new Set(
     fOrdersScoped.map(o => periodKey(o.order_date, period)).filter(Boolean)
   )).sort();
+  console.log('[renderPromoChart] periodBuckets:', periodBuckets, 'fOrdersScoped:', fOrdersScoped.length);
 
   // Aggregate amount by (seriesKey → periodKey).
   const series = {};   // key → { pk → amount }
