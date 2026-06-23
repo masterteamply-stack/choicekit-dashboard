@@ -6674,7 +6674,7 @@ function renderPromoChart(fOrders, fMkt) {
             plugins: {
               legend: { position:'top', labels:{ color:'#1D1D1F', font:{family:'IBM Plex Mono',weight:600,size:11}, boxWidth:14, padding:8 } },
               datalabels: {
-                display: ctx => ctx.parsed.y > 0,
+                display: ctx => ctx.parsed && ctx.parsed.y > 0,
                 anchor: 'end', align: 'end', offset: 2,
                 color: ctx => ctx.datasetIndex === 1 ? '#C8102E' : '#888',
                 font: { family:'IBM Plex Mono', weight:700, size:10 },
@@ -6731,7 +6731,7 @@ function renderPromoChart(fOrders, fMkt) {
           plugins: {
               legend: { position:'top', labels:{ color:'#1D1D1F', font:{family:'IBM Plex Mono',weight:600,size:11}, boxWidth:14, padding:8 } },
               datalabels: {
-                display: ctx => ctx.parsed.y > 0,
+                display: ctx => ctx.parsed && ctx.parsed.y > 0,
                 anchor: 'end', align: 'end', offset: 2,
                 color: ctx => ctx.datasetIndex === 1 ? '#C8102E' : '#666',
                 font: { family:'IBM Plex Mono', weight:700, size:10 },
@@ -6753,7 +6753,7 @@ function renderPromoChart(fOrders, fMkt) {
               },
             tooltip: {
               callbacks: {
-                label: c => `${c.dataset.label}: ${fmtMoney(c.parsed.y)}`,
+                label: c => `${c.dataset.label}: ${fmtMoney(c.parsed && c.parsed.y || 0)}`,
                 footer: items => {
                   const i = items[0].dataIndex;
                   const cur = curBars[i], prv = priorBars[i];
@@ -6803,7 +6803,7 @@ function renderPromoChart(fOrders, fMkt) {
         plugins: {
           legend: { position:'top', labels:{ color:'#1D1D1F', font:{family:'IBM Plex Mono',weight:600,size:11}, boxWidth:14, padding:8 } },
           datalabels: {
-            display: ctx => ctx.parsed.y > 0,
+            display: ctx => ctx.parsed && ctx.parsed.y > 0,
             anchor: 'end', align: 'end', offset: 2,
             color: ctx => ctx.datasetIndex === 1 ? '#C8102E' : '#888',
             font: { family:'IBM Plex Mono', weight:700, size:10 },
@@ -6823,7 +6823,7 @@ function renderPromoChart(fOrders, fMkt) {
           },
           tooltip: {
             callbacks: {
-              label: c => `${c.dataset.label}: ${fmtMoney(c.parsed.y)}`,
+              label: c => `${c.dataset.label}: ${fmtMoney(c.parsed && c.parsed.y || 0)}`,
               footer: items => {
                 const i = items[0].dataIndex;
                 const cur = curBarsAll[i], prv = priorBarsAll[i];
@@ -6998,8 +6998,6 @@ function renderPromoChart(fOrders, fMkt) {
   renderPromoTable();
   } catch(e) {
     console.error('[renderPromoChart]', e.message, e.stack);
-    const el = document.getElementById('chPromo');
-    if (el) el.parentElement.innerHTML = `<div style="color:red;padding:16px;font-family:monospace;font-size:12px"><b>ERROR:</b> ${e.message}<br>${(e.stack||'').split('\n').slice(0,3).join('<br>')}</div>`;
     renderPromoTable();
   }
 }
