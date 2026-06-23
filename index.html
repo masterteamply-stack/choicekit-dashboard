@@ -5904,15 +5904,7 @@ function periodLabelOf(period) {
 function renderPromoChart(fOrders, fMkt) {
   try {
   const period = state.promoPerfPeriod || 'month';
-  console.log('[renderPromoChart] START', {
-    ordersLen: fOrders.length,
-    mktLen: fMkt.length,
-    period,
-    cmpMode: state.promoCmp,
-    promoFilter: state.promoFilter,
-    preEnabled: state.preOrdersEnabled,
-    preLen: (state.preOrders||[]).length,
-  });
+
 
   // ── Marketing start date per promotion (earliest execution_date).
   // promoBundleBuyers: preOrders 로드 전에도 안전하게 참조할 수 있도록 미리 초기화
@@ -6221,7 +6213,6 @@ function renderPromoChart(fOrders, fMkt) {
   const periodBuckets = Array.from(new Set(
     fOrdersScoped.map(o => periodKey(o.order_date, period)).filter(Boolean)
   )).sort();
-  console.log('[renderPromoChart] periodBuckets:', periodBuckets, 'fOrdersScoped:', fOrdersScoped.length);
 
   // Aggregate amount by (seriesKey → periodKey).
   const series = {};   // key → { pk → amount }
@@ -6316,6 +6307,7 @@ function renderPromoChart(fOrders, fMkt) {
     // 각 캠페인 참여 고객의 bundle buyer_codes 수집
     promoBundleBuyers = {};
     skuBasedPromos.forEach(p => { promoBundleBuyers[p] = new Set(); });
+    window._promoBundleBuyers = promoBundleBuyers;  // cmpMode 블록에서 접근용
     (state.orders || []).forEach(o => {
       const p = (o.promotion_category || '').trim();
       if (!skuBasedPromos.has(p)) return;
@@ -6403,9 +6395,10 @@ function renderPromoChart(fOrders, fMkt) {
       const seen = new Set();
       const runRows = (rows) => rows.forEach(o => { if (!seen.has(o)) { seen.add(o); processBaseline(o); } });
       // SKU 기반: SKU/CTR + bundle buyer_code 2중 필터
+      const _pbbIdx = window._promoBundleBuyers || promoBundleBuyers || {};
       skuBasedPromos.forEach(p => {
         const tSkus = (_cfg[p].target_skus || []).map(s => s.trim());
-        const buyers = promoBundleBuyers[p] || new Set();
+        const buyers = _pbbIdx[p] || new Set();
         tSkus.forEach(k => {
           const skuRows = (preIdx.skuIdx[k] || []).filter(o => {
             const pm = (o.order_id||'').match(/^PO-[^-]+-(\d+)-\d+$/);
@@ -6567,10 +6560,11 @@ function renderPromoChart(fOrders, fMkt) {
       const bm   = (preIdx && preIdx._buyerMap) || _buyerMap;
       const buyerCust = pm ? (bm[buyer] || '') : '';
       // SKU 기반: target SKU/CTR code + 참여 고객 bundle buyer_code 2중 필터
+      const _pbb = window._promoBundleBuyers || {};
       for (const p of _skuBasedCmp) {
         const tSkus = new Set((_cfgCmp[p].target_skus || []).map(s => s.trim()));
         const skuMatch = tSkus.has(sku) || tSkus.has(ctr);
-        const buyerMatch = promoBundleBuyers && promoBundleBuyers[p] && buyer && promoBundleBuyers[p].has(buyer);
+        const buyerMatch = _pbb[p] && buyer && _pbb[p].has(buyer);
         if (skuMatch && buyerMatch) return p;
       }
       // Customer 기반: 실제 참여 고객 전체 오더
