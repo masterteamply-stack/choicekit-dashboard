@@ -5932,6 +5932,11 @@ function renderPromoChart(fOrders, fMkt) {
   Object.keys(promoStartAll).forEach(p => {
     if (!promoStart[p]) promoStart[p] = promoStartAll[p];
   });
+  // 성과 집계는 항상 2026년 오더부터 — 마케팅이 2025년에 시작됐어도
+  // 올해(2026년) 캠페인 성과에는 2026-01-01 이후 오더만 포함
+  Object.keys(promoStart).forEach(p => {
+    if (promoStart[p] < '2026-01-01') promoStart[p] = '2026-01-01';
+  });
 
   // Build campaign target maps so ORDER AMT can attribute orders via
   // (tag) OR (target SKU) OR (target customer) — broader than tag-only.
@@ -9356,6 +9361,10 @@ function _buildPreOrdersIndex() {
     if (!p || !d) return;
     if (kpi === 'STARTED') { if (!_promoStart[p] || d < _promoStart[p]) _promoStart[p] = d; }
     else { if (!_promoStart[p+'__all__'] || d < _promoStart[p+'__all__']) _promoStart[p+'__all__'] = d; }
+  });
+  // 성과는 2026년 오더부터만 집계
+  Object.keys(_promoStart).forEach(k => {
+    if (_promoStart[k] < '2026-01-01') _promoStart[k] = '2026-01-01';
   });
   Object.keys(_cfg).forEach(promo => {
     const cfg = _cfg[promo];
