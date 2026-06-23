@@ -6997,7 +6997,9 @@ function renderPromoChart(fOrders, fMkt) {
 
   renderPromoTable();
   } catch(e) {
-    console.error('[renderPromoChart]', e);
+    console.error('[renderPromoChart]', e.message, e.stack);
+    const el = document.getElementById('chPromo');
+    if (el) el.parentElement.innerHTML = `<div style="color:red;padding:16px;font-family:monospace;font-size:12px"><b>ERROR:</b> ${e.message}<br>${(e.stack||'').split('\n').slice(0,3).join('<br>')}</div>`;
     renderPromoTable();
   }
 }
