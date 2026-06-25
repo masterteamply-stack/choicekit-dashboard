@@ -4151,6 +4151,7 @@ function chartOpts(currencyAware) {
 let categoryPeriod = 'month'; // month | quarter | year
 
 function renderAll() {
+  console.log('[renderAll] START orders:', state.orders.length, 'mkt:', state.marketing.length);
   _orderMatchCache = new WeakMap();
   if (!state.preOrdersEnabled || !state.preOrders || !state.preOrders.length) {
     state._preIdx = null; state._preOrdersIndexed = false;
@@ -4159,10 +4160,12 @@ function renderAll() {
   document.getElementById('cntMkt').textContent = state.marketing.length;
 
   if (!state.orders.length && !state.marketing.length) {
+    console.warn('[renderAll] NO DATA — showing emptyState');
     document.getElementById('emptyState').style.display = 'block';
     document.getElementById('dashboard').style.display = 'none';
     return;
   }
+  console.log('[renderAll] HAS DATA — rendering dashboard');
   document.getElementById('emptyState').style.display = 'none';
   document.getElementById('dashboard').style.display = 'flex';
   document.getElementById('curLabel').textContent = state.currency;
@@ -11647,6 +11650,7 @@ window.publishSnapshot = publishSnapshot;
       } catch (e) { console.warn(e); }
     }
   }
+  console.log("[init] rebuildAll called, orders:", state.orders.length, "mkt:", state.marketing.length);
   rebuildAll();
   // Render cached data-update timestamps on first paint (markDataUpdated handles subsequent updates)
   try { renderDataTimestamps(); } catch (e) { console.warn('renderDataTimestamps init failed:', e); }
