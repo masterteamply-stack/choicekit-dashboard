@@ -5923,7 +5923,7 @@ function renderPromoChart(fOrders, fMkt) {
   // Scope the current-period order set to the selected promotion (if any).
   const fOrdersScoped = (promoFilter === '__all__')
     ? fOrdersST
-    : fOrders.filter(o => (o.promotion_category || '') === promoFilter);
+    : fOrdersST.filter(o => (o.promotion_category || '') === promoFilter);
   // For the baseline (used by the comparison overlay), match by the campaign's
   // explicit target_customers or target_skus when filtering to one promotion,
   // so prior-period values come from that campaign's actual targets.
@@ -6745,6 +6745,10 @@ function renderPromoChart(fOrders, fMkt) {
   renderPromoTable();
   } catch(e) {
     console.error('[renderPromoChart]', e.message, e.stack);
+    const el = document.getElementById('chPromo');
+    if (el && el.parentElement) {
+      el.parentElement.innerHTML = `<div style="color:red;padding:16px;font:12px monospace"><b>[renderPromoChart ERROR]</b><br>${e.message}<br><pre style="font-size:10px;white-space:pre-wrap">${(e.stack||'').slice(0,400)}</pre></div>`;
+    }
     renderPromoTable();
   }
 }
