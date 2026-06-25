@@ -9060,12 +9060,7 @@ function resolveModel(ctrCode, mode) {
 
 // Shared CSV URLs — same GitHub repo as pre-orders, just files at the repo root.
 function _resolveGhRepoBase() {
-  if (location.protocol === 'http:' || location.protocol === 'https:') {
-    // location.pathname is like '/choicekit-dashboard/' or '/choicekit-dashboard/index.html'
-    // Strip any trailing 'index.html' so we land at the folder containing the dashboard.
-    const path = location.pathname.replace(/index\.html?$/i, '').replace(/\/$/, '');
-    return location.origin + path; // e.g. 'https://masterteamply-stack.github.io/choicekit-dashboard'
-  }
+  // GitHub Pages doesn't serve raw CSV — always use raw.githubusercontent.com
   return 'https://raw.githubusercontent.com/masterteamply-stack/choicekit-dashboard/main';
 }
 const GH_REPO_BASE = _resolveGhRepoBase();
