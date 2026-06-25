@@ -6679,6 +6679,22 @@ function renderPromoChart(fOrders, fMkt) {
         }
       } else if (dim === 'customer') { key = normalizeCustomer(o); if (!key) return; }
       else key = normalizeRegion(o.region || '') || '(none)';
+      // ── SELL-IN 전년 데이터 정밀 필터링 ──
+      // SELL-IN 캠페인은 해당 SKU + 해당 고객에 해당하는 행만 전년 비교에 포함.
+      // preOrder rows는 이미 promoIdx/SKU 매칭으로 걸러지므로 현재 orders rows만 필터.
+      if (!o[PRE_ORDER_MARK] && key) {
+        const _mb = promoMatchBy[key] || 'sku';
+        if (_mb === 'sku') {
+          const _skuSet = promoTargetSkus[key];
+          const _custSet = promoTargetCust[key];
+          const oSku = (o.sku || o.ctr_code || '').trim();
+          const oCust = (o.customer || '').trim();
+          const skuOk = !_skuSet || !_skuSet.size || _skuSet.has(oSku);
+          // 고객도 해당 캠페인 참여 고객이어야 함 (custSet 있을 때만)
+          const custOk = !_custSet || !_custSet.size || _custSet.has(oCust);
+          if (!skuOk || !custOk) return;
+        }
+      }
       cmpSeries[key] = cmpSeries[key] || {};
       cmpSeries[key][pk] = (cmpSeries[key][pk] || 0) + amt;
     });
@@ -6812,12 +6828,9 @@ function renderPromoChart(fOrders, fMkt) {
         const ppk = shiftBucket(pk, cmpMode, period);
         return Math.round(shownKeys.reduce((s, key) => s + ((cmpSeries[key] && cmpSeries[key][ppk]) || 0), 0));
       });
-      // x축 레이블: "25.03 / 26.03" 형태 (전년 / 현재 월 쌍)
+      // x축 레이블: 현재 기간만 표시 ("26.03" 형태)
       const _fmtPk = pk => pk ? pk.replace(/^20(\d\d)-(\d\d)$/, '\'$1.$2').replace(/^20(\d\d)-Q(\d)$/, '\'$1.Q$2').replace(/^(20\d\d)$/, '$1') : '';
-      const barLabels = execBuckets.map(pk => {
-        const ppk = shiftBucket(pk, cmpMode, period);
-        return cmpMode !== 'off' ? `${_fmtPk(ppk)} / ${_fmtPk(pk)}` : _fmtPk(pk);
-      });
+      const barLabels = execBuckets.map(pk => _fmtPk(pk));
       // Render and EXIT — skip the default line chart.
       try { if (charts.promo) { charts.promo.destroy(); charts.promo = null; } } catch(_) {}
       charts.promo = new Chart(document.getElementById('chPromo'), {
@@ -6885,11 +6898,9 @@ function renderPromoChart(fOrders, fMkt) {
       const ppk = shiftBucket(pk, cmpMode, period);
       return Math.round(shownKeys.reduce((s, key) => s + ((cmpSeries[key] && cmpSeries[key][ppk]) || 0), 0));
     });
-    // x축 레이블: "25.04 / 26.04" 형태
+    // x축 레이블: 현재 기간만 표시 ("26.04" 형태)
     const pairedLabels = windowBuckets.map(pk => {
-      const ppk = shiftBucket(pk, cmpMode, period);
-      const fmt = s => s ? s.replace(/^20(\d\d)-(\d\d)$/, '$1.$2').replace(/^20(\d\d)-Q(\d)$/, '$1.Q$2').replace(/^(20\d\d)$/, '$1') : pk;
-      return `${fmt(ppk)} / ${fmt(pk)}`;
+      return pk ? pk.replace(/^20(\d\d)-(\d\d)$/, '\'$1.$2').replace(/^20(\d\d)-Q(\d)$/, '\'$1.Q$2').replace(/^(20\d\d)$/, '$1') : pk;
     });
     try { if (charts.promo) { charts.promo.destroy(); charts.promo = null; } } catch(_) {}
     charts.promo = new Chart(document.getElementById('chPromo'), {
