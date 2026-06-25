@@ -6228,9 +6228,10 @@ async function renderPromoChart(fOrders, fMkt) {
       cmpMode: tableCmpMode,
       region: promoRegion,
     };
-    // hasTargets 체크만 — 실제 집계는 아래 단일 패스에서 수행
+    // hasTargets: BEFORE 집계 가능 여부만 체크 (after는 이미 baAmt[p]에 설정됨)
     const hasTargets = mb === 'customer' ? (custSet && custSet.size) : (skuSet && skuSet.size);
-    if (!start || !hasTargets) return;
+    // target 없거나 start 없으면 BEFORE 스킵 (after는 유지)
+    if (!start || !hasTargets) { baAmt[p]._skipBefore = true; }
   });
 
   // ── BEFORE: 단일 패스로 전체 _baPrevSource 순회 (O(N) 로 최적화) ──
@@ -6257,6 +6258,7 @@ async function renderPromoChart(fOrders, fMkt) {
       // 각 캠페인에 매칭되는지 확인
       for (const p of Object.keys(baAmt)) {
         const ba = baAmt[p];
+        if (ba._skipBefore) continue;
         if (!ba.prevFrom || !ba.prevTo) continue;
         if (d < ba.prevFrom || d > ba.prevTo) continue;
         const mb = promoMatchBy[p] || 'sku';
@@ -7293,17 +7295,18 @@ function renderPromoTable() {
     // promoStart 이후만
     const start = _promoStart[promo];
     if (start && o.order_date < start) return;
-    // SKU/고객 2중 필터
+    // SKU/고객 필터: explicit target 있을 때만 필터, 없으면 tag-based 전체 허용
     const mb = _promoMatchBy[promo] || 'sku';
     if (mb === 'sku') {
       const skuSet = _promoTargetSkus[promo];
-      if (skuSet && skuSet.size) {
+      if (skuSet && skuSet.size > 0) {
         const oSku = (o.sku || o.ctr_code || '').trim();
         if (!skuSet.has(oSku)) return;
       }
+      // skuSet 없으면 tag-based 전체 허용
     } else {
       const custSet = _promoTargetCust[promo];
-      if (custSet && custSet.size) {
+      if (custSet && custSet.size > 0) {
         const oCust = (o.customer || '').trim();
         if (!custSet.has(oCust)) return;
       }
@@ -7316,6 +7319,18 @@ function renderPromoTable() {
     drillData[promo][country][cust].amt    += convOrder(o);
     drillData[promo][country][cust].orders += 1;
     drillData[promo][country][cust].qty    += Number(o.qty)||0;
+  });
+
+  // ── 국가별 MKT 데이터 ──
+  const drillMktData = {};  // promo → { country → { actual, expected } }
+  fMkt.forEach(m => {
+    const promo = (m.promotion_category || m.promotion_id || '').trim();
+    if (!_summaryPromos.has(promo)) return;
+    const country = m.country || m.region || '–';
+    if (!drillMktData[promo]) drillMktData[promo] = {};
+    if (!drillMktData[promo][country]) drillMktData[promo][country] = { actual:0, expected:0 };
+    drillMktData[promo][country].actual   += convMktActual(m);
+    drillMktData[promo][country].expected += convMktExpected(m);
   });
 
   const totalCur = summary.reduce((s,p)=>s+(p.afterAmt||p.orderAmt||0),0);
@@ -7392,10 +7407,10 @@ function renderPromoTable() {
     const mb = _promoMatchBy[promo] || 'sku';
     if (mb === 'sku') {
       const skuSet = _promoTargetSkus[promo];
-      if (skuSet && skuSet.size && !skuSet.has((o.sku || o.ctr_code || '').trim())) return;
+      if (skuSet && skuSet.size > 0 && !skuSet.has((o.sku || o.ctr_code || '').trim())) return;
     } else {
       const custSet = _promoTargetCust[promo];
-      if (custSet && custSet.size && !custSet.has((o.customer || '').trim())) return;
+      if (custSet && custSet.size > 0 && !custSet.has((o.customer || '').trim())) return;
     }
     const country = o.country || o.region || '–';
     const cust = o.customer || '–';
@@ -7410,23 +7425,31 @@ function renderPromoTable() {
   const buildDrillRows = (promo) => {
     const dd = drillData[promo] || {};
     const ddPrv = drillPrvData[promo] || {};
+    const ddMkt = drillMktData[promo] || {};
     const promoSummary = summary.find(s => (s.promotion||s.key) === promo);
     const promoAfterAmt = promoSummary ? (promoSummary.afterAmt || promoSummary.orderAmt || 0) : 0;
-    const countries = Object.entries(dd).sort((a,b)=>{
-      const aAmt = Object.values(a[1]).reduce((s,v)=>s+v.amt,0);
-      const bAmt = Object.values(b[1]).reduce((s,v)=>s+v.amt,0);
-      return bAmt - aAmt;
-    });
+    const allCountries = new Set([...Object.keys(dd), ...Object.keys(ddMkt)]);
+    const countries = [...allCountries].map(country => {
+      const custs = dd[country] || {};
+      const amt = Object.values(custs).reduce((s,v)=>s+v.amt,0);
+      return [country, custs, amt];
+    }).sort((a,b)=>b[2]-a[2]);
     let rows = '';
-    for (const [country, custs] of countries) {
-      const countryAmt = Object.values(custs).reduce((s,v)=>s+v.amt,0);
+    for (const [country, custs, countryAmt] of countries) {
       const countryOrd = Object.values(custs).reduce((s,v)=>s+v.orders,0);
       const countryPrvAmt = Object.values(ddPrv[country]||{}).reduce((s,v)=>s+v,0);
+      const countryMkt = ddMkt[country] || {};
+      const countryExpected = countryMkt.expected || 0;
+      const countryActual = countryMkt.actual || 0;
+      const countryRoi = countryActual > 0 ? ((countryAmt - countryActual)/countryActual*100) : null;
       const countryPct = promoAfterAmt > 0 ? (countryAmt/promoAfterAmt*100).toFixed(1) : '0';
       const countryDelta = countryPrvAmt > 0 ? ((countryAmt-countryPrvAmt)/countryPrvAmt*100) : null;
       const countryDeltaTag = countryDelta==null?'<span class="muted">–</span>'
         : countryDelta>=0?`<span class="t-green" style="font-size:10px">▲${countryDelta.toFixed(0)}%</span>`
         :`<span class="t-red" style="font-size:10px">▼${Math.abs(countryDelta).toFixed(0)}%</span>`;
+      const roiTag = countryRoi==null?'<span class="muted">–</span>'
+        : countryRoi>=0?`<span class="t-green" style="font-weight:700">${fmtPct(countryRoi)}</span>`
+        :`<span class="t-red" style="font-weight:700">${fmtPct(countryRoi)}</span>`;
       const custEntries = Object.entries(custs).sort((a,b)=>b[1].amt-a[1].amt);
       rows += `<tr class="promo-drill-country" data-promo="${promo.replace(/"/g,'&quot;')}" style="background:rgba(0,0,0,0.025);cursor:pointer" onclick="toggleCustomerDrill(this,'${promo.replace(/'/g,"\\'")}','${country.replace(/'/g,"\\'")}')">
         <td style="padding-left:28px;font-size:12px">
@@ -7434,11 +7457,11 @@ function renderPromoTable() {
           <b style="font-size:12px">${country}</b>
           <span class="muted" style="font-size:10px;margin-left:6px">${countryOrd} orders · ${countryPct}%</span>
         </td>
-        <td class="text-right mono" style="font-size:11px">${fmtNum(countryOrd)}</td>
-        <td class="text-right mono t-green" style="font-size:12px;font-weight:700">${fmtMoney(countryAmt)}</td>
+        <td class="text-right mono" style="font-size:11px">${countryOrd>0?fmtNum(countryOrd):'–'}</td>
+        <td class="text-right mono t-green" style="font-size:12px;font-weight:700">${countryAmt>0?fmtMoney(countryAmt):'–'}</td>
         ${_cmpModeNow!=='off'?`<td class="text-right mono muted" style="font-size:11px">${countryPrvAmt>0?fmtMoney(countryPrvAmt):'–'}</td>`:''}
-        <td class="text-right mono" style="font-size:10px">${_cmpModeNow!=='off'?countryDeltaTag:'–'}</td>
-        ${showMktCols?'<td></td><td></td><td></td>':''}
+        <td class="text-right mono" style="font-size:10px">${countryDeltaTag}</td>
+        ${showMktCols?`<td class="text-right mono t-yellow" style="font-size:11px">${countryExpected>0?fmtMoney(countryExpected):'–'}</td><td class="text-right mono t-orange" style="font-size:11px">${countryActual>0?fmtMoney(countryActual):'–'}</td><td class="text-right mono" style="font-size:11px">${roiTag}</td>`:''}
         ${curPeriods.map(()=>'<td></td>').join('')}
       </tr>`;
       for (const [cust, cv] of custEntries) {
@@ -7451,13 +7474,13 @@ function renderPromoTable() {
         rows += `<tr class="promo-drill-cust" data-promo="${promo.replace(/"/g,'&quot;')}" data-country="${country.replace(/"/g,'&quot;')}" style="display:none;background:rgba(0,0,0,0.012)">
           <td style="padding-left:52px;font-size:11px">
             <span style="color:var(--blue)">└</span>
-            <span style="margin-left:4px">${cust}</span>
-            <span class="muted" style="font-size:10px;margin-left:6px">${custPct}%</span>
+            <b style="margin-left:4px">${cust}</b>
+            <span class="muted" style="font-size:10px;margin-left:4px">${custPct}%</span>
           </td>
           <td class="text-right mono muted" style="font-size:11px">${fmtNum(cv.orders)}</td>
-          <td class="text-right mono" style="font-size:11px;color:var(--blue)">${fmtMoney(cv.amt)}</td>
+          <td class="text-right mono" style="font-size:11px;color:var(--blue);font-weight:700">${fmtMoney(cv.amt)}</td>
           ${_cmpModeNow!=='off'?`<td class="text-right mono muted" style="font-size:11px">${custPrvAmt>0?fmtMoney(custPrvAmt):'–'}</td>`:''}
-          <td class="text-right mono" style="font-size:10px">${_cmpModeNow!=='off'?custDeltaTag:'–'}</td>
+          <td class="text-right mono" style="font-size:10px">${custDeltaTag}</td>
           ${showMktCols?'<td></td><td></td><td></td>':''}
           ${curPeriods.map(()=>'<td></td>').join('')}
         </tr>`;
@@ -7465,7 +7488,6 @@ function renderPromoTable() {
     }
     return rows;
   };
-
 
   const body = `<tbody>${summary.map(p => {
     const promo = p.promotion||p.key||'';
