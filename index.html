@@ -2125,25 +2125,15 @@ header .mono b.t-orange {
             <p class="label-mono" style="margin-top:4px">Order trend by promotion</p>
           </div>
           <div class="chart-tools">
-            <!-- SELL-IN / SELL-OUT 탭 -->
-            <div class="seg" id="segPromoSellType" style="border:1px solid var(--border);border-radius:8px">
-              <button data-v="SELL-IN"  class="active" style="font-size:11px;font-weight:700;padding:5px 12px;height:auto;line-height:1.2">📦 SELL-IN<span class="label-mono" style="font-size:9px;display:block;font-weight:400;opacity:.7">SKU 기반</span></button>
-              <button data-v="SELL-OUT" style="font-size:11px;font-weight:700;padding:5px 12px;height:auto;line-height:1.2">🤝 SELL-OUT<span class="label-mono" style="font-size:9px;display:block;font-weight:400;opacity:.7">고객 기반</span></button>
-            </div>
             <div class="seg" id="segPromoPerf">
               <button data-v="month" class="active">Month</button>
               <button data-v="quarter">Quarter</button>
               <button data-v="year">Year</button>
             </div>
-            <select id="promoFilterSel" title="Show all promotions or focus on one" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-1)">
+            <select id="promoFilterSel" title="프로모션 선택" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-1)">
               <option value="__all__">All promotions</option>
             </select>
-            <select id="promoDimSel" title="What to break the trend down by" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-1)">
-              <option value="promotion">By promotion</option>
-              <option value="customer">By customer</option>
-              <option value="region">By region</option>
-            </select>
-            <select id="promoCmpSel" title="Compare against a prior period" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-1)">
+            <select id="promoCmpSel" title="전년 비교" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-1)">
               <option value="off">비교 없음</option>
               <option value="yoy">전년 동기 (YoY)</option>
               <option value="qoq">전분기 (QoQ)</option>
@@ -2152,26 +2142,21 @@ header .mono b.t-orange {
             <div class="widget-order-controls"></div>
           </div>
         </div>
-        <!-- SELL-IN 설명 배너 -->
-        <div id="promoSellInBanner" style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(200,16,46,.06);border-radius:8px;margin-bottom:10px;border-left:3px solid #C8102E">
-          <span style="font-size:18px">📦</span>
-          <div>
-            <span class="label-mono" style="font-size:11px;font-weight:700;color:#C8102E">SELL-IN · SKU 기반 성과</span>
-            <p style="font-size:11px;color:var(--text-2);margin:2px 0 0">해당 SKU가 캠페인 이후 얼마나 더 잘 팔리는지 추적합니다. <b>Portfolio Expansion · Asian vehicle · European vehicle · Korean &amp; Japanese vehicles</b></p>
+        <!-- 종합 KPI 카드 -->
+        <div id="promoCmpKpis" style="display:none;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:14px;min-height:0"></div>
+        <!-- 월별 전년 비교 요약 차트 -->
+        <div id="promoMonthlyOverview" style="margin-bottom:16px;padding:14px 16px;background:var(--surface-2);border-radius:10px;border:1px solid var(--border)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span class="label-mono" style="font-size:11px;font-weight:700;color:var(--text-1)">📊 월별 종합 추이 (Choice Kit 전체)</span>
+            <span id="promoOverviewRange" class="label-mono muted" style="font-size:10px"></span>
           </div>
+          <div style="overflow-x:auto"><table id="tblPromoMonthly" style="font-size:11px;width:100%;border-collapse:collapse"></table></div>
         </div>
-        <!-- SELL-OUT 설명 배너 -->
-        <div id="promoSellOutBanner" style="display:none;align-items:center;gap:10px;padding:8px 12px;background:rgba(10,132,255,.06);border-radius:8px;margin-bottom:10px;border-left:3px solid #0A84FF">
-          <span style="font-size:18px">🤝</span>
-          <div>
-            <span class="label-mono" style="font-size:11px;font-weight:700;color:#0A84FF">SELL-OUT · 고객 기반 성과</span>
-            <p style="font-size:11px;color:var(--text-2);margin:2px 0 0">캠페인 집행 고객의 오더가 캠페인 이후 어떻게 변화했는지 추적합니다. <b>Trade promotion · Strategic Partner · Mexico Awakening · Mexico Worldcup</b></p>
-          </div>
-        </div>
-        <div id="promoInsight" class="label-mono" style="margin-bottom:10px;font-size:11px;color:#525257"></div>
-        <div id="promoCmpKpis" style="display:none;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:12px;min-height:0"></div>
-        <div class="chart-wrap" style="height:360px;min-height:360px"><canvas id="chPromo"></canvas></div>
-        <div style="overflow:auto;margin-top:14px"><table id="tblPromo"></table></div>
+        <!-- 트렌드 차트 -->
+        <div class="chart-wrap" style="height:300px;min-height:300px;margin-bottom:16px"><canvas id="chPromo"></canvas></div>
+        <!-- 통합 캠페인 테이블 (SELL-IN / SELL-OUT 구분 + 종합) -->
+        <div id="promoInsight" class="label-mono" style="margin-bottom:8px;font-size:11px;color:#525257"></div>
+        <div style="overflow:auto"><table id="tblPromo"></table></div>
 
       <!-- Choice Kit Impact — Dormant Activation -->
       <div class="panel widget" data-widget-id="choicekitImpact">
@@ -5968,54 +5953,36 @@ async function renderPromoChart(fOrders, fMkt) {
   try {
   const period = state.promoPerfPeriod || 'month';
 
-  // ── SELL-IN / SELL-OUT 필터 ──
-  // marketing.csv의 sell_type 기준으로 캠페인을 분류
-  // SELL-IN: SKU 기반 (Portfolio Expansion, Asian vehicle, European vehicle, Korean & Japanese)
-  // SELL-OUT: 고객 기반 (Trade promotion, Strategic Partner, Mexico Awakening, Mexico Worldcup)
-  const sellType = state.promoSellType || 'SELL-IN';
-  const _mktSellType = {};  // promo → dominant sell_type (SELL-IN or SELL-OUT)
-  // SELL_IN/SELL_OUT 값만 사용, STARTED/RELEASED/B2C 등은 무시
-  const _validSellTypes = new Set(['SELL-IN','SELL-OUT','SELL_IN','SELL_OUT']);
+  // ── 전체 프로모션 포함 (SELL-IN/OUT 구분 없이) ──
+  const _mktSellType = {};  // promo → 'SELL-IN' | 'SELL-OUT'
   (state.marketing || []).forEach(m => {
     const p  = (m.promotion_category || '').trim();
-    const st = (m.sell_type || m.sellType || '').trim().toUpperCase().replace(/_/g,'-');
+    const st = (m.sell_type || '').trim().toUpperCase().replace(/_/g,'-');
     if (!p || !st) return;
-    // SELL-IN 또는 SELL-OUT만 인정, 이미 세팅된 경우 덮어쓰지 않음
-    const norm = st === 'SELL-IN' || st === 'SELL_IN' ? 'SELL-IN'
-               : st === 'SELL-OUT' || st === 'SELL_OUT' ? 'SELL-OUT' : null;
+    const norm = (st==='SELL-IN') ? 'SELL-IN' : (st==='SELL-OUT') ? 'SELL-OUT' : null;
     if (norm && !_mktSellType[p]) _mktSellType[p] = norm;
   });
-  // sell_type 없으면 match_by로 판단 (sku=SELL-IN, customer=SELL-OUT)
   const _cfg0 = state.campaignTargetSkus || {};
   Object.keys(_cfg0).forEach(p => {
-    if (!_mktSellType[p]) {
-      _mktSellType[p] = (_cfg0[p].match_by || 'sku').toLowerCase() === 'customer' ? 'SELL-OUT' : 'SELL-IN';
-    }
+    if (!_mktSellType[p])
+      _mktSellType[p] = (_cfg0[p].match_by||'sku').toLowerCase()==='customer' ? 'SELL-OUT' : 'SELL-IN';
   });
-  const sellTypePromos = new Set(
-    Object.entries(_mktSellType).filter(([,st]) => st === sellType).map(([p]) => p)
-  );
-  // fOrders를 현재 sell_type 캠페인으로만 필터
-  const fOrdersST = fOrders.filter(o => sellTypePromos.has((o.promotion_category||'').trim()));
-  // promoFilterSel 옵션을 sell_type에 맞게 동적 업데이트
+  // 모든 캠페인 포함 (sellType 필터 없음)
+  const fOrdersST = fOrders.filter(o => {
+    const p = (o.promotion_category||'').trim();
+    return p && p !== '(none)' && p !== 'PRE_ORDER';
+  });
+  // promoFilterSel 옵션 — 전체 캠페인
   const filterSel2 = document.getElementById('promoFilterSel');
   if (filterSel2) {
     const cur = filterSel2.value;
+    const allPromos = Array.from(new Set(Object.keys(_mktSellType))).sort();
     filterSel2.innerHTML = '<option value="__all__">All promotions</option>' +
-      [...sellTypePromos].sort().map(p => `<option value="${p}"${cur===p?' selected':''}>${p}</option>`).join('');
-    if (![...sellTypePromos].includes(cur) && cur !== '__all__') {
-      filterSel2.value = '__all__';
-      state.promoFilter = '__all__';
+      allPromos.map(p => `<option value="${p}"${cur===p?' selected':''}>${p}</option>`).join('');
+    if (!allPromos.includes(cur) && cur !== '__all__') {
+      filterSel2.value = '__all__'; state.promoFilter = '__all__';
     }
   }
-  // sync 탭 버튼
-  document.querySelectorAll('#segPromoSellType button').forEach(b => {
-    b.classList.toggle('active', b.dataset.v === sellType);
-  });
-  const inEl  = document.getElementById('promoSellInBanner');
-  const outEl = document.getElementById('promoSellOutBanner');
-  if (inEl)  inEl.style.display  = sellType==='SELL-IN'  ? 'flex' : 'none';
-  if (outEl) outEl.style.display = sellType==='SELL-OUT' ? 'flex' : 'none';
 
 
   // ── Marketing start date per promotion (earliest execution_date).
@@ -7196,398 +7163,387 @@ async function renderPromoChart(fOrders, fMkt) {
 }
 function renderPromoTable() {
   try {
-  const tableDim = state.promoTableDim || 'promotion';
-  const period   = state.promoPerfPeriod || 'month';
-  const _cmpModeNow = state.promoCmp || 'yoy';
-  const _prevColLabel = { yoy:'전년 동기', qoq:'전분기', mom:'전년 동월', off:'–' }[_cmpModeNow] || '전년 동기';
-  const fOrders = state.orders.filter(matchOrder).filter(o => isRegionVisible(o.region));
-  const fMkt    = state.marketing.filter(matchMkt).filter(m => isRegionVisible(m.region));
-  const _allSummary = window._lastPromoSummary || [];
+  const period       = state.promoPerfPeriod || 'month';
+  const _cmpModeNow  = state.promoCmp || 'yoy';
+  const _prevLabel   = { yoy:'전년 동기', qoq:'전분기', mom:'전년 동월', off:'–' }[_cmpModeNow] || '전년 동기';
+  const fOrders      = state.orders.filter(matchOrder).filter(o => isRegionVisible(o.region));
+  const fMkt         = state.marketing.filter(matchMkt).filter(m => isRegionVisible(m.region));
+  const _allSummary  = window._lastPromoSummary || [];
+  const _baAmt       = window._lastBaAmt || {};
+  const cmpSeries    = window._lastPromoCmpSeries || {};
+  const _promoFilter = state.promoFilter || '__all__';
 
-  const _sellType = state.promoSellType || 'SELL-IN';
-  const _cfg0 = state.campaignTargetSkus || {};
+  // sell_type 분류
   const _mktSellType = {};
   (state.marketing || []).forEach(m => {
     const p  = (m.promotion_category || '').trim();
     const st = (m.sell_type || '').trim().toUpperCase().replace(/_/g,'-');
     if (!p || !st) return;
-    const norm = (st === 'SELL-IN') ? 'SELL-IN' : (st === 'SELL-OUT') ? 'SELL-OUT' : null;
-    if (norm && !_mktSellType[p]) _mktSellType[p] = norm;
+    const n = st==='SELL-IN'?'SELL-IN':st==='SELL-OUT'?'SELL-OUT':null;
+    if (n && !_mktSellType[p]) _mktSellType[p] = n;
   });
+  const _cfg0 = state.campaignTargetSkus || {};
   Object.keys(_cfg0).forEach(p => {
     if (!_mktSellType[p])
       _mktSellType[p] = (_cfg0[p].match_by||'sku').toLowerCase()==='customer' ? 'SELL-OUT' : 'SELL-IN';
   });
-  const _promoFilter = state.promoFilter || '__all__';
+
+  // filter
   const summary = _allSummary.filter(p => {
     const promo = p.promotion || p.key || '';
-    if ((_mktSellType[promo] || 'SELL-IN') !== _sellType) return false;
-    if (_promoFilter !== '__all__' && promo !== _promoFilter) return false;
-    return true;
+    return _promoFilter === '__all__' || promo === _promoFilter;
   });
-  const cmpSeries = window._lastPromoCmpSeries || {};
 
   function shiftBucket(pk, mode, per) {
     if (!pk) return '';
-    if (per === 'year') { return String(parseInt(pk,10)-(mode==='yoy'?1:1)); }
+    if (per === 'year') return String(parseInt(pk,10)-1);
     if (per === 'quarter') {
       const [ys,qs]=pk.split('-Q'); let y=+ys,q=+qs;
       if (mode==='yoy') return `${y-1}-Q${q}`;
-      q-=1; if(q<1){q=4;y-=1;} return `${y}-Q${q}`;
+      q--; if(q<1){q=4;y--;} return `${y}-Q${q}`;
     }
     const [ys,ms]=pk.split('-'); let y=+ys,m=+ms;
-    if (mode==='yoy'){return `${y-1}-${String(m).padStart(2,'0')}`;}
-    if (mode==='qoq'){m-=3;while(m<1){m+=12;y-=1;}return `${y}-${String(m).padStart(2,'0')}`;}
+    if (mode==='yoy') return `${y-1}-${String(m).padStart(2,'0')}`;
+    if (mode==='qoq') { m-=3; while(m<1){m+=12;y--;} return `${y}-${String(m).padStart(2,'0')}`; }
     return `${y-1}-${String(m).padStart(2,'0')}`;
   }
+  const _fmtPk = pk => pk ? pk.replace(/^20(\d\d)-(\d\d)$/,"'$1.$2").replace(/^20(\d\d)-Q(\d)$/,"'$1.Q$2").replace(/^(20\d\d)$/,'$1') : '';
+  const _fmtDate = d => d ? d.replace(/^20(\d\d)-(\d\d).*$/,"'$1.$2") : '';
 
-  const curPeriods = Array.from(new Set(
-    (state.orders||[]).map(o=>periodKey(o.order_date,period)).filter(Boolean)
-  )).sort();
+  const dTag = (cur,prv) => {
+    const d = prv>0 ? ((cur-prv)/prv)*100 : null;
+    return d==null ? '<span class="muted">–</span>'
+      : d>=0 ? `<span class="t-green" style="font-size:10px">▲${d.toFixed(0)}%</span>`
+             : `<span class="t-red"   style="font-size:10px">▼${Math.abs(d).toFixed(0)}%</span>`;
+  };
 
-  const periodCurByPromo = {}, periodPrvByPromo = {};
-  summary.forEach(p => {
-    const promo = p.promotion||p.key||'';
-    periodCurByPromo[promo] = {};
-    periodPrvByPromo[promo] = {};
-  });
-  (state.orders||[]).forEach(o => {
-    const promo = o.promotion_category||'';
-    if (!periodCurByPromo[promo]) return;
-    const pk = periodKey(o.order_date, period);
-    if (!pk) return;
-    periodCurByPromo[promo][pk] = (periodCurByPromo[promo][pk]||0) + convOrder(o);
-  });
-  if (_cmpModeNow !== 'off') {
-    summary.forEach(p => {
+  // ── 월별 종합 요약 테이블 ──
+  const curPeriods = Array.from(new Set(fOrders.map(o=>periodKey(o.order_date,period)).filter(Boolean))).sort();
+  const grandCurByPk = {}, grandPrvByPk = {};
+  curPeriods.forEach(pk => {
+    grandCurByPk[pk] = summary.reduce((s,p) => {
       const promo = p.promotion||p.key||'';
-      curPeriods.forEach(pk => {
-        const ppk = shiftBucket(pk, _cmpModeNow, period);
-        const prv = (cmpSeries[promo]&&cmpSeries[promo][ppk])||0;
-        if (prv) periodPrvByPromo[promo][ppk] = (periodPrvByPromo[promo][ppk]||0)+prv;
-      });
+      // current period from orders
+      const ordAmt = fOrders.filter(o => o.promotion_category===promo && periodKey(o.order_date,period)===pk)
+                            .reduce((ss,o) => ss+convOrder(o), 0);
+      return s + ordAmt;
+    }, 0);
+    const ppk = shiftBucket(pk, _cmpModeNow, period);
+    grandPrvByPk[ppk] = shiftBucket ? (shownKeysPrv => {
+      return shownKeysPrv.reduce((s,key) => s + ((cmpSeries[key]&&cmpSeries[key][ppk])||0), 0);
+    })(summary.map(p=>p.promotion||p.key||'')) : 0;
+  });
+
+  // Simple monthly table
+  const monthlyEl = document.getElementById('tblPromoMonthly');
+  const overviewRangeEl = document.getElementById('promoOverviewRange');
+  if (monthlyEl && _cmpModeNow !== 'off' && curPeriods.length) {
+    const grandCur = summary.reduce((s,p)=>s+(p.afterAmt||p.orderAmt||0), 0);
+    const grandPrv = summary.reduce((s,p)=>s+(p.beforeAmt||0), 0);
+    if (overviewRangeEl) {
+      const allStarts = summary.map(r=>r.baStart||'').filter(Boolean).sort();
+      const from = allStarts.length ? _fmtDate(allStarts[0]) : '';
+      const to   = _fmtDate((_todayStr||(() => new Date().toISOString().slice(0,10)))());
+      overviewRangeEl.textContent = from ? `${from} ~ ${to}` : '';
+    }
+    // Monthly period amounts — use cmpSeries for prior, periodCurByPromo for current
+    const periodCurAll = {};
+    fOrders.forEach(o => {
+      const p = o.promotion_category||'';
+      if (!summary.find(s=>(s.promotion||s.key)===p)) return;
+      const pk = periodKey(o.order_date,period);
+      if (!pk) return;
+      periodCurAll[pk] = (periodCurAll[pk]||0) + convOrder(o);
     });
+
+    const colStyle = 'padding:4px 10px;text-align:right;font-family:var(--font-mono);white-space:nowrap;border-bottom:1px solid var(--border)';
+    const hStyle   = 'padding:4px 10px;text-align:right;font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--text-2);border-bottom:2px solid var(--border)';
+    const lStyle   = 'padding:4px 8px;font-size:10px;font-weight:700;color:var(--text-2);border-bottom:1px solid var(--border)';
+
+    let mHead = `<thead><tr><th style="${lStyle}">항목</th>`;
+    curPeriods.forEach(pk => { mHead += `<th style="${hStyle}">${_fmtPk(pk)}</th>`; });
+    mHead += `<th style="${hStyle}">합계</th></tr></thead>`;
+
+    const rowHtml = (label, byPk, total, colorCls='') => {
+      let r = `<tr><td style="${lStyle};${colorCls?'color:'+colorCls:''}">${label}</td>`;
+      curPeriods.forEach(pk => {
+        const v = byPk[pk]||0;
+        r += `<td style="${colStyle};font-size:11px;${colorCls&&v?'color:'+colorCls+';font-weight:700':''}">${v>0?fmtMoney(v):'<span class="muted">–</span>'}</td>`;
+      });
+      r += `<td style="${colStyle};font-weight:800;${colorCls?'color:'+colorCls:''}">${total>0?fmtMoney(total):'–'}</td></tr>`;
+      return r;
+    };
+
+    // prior periods
+    const periodPrvAll = {};
+    curPeriods.forEach(pk => {
+      const ppk = shiftBucket(pk, _cmpModeNow, period);
+      const prv = summary.reduce((s,p) => s + ((cmpSeries[p.promotion||p.key||'']&&cmpSeries[p.promotion||p.key||''][ppk])||0), 0);
+      if (prv) periodPrvAll[ppk] = prv;
+    });
+
+    // delta row
+    const deltaRow = (() => {
+      let r = `<tr style="background:rgba(0,0,0,0.02)"><td style="${lStyle}">Δ%</td>`;
+      let hasAny = false;
+      curPeriods.forEach(pk => {
+        const cur = periodCurAll[pk]||0;
+        const ppk = shiftBucket(pk, _cmpModeNow, period);
+        const prv = periodPrvAll[ppk]||0;
+        const tag = prv>0 ? dTag(cur,prv) : '<span class="muted">–</span>';
+        if (prv>0) hasAny = true;
+        r += `<td style="${colStyle};font-size:10px">${tag}</td>`;
+      });
+      const gDelta = grandPrv>0 ? dTag(grandCur,grandPrv) : '<span class="muted">–</span>';
+      r += `<td style="${colStyle};font-size:11px">${gDelta}</td></tr>`;
+      return hasAny ? r : '';
+    })();
+
+    monthlyEl.innerHTML = mHead + `<tbody>
+      ${rowHtml('현재 ORDER AMT', periodCurAll, grandCur, '#007AFF')}
+      ${_cmpModeNow!=='off' ? rowHtml(_prevLabel, periodPrvAll, grandPrv, '#86868B') : ''}
+      ${deltaRow}
+    </tbody>`;
+  } else if (monthlyEl) {
+    monthlyEl.innerHTML = '';
   }
 
-  const showMktCols = (tableDim === 'promotion');
-  const _fmtPk = pk => pk?pk.replace(/^20(\d\d)-(\d\d)$/,"'$1.$2").replace(/^20(\d\d)-Q(\d)$/,"'$1.Q$2").replace(/^(20\d\d)$/,'$1'):'';
-  const dTag = (cur,prv) => {
-    const d = prv>0?((cur-prv)/prv)*100:null;
-    return d==null?'<span class="muted">–</span>':d>=0?`<span class="t-green" style="font-size:10px">▲${d.toFixed(0)}%</span>`:`<span class="t-red" style="font-size:10px">▼${Math.abs(d).toFixed(0)}%</span>`;
-  };
+  // ── 캠페인 테이블 — SELL-IN / SELL-OUT 섹션 분리 ──
+  const siSummary = summary.filter(p => (_mktSellType[p.promotion||p.key||'']||'SELL-IN')==='SELL-IN');
+  const soSummary = summary.filter(p => (_mktSellType[p.promotion||p.key||'']||'SELL-IN')==='SELL-OUT');
 
-  const _calcPrv = (promo) => {
-    if (_cmpModeNow === 'off') return 0;
-    return curPeriods.reduce((s, pk) => {
-      const ppk = shiftBucket(pk, _cmpModeNow, period);
-      return s + ((periodPrvByPromo[promo] && periodPrvByPromo[promo][ppk]) || 0);
-    }, 0);
+  const regionColors = { 'CIS':'#5856D6','MENA':'#FF9500','LATAM':'#34C759','SEA':'#00C7BE','ASIA':'#0A84FF','EUROPE':'#FF375F','NA':'#BF5AF2','GCC':'#FF6B35' };
+  const regionBadge = label => {
+    if (!label) return '';
+    return label.split(',').map(r => {
+      const k=r.trim().toUpperCase(), c=regionColors[k]||'#86868B';
+      return `<span style="display:inline-block;background:${c}18;color:${c};border:1px solid ${c}40;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;margin-left:4px;vertical-align:middle">${r.trim()}</span>`;
+    }).join('');
   };
+  const sellBadge = st => st==='SELL-IN'
+    ? '<span style="background:#C8102E;color:#fff;font-size:8px;padding:1px 5px;border-radius:8px;font-weight:700;vertical-align:middle;margin-left:5px">SELL-IN</span>'
+    : '<span style="background:#0A84FF;color:#fff;font-size:8px;padding:1px 5px;border-radius:8px;font-weight:700;vertical-align:middle;margin-left:5px">SELL-OUT</span>';
 
-  // ── 드릴다운 데이터: 프로모션 → 국가 → 고객 ──
-  // afterAmt와 동일한 필터: promoStart 이후 + 대상 SKU/고객 2중 필터
+  // Drill data
   const _promoStart      = window._lastPromoStart      || {};
   const _promoTargetSkus = window._lastPromoTargetSkus || {};
   const _promoTargetCust = window._lastPromoTargetCust || {};
   const _promoMatchBy    = window._lastPromoMatchBy    || {};
-  const _summaryPromos   = new Set(summary.map(s => s.promotion || s.key || ''));
+  const _summaryPromos   = new Set(summary.map(s=>s.promotion||s.key||''));
 
-  const drillData = {};  // promo → { country → { customer → { amt, orders, qty } } }
+  const drillData = {};
   fOrders.forEach(o => {
-    const promo = (o.promotion_category || '').trim();
+    const promo = (o.promotion_category||'').trim();
     if (!_summaryPromos.has(promo)) return;
-    // promoStart 이후만
     const start = _promoStart[promo];
     if (start && o.order_date < start) return;
-    // SKU/고객 필터: explicit target 있을 때만 필터, 없으면 tag-based 전체 허용
-    const mb = _promoMatchBy[promo] || 'sku';
-    if (mb === 'sku') {
-      const skuSet = _promoTargetSkus[promo];
-      if (skuSet && skuSet.size > 0) {
-        const oSku = (o.sku || o.ctr_code || '').trim();
-        if (!skuSet.has(oSku)) return;
-      }
-      // skuSet 없으면 tag-based 전체 허용
+    const mb = _promoMatchBy[promo]||'sku';
+    if (mb==='sku') {
+      const ss = _promoTargetSkus[promo];
+      if (ss && ss.size>0 && !ss.has((o.sku||o.ctr_code||'').trim())) return;
     } else {
-      const custSet = _promoTargetCust[promo];
-      if (custSet && custSet.size > 0) {
-        const oCust = (o.customer || '').trim();
-        if (!custSet.has(oCust)) return;
-      }
+      const cs = _promoTargetCust[promo];
+      if (cs && cs.size>0 && !cs.has((o.customer||'').trim())) return;
     }
-    const country = o.country || o.region || '–';
-    const cust = o.customer || '–';
-    if (!drillData[promo]) drillData[promo] = {};
-    if (!drillData[promo][country]) drillData[promo][country] = {};
-    if (!drillData[promo][country][cust]) drillData[promo][country][cust] = { amt:0, orders:0, qty:0 };
+    const country=o.country||o.region||'–', cust=o.customer||'–';
+    if (!drillData[promo]) drillData[promo]={};
+    if (!drillData[promo][country]) drillData[promo][country]={};
+    if (!drillData[promo][country][cust]) drillData[promo][country][cust]={amt:0,orders:0,qty:0};
     drillData[promo][country][cust].amt    += convOrder(o);
     drillData[promo][country][cust].orders += 1;
     drillData[promo][country][cust].qty    += Number(o.qty)||0;
   });
 
-  // ── 국가별 MKT 데이터 ──
-  const drillMktData = {};  // promo → { country → { actual, expected } }
-  fMkt.forEach(m => {
-    const promo = (m.promotion_category || m.promotion_id || '').trim();
+  // Prev drill data
+  const drillPrvData={};
+  const _allOrdersForPrv=[...(state.orders||[]),...((state.preOrdersEnabled&&Array.isArray(state.preOrders))?state.preOrders:[])];
+  _allOrdersForPrv.forEach(o => {
+    const promo=(o.promotion_category||o._promo||'').trim();
     if (!_summaryPromos.has(promo)) return;
-    const country = m.country || m.region || '–';
-    if (!drillMktData[promo]) drillMktData[promo] = {};
-    if (!drillMktData[promo][country]) drillMktData[promo][country] = { actual:0, expected:0 };
+    const ba=_baAmt[promo];
+    if (!ba||!ba.prevFrom||!ba.prevTo) return;
+    const d=o.order_date||'';
+    if (!d||d<ba.prevFrom||d>ba.prevTo) return;
+    const mb=_promoMatchBy[promo]||'sku';
+    if (mb==='sku'){const ss=_promoTargetSkus[promo];if(ss&&ss.size>0&&!ss.has((o.sku||o.ctr_code||'').trim()))return;}
+    else{const cs=_promoTargetCust[promo];if(cs&&cs.size>0&&!cs.has((o.customer||'').trim()))return;}
+    const country=o.country||o.region||'–', cust=o.customer||'–';
+    const amt=(o[PRE_ORDER_MARK]&&o.amount_usd!=null)?Number(o.amount_usd)*usdToDisplay():convOrder(o);
+    if (!drillPrvData[promo]) drillPrvData[promo]={};
+    if (!drillPrvData[promo][country]) drillPrvData[promo][country]={};
+    drillPrvData[promo][country][cust]=(drillPrvData[promo][country][cust]||0)+amt;
+  });
+
+  // MKT drill data
+  const drillMktData={};
+  fMkt.forEach(m => {
+    const promo=(m.promotion_category||'').trim();
+    if (!_summaryPromos.has(promo)) return;
+    const country=m.country||m.region||'–';
+    if (!drillMktData[promo]) drillMktData[promo]={};
+    if (!drillMktData[promo][country]) drillMktData[promo][country]={actual:0,expected:0};
     drillMktData[promo][country].actual   += convMktActual(m);
     drillMktData[promo][country].expected += convMktExpected(m);
   });
 
-  const totalCur = summary.reduce((s,p)=>s+(p.afterAmt||p.orderAmt||0),0);
-  const totalPrv = summary.reduce((s,p)=>s+_calcPrv(p.promotion||p.key||''),0);
-  const totalOrd = summary.reduce((s,p)=>s+(p.orders||0),0);
-  const totalBudget = summary.reduce((s,p)=>s+(p.expected||0),0);
-  const totalExec   = summary.reduce((s,p)=>s+(p.actual||0),0);
-  const totalDelta  = totalPrv>0?((totalCur-totalPrv)/totalPrv)*100:null;
-  const totalCurByPk={}, totalPrvByPk={};
-  curPeriods.forEach(pk => {
-    totalCurByPk[pk] = summary.reduce((s,p)=>{
-      const promo=p.promotion||p.key||'';
-      return s+((periodCurByPromo[promo]&&periodCurByPromo[promo][pk])||0);
-    },0);
-    const ppk = shiftBucket(pk,_cmpModeNow,period);
-    totalPrvByPk[ppk] = summary.reduce((s,p)=>{
-      const promo=p.promotion||p.key||'';
-      return s+((periodPrvByPromo[promo]&&periodPrvByPromo[promo][ppk])||0);
-    },0);
-  });
-
-  const monthColsHead = curPeriods.map((pk,i)=>{
-    // 현재 기간만 표시 (paired label 제거)
-    return `<th class="text-right mono" style="font-size:10px;${i===0?'border-left:2px solid var(--border)':''}">${_fmtPk(pk)}</th>`;
-  }).join('');
-
-  const _stBadge = _sellType === 'SELL-IN'
-    ? '<span style="background:#C8102E;color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;font-weight:700;vertical-align:middle">📦 SELL-IN</span>'
-    : '<span style="background:#0A84FF;color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;font-weight:700;vertical-align:middle">🤝 SELL-OUT</span>';
-  const _filterBadge = _promoFilter !== '__all__'
-    ? `<span style="background:rgba(200,16,46,.1);color:#C8102E;font-size:9px;padding:1px 8px;border-radius:10px;font-weight:700;vertical-align:middle;margin-left:6px;border:1px solid rgba(200,16,46,.3)">🔍 ${_promoFilter}</span>`
-    : '';
-
-  const colCount = 4 + (_cmpModeNow!=='off'?1:0) + (showMktCols?3:0) + curPeriods.length;
-
-  const head = `<thead><tr>
-    <th>PROMOTION ${_stBadge}${_filterBadge}</th>
-    <th class="text-right">ORDERS</th>
-    <th class="text-right">현재 ORDER AMT</th>
-    ${_cmpModeNow!=='off'?`<th class="text-right">${_prevColLabel}</th>`:''}
-    <th class="text-right">Δ%</th>
-    ${showMktCols?'<th class="text-right">MKT BUDGET</th>':''}
-    ${showMktCols?'<th class="text-right">EXECUTED</th>':''}
-    ${showMktCols?'<th class="text-right">ROI</th>':''}
-  </tr></thead>`;
-
-  // 권역 뱃지 색상 맵
-  const regionColors = {
-    'CIS':'#5856D6','MENA':'#FF9500','LATAM':'#34C759','SEA':'#00C7BE',
-    'ASIA':'#0A84FF','EUROPE':'#FF375F','NA':'#BF5AF2','GCC':'#FF6B35'
-  };
-  const regionBadge = (label) => {
-    if (!label) return '';
-    return label.split(',').map(r => {
-      const key = r.trim().toUpperCase();
-      const color = regionColors[key] || '#86868B';
-      return `<span style="display:inline-block;background:${color}18;color:${color};border:1px solid ${color}40;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;margin-left:4px;vertical-align:middle">${r.trim()}</span>`;
-    }).join('');
-  };
-
-  // ── 전년 동기 드릴다운: 대상 SKU/고객 2중 필터 + prevFrom~prevTo ──
-  const _baAmt = window._lastBaAmt || {};
-  const _allOrdersForPrv = [...(state.orders||[]), ...((state.preOrdersEnabled && Array.isArray(state.preOrders)) ? state.preOrders : [])];
-  const drillPrvData = {};  // promo → { country → { customer → amt } }
-  _allOrdersForPrv.forEach(o => {
-    const promo = (o.promotion_category || '').trim();
-    if (!_summaryPromos.has(promo)) return;
-    const ba = _baAmt[promo];
-    if (!ba || !ba.prevFrom || !ba.prevTo) return;
-    const d = o.order_date || '';
-    if (!d || d < ba.prevFrom || d > ba.prevTo) return;
-    const mb = _promoMatchBy[promo] || 'sku';
-    if (mb === 'sku') {
-      const skuSet = _promoTargetSkus[promo];
-      if (skuSet && skuSet.size > 0 && !skuSet.has((o.sku || o.ctr_code || '').trim())) return;
-    } else {
-      const custSet = _promoTargetCust[promo];
-      if (custSet && custSet.size > 0 && !custSet.has((o.customer || '').trim())) return;
-    }
-    const country = o.country || o.region || '–';
-    const cust = o.customer || '–';
-    const amt = (o[PRE_ORDER_MARK] && o.amount_usd != null)
-      ? Number(o.amount_usd) * usdToDisplay() : convOrder(o);
-    if (!drillPrvData[promo]) drillPrvData[promo] = {};
-    if (!drillPrvData[promo][country]) drillPrvData[promo][country] = {};
-    drillPrvData[promo][country][cust] = (drillPrvData[promo][country][cust] || 0) + amt;
-  });
-
-  // ── 드릴다운 행 생성 ──
+  // ── Drill rows builder ──
   const buildDrillRows = (promo) => {
-    const dd = drillData[promo] || {};
-    const ddPrv = drillPrvData[promo] || {};
-    const ddMkt = drillMktData[promo] || {};
-    const promoSummary = summary.find(s => (s.promotion||s.key) === promo);
-    const promoAfterAmt = promoSummary ? (promoSummary.afterAmt || promoSummary.orderAmt || 0) : 0;
-    const allCountries = new Set([...Object.keys(dd), ...Object.keys(ddMkt)]);
-    const countries = [...allCountries].map(country => {
-      const custs = dd[country] || {};
-      const amt = Object.values(custs).reduce((s,v)=>s+v.amt,0);
-      return [country, custs, amt];
+    const dd=drillData[promo]||{}, ddPrv=drillPrvData[promo]||{}, ddMkt=drillMktData[promo]||{};
+    const pSummary=summary.find(s=>(s.promotion||s.key)===promo);
+    const pAmt=pSummary?(pSummary.afterAmt||pSummary.orderAmt||0):0;
+    const allCtries=new Set([...Object.keys(dd),...Object.keys(ddMkt)]);
+    const countries=[...allCtries].map(c=>{
+      const custs=dd[c]||{};
+      return [c,custs,Object.values(custs).reduce((s,v)=>s+v.amt,0)];
     }).sort((a,b)=>b[2]-a[2]);
-    let rows = '';
-    for (const [country, custs, countryAmt] of countries) {
-      const countryOrd = Object.values(custs).reduce((s,v)=>s+v.orders,0);
-      const countryPrvAmt = Object.values(ddPrv[country]||{}).reduce((s,v)=>s+v,0);
-      const countryMkt = ddMkt[country] || {};
-      const countryExpected = countryMkt.expected || 0;
-      const countryActual = countryMkt.actual || 0;
-      const countryRoi = countryActual > 0 ? ((countryAmt - countryActual)/countryActual*100) : null;
-      const countryPct = promoAfterAmt > 0 ? (countryAmt/promoAfterAmt*100).toFixed(1) : '0';
-      const countryDelta = countryPrvAmt > 0 ? ((countryAmt-countryPrvAmt)/countryPrvAmt*100) : null;
-      const countryDeltaTag = countryDelta==null?'<span class="muted">–</span>'
-        : countryDelta>=0?`<span class="t-green" style="font-size:10px">▲${countryDelta.toFixed(0)}%</span>`
-        :`<span class="t-red" style="font-size:10px">▼${Math.abs(countryDelta).toFixed(0)}%</span>`;
-      const roiTag = countryRoi==null?'<span class="muted">–</span>'
-        : countryRoi>=0?`<span class="t-green" style="font-weight:700">${fmtPct(countryRoi)}</span>`
-        :`<span class="t-red" style="font-weight:700">${fmtPct(countryRoi)}</span>`;
-      const custEntries = Object.entries(custs).sort((a,b)=>b[1].amt-a[1].amt);
-      rows += `<tr class="promo-drill-country" data-promo="${promo.replace(/"/g,'&quot;')}" style="background:rgba(0,0,0,0.025);cursor:pointer" onclick="toggleCustomerDrill(this,'${promo.replace(/'/g,"\\'")}','${country.replace(/'/g,"\\'")}')">
-        <td style="padding-left:28px;font-size:12px">
-          <span style="color:#86868B;margin-right:4px">▶</span>
-          <b style="font-size:12px">${country}</b>
-          <span class="muted" style="font-size:10px;margin-left:6px">${countryOrd} orders · ${countryPct}%</span>
-        </td>
-        <td class="text-right mono" style="font-size:11px">${countryOrd>0?fmtNum(countryOrd):'–'}</td>
-        <td class="text-right mono t-green" style="font-size:12px;font-weight:700">${countryAmt>0?fmtMoney(countryAmt):'–'}</td>
-        ${_cmpModeNow!=='off'?`<td class="text-right mono muted" style="font-size:11px">${countryPrvAmt>0?fmtMoney(countryPrvAmt):'–'}</td>`:''}
-        <td class="text-right mono" style="font-size:10px">${countryDeltaTag}</td>
-        ${showMktCols?`<td class="text-right mono t-yellow" style="font-size:11px">${countryExpected>0?fmtMoney(countryExpected):'–'}</td><td class="text-right mono t-orange" style="font-size:11px">${countryActual>0?fmtMoney(countryActual):'–'}</td><td class="text-right mono" style="font-size:11px">${roiTag}</td>`:''}
-        ${curPeriods.map(()=>'<td></td>').join('')}
+    let rows='';
+    for (const [country,custs,cAmt] of countries) {
+      const cOrd=Object.values(custs).reduce((s,v)=>s+v.orders,0);
+      const cPrv=Object.values(ddPrv[country]||{}).reduce((s,v)=>s+v,0);
+      const cMkt=ddMkt[country]||{};
+      const cExp=cMkt.expected||0, cAct=cMkt.actual||0;
+      const cRoi=cAct>0?((cAmt-cAct)/cAct*100):null;
+      const pct=pAmt>0?(cAmt/pAmt*100).toFixed(1):'0';
+      const delta=cPrv>0?((cAmt-cPrv)/cPrv*100):null;
+      const dTag2=delta==null?'–':delta>=0?`<span class="t-green" style="font-size:10px">▲${delta.toFixed(0)}%</span>`:`<span class="t-red" style="font-size:10px">▼${Math.abs(delta).toFixed(0)}%</span>`;
+      const roiTag=cRoi==null?'–':cRoi>=0?`<span class="t-green">${fmtPct(cRoi)}</span>`:`<span class="t-red">${fmtPct(cRoi)}</span>`;
+      rows+=`<tr class="promo-drill-country" data-promo="${promo.replace(/"/g,'&quot;')}" style="background:rgba(0,0,0,0.022);cursor:pointer" onclick="toggleCustomerDrill(this,'${promo.replace(/'/g,"\\'")}','${country.replace(/'/g,"\\'")}')">
+        <td style="padding-left:28px;font-size:12px"><span style="color:#86868B;margin-right:4px">▶</span><b>${country}</b><span class="muted" style="font-size:10px;margin-left:6px">${cOrd} orders · ${pct}%</span></td>
+        <td class="text-right mono" style="font-size:11px">${cOrd>0?fmtNum(cOrd):'–'}</td>
+        <td class="text-right mono t-green" style="font-size:12px;font-weight:700">${cAmt>0?fmtMoney(cAmt):'–'}</td>
+        ${_cmpModeNow!=='off'?`<td class="text-right mono muted" style="font-size:11px">${cPrv>0?fmtMoney(cPrv):'–'}</td>`:''}
+        <td class="text-right mono" style="font-size:10px">${dTag2}</td>
+        <td class="text-right mono t-yellow" style="font-size:11px">${cExp>0?fmtMoney(cExp):'–'}</td>
+        <td class="text-right mono t-orange" style="font-size:11px">${cAct>0?fmtMoney(cAct):'–'}</td>
+        <td class="text-right mono" style="font-size:11px">${roiTag}</td>
       </tr>`;
-      for (const [cust, cv] of custEntries) {
-        const custPrvAmt = (ddPrv[country]&&ddPrv[country][cust]) || 0;
-        const custPct = countryAmt > 0 ? (cv.amt/countryAmt*100).toFixed(1) : '0';
-        const custDelta = custPrvAmt > 0 ? ((cv.amt-custPrvAmt)/custPrvAmt*100) : null;
-        const custDeltaTag = custDelta==null?'<span class="muted">–</span>'
-          : custDelta>=0?`<span class="t-green" style="font-size:10px">▲${custDelta.toFixed(0)}%</span>`
-          :`<span class="t-red" style="font-size:10px">▼${Math.abs(custDelta).toFixed(0)}%</span>`;
-        rows += `<tr class="promo-drill-cust" data-promo="${promo.replace(/"/g,'&quot;')}" data-country="${country.replace(/"/g,'&quot;')}" style="display:none;background:rgba(0,0,0,0.012)">
-          <td style="padding-left:52px;font-size:11px">
-            <span style="color:var(--blue)">└</span>
-            <b style="margin-left:4px">${cust}</b>
-            <span class="muted" style="font-size:10px;margin-left:4px">${custPct}%</span>
-          </td>
+      for (const [cust,cv] of Object.entries(custs).sort((a,b)=>b[1].amt-a[1].amt)) {
+        const custPrv=(ddPrv[country]&&ddPrv[country][cust])||0;
+        const custPct=cAmt>0?(cv.amt/cAmt*100).toFixed(1):'0';
+        const custDelta=custPrv>0?((cv.amt-custPrv)/custPrv*100):null;
+        const custDTag=custDelta==null?'–':custDelta>=0?`<span class="t-green" style="font-size:10px">▲${custDelta.toFixed(0)}%</span>`:`<span class="t-red" style="font-size:10px">▼${Math.abs(custDelta).toFixed(0)}%</span>`;
+        rows+=`<tr class="promo-drill-cust" data-promo="${promo.replace(/"/g,'&quot;')}" data-country="${country.replace(/"/g,'&quot;')}" style="display:none;background:rgba(0,0,0,0.01)">
+          <td style="padding-left:52px;font-size:11px"><span style="color:var(--blue)">└</span><b style="margin-left:4px">${cust}</b><span class="muted" style="font-size:10px;margin-left:4px">${custPct}%</span></td>
           <td class="text-right mono muted" style="font-size:11px">${fmtNum(cv.orders)}</td>
           <td class="text-right mono" style="font-size:11px;color:var(--blue);font-weight:700">${fmtMoney(cv.amt)}</td>
-          ${_cmpModeNow!=='off'?`<td class="text-right mono muted" style="font-size:11px">${custPrvAmt>0?fmtMoney(custPrvAmt):'–'}</td>`:''}
-          <td class="text-right mono" style="font-size:10px">${custDeltaTag}</td>
-          ${showMktCols?'<td></td><td></td><td></td>':''}
-          ${curPeriods.map(()=>'<td></td>').join('')}
+          ${_cmpModeNow!=='off'?`<td class="text-right mono muted" style="font-size:11px">${custPrv>0?fmtMoney(custPrv):'–'}</td>`:''}
+          <td class="text-right mono" style="font-size:10px">${custDTag}</td>
+          <td></td><td></td><td></td>
         </tr>`;
       }
     }
     return rows;
   };
 
-  const body = `<tbody>${summary.map(p => {
-    const promo = p.promotion||p.key||'';
-    const _prvAmt = _calcPrv(promo);
-    const _pctDelta = _prvAmt > 0 ? ((p.afterAmt||p.orderAmt||0) - _prvAmt) / _prvAmt * 100 : null;
-    const dPctTag = _pctDelta==null?'<span class="muted">–</span>':_pctDelta>=0?`<span class="t-green">▲${_pctDelta.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(_pctDelta).toFixed(1)}%</span>`;
-    const roiTxt = p.roi==null?'–':fmtPct(p.roi);
-    const roiCls = p.roi==null?'muted':p.roi<0?'t-red':'t-green';
-    // 월별 컬럼 제거 — 기간은 프로모션명 옆에 표기
-    const monthCells = '';
-    const promoKey = promo.replace(/"/g,'&quot;');
-    return `<tr class="promo-main-row" data-promo="${promoKey}" style="cursor:pointer" onclick="togglePromoDrill(this,'${promo.replace(/'/g,"\\'")}')">
+  // ── Row builder for a single promotion ──
+  const buildPromoRow = (p) => {
+    const promo=p.promotion||p.key||'';
+    const st=_mktSellType[promo]||'SELL-IN';
+    const ba=_baAmt[promo]||{};
+    const afterAmt=p.afterAmt||p.orderAmt||0;
+    const prvAmt=p.beforeAmt||0;
+    const delta=prvAmt>0?((afterAmt-prvAmt)/prvAmt*100):null;
+    const dPctTag=delta==null?'<span class="muted">–</span>':delta>=0?`<span class="t-green">▲${delta.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(delta).toFixed(1)}%</span>`;
+    const roi=p.roi==null?'–':fmtPct(p.roi);
+    const roiCls=p.roi==null?'muted':p.roi<0?'t-red':'t-green';
+    const from=ba.winFrom?_fmtDate(ba.winFrom):'', to=ba.winTo?_fmtDate(ba.winTo):'';
+    const periodTag=from?`<span class="muted" style="font-size:9px;margin-left:6px;vertical-align:middle">${from}${to&&to!==from?' ~ '+to:''}</span>`:'';
+    return `<tr class="promo-main-row" data-promo="${promo.replace(/"/g,'&quot;')}" style="cursor:pointer" onclick="togglePromoDrill(this,'${promo.replace(/'/g,"\\'")}')">
       <td>
         <span style="color:#86868B;font-size:11px;margin-right:4px" class="promo-drill-arrow">▶</span>
         <b>${promo||'–'}</b>
+        ${sellBadge(st)}
         ${regionBadge(p.regionLabel)}
-        ${(() => {
-          const ba = window._lastBaAmt && window._lastBaAmt[promo];
-          if (!ba || !ba.winFrom) return '';
-          const _fd = d => d ? d.replace(/^20(\d\d)-(\d\d).*$/, "'$1.$2") : '';
-          const from = _fd(ba.winFrom), to = _fd(ba.winTo);
-          return `<span class="muted" style="font-size:9px;margin-left:6px;vertical-align:middle">${from}${to&&to!==from?' ~ '+to:''}</span>`;
-        })()}
+        ${periodTag}
         ${p.baStart?`<br><span class="muted" style="font-size:10px;padding-left:16px">from ${p.baStart}</span>`:''}
       </td>
       <td class="text-right mono">${fmtNum(p.orders)}</td>
-      <td class="text-right mono t-green" style="font-weight:700">${fmtMoney(p.afterAmt||p.orderAmt||0)}</td>
-      ${_cmpModeNow!=='off'?`<td class="text-right mono muted">${_prvAmt>0?fmtMoney(_prvAmt):'–'}</td>`:''}
+      <td class="text-right mono t-green" style="font-weight:700">${fmtMoney(afterAmt)}</td>
+      ${_cmpModeNow!=='off'?`<td class="text-right mono muted">${prvAmt>0?fmtMoney(prvAmt):'–'}</td>`:''}
       <td class="text-right mono">${dPctTag}</td>
-      ${showMktCols?`<td class="text-right mono t-yellow">${fmtMoney(p.expected||0)}</td>`:''}
-      ${showMktCols?`<td class="text-right mono t-orange">${fmtMoney(p.actual||0)}</td>`:''}
-      ${showMktCols?`<td class="text-right mono ${roiCls}" style="font-weight:700">${roiTxt}</td>`:''}
+      <td class="text-right mono t-yellow">${fmtMoney(p.expected||0)}</td>
+      <td class="text-right mono t-orange">${fmtMoney(p.actual||0)}</td>
+      <td class="text-right mono ${roiCls}" style="font-weight:700">${roi}</td>
     </tr>
     ${buildDrillRows(promo)}`;
-  }).join('')}
-  <tr style="border-top:2px solid var(--border);font-weight:800;background:rgba(0,0,0,0.03)">
-    <td><b>TOTAL</b> <span class="muted" style="font-size:10px">${_sellType === 'SELL-IN' ? '📦 SELL-IN' : '🤝 SELL-OUT'} · ${summary.length}개 캠페인</span></td>
-    <td class="text-right mono">${fmtNum(totalOrd)}</td>
-    <td class="text-right mono t-green" style="font-weight:800">${fmtMoney(totalCur)}</td>
-    ${_cmpModeNow!=='off'?`<td class="text-right mono muted">${fmtMoney(totalPrv)}</td>`:''}
-    <td class="text-right mono">${totalPrv>0?(totalDelta>=0?`<span class="t-green">▲${totalDelta.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(totalDelta).toFixed(1)}%</span>`):'–'}</td>
-    ${showMktCols?`<td class="text-right mono t-yellow">${fmtMoney(totalBudget)}</td>`:''}
-    ${showMktCols?`<td class="text-right mono t-orange">${fmtMoney(totalExec)}</td>`:''}
-    ${showMktCols?`<td class="text-right mono">${totalExec>0?fmtPct((totalCur-totalExec)/totalExec*100):'–'}</td>`:''}
-  </tr></tbody>`;
+  };
+
+  // ── Section subtotal row ──
+  const subtotalRow = (label, rows, color) => {
+    const tot=rows.reduce((s,p)=>s+(p.afterAmt||p.orderAmt||0),0);
+    const prv=rows.reduce((s,p)=>s+(p.beforeAmt||0),0);
+    const d=prv>0?((tot-prv)/prv*100):null;
+    const dTag3=d==null?'–':d>=0?`<span class="t-green">▲${d.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(d).toFixed(1)}%</span>`;
+    const exp=rows.reduce((s,p)=>s+(p.expected||0),0);
+    const act=rows.reduce((s,p)=>s+(p.actual||0),0);
+    const roi=act>0?fmtPct(((tot-act)/act)*100):'–';
+    return `<tr style="background:${color||'rgba(0,0,0,0.04)'};font-weight:700;border-top:1px solid var(--border)">
+      <td style="padding-left:8px;font-size:12px;color:var(--text-1)"><b>${label}</b> <span class="muted" style="font-size:10px">${rows.length}개 캠페인</span></td>
+      <td class="text-right mono">${fmtNum(rows.reduce((s,p)=>s+(p.orders||0),0))}</td>
+      <td class="text-right mono t-green" style="font-weight:800">${fmtMoney(tot)}</td>
+      ${_cmpModeNow!=='off'?`<td class="text-right mono muted">${prv>0?fmtMoney(prv):'–'}</td>`:''}
+      <td class="text-right mono">${dTag3}</td>
+      <td class="text-right mono t-yellow">${fmtMoney(exp)}</td>
+      <td class="text-right mono t-orange">${fmtMoney(act)}</td>
+      <td class="text-right mono">${roi}</td>
+    </tr>`;
+  };
+
+  // ── Grand total row ──
+  const grandTotal = (() => {
+    const all=[...siSummary,...soSummary];
+    const tot=all.reduce((s,p)=>s+(p.afterAmt||p.orderAmt||0),0);
+    const prv=all.reduce((s,p)=>s+(p.beforeAmt||0),0);
+    const d=prv>0?((tot-prv)/prv*100):null;
+    const dTag4=d==null?'–':d>=0?`<span class="t-green">▲${d.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(d).toFixed(1)}%</span>`;
+    const exp=all.reduce((s,p)=>s+(p.expected||0),0);
+    const act=all.reduce((s,p)=>s+(p.actual||0),0);
+    const roi=act>0?fmtPct(((tot-act)/act)*100):'–';
+    return `<tr style="background:rgba(0,0,0,0.07);font-weight:800;border-top:2px solid var(--border)">
+      <td style="font-size:13px"><b>🏆 CHOICE KIT 전체 합계</b></td>
+      <td class="text-right mono">${fmtNum(all.reduce((s,p)=>s+(p.orders||0),0))}</td>
+      <td class="text-right mono t-green" style="font-size:14px;font-weight:900">${fmtMoney(tot)}</td>
+      ${_cmpModeNow!=='off'?`<td class="text-right mono muted" style="font-size:13px">${prv>0?fmtMoney(prv):'–'}</td>`:''}
+      <td class="text-right mono" style="font-size:12px">${dTag4}</td>
+      <td class="text-right mono t-yellow">${fmtMoney(exp)}</td>
+      <td class="text-right mono t-orange">${fmtMoney(act)}</td>
+      <td class="text-right mono">${roi}</td>
+    </tr>`;
+  })();
+
+  const colCmp = _cmpModeNow!=='off' ? `<th class="text-right">${_prevLabel}</th>` : '';
+  const head = `<thead><tr>
+    <th>PROMOTION</th>
+    <th class="text-right">ORDERS</th>
+    <th class="text-right">현재 ORDER AMT</th>
+    ${colCmp}
+    <th class="text-right">Δ%</th>
+    <th class="text-right">MKT BUDGET</th>
+    <th class="text-right">EXECUTED</th>
+    <th class="text-right">ROI</th>
+  </tr></thead>`;
+
+  const siRows = siSummary.map(buildPromoRow).join('');
+  const soRows = soSummary.map(buildPromoRow).join('');
+
+  let body = '<tbody>';
+  if (siSummary.length) {
+    body += `<tr style="background:rgba(200,16,46,0.04)"><td colspan="8" style="padding:6px 10px;font-size:11px;font-weight:700;color:#C8102E;letter-spacing:0.05em">📦 SELL-IN · SKU 기반 캠페인</td></tr>`;
+    body += siRows;
+    body += subtotalRow('📦 SELL-IN 소계', siSummary, 'rgba(200,16,46,0.06)');
+  }
+  if (soSummary.length) {
+    body += `<tr style="background:rgba(10,132,255,0.04)"><td colspan="8" style="padding:6px 10px;font-size:11px;font-weight:700;color:#0A84FF;letter-spacing:0.05em">🤝 SELL-OUT · 고객 기반 캠페인</td></tr>`;
+    body += soRows;
+    body += subtotalRow('🤝 SELL-OUT 소계', soSummary, 'rgba(10,132,255,0.06)');
+  }
+  body += grandTotal;
+  body += '</tbody>';
+
   document.getElementById('tblPromo').innerHTML = head + body;
   } catch(e) { console.error('[renderPromoTable]', e); }
 }
 
-// ── 드릴다운 토글 함수 ──
-function togglePromoDrill(row, promo) {
-  const tbl = row.closest('table') || document.getElementById('tblPromo');
-  const arrow = row.querySelector('.promo-drill-arrow');
-  const isOpen = row.dataset.drillOpen === '1';
-  // 다른 열린 프로모션 닫기
-  tbl.querySelectorAll('.promo-main-row[data-drill-open="1"]').forEach(r => {
-    if (r !== row) {
-      r.dataset.drillOpen = '0';
-      const a = r.querySelector('.promo-drill-arrow');
-      if (a) a.textContent = '▶';
-      const rPromo = r.dataset.promo;
-      tbl.querySelectorAll(`.promo-drill-country[data-promo="${CSS.escape(rPromo)}"]`).forEach(dr => {
-        dr.style.display = 'none';
-        dr.dataset.custOpen = '0';
-        const da = dr.querySelector('span');
-        if (da) da.textContent = '▶';
-      });
-      tbl.querySelectorAll(`.promo-drill-cust[data-promo="${CSS.escape(rPromo)}"]`).forEach(dr => dr.style.display = 'none');
-    }
-  });
-  if (isOpen) {
-    row.dataset.drillOpen = '0';
-    if (arrow) arrow.textContent = '▶';
-    tbl.querySelectorAll(`.promo-drill-country[data-promo="${CSS.escape(row.dataset.promo)}"]`).forEach(r => r.style.display = 'none');
-    tbl.querySelectorAll(`.promo-drill-cust[data-promo="${CSS.escape(row.dataset.promo)}"]`).forEach(r => r.style.display = 'none');
-  } else {
-    row.dataset.drillOpen = '1';
-    if (arrow) arrow.textContent = '▼';
-    tbl.querySelectorAll(`.promo-drill-country[data-promo="${CSS.escape(row.dataset.promo)}"]`).forEach(r => r.style.display = '');
-  }
-}
-
-function toggleCustomerDrill(row, promo, country) {
-  const tbl = row.closest('table') || document.getElementById('tblPromo');
-  const arrow = row.querySelector('span');
-  const isOpen = row.dataset.custOpen === '1';
-  const escaped = CSS.escape(row.dataset.country || country);
-  const pEscaped = CSS.escape(row.dataset.promo || promo);
-  if (isOpen) {
-    row.dataset.custOpen = '0';
-    if (arrow) arrow.textContent = '▶';
-    tbl.querySelectorAll(`.promo-drill-cust[data-promo="${pEscaped}"][data-country="${escaped}"]`).forEach(r => r.style.display = 'none');
-  } else {
-    row.dataset.custOpen = '1';
-    if (arrow) arrow.textContent = '▼';
-    tbl.querySelectorAll(`.promo-drill-cust[data-promo="${pEscaped}"][data-country="${escaped}"]`).forEach(r => r.style.display = '');
-  }
-}
 
 
 /* Combined Sales Trend renderer — toggles between Promotion Category and Region/Country */
