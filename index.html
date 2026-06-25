@@ -6484,16 +6484,32 @@ function renderPromoChart(fOrders, fMkt) {
   }
 
   if (cmpMode !== 'off') {
-    // Aggregate current + baseline by the SAME dimension into prior buckets.
-    // srcAll = 현재 orders (전체 연도 포함) + preOrders baseline
-    // preOrders가 없어도 fOrders 자체에 과거 연도 데이터가 있으면 활용
     const cmpSeries = {};   // key → { pk → amt }   (full history incl. baseline)
+
+    // ── 스냅샷 우선 사용: pre_orders_summary.json (~41KB) ──
+    // 26MB 번들/preIdx 없어도 즉시 전년 동기 비교 표시
+    const snap = state.yoyByPromoMonth || {};
+    if (Object.keys(snap).length > 0) {
+      Object.entries(snap).forEach(([promo, monthData]) => {
+        cmpSeries[promo] = cmpSeries[promo] || {};
+        Object.entries(monthData).forEach(([ym, amt]) => {
+          // ym = "2025-04" → periodKey 변환
+          const pk = period === 'year'  ? ym.slice(0,4)
+                   : period === 'quarter' ? (() => {
+                       const mo = parseInt(ym.slice(5,7));
+                       return `${ym.slice(0,4)}-Q${Math.ceil(mo/3)}`;
+                     })()
+                   : ym;  // month: "2025-04" 그대로
+          cmpSeries[promo][pk] = (cmpSeries[promo][pk] || 0) + amt * usdToDisplay();
+        });
+      });
+    }
+
+    // 번들 기반 집계 (preIdx 있을 때만 추가 보강)
     const baselineRows = (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length)
       ? state.preOrders : [];
     const knownPromos = Object.keys(state.campaignTargetSkus || {});
-    // Use index for fast per-target lookup instead of scanning all 654K rows
     const preIdx = state._preIdx;
-    // buyer_code→customer 역매핑 (orders.csv Customer_No 기반)
     const _buyerMap = {};
     (state.orders || []).forEach(o => {
       const bn = (o.customer_no || '').toString().trim();
@@ -10692,7 +10708,29 @@ function slimPreOrderRow(o) {
 // Primary fast path: a single columnar + dictionary-encoded bundle file.
 // ~18MB raw / ~5-7MB gzipped over the wire → 3-5s on a decent connection vs
 // 15-30s for 1,025 chunk fetches. Regenerate via scripts/build_pre_orders_bundle.py.
-const PRE_ORDER_BUNDLE_URL = `${GH_REPO_BASE}/pre_orders_bundle.json`;
+const PRE_ORDER_BUNDLE_URL   = `${GH_REPO_BASE}/pre_orders_bundle.json`;
+const PRE_ORDER_SUMMARY_URL  = `${GH_REPO_BASE}/pre_orders_summary.json`;
+
+// ── 스냅샷 로드: 26MB 번들 없이 즉시 전년 비교 데이터 표시 ──
+// pre_orders_summary.json (~41KB): 캠페인별×월별 전년 집계 결과
+// 이 데이터만으로 Promotion Performance 전년 동기 수치를 즉시 표시
+async function loadPreOrdersSummary() {
+  try {
+    const res = await fetch(PRE_ORDER_SUMMARY_URL, { cache: 'force-cache' });
+    if (!res.ok) return null;
+    const snap = await res.json();
+    state.preOrdersSummary = snap;
+    // yoy_by_promo_month: { promo → { "2025-04": 210000, ... } }
+    state.yoyByPromoMonth = snap.yoy_by_promo_month || {};
+    state.promoBundleBuyersSnap = snap.promo_bundle_buyers || {};
+    state.promoCTRsSnap = snap.promo_ctrs || {};
+    console.log('[summary] loaded — promos:', Object.keys(state.yoyByPromoMonth).length);
+    return snap;
+  } catch(e) {
+    console.warn('[summary] load failed:', e);
+    return null;
+  }
+}
 
 // Reconstruct full row objects from a v2 (columnar+dict) bundle.
 //   bundle.k     = { order_id:'i', order_date:'d', ... }   (long → short)
@@ -11029,27 +11067,35 @@ async function togglePreOrders() {
 async function maybeAutoLoadPreOrders() {
   let want = null;
   try { want = localStorage.getItem('ck_pre_orders_on'); } catch(e){}
-  // Explicit OFF — respect the user's choice and skip.
   if (want === '0') { updatePreOrderBadge(); return; }
-  // file:// can't fetch — skip silently.
   if (location.protocol === 'file:') { updatePreOrderBadge(); return; }
-  // Otherwise (null = first visit, or '1' = previously enabled) → load.
+
+  // ── Step 1: 스냅샷 먼저 로드 (~41KB, 즉시) ──
+  // 26MB 번들 없이도 전년 동기 수치를 바로 표시
+  const snap = await loadPreOrdersSummary();
+  if (snap) {
+    state.preOrdersEnabled = true;  // 스냅샷만으로도 전년 비교 활성화
+    rebuildAll();  // 즉시 화면 업데이트
+  }
+
+  // ── Step 2: 번들은 백그라운드에서 로드 (인터랙티브 상세 분석용) ──
+  // 번들이 있으면 더 세밀한 필터링 가능 — 없어도 스냅샷으로 기본 표시
   try {
     await fetchPreOrdersOnce();
     state.preOrdersEnabled = true;
     try { localStorage.setItem('ck_pre_orders_on', '1'); } catch(e){}
-    // Build index in background — doesn't block initial render
+    // Build index in background
     setTimeout(() => { _buildPreOrdersIndex(); rebuildAll(); }, 100);
-    // Tiny celebratory toast on FIRST load only (no toast for cached repeat loads).
     if (want == null) {
       try {
         const n = (state.preOrders || []).length;
-        showToast(`✅ Baseline auto-loaded — ${fmtNum(n)} rows`);
+        showToast(`✅ Baseline loaded — ${fmtNum(n)} rows`);
       } catch(_){}
     }
   } catch (err) {
-    console.warn('Pre-order baseline auto-restore failed:', err);
-    state.preOrdersEnabled = false;
+    console.warn('Pre-order bundle load failed (snapshot only mode):', err);
+    // 번들 실패해도 스냅샷으로 전년 비교는 계속 표시
+    state.preOrdersEnabled = !!snap;
     state._preIdx = null;
     state._preOrdersIndexed = false;
   }
