@@ -2130,10 +2130,10 @@ header .mono b.t-orange {
               <button data-v="quarter">Quarter</button>
               <button data-v="year">Year</button>
             </div>
-            <select id="promoFilterSel" title="프로모션 선택" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-1)">
+            <select id="promoFilterSel" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-1)">
               <option value="__all__">All promotions</option>
             </select>
-            <select id="promoCmpSel" title="전년 비교" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-1)">
+            <select id="promoCmpSel" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-1)">
               <option value="off">비교 없음</option>
               <option value="yoy">전년 동기 (YoY)</option>
               <option value="qoq">전분기 (QoQ)</option>
@@ -2142,19 +2142,15 @@ header .mono b.t-orange {
             <div class="widget-order-controls"></div>
           </div>
         </div>
-        <!-- 종합 KPI 카드 -->
         <div id="promoCmpKpis" style="display:none;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:14px;min-height:0"></div>
-        <!-- 월별 전년 비교 요약 차트 -->
-        <div id="promoMonthlyOverview" style="margin-bottom:16px;padding:14px 16px;background:var(--surface-2);border-radius:10px;border:1px solid var(--border)">
+        <div id="promoMonthlyOverview" style="margin-bottom:16px;padding:14px 16px;background:rgba(0,0,0,0.02);border-radius:10px;border:1px solid var(--border)">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <span class="label-mono" style="font-size:11px;font-weight:700;color:var(--text-1)">📊 월별 종합 추이 (Choice Kit 전체)</span>
+            <span class="label-mono" style="font-size:11px;font-weight:700">📊 월별 종합 추이 (Choice Kit 전체)</span>
             <span id="promoOverviewRange" class="label-mono muted" style="font-size:10px"></span>
           </div>
           <div style="overflow-x:auto"><table id="tblPromoMonthly" style="font-size:11px;width:100%;border-collapse:collapse"></table></div>
         </div>
-        <!-- 트렌드 차트 -->
         <div class="chart-wrap" style="height:300px;min-height:300px;margin-bottom:16px"><canvas id="chPromo"></canvas></div>
-        <!-- 통합 캠페인 테이블 (SELL-IN / SELL-OUT 구분 + 종합) -->
         <div id="promoInsight" class="label-mono" style="margin-bottom:8px;font-size:11px;color:#525257"></div>
         <div style="overflow:auto"><table id="tblPromo"></table></div>
 
@@ -2175,9 +2171,7 @@ header .mono b.t-orange {
             <div class="widget-order-controls"></div>
           </div>
         </div>
-        <!-- KPI 카드 -->
         <div id="ckiKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:16px"></div>
-        <!-- 차트 2열 -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
           <div>
             <div class="label-mono" style="font-size:11px;font-weight:700;margin-bottom:6px;color:var(--text-2)">📦 월별 오더 전환 SKU 수</div>
@@ -2188,11 +2182,10 @@ header .mono b.t-orange {
             <div class="chart-wrap" style="height:220px"><canvas id="chCkiAmt"></canvas></div>
           </div>
         </div>
-        <!-- 캠페인별 비교 테이블 -->
         <div class="label-mono" style="font-size:11px;font-weight:700;margin-bottom:8px;color:var(--text-2)">캠페인별 대상 SKU 오더 현황</div>
         <div style="overflow:auto"><table id="tblCkiCmp" style="font-size:12px"></table></div>
       </div>
-      <div class="panel widget" data-widget-id="skuExplorer">
+            <div class="panel widget" data-widget-id="skuExplorer">
         <div class="widget-head">
           <div>
             <h3 class="h-section">SKU Analysis</h3>
@@ -2212,10 +2205,8 @@ header .mono b.t-orange {
           </div>
         </div>
         <div id="skuAggMeta" class="label-mono muted" style="font-size:11px;margin-bottom:10px"></div>
-        <!-- KPI + Before/After -->
         <div id="skuCompareKpis" style="display:none;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px"></div>
         <div id="skuBaSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px"></div>
-        <!-- 차트 2열 -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
           <div>
             <div class="label-mono muted" style="font-size:10px;margin-bottom:4px;text-align:center">ORDER AMOUNT — <span id="skuBaAmtTotal" class="t-orange" style="font-weight:700">–</span></div>
@@ -2226,11 +2217,10 @@ header .mono b.t-orange {
             <div class="chart-wrap" style="height:260px"><canvas id="chSkuBeforeAfterQty"></canvas></div>
           </div>
         </div>
-        <!-- SKU 목록 -->
         <div id="skuAggBreakdown" style="overflow:auto;max-height:280px"><table id="tblSkuAggBreakdown" style="font-size:12px"></table></div>
       </div>
 
-      <!-- Sales Trend (merged: Promotion Category + Region/Country Monthly) -->
+            <!-- Sales Trend (merged: Promotion Category + Region/Country Monthly) -->
       <div class="panel widget" data-widget-id="planexec">
         <div class="widget-head">
           <div>
@@ -5913,36 +5903,54 @@ async function renderPromoChart(fOrders, fMkt) {
   try {
   const period = state.promoPerfPeriod || 'month';
 
-  // ── 전체 프로모션 포함 (SELL-IN/OUT 구분 없이) ──
-  const _mktSellType = {};  // promo → 'SELL-IN' | 'SELL-OUT'
+  // ── SELL-IN / SELL-OUT 필터 ──
+  // marketing.csv의 sell_type 기준으로 캠페인을 분류
+  // SELL-IN: SKU 기반 (Portfolio Expansion, Asian vehicle, European vehicle, Korean & Japanese)
+  // SELL-OUT: 고객 기반 (Trade promotion, Strategic Partner, Mexico Awakening, Mexico Worldcup)
+  const sellType = state.promoSellType || 'SELL-IN';
+  const _mktSellType = {};  // promo → dominant sell_type (SELL-IN or SELL-OUT)
+  // SELL_IN/SELL_OUT 값만 사용, STARTED/RELEASED/B2C 등은 무시
+  const _validSellTypes = new Set(['SELL-IN','SELL-OUT','SELL_IN','SELL_OUT']);
   (state.marketing || []).forEach(m => {
     const p  = (m.promotion_category || '').trim();
-    const st = (m.sell_type || '').trim().toUpperCase().replace(/_/g,'-');
+    const st = (m.sell_type || m.sellType || '').trim().toUpperCase().replace(/_/g,'-');
     if (!p || !st) return;
-    const norm = (st==='SELL-IN') ? 'SELL-IN' : (st==='SELL-OUT') ? 'SELL-OUT' : null;
+    // SELL-IN 또는 SELL-OUT만 인정, 이미 세팅된 경우 덮어쓰지 않음
+    const norm = st === 'SELL-IN' || st === 'SELL_IN' ? 'SELL-IN'
+               : st === 'SELL-OUT' || st === 'SELL_OUT' ? 'SELL-OUT' : null;
     if (norm && !_mktSellType[p]) _mktSellType[p] = norm;
   });
+  // sell_type 없으면 match_by로 판단 (sku=SELL-IN, customer=SELL-OUT)
   const _cfg0 = state.campaignTargetSkus || {};
   Object.keys(_cfg0).forEach(p => {
-    if (!_mktSellType[p])
-      _mktSellType[p] = (_cfg0[p].match_by||'sku').toLowerCase()==='customer' ? 'SELL-OUT' : 'SELL-IN';
+    if (!_mktSellType[p]) {
+      _mktSellType[p] = (_cfg0[p].match_by || 'sku').toLowerCase() === 'customer' ? 'SELL-OUT' : 'SELL-IN';
+    }
   });
-  // 모든 캠페인 포함 (sellType 필터 없음)
-  const fOrdersST = fOrders.filter(o => {
-    const p = (o.promotion_category||'').trim();
-    return p && p !== '(none)' && p !== 'PRE_ORDER';
-  });
-  // promoFilterSel 옵션 — 전체 캠페인
+  const sellTypePromos = new Set(
+    Object.entries(_mktSellType).filter(([,st]) => st === sellType).map(([p]) => p)
+  );
+  // fOrders를 현재 sell_type 캠페인으로만 필터
+  const fOrdersST = fOrders.filter(o => sellTypePromos.has((o.promotion_category||'').trim()));
+  // promoFilterSel 옵션을 sell_type에 맞게 동적 업데이트
   const filterSel2 = document.getElementById('promoFilterSel');
   if (filterSel2) {
     const cur = filterSel2.value;
-    const allPromos = Array.from(new Set(Object.keys(_mktSellType))).sort();
     filterSel2.innerHTML = '<option value="__all__">All promotions</option>' +
-      allPromos.map(p => `<option value="${p}"${cur===p?' selected':''}>${p}</option>`).join('');
-    if (!allPromos.includes(cur) && cur !== '__all__') {
-      filterSel2.value = '__all__'; state.promoFilter = '__all__';
+      [...sellTypePromos].sort().map(p => `<option value="${p}"${cur===p?' selected':''}>${p}</option>`).join('');
+    if (![...sellTypePromos].includes(cur) && cur !== '__all__') {
+      filterSel2.value = '__all__';
+      state.promoFilter = '__all__';
     }
   }
+  // sync 탭 버튼
+  document.querySelectorAll('#segPromoSellType button').forEach(b => {
+    b.classList.toggle('active', b.dataset.v === sellType);
+  });
+  const inEl  = document.getElementById('promoSellInBanner');
+  const outEl = document.getElementById('promoSellOutBanner');
+  if (inEl)  inEl.style.display  = sellType==='SELL-IN'  ? 'flex' : 'none';
+  if (outEl) outEl.style.display = sellType==='SELL-OUT' ? 'flex' : 'none';
 
 
   // ── Marketing start date per promotion (earliest execution_date).
@@ -6280,15 +6288,9 @@ async function renderPromoChart(fOrders, fMkt) {
         (state.orders||[]).filter(o => o.promotion_category===promoFilter).map(o => (o.sku||'').trim()).filter(Boolean));
     }
   }
-  // fOrdersScoped 기반 periodBuckets; 비면 fOrders 전체에서 생성
-  let periodBuckets = Array.from(new Set(
+  const periodBuckets = Array.from(new Set(
     fOrdersScoped.map(o => periodKey(o.order_date, period)).filter(Boolean)
   )).sort();
-  if (!periodBuckets.length) {
-    periodBuckets = Array.from(new Set(
-      fOrders.map(o => periodKey(o.order_date, period)).filter(Boolean)
-    )).sort();
-  }
 
   // Aggregate amount by (seriesKey → periodKey).
   const series = {};   // key → { pk → amount }
@@ -7123,387 +7125,100 @@ async function renderPromoChart(fOrders, fMkt) {
 }
 function renderPromoTable() {
   try {
-  const period       = state.promoPerfPeriod || 'month';
-  const _cmpModeNow  = state.promoCmp || 'yoy';
-  const _prevLabel   = { yoy:'전년 동기', qoq:'전분기', mom:'전년 동월', off:'–' }[_cmpModeNow] || '전년 동기';
-  const fOrders      = state.orders.filter(matchOrder).filter(o => isRegionVisible(o.region));
-  const fMkt         = state.marketing.filter(matchMkt).filter(m => isRegionVisible(m.region));
-  const _allSummary  = window._lastPromoSummary || [];
-  const _baAmt       = window._lastBaAmt || {};
-  const cmpSeries    = window._lastPromoCmpSeries || {};
-  const _promoFilter = state.promoFilter || '__all__';
-
-  // sell_type 분류
-  const _mktSellType = {};
-  (state.marketing || []).forEach(m => {
-    const p  = (m.promotion_category || '').trim();
-    const st = (m.sell_type || '').trim().toUpperCase().replace(/_/g,'-');
-    if (!p || !st) return;
-    const n = st==='SELL-IN'?'SELL-IN':st==='SELL-OUT'?'SELL-OUT':null;
-    if (n && !_mktSellType[p]) _mktSellType[p] = n;
-  });
-  const _cfg0 = state.campaignTargetSkus || {};
-  Object.keys(_cfg0).forEach(p => {
-    if (!_mktSellType[p])
-      _mktSellType[p] = (_cfg0[p].match_by||'sku').toLowerCase()==='customer' ? 'SELL-OUT' : 'SELL-IN';
-  });
-
-  // filter
-  const summary = _allSummary.filter(p => {
-    const promo = p.promotion || p.key || '';
-    return _promoFilter === '__all__' || promo === _promoFilter;
-  });
-
-  function shiftBucket(pk, mode, per) {
-    if (!pk) return '';
-    if (per === 'year') return String(parseInt(pk,10)-1);
-    if (per === 'quarter') {
-      const [ys,qs]=pk.split('-Q'); let y=+ys,q=+qs;
-      if (mode==='yoy') return `${y-1}-Q${q}`;
-      q--; if(q<1){q=4;y--;} return `${y}-Q${q}`;
-    }
-    const [ys,ms]=pk.split('-'); let y=+ys,m=+ms;
-    if (mode==='yoy') return `${y-1}-${String(m).padStart(2,'0')}`;
-    if (mode==='qoq') { m-=3; while(m<1){m+=12;y--;} return `${y}-${String(m).padStart(2,'0')}`; }
-    return `${y-1}-${String(m).padStart(2,'0')}`;
+  const period=state.promoPerfPeriod||'month',_cmpMode=state.promoCmp||'yoy';
+  const _prevLabel={yoy:'전년 동기',qoq:'전분기',mom:'전년 동월',off:'–'}[_cmpMode]||'전년 동기';
+  const fOrders=state.orders.filter(matchOrder).filter(o=>isRegionVisible(o.region));
+  const fMkt=state.marketing.filter(matchMkt).filter(m=>isRegionVisible(m.region));
+  const _allSummary=window._lastPromoSummary||[],_baAmt=window._lastBaAmt||{},cmpSeries=window._lastPromoCmpSeries||{};
+  const _promoFilter=state.promoFilter||'__all__';
+  const _mktST={};
+  (state.marketing||[]).forEach(m=>{const p=(m.promotion_category||'').trim(),st=(m.sell_type||'').trim().toUpperCase().replace(/_/g,'-');if(!p||!st)return;const n=st==='SELL-IN'?'SELL-IN':st==='SELL-OUT'?'SELL-OUT':null;if(n&&!_mktST[p])_mktST[p]=n;});
+  const _cfg0=state.campaignTargetSkus||{};Object.keys(_cfg0).forEach(p=>{if(!_mktST[p])_mktST[p]=(_cfg0[p].match_by||'sku').toLowerCase()==='customer'?'SELL-OUT':'SELL-IN';});
+  const summary=_allSummary.filter(p=>_promoFilter==='__all__'||(p.promotion||p.key||'')===_promoFilter);
+  function shiftBucket(pk,mode,per){
+    if(!pk)return'';if(per==='year')return String(parseInt(pk,10)-1);
+    if(per==='quarter'){const[ys,qs]=pk.split('-Q');let y=+ys,q=+qs;if(mode==='yoy')return`${y-1}-Q${q}`;q--;if(q<1){q=4;y--;}return`${y}-Q${q}`;}
+    const[ys,ms]=pk.split('-');let y=+ys,m=+ms;if(mode==='yoy')return`${y-1}-${String(m).padStart(2,'0')}`;if(mode==='qoq'){m-=3;while(m<1){m+=12;y--;}return`${y}-${String(m).padStart(2,'0')}`;}return`${y-1}-${String(m).padStart(2,'0')}`;
   }
-  const _fmtPk = pk => pk ? pk.replace(/^20(\d\d)-(\d\d)$/,"'$1.$2").replace(/^20(\d\d)-Q(\d)$/,"'$1.Q$2").replace(/^(20\d\d)$/,'$1') : '';
-  const _fmtDate = d => d ? d.replace(/^20(\d\d)-(\d\d).*$/,"'$1.$2") : '';
-
-  const dTag = (cur,prv) => {
-    const d = prv>0 ? ((cur-prv)/prv)*100 : null;
-    return d==null ? '<span class="muted">–</span>'
-      : d>=0 ? `<span class="t-green" style="font-size:10px">▲${d.toFixed(0)}%</span>`
-             : `<span class="t-red"   style="font-size:10px">▼${Math.abs(d).toFixed(0)}%</span>`;
-  };
-
-  // ── 월별 종합 요약 테이블 ──
-  const curPeriods = Array.from(new Set(fOrders.map(o=>periodKey(o.order_date,period)).filter(Boolean))).sort();
-  const grandCurByPk = {}, grandPrvByPk = {};
-  curPeriods.forEach(pk => {
-    grandCurByPk[pk] = summary.reduce((s,p) => {
-      const promo = p.promotion||p.key||'';
-      // current period from orders
-      const ordAmt = fOrders.filter(o => o.promotion_category===promo && periodKey(o.order_date,period)===pk)
-                            .reduce((ss,o) => ss+convOrder(o), 0);
-      return s + ordAmt;
-    }, 0);
-    const ppk = shiftBucket(pk, _cmpModeNow, period);
-    grandPrvByPk[ppk] = shiftBucket ? (shownKeysPrv => {
-      return shownKeysPrv.reduce((s,key) => s + ((cmpSeries[key]&&cmpSeries[key][ppk])||0), 0);
-    })(summary.map(p=>p.promotion||p.key||'')) : 0;
-  });
-
-  // Simple monthly table
-  const monthlyEl = document.getElementById('tblPromoMonthly');
-  const overviewRangeEl = document.getElementById('promoOverviewRange');
-  if (monthlyEl && _cmpModeNow !== 'off' && curPeriods.length) {
-    const grandCur = summary.reduce((s,p)=>s+(p.afterAmt||p.orderAmt||0), 0);
-    const grandPrv = summary.reduce((s,p)=>s+(p.beforeAmt||0), 0);
-    if (overviewRangeEl) {
-      const allStarts = summary.map(r=>r.baStart||'').filter(Boolean).sort();
-      const from = allStarts.length ? _fmtDate(allStarts[0]) : '';
-      const to   = _fmtDate((_todayStr||(() => new Date().toISOString().slice(0,10)))());
-      overviewRangeEl.textContent = from ? `${from} ~ ${to}` : '';
-    }
-    // Monthly period amounts — use cmpSeries for prior, periodCurByPromo for current
-    const periodCurAll = {};
-    fOrders.forEach(o => {
-      const p = o.promotion_category||'';
-      if (!summary.find(s=>(s.promotion||s.key)===p)) return;
-      const pk = periodKey(o.order_date,period);
-      if (!pk) return;
-      periodCurAll[pk] = (periodCurAll[pk]||0) + convOrder(o);
-    });
-
-    const colStyle = 'padding:4px 10px;text-align:right;font-family:var(--font-mono);white-space:nowrap;border-bottom:1px solid var(--border)';
-    const hStyle   = 'padding:4px 10px;text-align:right;font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--text-2);border-bottom:2px solid var(--border)';
-    const lStyle   = 'padding:4px 8px;font-size:10px;font-weight:700;color:var(--text-2);border-bottom:1px solid var(--border)';
-
-    let mHead = `<thead><tr><th style="${lStyle}">항목</th>`;
-    curPeriods.forEach(pk => { mHead += `<th style="${hStyle}">${_fmtPk(pk)}</th>`; });
-    mHead += `<th style="${hStyle}">합계</th></tr></thead>`;
-
-    const rowHtml = (label, byPk, total, colorCls='') => {
-      let r = `<tr><td style="${lStyle};${colorCls?'color:'+colorCls:''}">${label}</td>`;
-      curPeriods.forEach(pk => {
-        const v = byPk[pk]||0;
-        r += `<td style="${colStyle};font-size:11px;${colorCls&&v?'color:'+colorCls+';font-weight:700':''}">${v>0?fmtMoney(v):'<span class="muted">–</span>'}</td>`;
-      });
-      r += `<td style="${colStyle};font-weight:800;${colorCls?'color:'+colorCls:''}">${total>0?fmtMoney(total):'–'}</td></tr>`;
-      return r;
-    };
-
-    // prior periods
-    const periodPrvAll = {};
-    curPeriods.forEach(pk => {
-      const ppk = shiftBucket(pk, _cmpModeNow, period);
-      const prv = summary.reduce((s,p) => s + ((cmpSeries[p.promotion||p.key||'']&&cmpSeries[p.promotion||p.key||''][ppk])||0), 0);
-      if (prv) periodPrvAll[ppk] = prv;
-    });
-
-    // delta row
-    const deltaRow = (() => {
-      let r = `<tr style="background:rgba(0,0,0,0.02)"><td style="${lStyle}">Δ%</td>`;
-      let hasAny = false;
-      curPeriods.forEach(pk => {
-        const cur = periodCurAll[pk]||0;
-        const ppk = shiftBucket(pk, _cmpModeNow, period);
-        const prv = periodPrvAll[ppk]||0;
-        const tag = prv>0 ? dTag(cur,prv) : '<span class="muted">–</span>';
-        if (prv>0) hasAny = true;
-        r += `<td style="${colStyle};font-size:10px">${tag}</td>`;
-      });
-      const gDelta = grandPrv>0 ? dTag(grandCur,grandPrv) : '<span class="muted">–</span>';
-      r += `<td style="${colStyle};font-size:11px">${gDelta}</td></tr>`;
-      return hasAny ? r : '';
-    })();
-
-    monthlyEl.innerHTML = mHead + `<tbody>
-      ${rowHtml('현재 ORDER AMT', periodCurAll, grandCur, '#007AFF')}
-      ${_cmpModeNow!=='off' ? rowHtml(_prevLabel, periodPrvAll, grandPrv, '#86868B') : ''}
-      ${deltaRow}
-    </tbody>`;
-  } else if (monthlyEl) {
-    monthlyEl.innerHTML = '';
-  }
-
-  // ── 캠페인 테이블 — SELL-IN / SELL-OUT 섹션 분리 ──
-  const siSummary = summary.filter(p => (_mktSellType[p.promotion||p.key||'']||'SELL-IN')==='SELL-IN');
-  const soSummary = summary.filter(p => (_mktSellType[p.promotion||p.key||'']||'SELL-IN')==='SELL-OUT');
-
-  const regionColors = { 'CIS':'#5856D6','MENA':'#FF9500','LATAM':'#34C759','SEA':'#00C7BE','ASIA':'#0A84FF','EUROPE':'#FF375F','NA':'#BF5AF2','GCC':'#FF6B35' };
-  const regionBadge = label => {
-    if (!label) return '';
-    return label.split(',').map(r => {
-      const k=r.trim().toUpperCase(), c=regionColors[k]||'#86868B';
-      return `<span style="display:inline-block;background:${c}18;color:${c};border:1px solid ${c}40;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;margin-left:4px;vertical-align:middle">${r.trim()}</span>`;
-    }).join('');
-  };
-  const sellBadge = st => st==='SELL-IN'
-    ? '<span style="background:#C8102E;color:#fff;font-size:8px;padding:1px 5px;border-radius:8px;font-weight:700;vertical-align:middle;margin-left:5px">SELL-IN</span>'
-    : '<span style="background:#0A84FF;color:#fff;font-size:8px;padding:1px 5px;border-radius:8px;font-weight:700;vertical-align:middle;margin-left:5px">SELL-OUT</span>';
-
-  // Drill data
-  const _promoStart      = window._lastPromoStart      || {};
-  const _promoTargetSkus = window._lastPromoTargetSkus || {};
-  const _promoTargetCust = window._lastPromoTargetCust || {};
-  const _promoMatchBy    = window._lastPromoMatchBy    || {};
-  const _summaryPromos   = new Set(summary.map(s=>s.promotion||s.key||''));
-
-  const drillData = {};
-  fOrders.forEach(o => {
-    const promo = (o.promotion_category||'').trim();
-    if (!_summaryPromos.has(promo)) return;
-    const start = _promoStart[promo];
-    if (start && o.order_date < start) return;
-    const mb = _promoMatchBy[promo]||'sku';
-    if (mb==='sku') {
-      const ss = _promoTargetSkus[promo];
-      if (ss && ss.size>0 && !ss.has((o.sku||o.ctr_code||'').trim())) return;
-    } else {
-      const cs = _promoTargetCust[promo];
-      if (cs && cs.size>0 && !cs.has((o.customer||'').trim())) return;
-    }
-    const country=o.country||o.region||'–', cust=o.customer||'–';
-    if (!drillData[promo]) drillData[promo]={};
-    if (!drillData[promo][country]) drillData[promo][country]={};
-    if (!drillData[promo][country][cust]) drillData[promo][country][cust]={amt:0,orders:0,qty:0};
-    drillData[promo][country][cust].amt    += convOrder(o);
-    drillData[promo][country][cust].orders += 1;
-    drillData[promo][country][cust].qty    += Number(o.qty)||0;
-  });
-
-  // Prev drill data
-  const drillPrvData={};
-  const _allOrdersForPrv=[...(state.orders||[]),...((state.preOrdersEnabled&&Array.isArray(state.preOrders))?state.preOrders:[])];
-  _allOrdersForPrv.forEach(o => {
-    const promo=(o.promotion_category||o._promo||'').trim();
-    if (!_summaryPromos.has(promo)) return;
-    const ba=_baAmt[promo];
-    if (!ba||!ba.prevFrom||!ba.prevTo) return;
-    const d=o.order_date||'';
-    if (!d||d<ba.prevFrom||d>ba.prevTo) return;
-    const mb=_promoMatchBy[promo]||'sku';
-    if (mb==='sku'){const ss=_promoTargetSkus[promo];if(ss&&ss.size>0&&!ss.has((o.sku||o.ctr_code||'').trim()))return;}
-    else{const cs=_promoTargetCust[promo];if(cs&&cs.size>0&&!cs.has((o.customer||'').trim()))return;}
-    const country=o.country||o.region||'–', cust=o.customer||'–';
-    const amt=(o[PRE_ORDER_MARK]&&o.amount_usd!=null)?Number(o.amount_usd)*usdToDisplay():convOrder(o);
-    if (!drillPrvData[promo]) drillPrvData[promo]={};
-    if (!drillPrvData[promo][country]) drillPrvData[promo][country]={};
-    drillPrvData[promo][country][cust]=(drillPrvData[promo][country][cust]||0)+amt;
-  });
-
-  // MKT drill data
-  const drillMktData={};
-  fMkt.forEach(m => {
-    const promo=(m.promotion_category||'').trim();
-    if (!_summaryPromos.has(promo)) return;
-    const country=m.country||m.region||'–';
-    if (!drillMktData[promo]) drillMktData[promo]={};
-    if (!drillMktData[promo][country]) drillMktData[promo][country]={actual:0,expected:0};
-    drillMktData[promo][country].actual   += convMktActual(m);
-    drillMktData[promo][country].expected += convMktExpected(m);
-  });
-
-  // ── Drill rows builder ──
-  const buildDrillRows = (promo) => {
-    const dd=drillData[promo]||{}, ddPrv=drillPrvData[promo]||{}, ddMkt=drillMktData[promo]||{};
-    const pSummary=summary.find(s=>(s.promotion||s.key)===promo);
-    const pAmt=pSummary?(pSummary.afterAmt||pSummary.orderAmt||0):0;
-    const allCtries=new Set([...Object.keys(dd),...Object.keys(ddMkt)]);
-    const countries=[...allCtries].map(c=>{
-      const custs=dd[c]||{};
-      return [c,custs,Object.values(custs).reduce((s,v)=>s+v.amt,0)];
-    }).sort((a,b)=>b[2]-a[2]);
+  const _fd=d=>d?d.replace(/^20(\d\d)-(\d\d).*$/,"'$1.$2"):'';
+  const dtag=(cur,prv)=>{const d=prv>0?((cur-prv)/prv)*100:null;return d==null?'<span class="muted">–</span>':d>=0?`<span class="t-green" style="font-size:10px">▲${d.toFixed(0)}%</span>`:`<span class="t-red" style="font-size:10px">▼${Math.abs(d).toFixed(0)}%</span>`;};
+  // monthly overview
+  const curPeriods=Array.from(new Set(fOrders.map(o=>periodKey(o.order_date,period)).filter(Boolean))).sort();
+  const ovEl=document.getElementById('tblPromoMonthly'),rnEl=document.getElementById('promoOverviewRange');
+  if(ovEl&&_cmpMode!=='off'&&curPeriods.length){
+    const gC=summary.reduce((s,p)=>s+(p.afterAmt||p.orderAmt||0),0),gP=summary.reduce((s,p)=>s+(p.beforeAmt||0),0);
+    if(rnEl){const st=summary.map(r=>r.baStart||'').filter(Boolean).sort();const fr=st.length?_fd(st[0]):'';const to=_fd((_todayStr||(() => new Date().toISOString().slice(0,10)))());rnEl.textContent=fr?`${fr} ~ ${to}`:''}
+    const pCA={},pPA={};
+    fOrders.forEach(o=>{const p=o.promotion_category||'';if(!summary.find(s=>(s.promotion||s.key)===p))return;const pk=periodKey(o.order_date,period);if(!pk)return;pCA[pk]=(pCA[pk]||0)+convOrder(o);});
+    curPeriods.forEach(pk=>{const ppk=shiftBucket(pk,_cmpMode,period);const prv=summary.reduce((s,p)=>s+((cmpSeries[p.promotion||p.key||'']&&cmpSeries[p.promotion||p.key||''][ppk])||0),0);if(prv)pPA[ppk]=prv;});
+    const cs='padding:4px 10px;text-align:right;font-family:var(--font-mono);white-space:nowrap;border-bottom:1px solid var(--border)';
+    const hs='padding:4px 10px;text-align:right;font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--text-2);border-bottom:2px solid var(--border)';
+    const ls='padding:4px 8px;font-size:10px;font-weight:700;color:var(--text-2);border-bottom:1px solid var(--border)';
+    const _fp=pk=>pk?pk.replace(/^20(\d\d)-(\d\d)$/,"'$1.$2").replace(/^20(\d\d)-Q(\d)$/,"'$1.Q$2"):pk;
+    let mh=`<thead><tr><th style="${ls}">항목</th>`;curPeriods.forEach(pk=>{mh+=`<th style="${hs}">${_fp(pk)}</th>`;});mh+=`<th style="${hs}">합계</th></tr></thead>`;
+    const rh=(label,byPk,total,col='')=>{let r=`<tr><td style="${ls};${col?'color:'+col:''}">${label}</td>`;curPeriods.forEach(pk=>{const v=byPk[pk]||0;r+=`<td style="${cs};font-size:11px;${col&&v?'color:'+col+';font-weight:700':''}">${v>0?fmtMoney(v):'<span class="muted">–</span>'}</td>`;});r+=`<td style="${cs};font-weight:800;${col?'color:'+col:''}">${total>0?fmtMoney(total):'–'}</td></tr>`;return r;};
+    const dRow=(()=>{let r=`<tr style="background:rgba(0,0,0,0.02)"><td style="${ls}">Δ%</td>`;curPeriods.forEach(pk=>{const cur=pCA[pk]||0,ppk=shiftBucket(pk,_cmpMode,period),prv=pPA[ppk]||0;r+=`<td style="${cs};font-size:10px">${prv>0?dtag(cur,prv):'<span class="muted">–</span>'}</td>`;});r+=`<td style="${cs};font-size:11px">${gP>0?dtag(gC,gP):'<span class="muted">–</span>'}</td></tr>`;return r;})();
+    ovEl.innerHTML=mh+`<tbody>${rh('현재 ORDER AMT',pCA,gC,'#007AFF')}${rh(_prevLabel,pPA,gP,'#86868B')}${dRow}</tbody>`;
+  }else if(ovEl)ovEl.innerHTML='';
+  // drill data
+  const _ps=window._lastPromoStart||{},_pts=window._lastPromoTargetSkus||{},_ptc=window._lastPromoTargetCust||{},_pmb=window._lastPromoMatchBy||{};
+  const _sp=new Set(summary.map(s=>s.promotion||s.key||''));
+  const dd={};
+  fOrders.forEach(o=>{const pr=(o.promotion_category||'').trim();if(!_sp.has(pr))return;const st=_ps[pr];if(st&&o.order_date<st)return;const mb=_pmb[pr]||'sku';if(mb==='sku'){const ss=_pts[pr];if(ss&&ss.size>0&&!ss.has((o.sku||o.ctr_code||'').trim()))return;}else{const cs=_ptc[pr];if(cs&&cs.size>0&&!cs.has((o.customer||'').trim()))return;}const country=o.country||o.region||'–',cust=o.customer||'–';if(!dd[pr])dd[pr]={};if(!dd[pr][country])dd[pr][country]={};if(!dd[pr][country][cust])dd[pr][country][cust]={amt:0,orders:0};dd[pr][country][cust].amt+=convOrder(o);dd[pr][country][cust].orders+=1;});
+  const ddP={};
+  [...(state.orders||[]),...((state.preOrdersEnabled&&Array.isArray(state.preOrders))?state.preOrders:[])].forEach(o=>{const pr=(o.promotion_category||o._promo||'').trim();if(!_sp.has(pr))return;const ba=_baAmt[pr];if(!ba||!ba.prevFrom||!ba.prevTo)return;const d=o.order_date||'';if(!d||d<ba.prevFrom||d>ba.prevTo)return;const mb=_pmb[pr]||'sku';if(mb==='sku'){const ss=_pts[pr];if(ss&&ss.size>0&&!ss.has((o.sku||o.ctr_code||'').trim()))return;}else{const cs=_ptc[pr];if(cs&&cs.size>0&&!cs.has((o.customer||'').trim()))return;}const country=o.country||o.region||'–',cust=o.customer||'–';const amt=(o[PRE_ORDER_MARK]&&o.amount_usd!=null)?Number(o.amount_usd)*usdToDisplay():convOrder(o);if(!ddP[pr])ddP[pr]={};if(!ddP[pr][country])ddP[pr][country]={};ddP[pr][country][cust]=(ddP[pr][country][cust]||0)+amt;});
+  const ddM={};fMkt.forEach(m=>{const pr=(m.promotion_category||'').trim();if(!_sp.has(pr))return;const country=m.country||m.region||'–';if(!ddM[pr])ddM[pr]={};if(!ddM[pr][country])ddM[pr][country]={actual:0,expected:0};ddM[pr][country].actual+=convMktActual(m);ddM[pr][country].expected+=convMktExpected(m);});
+  const rc={CIS:'#5856D6',MENA:'#FF9500',LATAM:'#34C759',ASIA:'#0A84FF',EUROPE:'#FF375F',NA:'#BF5AF2'};
+  const rbadge=label=>{if(!label)return'';return label.split(',').map(r=>{const k=r.trim().toUpperCase(),c=rc[k]||'#86868B';return`<span style="display:inline-block;background:${c}18;color:${c};border:1px solid ${c}40;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;margin-left:4px;vertical-align:middle">${r.trim()}</span>`;}).join('');};
+  const sbadge=st=>st==='SELL-IN'?'<span style="background:#C8102E;color:#fff;font-size:8px;padding:1px 5px;border-radius:8px;font-weight:700;vertical-align:middle;margin-left:4px">SELL-IN</span>':'<span style="background:#0A84FF;color:#fff;font-size:8px;padding:1px 5px;border-radius:8px;font-weight:700;vertical-align:middle;margin-left:4px">SELL-OUT</span>';
+  const buildDrill=promo=>{
+    const d=dd[promo]||{},dP=ddP[promo]||{},dM=ddM[promo]||{};
+    const pS=summary.find(s=>(s.promotion||s.key)===promo),pA=pS?(pS.afterAmt||pS.orderAmt||0):0;
+    const allC=new Set([...Object.keys(d),...Object.keys(dM)]);
+    const countries=[...allC].map(c=>{const cu=d[c]||{};return[c,cu,Object.values(cu).reduce((s,v)=>s+v.amt,0)];}).sort((a,b)=>b[2]-a[2]);
     let rows='';
-    for (const [country,custs,cAmt] of countries) {
-      const cOrd=Object.values(custs).reduce((s,v)=>s+v.orders,0);
-      const cPrv=Object.values(ddPrv[country]||{}).reduce((s,v)=>s+v,0);
-      const cMkt=ddMkt[country]||{};
-      const cExp=cMkt.expected||0, cAct=cMkt.actual||0;
-      const cRoi=cAct>0?((cAmt-cAct)/cAct*100):null;
-      const pct=pAmt>0?(cAmt/pAmt*100).toFixed(1):'0';
-      const delta=cPrv>0?((cAmt-cPrv)/cPrv*100):null;
-      const dTag2=delta==null?'–':delta>=0?`<span class="t-green" style="font-size:10px">▲${delta.toFixed(0)}%</span>`:`<span class="t-red" style="font-size:10px">▼${Math.abs(delta).toFixed(0)}%</span>`;
-      const roiTag=cRoi==null?'–':cRoi>=0?`<span class="t-green">${fmtPct(cRoi)}</span>`:`<span class="t-red">${fmtPct(cRoi)}</span>`;
-      rows+=`<tr class="promo-drill-country" data-promo="${promo.replace(/"/g,'&quot;')}" style="background:rgba(0,0,0,0.022);cursor:pointer" onclick="toggleCustomerDrill(this,'${promo.replace(/'/g,"\\'")}','${country.replace(/'/g,"\\'")}')">
-        <td style="padding-left:28px;font-size:12px"><span style="color:#86868B;margin-right:4px">▶</span><b>${country}</b><span class="muted" style="font-size:10px;margin-left:6px">${cOrd} orders · ${pct}%</span></td>
-        <td class="text-right mono" style="font-size:11px">${cOrd>0?fmtNum(cOrd):'–'}</td>
-        <td class="text-right mono t-green" style="font-size:12px;font-weight:700">${cAmt>0?fmtMoney(cAmt):'–'}</td>
-        ${_cmpModeNow!=='off'?`<td class="text-right mono muted" style="font-size:11px">${cPrv>0?fmtMoney(cPrv):'–'}</td>`:''}
-        <td class="text-right mono" style="font-size:10px">${dTag2}</td>
-        <td class="text-right mono t-yellow" style="font-size:11px">${cExp>0?fmtMoney(cExp):'–'}</td>
-        <td class="text-right mono t-orange" style="font-size:11px">${cAct>0?fmtMoney(cAct):'–'}</td>
-        <td class="text-right mono" style="font-size:11px">${roiTag}</td>
-      </tr>`;
-      for (const [cust,cv] of Object.entries(custs).sort((a,b)=>b[1].amt-a[1].amt)) {
-        const custPrv=(ddPrv[country]&&ddPrv[country][cust])||0;
-        const custPct=cAmt>0?(cv.amt/cAmt*100).toFixed(1):'0';
-        const custDelta=custPrv>0?((cv.amt-custPrv)/custPrv*100):null;
-        const custDTag=custDelta==null?'–':custDelta>=0?`<span class="t-green" style="font-size:10px">▲${custDelta.toFixed(0)}%</span>`:`<span class="t-red" style="font-size:10px">▼${Math.abs(custDelta).toFixed(0)}%</span>`;
-        rows+=`<tr class="promo-drill-cust" data-promo="${promo.replace(/"/g,'&quot;')}" data-country="${country.replace(/"/g,'&quot;')}" style="display:none;background:rgba(0,0,0,0.01)">
-          <td style="padding-left:52px;font-size:11px"><span style="color:var(--blue)">└</span><b style="margin-left:4px">${cust}</b><span class="muted" style="font-size:10px;margin-left:4px">${custPct}%</span></td>
-          <td class="text-right mono muted" style="font-size:11px">${fmtNum(cv.orders)}</td>
-          <td class="text-right mono" style="font-size:11px;color:var(--blue);font-weight:700">${fmtMoney(cv.amt)}</td>
-          ${_cmpModeNow!=='off'?`<td class="text-right mono muted" style="font-size:11px">${custPrv>0?fmtMoney(custPrv):'–'}</td>`:''}
-          <td class="text-right mono" style="font-size:10px">${custDTag}</td>
-          <td></td><td></td><td></td>
-        </tr>`;
-      }
-    }
-    return rows;
+    for(const[country,custs,cA] of countries){
+      const cO=Object.values(custs).reduce((s,v)=>s+v.orders,0);
+      const cP=Object.values(dP[country]||{}).reduce((s,v)=>s+v,0);
+      const cM=dM[country]||{},pct=pA>0?(cA/pA*100).toFixed(1):'0';
+      const roiTag=cM.actual>0?`<span class="${((cA-cM.actual)/cM.actual)>=0?'t-green':'t-red'}">${fmtPct(((cA-cM.actual)/cM.actual)*100)}</span>`:'–';
+      rows+=`<tr class="promo-drill-country" data-promo="${promo.replace(/"/g,'&quot;')}" style="background:rgba(0,0,0,0.022);cursor:pointer" onclick="toggleCustomerDrill(this,'${promo.replace(/'/g,"\'")}','${country.replace(/'/g,"\'")}')"><td style="padding-left:28px;font-size:12px"><span style="color:#86868B;margin-right:4px">▶</span><b>${country}</b><span class="muted" style="font-size:10px;margin-left:6px">${cO} orders · ${pct}%</span></td><td class="text-right mono" style="font-size:11px">${cO>0?fmtNum(cO):'–'}</td><td class="text-right mono t-green" style="font-size:12px;font-weight:700">${cA>0?fmtMoney(cA):'–'}</td>${_cmpMode!=='off'?`<td class="text-right mono muted" style="font-size:11px">${cP>0?fmtMoney(cP):'–'}</td>`:''}<td class="text-right mono" style="font-size:10px">${cP>0?dtag(cA,cP):'–'}</td><td class="text-right mono t-yellow" style="font-size:11px">${cM.expected>0?fmtMoney(cM.expected):'–'}</td><td class="text-right mono t-orange" style="font-size:11px">${cM.actual>0?fmtMoney(cM.actual):'–'}</td><td class="text-right mono" style="font-size:11px">${roiTag}</td></tr>`;
+      for(const[cust,cv] of Object.entries(custs).sort((a,b)=>b[1].amt-a[1].amt)){const cP2=(dP[country]&&dP[country][cust])||0;rows+=`<tr class="promo-drill-cust" data-promo="${promo.replace(/"/g,'&quot;')}" data-country="${country.replace(/"/g,'&quot;')}" style="display:none;background:rgba(0,0,0,0.01)"><td style="padding-left:52px;font-size:11px"><span style="color:var(--blue)">└</span><b style="margin-left:4px">${cust}</b></td><td class="text-right mono muted" style="font-size:11px">${fmtNum(cv.orders)}</td><td class="text-right mono" style="font-size:11px;color:var(--blue);font-weight:700">${fmtMoney(cv.amt)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted" style="font-size:11px">${cP2>0?fmtMoney(cP2):'–'}</td>`:''}<td class="text-right mono" style="font-size:10px">${cP2>0?dtag(cv.amt,cP2):'–'}</td><td></td><td></td><td></td></tr>`;}
+    }return rows;
   };
-
-  // ── Row builder for a single promotion ──
-  const buildPromoRow = (p) => {
+  const buildRow=p=>{
     const promo=p.promotion||p.key||'';
-    const st=_mktSellType[promo]||'SELL-IN';
-    const ba=_baAmt[promo]||{};
-    const afterAmt=p.afterAmt||p.orderAmt||0;
-    const prvAmt=p.beforeAmt||0;
-    const delta=prvAmt>0?((afterAmt-prvAmt)/prvAmt*100):null;
-    const dPctTag=delta==null?'<span class="muted">–</span>':delta>=0?`<span class="t-green">▲${delta.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(delta).toFixed(1)}%</span>`;
-    const roi=p.roi==null?'–':fmtPct(p.roi);
-    const roiCls=p.roi==null?'muted':p.roi<0?'t-red':'t-green';
-    const from=ba.winFrom?_fmtDate(ba.winFrom):'', to=ba.winTo?_fmtDate(ba.winTo):'';
-    const periodTag=from?`<span class="muted" style="font-size:9px;margin-left:6px;vertical-align:middle">${from}${to&&to!==from?' ~ '+to:''}</span>`:'';
-    return `<tr class="promo-main-row" data-promo="${promo.replace(/"/g,'&quot;')}" style="cursor:pointer" onclick="togglePromoDrill(this,'${promo.replace(/'/g,"\\'")}')">
-      <td>
-        <span style="color:#86868B;font-size:11px;margin-right:4px" class="promo-drill-arrow">▶</span>
-        <b>${promo||'–'}</b>
-        ${sellBadge(st)}
-        ${regionBadge(p.regionLabel)}
-        ${periodTag}
-        ${p.baStart?`<br><span class="muted" style="font-size:10px;padding-left:16px">from ${p.baStart}</span>`:''}
-      </td>
-      <td class="text-right mono">${fmtNum(p.orders)}</td>
-      <td class="text-right mono t-green" style="font-weight:700">${fmtMoney(afterAmt)}</td>
-      ${_cmpModeNow!=='off'?`<td class="text-right mono muted">${prvAmt>0?fmtMoney(prvAmt):'–'}</td>`:''}
-      <td class="text-right mono">${dPctTag}</td>
-      <td class="text-right mono t-yellow">${fmtMoney(p.expected||0)}</td>
-      <td class="text-right mono t-orange">${fmtMoney(p.actual||0)}</td>
-      <td class="text-right mono ${roiCls}" style="font-weight:700">${roi}</td>
-    </tr>
-    ${buildDrillRows(promo)}`;
+    const st=_mktST[promo]||'SELL-IN',ba=_baAmt[promo]||{};
+    const aA=p.afterAmt||p.orderAmt||0,pA=p.beforeAmt||0;
+    const d=pA>0?((aA-pA)/pA*100):null;
+    const dTag2=d==null?'<span class="muted">–</span>':d>=0?`<span class="t-green">▲${d.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(d).toFixed(1)}%</span>`;
+    const roi=p.roi==null?'–':fmtPct(p.roi),rCls=p.roi==null?'muted':p.roi<0?'t-red':'t-green';
+    const from=ba.winFrom?_fd(ba.winFrom):'',to=ba.winTo?_fd(ba.winTo):'';
+    const ptag=from?`<span class="muted" style="font-size:9px;margin-left:6px;vertical-align:middle">${from}${to&&to!==from?' ~ '+to:''}</span>`:'';
+    return`<tr class="promo-main-row" data-promo="${promo.replace(/"/g,'&quot;')}" style="cursor:pointer" onclick="togglePromoDrill(this,'${promo.replace(/'/g,"\'")}')"><td><span style="color:#86868B;font-size:11px;margin-right:4px" class="promo-drill-arrow">▶</span><b>${promo||'–'}</b>${sbadge(st)}${rbadge(p.regionLabel)}${ptag}${p.baStart?`<br><span class="muted" style="font-size:10px;padding-left:16px">from ${p.baStart}</span>`:''}</td><td class="text-right mono">${fmtNum(p.orders)}</td><td class="text-right mono t-green" style="font-weight:700">${fmtMoney(aA)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted">${pA>0?fmtMoney(pA):'–'}</td>`:''}<td class="text-right mono">${dTag2}</td><td class="text-right mono t-yellow">${fmtMoney(p.expected||0)}</td><td class="text-right mono t-orange">${fmtMoney(p.actual||0)}</td><td class="text-right mono ${rCls}" style="font-weight:700">${roi}</td></tr>${buildDrill(promo)}`;
   };
-
-  // ── Section subtotal row ──
-  const subtotalRow = (label, rows, color) => {
-    const tot=rows.reduce((s,p)=>s+(p.afterAmt||p.orderAmt||0),0);
-    const prv=rows.reduce((s,p)=>s+(p.beforeAmt||0),0);
+  const subRow=(label,rows,color)=>{
+    const tot=rows.reduce((s,p)=>s+(p.afterAmt||p.orderAmt||0),0),prv=rows.reduce((s,p)=>s+(p.beforeAmt||0),0);
     const d=prv>0?((tot-prv)/prv*100):null;
-    const dTag3=d==null?'–':d>=0?`<span class="t-green">▲${d.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(d).toFixed(1)}%</span>`;
-    const exp=rows.reduce((s,p)=>s+(p.expected||0),0);
-    const act=rows.reduce((s,p)=>s+(p.actual||0),0);
-    const roi=act>0?fmtPct(((tot-act)/act)*100):'–';
-    return `<tr style="background:${color||'rgba(0,0,0,0.04)'};font-weight:700;border-top:1px solid var(--border)">
-      <td style="padding-left:8px;font-size:12px;color:var(--text-1)"><b>${label}</b> <span class="muted" style="font-size:10px">${rows.length}개 캠페인</span></td>
-      <td class="text-right mono">${fmtNum(rows.reduce((s,p)=>s+(p.orders||0),0))}</td>
-      <td class="text-right mono t-green" style="font-weight:800">${fmtMoney(tot)}</td>
-      ${_cmpModeNow!=='off'?`<td class="text-right mono muted">${prv>0?fmtMoney(prv):'–'}</td>`:''}
-      <td class="text-right mono">${dTag3}</td>
-      <td class="text-right mono t-yellow">${fmtMoney(exp)}</td>
-      <td class="text-right mono t-orange">${fmtMoney(act)}</td>
-      <td class="text-right mono">${roi}</td>
-    </tr>`;
+    const dt=d==null?'–':d>=0?`<span class="t-green">▲${d.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(d).toFixed(1)}%</span>`;
+    const exp=rows.reduce((s,p)=>s+(p.expected||0),0),act=rows.reduce((s,p)=>s+(p.actual||0),0);
+    return`<tr style="background:${color};font-weight:700;border-top:1px solid var(--border)"><td style="padding-left:8px;font-size:12px"><b>${label}</b><span class="muted" style="font-size:10px;margin-left:6px">${rows.length}개 캠페인</span></td><td class="text-right mono">${fmtNum(rows.reduce((s,p)=>s+(p.orders||0),0))}</td><td class="text-right mono t-green" style="font-weight:800">${fmtMoney(tot)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted">${prv>0?fmtMoney(prv):'–'}</td>`:''}<td class="text-right mono">${dt}</td><td class="text-right mono t-yellow">${fmtMoney(exp)}</td><td class="text-right mono t-orange">${fmtMoney(act)}</td><td class="text-right mono">${act>0?fmtPct(((tot-act)/act)*100):'–'}</td></tr>`;
   };
-
-  // ── Grand total row ──
-  const grandTotal = (() => {
-    const all=[...siSummary,...soSummary];
-    const tot=all.reduce((s,p)=>s+(p.afterAmt||p.orderAmt||0),0);
-    const prv=all.reduce((s,p)=>s+(p.beforeAmt||0),0);
-    const d=prv>0?((tot-prv)/prv*100):null;
-    const dTag4=d==null?'–':d>=0?`<span class="t-green">▲${d.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(d).toFixed(1)}%</span>`;
-    const exp=all.reduce((s,p)=>s+(p.expected||0),0);
-    const act=all.reduce((s,p)=>s+(p.actual||0),0);
-    const roi=act>0?fmtPct(((tot-act)/act)*100):'–';
-    return `<tr style="background:rgba(0,0,0,0.07);font-weight:800;border-top:2px solid var(--border)">
-      <td style="font-size:13px"><b>🏆 CHOICE KIT 전체 합계</b></td>
-      <td class="text-right mono">${fmtNum(all.reduce((s,p)=>s+(p.orders||0),0))}</td>
-      <td class="text-right mono t-green" style="font-size:14px;font-weight:900">${fmtMoney(tot)}</td>
-      ${_cmpModeNow!=='off'?`<td class="text-right mono muted" style="font-size:13px">${prv>0?fmtMoney(prv):'–'}</td>`:''}
-      <td class="text-right mono" style="font-size:12px">${dTag4}</td>
-      <td class="text-right mono t-yellow">${fmtMoney(exp)}</td>
-      <td class="text-right mono t-orange">${fmtMoney(act)}</td>
-      <td class="text-right mono">${roi}</td>
-    </tr>`;
-  })();
-
-  const colCmp = _cmpModeNow!=='off' ? `<th class="text-right">${_prevLabel}</th>` : '';
-  const head = `<thead><tr>
-    <th>PROMOTION</th>
-    <th class="text-right">ORDERS</th>
-    <th class="text-right">현재 ORDER AMT</th>
-    ${colCmp}
-    <th class="text-right">Δ%</th>
-    <th class="text-right">MKT BUDGET</th>
-    <th class="text-right">EXECUTED</th>
-    <th class="text-right">ROI</th>
-  </tr></thead>`;
-
-  const siRows = siSummary.map(buildPromoRow).join('');
-  const soRows = soSummary.map(buildPromoRow).join('');
-
-  let body = '<tbody>';
-  if (siSummary.length) {
-    body += `<tr style="background:rgba(200,16,46,0.04)"><td colspan="8" style="padding:6px 10px;font-size:11px;font-weight:700;color:#C8102E;letter-spacing:0.05em">📦 SELL-IN · SKU 기반 캠페인</td></tr>`;
-    body += siRows;
-    body += subtotalRow('📦 SELL-IN 소계', siSummary, 'rgba(200,16,46,0.06)');
-  }
-  if (soSummary.length) {
-    body += `<tr style="background:rgba(10,132,255,0.04)"><td colspan="8" style="padding:6px 10px;font-size:11px;font-weight:700;color:#0A84FF;letter-spacing:0.05em">🤝 SELL-OUT · 고객 기반 캠페인</td></tr>`;
-    body += soRows;
-    body += subtotalRow('🤝 SELL-OUT 소계', soSummary, 'rgba(10,132,255,0.06)');
-  }
-  body += grandTotal;
-  body += '</tbody>';
-
-  document.getElementById('tblPromo').innerHTML = head + body;
-  } catch(e) { console.error('[renderPromoTable]', e); }
+  const siS=summary.filter(p=>(_mktST[p.promotion||p.key||'']||'SELL-IN')==='SELL-IN');
+  const soS=summary.filter(p=>(_mktST[p.promotion||p.key||'']||'SELL-IN')==='SELL-OUT');
+  const allS=[...siS,...soS];
+  const gT=allS.reduce((s,p)=>s+(p.afterAmt||p.orderAmt||0),0),gP=allS.reduce((s,p)=>s+(p.beforeAmt||0),0);
+  const gd=gP>0?((gT-gP)/gP*100):null,gdTag=gd==null?'–':gd>=0?`<span class="t-green">▲${gd.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(gd).toFixed(1)}%</span>`;
+  const gE=allS.reduce((s,p)=>s+(p.expected||0),0),gA=allS.reduce((s,p)=>s+(p.actual||0),0);
+  const colCmp=_cmpMode!=='off'?`<th class="text-right">${_prevLabel}</th>`:'';
+  const head=`<thead><tr><th>PROMOTION</th><th class="text-right">ORDERS</th><th class="text-right">현재 ORDER AMT</th>${colCmp}<th class="text-right">Δ%</th><th class="text-right">MKT BUDGET</th><th class="text-right">EXECUTED</th><th class="text-right">ROI</th></tr></thead>`;
+  let body='<tbody>';
+  if(siS.length){body+=`<tr style="background:rgba(200,16,46,0.04)"><td colspan="8" style="padding:6px 10px;font-size:11px;font-weight:700;color:#C8102E;letter-spacing:0.05em">📦 SELL-IN · SKU 기반 캠페인</td></tr>`;body+=siS.map(buildRow).join('');body+=subRow('📦 SELL-IN 소계',siS,'rgba(200,16,46,0.06)');}
+  if(soS.length){body+=`<tr style="background:rgba(10,132,255,0.04)"><td colspan="8" style="padding:6px 10px;font-size:11px;font-weight:700;color:#0A84FF;letter-spacing:0.05em">🤝 SELL-OUT · 고객 기반 캠페인</td></tr>`;body+=soS.map(buildRow).join('');body+=subRow('🤝 SELL-OUT 소계',soS,'rgba(10,132,255,0.06)');}
+  body+=`<tr style="background:rgba(0,0,0,0.06);font-weight:800;border-top:2px solid var(--border)"><td style="font-size:13px"><b>🏆 CHOICE KIT 전체 합계</b></td><td class="text-right mono">${fmtNum(allS.reduce((s,p)=>s+(p.orders||0),0))}</td><td class="text-right mono t-green" style="font-size:14px;font-weight:900">${fmtMoney(gT)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted" style="font-size:13px">${gP>0?fmtMoney(gP):'–'}</td>`:''}<td class="text-right mono" style="font-size:12px">${gdTag}</td><td class="text-right mono t-yellow">${fmtMoney(gE)}</td><td class="text-right mono t-orange">${fmtMoney(gA)}</td><td class="text-right mono">${gA>0?fmtPct(((gT-gA)/gA)*100):'–'}</td></tr></tbody>`;
+  document.getElementById('tblPromo').innerHTML=head+body;
+  } catch(e){console.error('[renderPromoTable]',e);}
 }
-
 
 
 /* Combined Sales Trend renderer — toggles between Promotion Category and Region/Country */
@@ -8317,16 +8032,7 @@ function populateSkuUI(fOrders) {
                        promoKeys.map(k => `<option value="${k}">${k}</option>`).join('');
     aggSel.value = (cur === '__all__' || promoKeys.includes(cur)) ? cur : '__all__';
     if (state.skuAggPromo !== aggSel.value) state.skuAggPromo = aggSel.value;
-    // 핸들러 중복 등록 방지
-    if (!aggSel._ckHandler) {
-      aggSel._ckHandler = true;
-      aggSel.addEventListener('change', e => {
-        state.skuAggPromo = e.target.value;
-        try { localStorage.setItem('ck_sku_agg_promo', state.skuAggPromo); } catch(_) {}
-        const fO = state.orders.filter(matchOrder).filter(o => isRegionVisible(o.region));
-        renderSkuExplorer(fO, []);
-      });
-    }
+    if (!aggSel._ckH) { aggSel._ckH = true; aggSel.addEventListener('change', e => { state.skuAggPromo = e.target.value; try{localStorage.setItem('ck_sku_agg_promo',state.skuAggPromo);}catch(_){} const fO=state.orders.filter(matchOrder).filter(o=>isRegionVisible(o.region)); renderSkuExplorer(fO, []); }); }
   }
   // Mode/tab are fixed now: always aggregate + before/after.
   state.skuMode = 'aggregate';
@@ -8764,298 +8470,35 @@ function buildAnnualSeries(orders) {
      2개 이상 함께 주문된 건수 → Full-range 동시 주문 효과.
    ========================================================================= */
 function renderChoiceKitImpact(fOrders, fMkt) {
-  const cfg = state.campaignTargetSkus || {};
-  const promoNames = Object.keys(cfg);
-  if (!promoNames.length) return;
-
-  // ── Populate selector ──
-  const sel = document.getElementById('ckiPromoSel');
-  if (sel) {
-    const cur = state.ckiPromo || '__all__';
-    sel.innerHTML = `<option value="__all__">All Promotions</option>` +
-      promoNames.map(p => `<option value="${p.replace(/"/g,'&quot;')}"${p===cur?' selected':''}>${p}</option>`).join('');
-    if (state.ckiPromo !== sel.value) state.ckiPromo = sel.value;
-    if (!sel._ckHandler) {
-      sel._ckHandler = true;
-      sel.addEventListener('change', e => {
-        state.ckiPromo = e.target.value;
-        try { localStorage.setItem('ck_cki_promo', state.ckiPromo); } catch(_) {}
-        const fO = state.orders.filter(matchOrder).filter(o => isRegionVisible(o.region));
-        const fM = state.marketing.filter(matchMkt).filter(m => isRegionVisible(m.region));
-        renderChoiceKitImpact(fO, fM);
-      });
-    }
-  }
-  // Compare mode buttons
-  const cmpMode = state.ckiCompare || 'mom';
-  document.querySelectorAll('#ckiCmpSeg button').forEach(b => {
-    b.classList.toggle('active', b.dataset.v === cmpMode);
-    if (!b._ckHandler) {
-      b._ckHandler = true;
-      b.addEventListener('click', () => {
-        state.ckiCompare = b.dataset.v;
-        try { localStorage.setItem('ck_cki_compare', state.ckiCompare); } catch(_) {}
-        const fO = state.orders.filter(matchOrder).filter(o => isRegionVisible(o.region));
-        const fM = state.marketing.filter(matchMkt).filter(m => isRegionVisible(m.region));
-        renderChoiceKitImpact(fO, fM);
-      });
-    }
-  });
-
-  const selPromo = state.ckiPromo || '__all__';
-  const isAll    = selPromo === '__all__';
-  const activeCampaigns = isAll ? promoNames : [selPromo];
-  const ordersAll = state.orders || [];
-  const today = _todayStr();
-
-  // 비교 레이블
-  const cmpLabel = { mom:'전년 동월', qoq:'전분기', yoy:'전년 동기' }[cmpMode] || '비교';
-
-  // ── 날짜 shift helper ──
-  function shiftYM(ym, mode) {
-    let [y, m] = ym.split('-').map(Number);
-    if (mode === 'yoy') y -= 1;
-    else if (mode === 'qoq') { m -= 3; if (m < 1) { m += 12; y -= 1; } }
-    else { y -= 1; } // mom → 전년 동월
-    return `${y}-${String(m).padStart(2,'0')}`;
-  }
-
-  // ── 캠페인별 target SKU set ──
-  function getTargetSkus(promoName) {
-    const pc = cfg[promoName] || {};
-    if ((pc.match_by||'sku') !== 'sku') return null; // customer-based: N/A
-    const explicit = (pc.target_skus || []).map(s => s.trim()).filter(Boolean);
-    if (explicit.length) return new Set(explicit);
-    // fallback: tagged orders
-    return new Set(ordersAll.filter(o=>(o.promotion_category||'')===promoName).map(o=>(o.sku||'').trim()).filter(Boolean));
-  }
-  function getTargetCusts(promoName) {
-    const pc = cfg[promoName] || {};
-    return new Set((pc.target_customers||[]).map(c=>c.trim()).filter(Boolean));
-  }
-
-  // ── 캠페인별 월별 집계 ──
-  // 반환: { ym → { skuCount: Set, amt, orders } }
-  function monthlyForPromo(promoName) {
-    const pc  = cfg[promoName] || {};
-    const mb  = (pc.match_by||'sku').toLowerCase();
-    const skuSet  = mb==='sku'  ? getTargetSkus(promoName)  : null;
-    const custSet = mb==='customer' ? getTargetCusts(promoName) : null;
-    const byYm = {};
-    ordersAll.forEach(o => {
-      // 필터: SKU 기반은 SKU 매칭, 고객 기반은 고객 매칭
-      if (mb === 'sku') {
-        if (!skuSet || !skuSet.size) return;
-        const oSku = (o.sku || o.ctr_code || '').trim();
-        if (!skuSet.has(oSku)) return;
-      } else {
-        if (!custSet || !custSet.size) return;
-        if (!custSet.has((o.customer||'').trim())) return;
-      }
-      const ym = (o.order_date||'').slice(0,7);
-      if (!ym) return;
-      if (!byYm[ym]) byYm[ym] = { skuSet: new Set(), amt: 0, orders: 0 };
-      byYm[ym].skuSet.add((o.sku||'').trim());
-      byYm[ym].amt    += convOrder(o);
-      byYm[ym].orders += 1;
-    });
-    return byYm;
-  }
-
-  // ── 비교 기간 집계 (baseline preOrders) ──
-  function cmpMonthlyForPromo(promoName, cmp) {
-    const pc  = cfg[promoName] || {};
-    const mb  = (pc.match_by||'sku').toLowerCase();
-    const skuSet  = mb==='sku'  ? getTargetSkus(promoName)  : null;
-    const custSet = mb==='customer' ? getTargetCusts(promoName) : null;
-    const src = (state.preOrdersEnabled && Array.isArray(state.preOrders)) ? state.preOrders : [];
-    const byYm = {};
-    src.forEach(o => {
-      const target = o._promo || o.promotion_category || '';
-      // 해당 캠페인 대상만
-      if (mb === 'sku') {
-        if (!skuSet || !skuSet.size) return;
-        const oSku = (o.sku || o.ctr_code || '').trim();
-        if (!skuSet.has(oSku)) return;
-      } else {
-        if (!custSet || !custSet.size) return;
-        if (!custSet.has((o.customer||'').trim())) return;
-      }
-      const ym = (o.order_date||'').slice(0,7);
-      if (!ym) return;
-      if (!byYm[ym]) byYm[ym] = { skuSet: new Set(), amt: 0, orders: 0 };
-      byYm[ym].skuSet.add((o.sku||'').trim());
-      byYm[ym].amt    += (o.amount_usd!=null ? Number(o.amount_usd)*usdToDisplay() : convOrder(o));
-      byYm[ym].orders += 1;
-    });
-    return byYm;
-  }
-
-  // 현재 기간 월 목록 (orders.csv 기준)
-  const curYms = Array.from(new Set(ordersAll.map(o=>(o.order_date||'').slice(0,7)).filter(Boolean))).sort();
-
-  // ── 전체/캠페인별 집계 ──
-  // cur: ym → { skuCount, amt, orders }
-  // prv: ym → { skuCount, amt, orders }  (비교 기간)
-  const curByYm = {}, prvByYm = {};
-  curYms.forEach(ym => { curByYm[ym] = { skuCount: 0, amt: 0, orders: 0 }; });
-
-  const campaignStats = {}; // promoName → { curByYm, prvByYm, totalCur, totalPrv }
-  activeCampaigns.forEach(pn => {
-    const cur = monthlyForPromo(pn);
-    const prv = cmpMonthlyForPromo(pn, cmpMode);
-    let totalCurAmt=0, totalPrvAmt=0, totalCurSku=0, totalPrvSku=0, totalCurOrd=0, totalPrvOrd=0;
-    curYms.forEach(ym => {
-      const c = cur[ym] || { skuSet: new Set(), amt:0, orders:0 };
-      const ppym = shiftYM(ym, cmpMode);
-      const p = prv[ppym] || { skuSet: new Set(), amt:0, orders:0 };
-      curByYm[ym].skuCount += c.skuSet.size;
-      curByYm[ym].amt      += c.amt;
-      curByYm[ym].orders   += c.orders;
-      totalCurAmt += c.amt; totalCurSku += c.skuSet.size; totalCurOrd += c.orders;
-      totalPrvAmt += p.amt; totalPrvSku += p.skuSet.size; totalPrvOrd += p.orders;
-    });
-    campaignStats[pn] = { cur, prv, totalCurAmt, totalPrvAmt, totalCurSku, totalPrvSku, totalCurOrd, totalPrvOrd };
-  });
-
-  // ── KPI 카드 ──
-  const kpiEl = document.getElementById('ckiKpis');
-  if (kpiEl) {
-    const gCurAmt = activeCampaigns.reduce((s,pn)=>s+campaignStats[pn].totalCurAmt, 0);
-    const gPrvAmt = activeCampaigns.reduce((s,pn)=>s+campaignStats[pn].totalPrvAmt, 0);
-    const gCurSku = curYms.reduce((s,ym)=>s+curByYm[ym].skuCount, 0);
-    const gCurOrd = curYms.reduce((s,ym)=>s+curByYm[ym].orders, 0);
-    const dAmt = gPrvAmt>0 ? ((gCurAmt-gPrvAmt)/gPrvAmt*100) : null;
-    const dTag = v => v==null ? '<span class="muted">데이터 없음</span>'
-      : v>=0 ? `<span class="t-green" style="font-size:18px;font-weight:800">▲${v.toFixed(1)}%</span>`
-             : `<span class="t-red"   style="font-size:18px;font-weight:800">▼${Math.abs(v).toFixed(1)}%</span>`;
-    const card = (label, val, sub='') => `
-      <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:12px 14px">
-        <div class="label-mono" style="font-size:10px;color:var(--text-2);letter-spacing:.05em">${label}</div>
-        <div style="font-size:20px;font-weight:800;margin-top:4px">${val}</div>
-        ${sub?`<div class="label-mono muted" style="font-size:11px;margin-top:3px">${sub}</div>`:''}
-      </div>`;
-    kpiEl.innerHTML =
-      card('현재 ORDER AMT', fmtMoney(gCurAmt), gPrvAmt>0?`${cmpLabel}: ${fmtMoney(gPrvAmt)}`:'baseline 없음') +
-      card(`vs ${cmpLabel}`, dTag(dAmt), gPrvAmt>0?`${gCurAmt>gPrvAmt?'+':'-'}${fmtMoney(Math.abs(gCurAmt-gPrvAmt))}`:cmpLabel+' 데이터 로딩 중') +
-      card('누적 오더 SKU 수', fmtNum(gCurSku), `${activeCampaigns.length}개 캠페인 합산`) +
-      card('누적 오더 수', fmtNum(gCurOrd), '현재 기간');
-    kpiEl.style.display = 'grid';
-  }
-
-  // ── 차트: 월별 SKU 수 ──
-  const fmtYm = ym => ym ? ym.replace(/^20(\d\d)-(\d\d)$/,"'$1.$2") : ym;
-  const labels = curYms.map(fmtYm);
-  const curSkuData = curYms.map(ym => curByYm[ym].skuCount);
-  const prvSkuData = curYms.map(ym => {
-    const ppym = shiftYM(ym, cmpMode);
-    return activeCampaigns.reduce((s,pn) => {
-      const p = campaignStats[pn].prv[ppym];
-      return s + (p ? p.skuSet.size : 0);
-    }, 0);
-  });
-  const hasPrv = prvSkuData.some(v=>v>0);
-
-  try { if (charts.ckiSkuCount) { charts.ckiSkuCount.destroy(); charts.ckiSkuCount = null; } } catch(_){}
-  const ctxSku = document.getElementById('chCkiSkuCount');
-  if (ctxSku) {
-    charts.ckiSkuCount = new Chart(ctxSku, {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [
-          ...(hasPrv ? [{ label: cmpLabel, data: prvSkuData, backgroundColor:'#A1A1A680', borderRadius:3, maxBarThickness:28 }] : []),
-          { label: '현재', data: curSkuData, backgroundColor:'#C8102E', borderRadius:3, maxBarThickness:28 },
-        ]
-      },
-      options: {
-        responsive:true, maintainAspectRatio:false,
-        plugins: { legend:{position:'top',labels:{font:{family:'IBM Plex Mono',size:10},boxWidth:10}}, datalabels:{display:false},
-          tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y} SKUs`}} },
-        scales: {
-          x:{ticks:{font:{family:'IBM Plex Mono',size:9}},grid:{display:false}},
-          y:{beginAtZero:true,ticks:{font:{family:'IBM Plex Mono',size:10},stepSize:1},grid:{color:'rgba(0,0,0,0.05)'}},
-        },
-      }
-    });
-  }
-
-  // ── 차트: 월별 AMT ──
-  const curAmtData = curYms.map(ym => Math.round(curByYm[ym].amt));
-  const prvAmtData = curYms.map(ym => {
-    const ppym = shiftYM(ym, cmpMode);
-    return Math.round(activeCampaigns.reduce((s,pn) => {
-      const p = campaignStats[pn].prv[ppym];
-      return s + (p ? p.amt : 0);
-    }, 0));
-  });
-  const hasPrvAmt = prvAmtData.some(v=>v>0);
-
-  try { if (charts.ckiAmt) { charts.ckiAmt.destroy(); charts.ckiAmt = null; } } catch(_){}
-  const ctxAmt = document.getElementById('chCkiAmt');
-  if (ctxAmt) {
-    charts.ckiAmt = new Chart(ctxAmt, {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [
-          ...(hasPrvAmt ? [{ label: cmpLabel, data: prvAmtData, backgroundColor:'#A1A1A680', borderRadius:3, maxBarThickness:28 }] : []),
-          { label: '현재', data: curAmtData, backgroundColor:'#0A84FF', borderRadius:3, maxBarThickness:28 },
-        ]
-      },
-      options: {
-        responsive:true, maintainAspectRatio:false,
-        plugins: { legend:{position:'top',labels:{font:{family:'IBM Plex Mono',size:10},boxWidth:10}}, datalabels:{display:false},
-          tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtMoney(c.parsed.y||0)}`}} },
-        scales: {
-          x:{ticks:{font:{family:'IBM Plex Mono',size:9}},grid:{display:false}},
-          y:{beginAtZero:true,ticks:{font:{family:'IBM Plex Mono',size:10},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v},grid:{color:'rgba(0,0,0,0.05)'}},
-        },
-      }
-    });
-  }
-
-  // ── 캠페인별 테이블 ──
-  const tbl = document.getElementById('tblCkiCmp');
-  if (!tbl) return;
-  const colCmp = hasPrvAmt ? `<th class="text-right">${cmpLabel} AMT</th><th class="text-right">Δ%</th>` : '';
-  const head = `<thead><tr>
-    <th>캠페인</th>
-    <th>타입</th>
-    <th class="text-right">현재 AMT</th>
-    ${colCmp}
-    <th class="text-right">오더 SKU 수</th>
-    <th class="text-right">오더 수</th>
-  </tr></thead>`;
-
-  const mktST = {};
-  (state.marketing||[]).forEach(m=>{
-    const p=(m.promotion_category||'').trim(), st=(m.sell_type||'').trim().toUpperCase().replace(/_/g,'-');
-    if(p&&(st==='SELL-IN'||st==='SELL-OUT')&&!mktST[p]) mktST[p]=st;
-  });
-  Object.keys(cfg).forEach(p=>{ if(!mktST[p]) mktST[p]=(cfg[p].match_by||'sku').toLowerCase()==='customer'?'SELL-OUT':'SELL-IN'; });
-
-  const rows = activeCampaigns.map(pn => {
-    const s = campaignStats[pn];
-    const dPct = s.totalPrvAmt>0 ? ((s.totalCurAmt-s.totalPrvAmt)/s.totalPrvAmt*100) : null;
-    const dTag = dPct==null ? '–' : dPct>=0
-      ? `<span class="t-green">▲${dPct.toFixed(1)}%</span>`
-      : `<span class="t-red">▼${Math.abs(dPct).toFixed(1)}%</span>`;
-    const st = mktST[pn]||'SELL-IN';
-    const stBadge = st==='SELL-IN'
-      ? '<span style="background:#C8102E;color:#fff;font-size:8px;padding:1px 5px;border-radius:6px;font-weight:700">SELL-IN</span>'
-      : '<span style="background:#0A84FF;color:#fff;font-size:8px;padding:1px 5px;border-radius:6px;font-weight:700">SELL-OUT</span>';
-    return `<tr>
-      <td style="font-weight:700">${pn}</td>
-      <td>${stBadge}</td>
-      <td class="text-right mono t-green" style="font-weight:700">${fmtMoney(s.totalCurAmt)}</td>
-      ${hasPrvAmt?`<td class="text-right mono muted">${s.totalPrvAmt>0?fmtMoney(s.totalPrvAmt):'–'}</td><td class="text-right mono">${dTag}</td>`:''}
-      <td class="text-right mono">${fmtNum(s.totalCurSku)}</td>
-      <td class="text-right mono">${fmtNum(s.totalCurOrd)}</td>
-    </tr>`;
-  }).join('');
-
-  tbl.innerHTML = head + `<tbody>${rows}</tbody>`;
+  const cfg=state.campaignTargetSkus||{},pns=Object.keys(cfg);if(!pns.length)return;
+  const sel=document.getElementById('ckiPromoSel');
+  if(sel){const cur=state.ckiPromo||'__all__';sel.innerHTML=`<option value="__all__">All Promotions</option>`+pns.map(p=>`<option value="${p.replace(/"/g,'&quot;')}"${p===cur?' selected':''}>${p}</option>`).join('');if(state.ckiPromo!==sel.value)state.ckiPromo=sel.value;if(!sel._ckH){sel._ckH=true;sel.addEventListener('change',e=>{state.ckiPromo=e.target.value;try{localStorage.setItem('ck_cki_promo',state.ckiPromo);}catch(_){}const fO=state.orders.filter(matchOrder).filter(o=>isRegionVisible(o.region)),fM=state.marketing.filter(matchMkt).filter(m=>isRegionVisible(m.region));renderChoiceKitImpact(fO,fM);});}}
+  const cmpMode=state.ckiCompare||'mom';
+  document.querySelectorAll('#ckiCmpSeg button').forEach(b=>{b.classList.toggle('active',b.dataset.v===cmpMode);if(!b._ckH){b._ckH=true;b.addEventListener('click',()=>{state.ckiCompare=b.dataset.v;try{localStorage.setItem('ck_cki_compare',state.ckiCompare);}catch(_){}const fO=state.orders.filter(matchOrder).filter(o=>isRegionVisible(o.region)),fM=state.marketing.filter(matchMkt).filter(m=>isRegionVisible(m.region));renderChoiceKitImpact(fO,fM);});}});
+  const sP=state.ckiPromo||'__all__',isAll=sP==='__all__',aC=isAll?pns:[sP];
+  const oA=state.orders||[],cL={mom:'전년 동월',qoq:'전분기',yoy:'전년 동기'}[cmpMode]||'비교';
+  function sYM(ym,mode){let[y,m]=ym.split('-').map(Number);if(mode==='yoy')y-=1;else if(mode==='qoq'){m-=3;if(m<1){m+=12;y-=1;}}else y-=1;return`${y}-${String(m).padStart(2,'0')}`;}
+  function gSku(pn){const pc=cfg[pn]||{};if((pc.match_by||'sku')!=='sku')return null;const ex=(pc.target_skus||[]).map(s=>s.trim()).filter(Boolean);return ex.length?new Set(ex):new Set(oA.filter(o=>(o.promotion_category||'')===pn).map(o=>(o.sku||'').trim()).filter(Boolean));}
+  function gCust(pn){return new Set((cfg[pn]?.target_customers||[]).map(c=>c.trim()).filter(Boolean));}
+  function mFP(pn){const pc=cfg[pn]||{},mb=(pc.match_by||'sku').toLowerCase(),sS=mb==='sku'?gSku(pn):null,cS=mb!=='sku'?gCust(pn):null;const bY={};oA.forEach(o=>{if(mb==='sku'){if(!sS||!sS.size)return;if(!sS.has((o.sku||o.ctr_code||'').trim()))return;}else{if(!cS||!cS.size)return;if(!cS.has((o.customer||'').trim()))return;}const ym=(o.order_date||'').slice(0,7);if(!ym)return;if(!bY[ym])bY[ym]={skuSet:new Set(),amt:0,orders:0};bY[ym].skuSet.add((o.sku||'').trim());bY[ym].amt+=convOrder(o);bY[ym].orders+=1;});return bY;}
+  function cFP(pn){const pc=cfg[pn]||{},mb=(pc.match_by||'sku').toLowerCase(),sS=mb==='sku'?gSku(pn):null,cS=mb!=='sku'?gCust(pn):null;const src=(state.preOrdersEnabled&&Array.isArray(state.preOrders))?state.preOrders:[];const bY={};src.forEach(o=>{if(mb==='sku'){if(!sS||!sS.size)return;if(!sS.has((o.sku||o.ctr_code||'').trim()))return;}else{if(!cS||!cS.size)return;if(!cS.has((o.customer||'').trim()))return;}const ym=(o.order_date||'').slice(0,7);if(!ym)return;if(!bY[ym])bY[ym]={skuSet:new Set(),amt:0,orders:0};bY[ym].skuSet.add((o.sku||'').trim());bY[ym].amt+=(o.amount_usd!=null?Number(o.amount_usd)*usdToDisplay():convOrder(o));bY[ym].orders+=1;});return bY;}
+  const cYms=Array.from(new Set(oA.map(o=>(o.order_date||'').slice(0,7)).filter(Boolean))).sort();
+  const cBY={};cYms.forEach(ym=>{cBY[ym]={skuCount:0,amt:0,orders:0};});
+  const cS2={};
+  aC.forEach(pn=>{const cur=mFP(pn),prv=cFP(pn);let tCA=0,tPA=0,tCS=0,tPS=0,tCO=0;cYms.forEach(ym=>{const c=cur[ym]||{skuSet:new Set(),amt:0,orders:0},ppym=sYM(ym,cmpMode),p=prv[ppym]||{skuSet:new Set(),amt:0,orders:0};cBY[ym].skuCount+=c.skuSet.size;cBY[ym].amt+=c.amt;cBY[ym].orders+=c.orders;tCA+=c.amt;tCS+=c.skuSet.size;tCO+=c.orders;tPA+=p.amt;tPS+=p.skuSet.size;});cS2[pn]={cur,prv,totalCurAmt:tCA,totalPrvAmt:tPA,totalCurSku:tCS,totalPrvSku:tPS,totalCurOrd:tCO};});
+  const kE=document.getElementById('ckiKpis');
+  if(kE){const gCA=aC.reduce((s,pn)=>s+cS2[pn].totalCurAmt,0),gPA=aC.reduce((s,pn)=>s+cS2[pn].totalPrvAmt,0),gCS=cYms.reduce((s,ym)=>s+cBY[ym].skuCount,0),gCO=cYms.reduce((s,ym)=>s+cBY[ym].orders,0),dA=gPA>0?((gCA-gPA)/gPA*100):null;const dT=v=>v==null?'<span class="muted" style="font-size:20px">–</span>':v>=0?`<span class="t-green" style="font-size:20px;font-weight:800">▲${v.toFixed(1)}%</span>`:`<span class="t-red" style="font-size:20px;font-weight:800">▼${Math.abs(v).toFixed(1)}%</span>`;const card=(l,v,s='')=>`<div style="background:rgba(0,0,0,0.02);border:1px solid var(--border);border-radius:10px;padding:12px 14px"><div class="label-mono" style="font-size:10px;color:var(--text-2);letter-spacing:.05em">${l}</div><div style="font-size:20px;font-weight:800;margin-top:4px">${v}</div>${s?`<div class="label-mono muted" style="font-size:11px;margin-top:3px">${s}</div>`:''}</div>`;kE.innerHTML=card('현재 ORDER AMT',fmtMoney(gCA),gPA>0?`${cL}: ${fmtMoney(gPA)}`:'baseline 로딩 전')+card(`vs ${cL}`,dT(dA),gPA>0?`${gCA>gPA?'+':'-'}${fmtMoney(Math.abs(gCA-gPA))}`:cL+' 데이터 없음')+card('누적 오더 SKU 수',fmtNum(gCS),`${aC.length}개 캠페인 합산`)+card('누적 오더 수',fmtNum(gCO),'현재 기간');kE.style.display='grid';}
+  const fYm=ym=>ym?ym.replace(/^20(\d\d)-(\d\d)$/,"'$1.$2"):ym;
+  const lbs=cYms.map(fYm),cSD=cYms.map(ym=>cBY[ym].skuCount),pSD=cYms.map(ym=>{const ppym=sYM(ym,cmpMode);return aC.reduce((s,pn)=>{const p=cS2[pn].prv[ppym];return s+(p?p.skuSet.size:0);},0);}),hP=pSD.some(v=>v>0);
+  const cAD=cYms.map(ym=>Math.round(cBY[ym].amt)),pAD=cYms.map(ym=>{const ppym=sYM(ym,cmpMode);return Math.round(aC.reduce((s,pn)=>{const p=cS2[pn].prv[ppym];return s+(p?p.amt:0);},0));}),hPA=pAD.some(v=>v>0);
+  try{if(charts.ckiSkuCount){charts.ckiSkuCount.destroy();charts.ckiSkuCount=null;}}catch(_){}
+  const ctxS=document.getElementById('chCkiSkuCount');if(ctxS)charts.ckiSkuCount=new Chart(ctxS,{type:'bar',data:{labels:lbs,datasets:[...(hP?[{label:cL,data:pSD,backgroundColor:'#A1A1A680',borderRadius:3,maxBarThickness:28}]:[]),{label:'현재',data:cSD,backgroundColor:'#C8102E',borderRadius:3,maxBarThickness:28}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{family:'IBM Plex Mono',size:10},boxWidth:10}},datalabels:{display:false},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y} SKUs`}}},scales:{x:{ticks:{font:{family:'IBM Plex Mono',size:9}},grid:{display:false}},y:{beginAtZero:true,ticks:{font:{family:'IBM Plex Mono',size:10},stepSize:1},grid:{color:'rgba(0,0,0,0.05)'}}}}});
+  try{if(charts.ckiAmt){charts.ckiAmt.destroy();charts.ckiAmt=null;}}catch(_){}
+  const ctxA=document.getElementById('chCkiAmt');if(ctxA)charts.ckiAmt=new Chart(ctxA,{type:'bar',data:{labels:lbs,datasets:[...(hPA?[{label:cL,data:pAD,backgroundColor:'#A1A1A680',borderRadius:3,maxBarThickness:28}]:[]),{label:'현재',data:cAD,backgroundColor:'#0A84FF',borderRadius:3,maxBarThickness:28}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{family:'IBM Plex Mono',size:10},boxWidth:10}},datalabels:{display:false},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtMoney(c.parsed.y||0)}`}}},scales:{x:{ticks:{font:{family:'IBM Plex Mono',size:9}},grid:{display:false}},y:{beginAtZero:true,ticks:{font:{family:'IBM Plex Mono',size:10},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v},grid:{color:'rgba(0,0,0,0.05)'}}}}});
+  const tbl=document.getElementById('tblCkiCmp');if(!tbl)return;
+  const mST={};(state.marketing||[]).forEach(m=>{const p=(m.promotion_category||'').trim(),st=(m.sell_type||'').trim().toUpperCase().replace(/_/g,'-');if(p&&(st==='SELL-IN'||st==='SELL-OUT')&&!mST[p])mST[p]=st;});Object.keys(cfg).forEach(p=>{if(!mST[p])mST[p]=(cfg[p].match_by||'sku').toLowerCase()==='customer'?'SELL-OUT':'SELL-IN';});
+  const cc2=hPA?`<th class="text-right">${cL} AMT</th><th class="text-right">Δ%</th>`:'';
+  tbl.innerHTML=`<thead><tr><th>캠페인</th><th>타입</th><th class="text-right">현재 AMT</th>${cc2}<th class="text-right">오더 SKU 수</th><th class="text-right">오더 수</th></tr></thead><tbody>${aC.map(pn=>{const s=cS2[pn],dP=s.totalPrvAmt>0?((s.totalCurAmt-s.totalPrvAmt)/s.totalPrvAmt*100):null,dT2=dP==null?'–':dP>=0?`<span class="t-green">▲${dP.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(dP).toFixed(1)}%</span>`,stb=mST[pn]==='SELL-IN'?'<span style="background:#C8102E;color:#fff;font-size:8px;padding:1px 5px;border-radius:6px;font-weight:700">SELL-IN</span>':'<span style="background:#0A84FF;color:#fff;font-size:8px;padding:1px 5px;border-radius:6px;font-weight:700">SELL-OUT</span>';return`<tr><td style="font-weight:700">${pn}</td><td>${stb}</td><td class="text-right mono t-green" style="font-weight:700">${fmtMoney(s.totalCurAmt)}</td>${hPA?`<td class="text-right mono muted">${s.totalPrvAmt>0?fmtMoney(s.totalPrvAmt):'–'}</td><td class="text-right mono">${dT2}</td>`:''}<td class="text-right mono">${fmtNum(s.totalCurSku)}</td><td class="text-right mono">${fmtNum(s.totalCurOrd)}</td></tr>`;}).join('')}</tbody>`;
 }
 
 function renderSkuExplorer(fOrders, fMkt) {
@@ -9392,15 +8835,14 @@ function renderSkuAggregate(fOrders) {
   }
 
   // ── Period Comparison KPIs ──
-  // cmpScope: baseline rows use _promo tag; current orders use promotion_category
+  // Pass orders.csv-only rows so that fillCompareKpis current-period ORDER AMOUNT
+  // is never inflated by preOrders. preOrders are added internally for previous
+  // period only (fillCompareKpis already calls state.preOrders for prevSource).
   const cmpScope = (promo && promo !== '__all__')
-    ? ((o) => {
-        if (!o) return false;
-        // baseline rows tagged with _promo
-        if (o[PRE_ORDER_MARK]) return (o._promo || o.promotion_category || '') === promo;
-        return promoKeyOfOrder(o) === promo;
-      })
+    ? ((o) => {if(!o)return false;if(o[PRE_ORDER_MARK])return(o._promo||o.promotion_category||'')===promo;return promoKeyOfOrder(o)===promo;})
     : null;
+  // ordersCsv = orders.csv only (no baseline). Filter same way useOrders was filtered
+  // but without the baseline rows so current ORDER AMOUNT = orders.csv only.
   const cmpOrders = promo === '__all__'
     ? ordersCsv
     : ordersCsv.filter(o => promoKeyOfOrder(o) === promo);
@@ -9441,6 +8883,1432 @@ function _buildPreOrdersIndex() {
     state._preIdx = null; state._preOrdersIndexed = false; return;
   }
   if (state._preOrdersIndexed) return;
+  const skuIdx = {}, custIdx = {}, ctrIdx = {}, buyerIdx = {};
+  const bundleBuyerIdx = {};
+  const ctrToBundleBuyers = {};
+  const _buyerMap = {};
+  (state.orders || []).forEach(o => {
+    const bn = (o.customer_no || '').toString().trim();
+    const cn = (o.customer || '').trim();
+    if (bn && cn && !_buyerMap[bn]) _buyerMap[bn] = cn;
+  });
+  const PAT_PO = /^PO-([^-]+)-(\d+)-\d+$/;
+  state.preOrders.forEach(o => {
+    const sku  = (o.sku  || '').trim();
+    const cust = (o.customer || '').trim();
+    const oid  = (o.order_id || '').trim();
+    if (sku)  { (skuIdx[sku]   = skuIdx[sku]   || []).push(o); }
+    if (cust) { (custIdx[cust] = custIdx[cust] || []).push(o); }
+    const m = oid.match(PAT_PO);
+    if (m) {
+      const ctr = m[1], buyer = m[2];
+      if (ctr)   { (ctrIdx[ctr]           = ctrIdx[ctr]           || []).push(o); }
+      if (buyer) { (bundleBuyerIdx[buyer]  = bundleBuyerIdx[buyer] || []).push(o); }
+      if (ctr && buyer) {
+        if (!ctrToBundleBuyers[ctr]) ctrToBundleBuyers[ctr] = new Set();
+        ctrToBundleBuyers[ctr].add(buyer);
+      }
+      if (buyer && _buyerMap[buyer]) {
+        const cn = _buyerMap[buyer];
+        (buyerIdx[cn] = buyerIdx[cn] || []).push(o);
+      }
+    }
+  });
+
+  // ── promoIdx: 프로모션별 매칭 rows 미리 빌드 (SKU+buyer 2중필터 결과 캐시) ──
+  // renderPromoChart에서 매번 수백만 regex 실행하는 대신 O(1) 조회용
+  const promoIdx = {};  // promo → rows[]
+  const _cfg = state.campaignTargetSkus || {};
+  const _promoStart = {};
+  (state.marketing || []).forEach(m => {
+    const p = (m.promotion_category || '').trim();
+    const d = (m.execution_date || m.date || '').trim();
+    const kpi = (m.kpi_metric || '').trim().toUpperCase();
+    if (!p || !d) return;
+    if (kpi === 'STARTED') { if (!_promoStart[p] || d < _promoStart[p]) _promoStart[p] = d; }
+    else { if (!_promoStart[p+'__all__'] || d < _promoStart[p+'__all__']) _promoStart[p+'__all__'] = d; }
+  });
+  // 성과는 2026년 오더부터만 집계
+  Object.keys(_promoStart).forEach(k => {
+    if (_promoStart[k] < '2026-01-01') _promoStart[k] = '2026-01-01';
+  });
+  Object.keys(_cfg).forEach(promo => {
+    const cfg = _cfg[promo];
+    const mb = (cfg.match_by || 'sku').toLowerCase();
+    if (mb === 'customer') {
+      // Customer 기반: 실제 참여 고객의 모든 오더
+      const actualCusts = new Set((cfg.target_customers || []).map(c => c.trim()));
+      (state.orders || []).forEach(o => {
+        const p = (o.promotion_category || '').trim();
+        if (p !== promo) return;
+        const start = _promoStart[promo] || _promoStart[promo + '__all__'];
+        if (start && (o.order_date || '') < start) return;
+        const c = (o.customer || '').trim();
+        if (c) actualCusts.add(c);
+      });
+      const rows = [];
+      const seen = new Set();
+      actualCusts.forEach(c => {
+        (custIdx[c] || []).forEach(o => { if (!seen.has(o)) { seen.add(o); rows.push(o); } });
+        (buyerIdx[c] || []).forEach(o => { if (!seen.has(o)) { seen.add(o); rows.push(o); } });
+      });
+      promoIdx[promo] = rows;
+    } else {
+      // SKU 기반: 2026 참여 고객의 bundle buyer_codes 수집 → SKU + buyer 2중 필터
+      const targetSkus = new Set((cfg.target_skus || []).map(s => s.trim()));
+      // 참여 고객 buyer_codes: 2026 orders에서 해당 캠페인 CTR code로 bundle buyer 역추출
+      const buyers = new Set();
+      (state.orders || []).forEach(o => {
+        const p = (o.promotion_category || '').trim();
+        if (p !== promo) return;
+        const start = _promoStart[promo] || _promoStart[promo + '__all__'];
+        if (start && (o.order_date || '') < start) return;
+        const ctr = (o.ctr_code || o['CTR Code'] || o.sku || '').trim();
+        if (ctr && ctrToBundleBuyers[ctr]) {
+          ctrToBundleBuyers[ctr].forEach(b => buyers.add(b));
+        }
+      });
+      window._promoBundleBuyers = window._promoBundleBuyers || {};
+      window._promoBundleBuyers[promo] = buyers;
+      // bundle buyer_code 인덱스로 O(1) 조회 → SKU 필터
+      const rows = [];
+      const seen = new Set();
+      buyers.forEach(buyer => {
+        (bundleBuyerIdx[buyer] || []).forEach(o => {
+          if (seen.has(o)) return;
+          const s = (o.sku || '').trim();
+          const oid = (o.order_id || '').trim();
+          const pm = oid.match(PAT_PO);
+          const ctr = pm ? pm[1] : '';
+          if (targetSkus.has(s) || targetSkus.has(ctr)) {
+            seen.add(o);
+            rows.push(o);
+          }
+        });
+      });
+      promoIdx[promo] = rows;
+    }
+  });
+
+  state._preIdx = { skuIdx, custIdx, ctrIdx, buyerIdx, bundleBuyerIdx, ctrToBundleBuyers, promoIdx, _buyerMap };
+  state._preOrdersIndexed = true;
+  const total = Object.values(promoIdx).reduce((s,r) => s+r.length, 0);
+  console.log(`[preIdx] built — SKU:${Object.keys(skuIdx).length} CTR:${Object.keys(ctrIdx).length} BUYER:${Object.keys(bundleBuyerIdx).length} promoIdx:${total}rows`);
+}
+
+document.getElementById('curToggle').addEventListener('click', e => {
+  const b = e.target.closest('button[data-cur]'); if (!b) return;
+  state.currency = b.dataset.cur;
+  document.querySelectorAll('#curToggle button').forEach(x => x.classList.toggle('active', x.dataset.cur===state.currency));
+  persist(); renderAll();
+});
+
+// (orderTarget input은 Budgets 모달로 이동)
+
+document.getElementById('fOrders').addEventListener('change', async e => {
+  const f = e.target.files?.[0]; e.target.value = '';
+  if (!f) return;
+  try {
+    const rows = await parseOrderCSV(f);
+    rows.forEach(r => { r[SNAPSHOT_USER_MARK] = true; });
+    state.orders = state.orders.concat(rows);
+    localStorage.setItem('ck_has_personal_data', '1');
+    persist();
+    markDataUpdated('orders');
+    await loadFxRates();
+    rebuildAll();
+    alert(`${rows.length} order rows added`);
+  } catch (err) { console.error(err); alert('Failed to parse Order CSV'); }
+});
+document.getElementById('fMkt').addEventListener('change', async e => {
+  const f = e.target.files?.[0]; e.target.value = '';
+  if (!f) return;
+  try {
+    const rows = await parseMarketingCSV(f);
+    rows.forEach(r => { r[SNAPSHOT_USER_MARK] = true; });
+    state.marketing = state.marketing.concat(rows);
+    localStorage.setItem('ck_has_personal_data', '1');
+    persist();
+    markDataUpdated('marketing');
+    await loadFxRates();
+    rebuildAll();
+    alert(`${rows.length} marketing activities added`);
+  } catch (err) { console.error(err); alert('Failed to parse Marketing CSV'); }
+});
+
+function clearAll() {
+  if (!confirm('모든 데이터를 삭제하시겠습니까?')) return;
+  localStorage.removeItem('ck_has_personal_data');
+  localStorage.removeItem('ck_orders_updated_at');
+  localStorage.removeItem('ck_marketing_updated_at');
+  state.orders = []; state.marketing = [];
+  state.regionBudgets = {}; state.regionTargets = {}; state.promoBudgets = {};
+  // Also drop the pre-orders IndexedDB cache so a fresh session re-downloads
+  try { idbDelete('preOrdersCache_v2'); } catch (e) {}
+  persist(); rebuildAll();
+  renderDataTimestamps();
+  showToast('🗑️ 데이터가 초기화됐습니다');
+}
+
+/* Modal */
+function fillSelect(id, opts) { document.getElementById(id).innerHTML = opts.map(o=>`<option value="${o}">${o}</option>`).join(''); }
+fillSelect('m_region', REGIONS);
+fillSelect('m_category', CATEGORIES);
+fillSelect('m_activity_type', ACTIVITY_TYPES);
+fillSelect('m_currency', ['USD','KRW','EUR','RUB','AED','AUD','BRL','GBP','JPY','CNY']);
+document.getElementById('m_date').value = new Date().toISOString().slice(0,10);
+
+function openAddActivity() { document.getElementById('addModal').classList.add('open'); }
+function closeModal() { document.getElementById('addModal').classList.remove('open'); }
+async function submitActivity() {
+  const get = id => document.getElementById(id).value;
+  if (!get('m_title') || !get('m_cost')) { alert('Title and Cost are required'); return; }
+  state.marketing.push({
+    activity_id: 'MKT-' + Date.now(),
+    date: get('m_date'), region: get('m_region'), country: get('m_country'),
+    category: get('m_category'), promotion_id: get('m_promotion_id') || 'CHOICE_KIT',
+    promotion_name: '', activity_type: get('m_activity_type'),
+    title: get('m_title'), target_customer: get('m_target_customer'),
+    target_product: get('m_target_product'), cost: Number(get('m_cost')),
+    currency: get('m_currency'), kpi_metric: get('m_kpi_metric'),
+    kpi_value: Number(get('m_kpi_value'))||0,
+    kpi_status: get('m_kpi_status'),
+    kpi_target: Number(get('m_kpi_target'))||0,
+    note: get('m_note'),
+  });
+  persist(); await loadFxRates(); closeModal(); rebuildAll();
+}
+
+/* Templates */
+function downloadCsv(filename, content) {
+  const blob = new Blob([content], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+}
+function downloadOrderTemplate() {
+  downloadCsv('order_template.csv',
+    'CTR Code,order date,region,country,promotion_category,promotion_theme,product,sku,part_no,position,make_model,qty,unit_price,amount,currency,target,sell_type,customer\n'
+   +'GK0383,2026-01-13,MENA,IRAQ,New segment,CHOICE_KIT,BRAKE PAD ASSY,GK0383,06450S5DA00,FRONT,HONDA_Accord 1990-1991,10,12.72,127.20,USD,B2B,SELL-IN,MESK AL-BARARI\n'
+   +'GY0272G,2026-02-05,CIS,RUSSIA,Asian,CHOICE_KIT,SHOCK ABSORBER,GY0272G,13332639,REAR,CHEVROLET_Cruze 2008-2011,16,14.99,239.84,USD,B2B,SELL-IN,EMEX\n');
+}
+function downloadMarketingTemplate() {
+  downloadCsv('marketing_template.csv',
+    'execution_date,region,country,promotion_theme,promotion_category,target_product,activity_type,title,customer,expected_cost,actual_cost,Bizreward,currency,kpi_metric,target,sell_type,owner,Order_Target($)\n'
+   +'2026-04-09,CIS,RUSSIA,CHOICE_KIT,Asian vehicle,Asian vehicle,CONTENT,Catalog,,0,0,x,USD,DISTRIBUTED,B2B,SELL_IN,HY,175000\n'
+   +'2026-05-04,CIS,RUSSIA,CHOICE_KIT,European vehicle,European vehicle,CONTENT,Catalog,,0,0,x,USD,DISTRIBUTED,B2B,SELL_IN,HY,75000\n'
+   +'2026-01-10,CIS,RUSSIA,CHOICE_KIT,Asian vehicle,Asian vehicle,ONLINE_CONTENT,YouTube Choice Kit Intro,EMEX,2000,1500,promo,USD,VIEWS,B2B,SELL_IN,HY,175000\n');
+}
+
+/* =================== BUDGET (Plan) & ORDER TARGET =================== */
+// Display currency로 환산된 plan budget 합계
+function computePlanBudget() {
+  const f = state.filters;
+  const usdToDisp = usdToDisplay();   // ✅ FX 캐시 기반 정확한 환율
+  const regionKeys = (f.regions && f.regions.length) ? f.regions : Object.keys(state.regionBudgets);
+  let regionSum = 0;
+  regionKeys.forEach(r => { regionSum += Number(state.regionBudgets[r] || 0); });
+  const promoKeys = (f.promotions && f.promotions.length) ? f.promotions : Object.keys(state.promoBudgets);
+  let promoSum = 0;
+  promoKeys.forEach(p => { promoSum += Number(state.promoBudgets[p] || 0); });
+  return (regionSum + promoSum) * usdToDisp;
+}
+// Display currency로 환산된 order target (Region 필터 시 그 Region들 합, 없으면 전체)
+function computeOrderTargetDisp() {
+  const f = state.filters;
+  const usdToDisp = usdToDisplay();
+  // Order Target is a campaign-level baseline — derive from FULL marketing data
+  // (ignore date / category / promotion / activity / customer filters). Only
+  // the Region filter scopes the total, since region targets are independent.
+  const derived = deriveOrderTargets(state.marketing || []);
+  const tForRegion = (r) => getRegionOrderTargetUSD(r, derived); // manual override → derived
+  if (f.regions && f.regions.length) {
+    let s = 0;
+    f.regions.forEach(r => { s += tForRegion(r); });
+    return s * usdToDisp;
+  }
+  // Region 필터 미적용: 모든 Region의 타깃 합계.
+  // ALWAYS start from derived.byRegion (the marketing CSV is the source of truth);
+  // state.regionTargets only contributes additional regions that have a manual
+  // value but no marketing data. This prevents any region from being silently
+  // skipped if state.regionTargets is sparse.
+  const allRegions = new Set([
+    ...Object.keys(derived.byRegion || {}),
+    ...Object.keys(state.regionTargets || {}),
+  ]);
+  let regionSum = 0;
+  allRegions.forEach(r => { regionSum += tForRegion(r); });
+  if (regionSum > 0) return regionSum * usdToDisp;
+  return Number(state.orderTargetUSD||0) * usdToDisp;
+}
+function activeRegionCount() {
+  const f = state.filters;
+  const keys = (f.regions && f.regions.length) ? f.regions : Object.keys(state.regionBudgets);
+  return keys.filter(k => Number(state.regionBudgets[k]||0) > 0).length;
+}
+function activePromoCount() {
+  const f = state.filters;
+  const keys = (f.promotions && f.promotions.length) ? f.promotions : Object.keys(state.promoBudgets);
+  return keys.filter(k => Number(state.promoBudgets[k]||0) > 0).length;
+}
+
+/* =================== BUDGETS MODAL (USD ↔ KRW dual + Live FX) =================== */
+function fxAutoUsdKrw() {
+  // 자동(API) USD→KRW: state.fxManualUsdKrw 무시하고 fx 캐시만 사용
+  const keys = Object.keys(state.fx).filter(k => k.endsWith('|KRW')).sort().reverse();
+  for (const k of keys) { const v = state.fx[k]; if (v && v>0) return 1/v; }
+  return 1 / FALLBACK_TO_USD.KRW;
+}
+function getCurrentUsdKrw() {
+  const m = Number(state.fxManualUsdKrw||0);
+  return m > 0 ? m : fxAutoUsdKrw();
+}
+function refreshFxApplied() {
+  const r = getCurrentUsdKrw();
+  const disp = document.getElementById('fxAppliedDisp');
+  const src = document.getElementById('fxSource');
+  if (disp) disp.textContent = fmtNum(r);
+  if (src) src.textContent = (Number(state.fxManualUsdKrw||0) > 0) ? '(manual)' : '(auto)';
+}
+function syncDualPair(pair, sourceKind) {
+  // sourceKind: 'usd' or 'krw'. pair: 'orderTarget' | 'rb-<region>' | 'rt-<region>' | 'pb-<key>'
+  const r = getCurrentUsdKrw();
+  const usdEl = document.querySelector(`input[data-pair="${pair}"][data-side="usd"], #orderTargetUSDInput[data-pair="${pair}"]`);
+  const krwEl = document.querySelector(`input[data-pair="${pair}"][data-side="krw"], #orderTargetKRWInput[data-pair="${pair}"]`);
+  if (!usdEl || !krwEl) return;
+  if (sourceKind === 'usd') {
+    const v = Number(usdEl.value)||0;
+    krwEl.value = v ? Math.round(v * r) : '';
+  } else {
+    const v = Number(krwEl.value)||0;
+    usdEl.value = v ? Math.round(v / r) : '';
+  }
+}
+function syncAllPairs() {
+  // FX changed → recompute KRW from USD for every pair
+  document.querySelectorAll('input[data-pair]').forEach(el => {
+    if (el.dataset.side === 'krw') return;
+    const pair = el.dataset.pair;
+    syncDualPair(pair, 'usd');
+  });
+  // orderTarget pair (no data-side, special ids)
+  syncDualPair('orderTarget', 'usd');
+}
+
+function dualRow(label, pairId, usdVal) {
+  const r = getCurrentUsdKrw();
+  const krwVal = usdVal ? Math.round(usdVal * r) : '';
+  const usdShow = usdVal ? Math.round(usdVal) : '';
+  return `
+    <div style="display:grid;grid-template-columns:80px 1fr 1fr;gap:8px;align-items:center">
+      <span class="label-mono" style="font-weight:700">${label}</span>
+      <label style="display:flex;align-items:center;gap:6px"><span class="label-mono muted">$</span>
+        <input type="number" data-pair="${pairId}" data-side="usd" value="${usdShow}" style="flex:1;text-align:right" placeholder="USD" />
+      </label>
+      <label style="display:flex;align-items:center;gap:6px"><span class="label-mono muted">₩</span>
+        <input type="number" data-pair="${pairId}" data-side="krw" value="${krwVal}" style="flex:1;text-align:right" placeholder="KRW" />
+      </label>
+    </div>`;
+}
+
+function openBudgetModal() {
+  // FX manual 입력
+  const fxInput = document.getElementById('fxUsdKrwInput');
+  fxInput.value = Number(state.fxManualUsdKrw||0) > 0 ? state.fxManualUsdKrw : '';
+  refreshFxApplied();
+
+  // Total order target (USD 직접 + KRW 동기화)
+  const usdT = Math.round(Number(state.orderTargetUSD)||0);
+  document.getElementById('orderTargetUSDInput').value = usdT || '';
+  document.getElementById('orderTargetKRWInput').value = usdT ? Math.round(usdT * getCurrentUsdKrw()) : '';
+
+  // Region budget grid (USD 저장값 → 양쪽 표시)
+  const rg = document.getElementById('regionBudgetGrid');
+  rg.innerHTML = REGIONS.map(r => dualRow(r, `rb-${r}`, Number(state.regionBudgets[r])||0)).join('');
+
+  // Region target grid
+  const rt = document.getElementById('regionTargetGrid');
+  rt.innerHTML = REGIONS.map(r => dualRow(r, `rt-${r}`, Number(state.regionTargets[r])||0)).join('');
+
+  // Promo rows
+  renderPromoBudgetRows();
+  document.getElementById('budgetModal').classList.add('open');
+}
+
+function renderPromoBudgetRows() {
+  const pg = document.getElementById('promoBudgetGrid');
+  const entries = Object.entries(state.promoBudgets);
+  if (!entries.length) {
+    pg.innerHTML = '<p class="label-mono" style="color:var(--text-3)">No promotions yet. Add one above.</p>';
+    return;
+  }
+  const r = getCurrentUsdKrw();
+  pg.innerHTML = entries.map(([name, valUsd]) => {
+    const usd = Math.round(Number(valUsd)||0);
+    const krw = usd ? Math.round(usd * r) : '';
+    const safe = name.replace(/'/g,"\\'");
+    return `
+      <div style="display:grid;grid-template-columns:1.3fr 1fr 1fr 40px;gap:8px;align-items:center">
+        <input data-promo-name="${name}" value="${name}" />
+        <label style="display:flex;align-items:center;gap:6px"><span class="label-mono muted">$</span>
+          <input type="number" data-pair="pb-${name}" data-side="usd" data-promo-key="${name}" value="${usd||''}" style="flex:1;text-align:right" placeholder="USD" />
+        </label>
+        <label style="display:flex;align-items:center;gap:6px"><span class="label-mono muted">₩</span>
+          <input type="number" data-pair="pb-${name}" data-side="krw" value="${krw}" style="flex:1;text-align:right" placeholder="KRW" />
+        </label>
+        <button class="btn ghost danger" onclick="removePromoBudgetRow('${safe}')" title="Delete">✕</button>
+      </div>`;
+  }).join('');
+}
+function addPromoBudgetRow() {
+  const inp = document.getElementById('newPromoName');
+  const name = (inp.value||'').trim();
+  if (!name) { inp.focus(); return; }
+  if (state.promoBudgets[name] === undefined) state.promoBudgets[name] = 0;
+  inp.value = '';
+  renderPromoBudgetRows();
+}
+function removePromoBudgetRow(name) {
+  const el = document.querySelector(`[data-promo-name="${CSS.escape(name)}"]`);
+  if (el) el.closest('div').remove();
+}
+function prefillRegionBudgetsFromCSV() {
+  // Aggregate state.marketing expected_cost by region, converted to USD via per-row FX.
+  // Region budgets are stored in USD (state.regionBudgets) and the input uses data-side="usd".
+  const byRegionUsd = {};
+  (state.marketing || []).forEach(m => {
+    const r = m.region;
+    if (!r) return;
+    const localExpected = num(m.expected_cost);
+    if (!(localExpected > 0)) return;
+    const usd = localExpected * rateToUsd(ymOf(m.date), m.currency);
+    byRegionUsd[r] = (byRegionUsd[r] || 0) + usd;
+  });
+  const entries = Object.entries(byRegionUsd).filter(([,v]) => v > 0);
+  if (!entries.length) {
+    showToast('⚠️ CSV에서 region별 expected_cost를 찾지 못했습니다');
+    return;
+  }
+  // Warn before overwriting existing manual entries
+  const existing = [];
+  document.querySelectorAll('#regionBudgetGrid input[data-side="usd"]').forEach(el => {
+    if (Number(el.value) > 0) existing.push(el);
+  });
+  if (existing.length && !confirm(`기존에 입력된 region budget ${existing.length}개를 CSV expected_cost 값으로 덮어쓸까요?`)) return;
+
+  let filled = 0;
+  const skippedRegions = [];
+  entries.forEach(([region, usd]) => {
+    const usdEl = document.querySelector(`#regionBudgetGrid input[data-pair="rb-${region}"][data-side="usd"]`);
+    if (!usdEl) { skippedRegions.push(region); return; }
+    usdEl.value = Math.round(usd) || '';
+    // Sync the paired KRW input via existing helper
+    try { syncDualPair(`rb-${region}`, 'usd'); } catch (e) { /* ignore */ }
+    filled++;
+  });
+  const skipNote = skippedRegions.length
+    ? ` · 건너뜀: ${skippedRegions.join(', ')} (REGIONS 마스터에 없음)`
+    : '';
+  showToast(`✅ ${filled}개 region을 CSV expected_cost로 채웠습니다${skipNote} — 검토 후 Save`);
+}
+window.prefillRegionBudgetsFromCSV = prefillRegionBudgetsFromCSV;
+
+function closeBudgetModal() { document.getElementById('budgetModal').classList.remove('open'); }
+
+function saveBudgets() {
+  // Manual FX 저장
+  const fxVal = Number(document.getElementById('fxUsdKrwInput').value)||0;
+  state.fxManualUsdKrw = fxVal > 0 ? fxVal : 0;
+
+  // Total order target: USD 입력 우선
+  const tUsd = Number(document.getElementById('orderTargetUSDInput').value)||0;
+  state.orderTargetUSD = tUsd;
+
+  // Region budgets: USD side 기준
+  const newRegionBud = {};
+  document.querySelectorAll('#regionBudgetGrid input[data-side="usd"]').forEach(el => {
+    const region = el.dataset.pair.replace(/^rb-/, '');
+    const usd = Number(el.value)||0;
+    if (usd > 0) newRegionBud[region] = usd;
+  });
+  state.regionBudgets = newRegionBud;
+
+  // Region targets
+  const newRegionTgt = {};
+  document.querySelectorAll('#regionTargetGrid input[data-side="usd"]').forEach(el => {
+    const region = el.dataset.pair.replace(/^rt-/, '');
+    const usd = Number(el.value)||0;
+    if (usd > 0) newRegionTgt[region] = usd;
+  });
+  state.regionTargets = newRegionTgt;
+
+  // Promo budgets
+  const newPromo = {};
+  document.querySelectorAll('#promoBudgetGrid [data-promo-name]').forEach(el => {
+    const name = (el.value||'').trim(); if (!name) return;
+    const usdEl = document.querySelector(`#promoBudgetGrid input[data-pair="pb-${CSS.escape(el.dataset.promoName)}"][data-side="usd"]`);
+    const usd = Number(usdEl?.value)||0;
+    newPromo[name] = usd;
+  });
+  state.promoBudgets = newPromo;
+
+  persist();
+  closeBudgetModal();
+  renderAll();
+}
+
+function resetFxManual() {
+  state.fxManualUsdKrw = 0;
+  persist();
+  document.getElementById('fxUsdKrwInput').value = '';
+  refreshFxApplied();
+  syncAllPairs();
+  renderPromoBudgetRows();
+}
+
+// Live update: dual pair sync + FX manual sync
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.id === 'fxUsdKrwInput') {
+    const v = Number(t.value)||0;
+    state.fxManualUsdKrw = v > 0 ? v : 0;
+    refreshFxApplied();
+    syncAllPairs();
+    renderPromoBudgetRows();
+    return;
+  }
+  if (t.id === 'orderTargetUSDInput') { syncDualPair('orderTarget', 'usd'); return; }
+  if (t.id === 'orderTargetKRWInput') { syncDualPair('orderTarget', 'krw'); return; }
+  if (t.dataset && t.dataset.pair && t.dataset.side) {
+    syncDualPair(t.dataset.pair, t.dataset.side);
+  }
+});
+
+window.openBudgetModal = openBudgetModal;
+window.closeBudgetModal = closeBudgetModal;
+window.saveBudgets = saveBudgets;
+window.addPromoBudgetRow = addPromoBudgetRow;
+window.removePromoBudgetRow = removePromoBudgetRow;
+window.resetFxManual = resetFxManual;
+
+/* =================== BUDGETS CSV (Template / Import / Export) =================== */
+function downloadBudgetTemplate() {
+  // 헤더는 type,key,value_usd 고정. 모든 금액은 USD.
+  // type: total_order_target | region_budget | region_target | promo_budget
+  const rows = [
+    ['type','key','value_usd'],
+    ['total_order_target','','1000000'],
+  ];
+  REGIONS.forEach(r => rows.push(['region_budget', r, '0']));
+  REGIONS.forEach(r => rows.push(['region_target', r, '0']));
+  rows.push(['promo_budget','CHOICE_KIT','0']);
+  rows.push(['promo_budget','NEW_SEGMENT','0']);
+  const csv = rows.map(r => r.join(',')).join('\n') + '\n';
+  downloadCsv('budgets_template.csv', csv);
+}
+
+function exportBudgetsCSV() {
+  const rows = [['type','key','value_usd']];
+  rows.push(['total_order_target','', String(Math.round(Number(state.orderTargetUSD)||0))]);
+  Object.entries(state.regionBudgets||{}).forEach(([k,v]) => rows.push(['region_budget', k, String(Math.round(Number(v)||0))]));
+  Object.entries(state.regionTargets||{}).forEach(([k,v]) => rows.push(['region_target', k, String(Math.round(Number(v)||0))]));
+  Object.entries(state.promoBudgets||{}).forEach(([k,v]) => rows.push(['promo_budget', k, String(Math.round(Number(v)||0))]));
+  const csv = rows.map(r => r.map(c => /[",\n]/.test(c) ? `"${c.replace(/"/g,'""')}"` : c).join(',')).join('\n') + '\n';
+  downloadCsv('budgets_current.csv', csv);
+}
+
+async function readFileText(file) {
+  const buf = await file.arrayBuffer();
+  try {
+    const utf8 = new TextDecoder('utf-8',{fatal:false}).decode(buf);
+    if (!/\uFFFD/.test(utf8)) return utf8;
+  } catch {}
+  try { return new TextDecoder('euc-kr').decode(buf); }
+  catch { return new TextDecoder('utf-8').decode(buf); }
+}
+
+function parseBudgetsCSV(text) {
+  // strip BOM, split lines, skip blanks/comments
+  const raw = String(text||'').replace(/^\uFEFF/,'').split(/\r?\n/);
+  const lines = raw.map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+  if (!lines.length) return { totalTargetUSD: null, regionBudgets:{}, regionTargets:{}, promoBudgets:{} };
+  const splitCsv = (line) => {
+    const out = []; let cur = ''; let q = false;
+    for (let i=0;i<line.length;i++){
+      const ch = line[i];
+      if (q) {
+        if (ch === '"' && line[i+1] === '"') { cur += '"'; i++; }
+        else if (ch === '"') { q = false; }
+        else cur += ch;
+      } else {
+        if (ch === ',') { out.push(cur); cur=''; }
+        else if (ch === '"') { q = true; }
+        else cur += ch;
+      }
+    }
+    out.push(cur);
+    return out.map(s => s.trim());
+  };
+  const header = splitCsv(lines[0]).map(h => h.toLowerCase().replace(/^\uFEFF/,''));
+  const tIdx = header.indexOf('type');
+  const kIdx = header.indexOf('key');
+  const vIdx = header.findIndex(h => h.startsWith('value'));
+  const out = { totalTargetUSD: null, regionBudgets:{}, regionTargets:{}, promoBudgets:{} };
+  for (let i=1;i<lines.length;i++) {
+    const cols = splitCsv(lines[i]);
+    const type = (cols[tIdx]||'').toLowerCase();
+    const key = (cols[kIdx]||'').trim();
+    const val = Number(String(cols[vIdx]||'').replace(/[, ]/g,''))||0;
+    if (type === 'total_order_target') out.totalTargetUSD = val;
+    else if (type === 'region_budget' && key) out.regionBudgets[key] = val;
+    else if (type === 'region_target' && key) out.regionTargets[key] = val;
+    else if (type === 'promo_budget' && key) out.promoBudgets[key] = val;
+  }
+  return out;
+}
+
+function applyBudgets(parsed) {
+  if (parsed.totalTargetUSD != null) state.orderTargetUSD = parsed.totalTargetUSD;
+  if (Object.keys(parsed.regionBudgets).length) state.regionBudgets = parsed.regionBudgets;
+  if (Object.keys(parsed.regionTargets).length) state.regionTargets = parsed.regionTargets;
+  if (Object.keys(parsed.promoBudgets).length) state.promoBudgets = parsed.promoBudgets;
+  persist();
+}
+
+async function handleBudgetFile(file) {
+  const txt = await readFileText(file);
+  const parsed = parseBudgetsCSV(txt);
+  applyBudgets(parsed);
+  return parsed;
+}
+
+window.downloadBudgetTemplate = downloadBudgetTemplate;
+window.exportBudgetsCSV = exportBudgetsCSV;
+
+// Header & Modal Budgets CSV upload
+document.getElementById('fBudgets').addEventListener('change', async e => {
+  const f = e.target.files?.[0]; e.target.value=''; if (!f) return;
+  try {
+    const p = await handleBudgetFile(f);
+    rebuildAll();
+    alert(`Budgets updated\n· Total Target: ${p.totalTargetUSD!=null?'$'+fmtNum(p.totalTargetUSD):'(unchanged)'}\n· Region Budgets: ${Object.keys(p.regionBudgets).length}\n· Region Targets: ${Object.keys(p.regionTargets).length}\n· Promo Budgets: ${Object.keys(p.promoBudgets).length}`);
+  } catch (err) { console.error(err); alert('Failed to parse Budgets CSV'); }
+});
+document.getElementById('fBudgetsModal').addEventListener('change', async e => {
+  const f = e.target.files?.[0]; e.target.value=''; if (!f) return;
+  try {
+    await handleBudgetFile(f);
+    closeBudgetModal();
+    openBudgetModal(); // refresh inputs
+    rebuildAll();
+  } catch (err) { console.error(err); alert('Failed to parse Budgets CSV'); }
+});
+
+function detectCsvKind(headerLine) {
+  const h = String(headerLine || '').toLowerCase().replace(/^\uFEFF/, '');
+
+  // Budgets
+  if (/(^|,)\s*type\s*(,|$)/.test(h) && /value/.test(h)) return 'budgets';
+
+  // Marketing — 다양한 헤더 조합 인식
+  if (/execution_date/.test(h)) return 'marketing';
+  if (/expected_cost|actual_cost/.test(h)) return 'marketing';
+  if (/order_target/.test(h)) return 'marketing';
+  if (/activity_type/.test(h)) return 'marketing';
+  if (/promotion_category/.test(h) && /title/.test(h)) return 'marketing';
+  if (/promotion_category/.test(h) && /cost/.test(h)) return 'marketing';
+  if (/promotion_category/.test(h) && /region/.test(h) && !/order.?date/.test(h)) return 'marketing';
+
+  // Orders
+  if (/order.?date|order date/.test(h)) return 'orders';
+  if (/ctr.?code|unit.?price/.test(h)) return 'orders';
+  if (/qty/.test(h) && /amount/.test(h) && /region/.test(h) && !/activity/.test(h)) return 'orders';
+
+  return 'unknown';
+}
+
+
+// Bulk Upload + Drag&Drop 공통 처리
+async function processBulkFiles(files, { replace = false } = {}) {
+  const summary = { orders:0, marketing:0, budgets:0, unknown:[] };
+  let replacedOrders = false, replacedMkt = false;
+  for (const f of files) {
+    if (!/\.csv$/i.test(f.name)) { summary.unknown.push(f.name + ' (not .csv)'); continue; }
+    try {
+      const txt = await readFileText(f);
+      const firstLine = (txt.split(/\r?\n/).find(l => l.trim()) || '');
+      const kind = detectCsvKind(firstLine);
+      if (kind === 'orders') {
+        const rows = await parseOrderCSV(txt);
+        rows.forEach(r => { r[SNAPSHOT_USER_MARK] = true; });
+        if (replace && !replacedOrders) { state.orders = rows; replacedOrders = true; }
+        else state.orders = state.orders.concat(rows);
+        summary.orders += rows.length;
+        markDataUpdated('orders');
+      } else if (kind === 'marketing') {
+        const rows = await parseMarketingCSV(txt);
+        rows.forEach(r => { r[SNAPSHOT_USER_MARK] = true; });
+        if (replace && !replacedMkt) { state.marketing = rows; replacedMkt = true; }
+        else state.marketing = state.marketing.concat(rows);
+        summary.marketing += rows.length;
+        markDataUpdated('marketing');
+      } else if (kind === 'budgets') {
+        applyBudgets(parseBudgetsCSV(txt));
+        summary.budgets += 1;
+      } else {
+        summary.unknown.push(f.name);
+      }
+    } catch (err) {
+      console.error(f.name, err);
+      summary.unknown.push(f.name + ' (parse failed)');
+    }
+  }
+  persist();
+  await loadFxRates();
+  rebuildAll();
+  return summary;
+}
+
+document.getElementById('fBulk').addEventListener('change', async e => {
+  const files = Array.from(e.target.files || []); e.target.value = '';
+  if (!files.length) return;
+  const summary = await processBulkFiles(files);
+  const lines = [
+    `✓ Orders: ${summary.orders} added`,
+    `✓ Marketing: ${summary.marketing} added`,
+    `✓ Budgets: ${summary.budgets} files applied`,
+  ];
+  if (summary.unknown.length) lines.push('', 'Unrecognized:', ...summary.unknown);
+  alert(lines.join('\n'));
+});
+
+/* ----- Drag & Drop: 페이지 어디든 CSV를 떨어뜨리면 자동 인식 (file:// 사용자에게 특히 유용) ----- */
+(function installDragDrop(){
+  let depth = 0;
+  let overlay = null;
+  function ensureOverlay() {
+    if (overlay) return overlay;
+    overlay = document.createElement('div');
+    overlay.id = 'dndOverlay';
+    overlay.style.cssText =
+      'position:fixed;inset:0;background:rgba(20,30,60,.55);' +
+      'backdrop-filter:blur(2px);z-index:99999;display:none;' +
+      'align-items:center;justify-content:center;pointer-events:none;' +
+      'color:#fff;font:600 18px/1.4 system-ui,-apple-system,Segoe UI,sans-serif;text-align:center;';
+    overlay.innerHTML =
+      '<div style="border:2px dashed #fff;padding:28px 40px;border-radius:14px;background:rgba(0,0,0,.25)">' +
+      '📥 CSV 파일을 여기에 놓으세요<br>' +
+      '<span style="font-weight:400;font-size:14px;opacity:.85">' +
+      'orders.csv / marketing.csv / budgets.csv — 헤더로 자동 인식</span></div>';
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+  function isFileDrag(e) {
+    return e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
+  }
+  window.addEventListener('dragenter', e => {
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    depth++;
+    ensureOverlay().style.display = 'flex';
+  });
+  window.addEventListener('dragover', e => {
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  });
+  window.addEventListener('dragleave', e => {
+    if (!isFileDrag(e)) return;
+    depth = Math.max(0, depth - 1);
+    if (depth === 0 && overlay) overlay.style.display = 'none';
+  });
+  window.addEventListener('drop', async e => {
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    depth = 0;
+    if (overlay) overlay.style.display = 'none';
+    const files = Array.from(e.dataTransfer.files || []).filter(f => /\.csv$/i.test(f.name));
+    if (!files.length) { alert('CSV 파일만 인식됩니다.'); return; }
+    const summary = await processBulkFiles(files);
+    const lines = [
+      `✓ Orders: ${summary.orders} added`,
+      `✓ Marketing: ${summary.marketing} added`,
+      `✓ Budgets: ${summary.budgets} files applied`,
+    ];
+    if (summary.unknown.length) lines.push('', 'Unrecognized:', ...summary.unknown);
+    alert(lines.join('\n'));
+  });
+})();
+
+// === Filter bar collapse toggle ===
+(function setupFilterToggle() {
+  const wrap = document.getElementById('filterBarWrap');
+  const btn = document.getElementById('filterBarToggle');
+  if (!wrap || !btn) return;
+  // Default is COLLAPSED unless the user has explicitly expanded it.
+  if (localStorage.getItem('ck_filter_collapsed') === '0') {
+    wrap.classList.remove('collapsed');
+    btn.setAttribute('aria-expanded', 'true');
+  }
+  btn.addEventListener('click', () => {
+    const nowOpen = wrap.classList.toggle('collapsed') === false;
+    btn.setAttribute('aria-expanded', String(nowOpen));
+    try { localStorage.setItem('ck_filter_collapsed', nowOpen ? '0' : '1'); } catch(_) {}
+  });
+  // Update the badge with a quick summary of any non-default filter values.
+  // Runs periodically so it reflects state mutations from anywhere in the app.
+  function summarize() {
+    const badge = document.getElementById('filterActiveBadge');
+    if (!badge) return;
+    const f = (state && state.filters) || {};
+    const parts = [];
+    if (f.year && f.year !== 'all')         parts.push(`Year: ${f.year}`);
+    if (f.quarter && f.quarter !== 'all')   parts.push(`Q: ${f.quarter}`);
+    if (f.month && f.month !== 'all')       parts.push(`Month: ${f.month}`);
+    if (f.region && f.region !== 'all')     parts.push(f.region);
+    if (f.country && f.country !== 'all')   parts.push(f.country);
+    if (f.customer && f.customer !== 'all') parts.push(f.customer);
+    if (f.promotion && f.promotion !== 'all') parts.push(f.promotion);
+    if (f.category && f.category !== 'all') parts.push(f.category);
+    if (f.sellType && f.sellType !== 'all') parts.push(f.sellType);
+    if (f.activity && f.activity !== 'all') parts.push(f.activity);
+    if (f.dateFrom || f.dateTo)             parts.push(`Date: ${f.dateFrom || '…'}~${f.dateTo || '…'}`);
+    if (parts.length === 0) {
+      badge.textContent = '(default · click to filter)';
+      badge.classList.remove('has-filters');
+    } else {
+      badge.textContent = `${parts.length} active · ${parts.slice(0,3).join(', ')}${parts.length>3?'…':''}`;
+      badge.classList.add('has-filters');
+    }
+  }
+  summarize();
+  setInterval(summarize, 800);
+})();
+
+// === Jump-to dropdown (in header) + URL-hash deep linking ===
+(function setupJumpTo() {
+  const sel = document.getElementById('jumpToSel');
+  // Scroll helper used both by dropdown selection and URL-hash handling.
+  function jumpTo(id, { updateHash = true, flash = true } = {}) {
+    if (!id) return false;
+    const el = document.querySelector(`.widget[data-widget-id="${id}"]`);
+    if (!el) return false;
+    const headerH = (document.querySelector('header')?.getBoundingClientRect().height || 0) + 12;
+    const y = el.getBoundingClientRect().top + window.scrollY - headerH;
+    window.scrollTo({ top: y, behavior: 'smooth' });
+    if (flash) {
+      el.classList.remove('jump-flash');
+      void el.offsetWidth;       // restart CSS animation
+      el.classList.add('jump-flash');
+    }
+    if (updateHash && location.hash.slice(1) !== id) {
+      // Use replaceState so the back button isn't polluted.
+      try { history.replaceState(null, '', `#${id}`); } catch(_) {}
+    }
+    return true;
+  }
+  // Expose globally so other code or future links can use it.
+  window._jumpToWidget = jumpTo;
+
+  if (sel) {
+    sel.addEventListener('change', () => {
+      const id = sel.value;
+      if (id) jumpTo(id);
+      sel.value = '';            // reset to placeholder
+    });
+  }
+  // Handle the initial URL hash once the dashboard is visible. We wait for
+  // either the #dashboard element to become visible or up to ~6s.
+  function tryInitialHash() {
+    const id = location.hash.replace(/^#/, '').trim();
+    if (!id) return true;        // nothing to do
+    const dash = document.getElementById('dashboard');
+    const visible = dash && dash.style.display !== 'none' && dash.offsetParent !== null;
+    if (!visible) return false;
+    return jumpTo(id, { updateHash: false });   // hash already in URL
+  }
+  function startInitialHashWatch() {
+    if (tryInitialHash()) return;
+    let tries = 0;
+    const iv = setInterval(() => {
+      tries++;
+      if (tryInitialHash() || tries > 30) clearInterval(iv);  // 30 × 200ms = 6s
+    }, 200);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startInitialHashWatch);
+  } else {
+    startInitialHashWatch();
+  }
+  // External hash changes (someone pastes a different link in the address bar).
+  window.addEventListener('hashchange', () => {
+    const id = location.hash.replace(/^#/, '').trim();
+    if (id) jumpTo(id, { updateHash: false });
+  });
+})();
+
+document.addEventListener('change', e => {
+  // Promotion Performance widget controls
+  if (e.target.id === 'ckiPromoSel') {
+    state.ckiPromo = e.target.value;
+    try { localStorage.setItem('ck_cki_promo', state.ckiPromo); } catch(_){}
+    renderAll(); return;
+  }
+  if (e.target.id === 'ckiThresholdSel') {
+    state.ckiThreshold = parseFloat(e.target.value) || 0;
+    try { localStorage.setItem('ck_cki_threshold', String(state.ckiThreshold)); } catch(_){}
+    renderAll(); return;
+  }
+  if (e.target.id === 'ckiCompareSel') {
+    state.ckiCompare = e.target.value;
+    try { localStorage.setItem('ck_cki_compare', state.ckiCompare); } catch(_){}
+    renderAll(); return;
+  }
+  if (e.target.id === 'promoFilterSel') {
+    state.promoFilter = e.target.value;
+    try { localStorage.setItem('ck_promo_filter', state.promoFilter); } catch(_){}
+    _quickRenderPromo(); return;
+  }
+  if (e.target.id === 'promoDimSel') {
+    state.promoDim = e.target.value;
+    try { localStorage.setItem('ck_promo_dim', state.promoDim); } catch(_){}
+    _quickRenderPromo(); return;
+  }
+  if (e.target.id === 'promoTableDimSel') {
+    state.promoTableDim = e.target.value;
+    try { localStorage.setItem('ck_promo_table_dim', state.promoTableDim); } catch(_){}
+    renderAll(); return;
+  }
+  if (e.target.id === 'promoCmpSel') {
+    state.promoCmp = e.target.value;
+    try { localStorage.setItem('ck_promo_cmp', state.promoCmp); } catch(_){}
+    persist(); _quickRenderPromo(); return;
+  }
+  if (e.target.id === 'selTrendDim') renderAll();
+  if (e.target.id === 'selPromoCtrFilter') {
+    state.promoCtrFilter = e.target.value; persist(); renderAll();
+  }
+  if (e.target.id === 'selCustTrendCamp') {
+    state.custTrendCampaign = e.target.value; persist(); renderAll(); return;
+  }
+  if (e.target.id === 'selCustTrendN') {
+    state.custTrendN = Number(e.target.value)||5; persist(); renderAll(); return;
+  }
+  if (e.target.id === 'selTopInsightsRegion') {
+    state.topInsightsRegion = e.target.value;
+    state.topInsightsCountry = '__all__';
+    persist(); renderAll();
+  }
+  if (e.target.id === 'selTopInsightsCountry') {
+    state.topInsightsCountry = e.target.value; persist(); renderAll();
+  }
+  if (e.target.id === 'selTopInsightsPromo') {
+    state.topInsightsPromo = e.target.value; persist(); renderAll();
+  }
+  if (e.target.id === 'inpTopInsightsFrom') {
+    state.topInsightsFrom = e.target.value; persist();
+    if (state.topInsightsPeriod === 'custom') renderAll();
+  }
+  if (e.target.id === 'inpTopInsightsTo') {
+    state.topInsightsTo = e.target.value; persist();
+    if (state.topInsightsPeriod === 'custom') renderAll();
+  }
+  if (e.target.id === 'selPromoCtrPromo') {
+    state.promoCtrPromo = e.target.value; persist(); renderAll();
+  }
+  if (e.target.id === 'inpPromoCtrFrom') {
+    state.promoCtrFrom = e.target.value; persist();
+    if (state.promoCtrPeriod === 'custom') renderAll();
+  }
+  if (e.target.id === 'inpPromoCtrTo') {
+    state.promoCtrTo = e.target.value; persist();
+    if (state.promoCtrPeriod === 'custom') renderAll();
+  }
+  // ── new widgets ──
+  if (e.target.id === 'selPotPromo') {
+    state.potPromo = e.target.value; persist(); renderAll();
+  }
+  if (e.target.id === 'selSkuAggPromo') {
+    state.skuAggPromo = e.target.value;
+    state.skuAggDrillSku = ''; // changing promotion resets drill-in
+    persist(); renderAll();
+  }
+});
+document.addEventListener('click', e => {
+  // SKU Aggregate — "Back to aggregate" link
+  if (e.target && e.target.id === 'lnkClearDrill') {
+    e.preventDefault();
+    state.skuAggDrillSku = '';
+    renderAll();
+    return;
+  }
+  // SKU Aggregate — row click drill-into SKU
+  const skuRow = e.target.closest('[data-drill-sku]');
+  if (skuRow && skuRow.closest('#tblSkuAggBreakdown')) {
+    const picked = skuRow.dataset.drillSku || '';
+    // toggle: clicking the currently-drilled SKU clears the drill
+    state.skuAggDrillSku = (state.skuAggDrillSku === picked) ? '' : picked;
+    renderAll();
+    return;
+  }
+  // PromoCtr column-sort header click (must precede row drill-down so header in same table doesn't trigger pick)
+  const sortHead = e.target.closest('#tblPromoCtrDetail th[data-sort-key]');
+  if (sortHead) {
+    const key = sortHead.dataset.sortKey;
+    if (state.promoCtrSortKey === key) {
+      state.promoCtrSortDir = (state.promoCtrSortDir === 'asc') ? 'desc' : 'asc';
+    } else {
+      state.promoCtrSortKey = key;
+      // sensible defaults: text columns asc, numeric desc
+      state.promoCtrSortDir = (key==='name'||key==='ctr'||key==='product'||key==='region') ? 'asc' : 'desc';
+    }
+    persist(); renderAll();
+    return;
+  }
+  // PromoCtr drill-down via row click
+  const promoRow = e.target.closest('[data-promoctr-pick]');
+  if (promoRow) {
+    state.promoCtrFilter = promoRow.dataset.promoctrPick;
+    const sel = document.getElementById('selPromoCtrFilter');
+    if (sel) sel.value = state.promoCtrFilter;
+    persist(); renderAll();
+    return;
+  }
+  // PlanExec breadcrumb
+  const crumb = e.target.closest('[data-planexec-crumb]');
+  if (crumb) {
+    const lvl = Number(crumb.dataset.planexecCrumb);
+    state.planExecPath = (state.planExecPath || []).slice(0, lvl);
+    persist(); renderAll();
+    return;
+  }
+  // PlanExec card drill-down
+  const peCard = e.target.closest('[data-planexec-pick]');
+  if (peCard) {
+    const path = (state.planExecPath || []).slice();
+    if (path.length < 3) {
+      path.push(peCard.dataset.planexecPick);
+      state.planExecPath = path;
+      persist(); renderAll();
+    }
+    return;
+  }
+  // PlanExec attention chip → jump to that region/country
+  const peJump = e.target.closest('[data-planexec-jump]');
+  if (peJump) {
+    const [r,c] = peJump.dataset.planexecJump.split('|||');
+    state.planExecPath = [r, c];
+    persist(); renderAll();
+    return;
+  }
+  // Period buttons (category trend)
+  const pb = e.target.closest('.period-btn');
+  if (pb) {
+    categoryPeriod = pb.dataset.period;
+    document.querySelectorAll('.period-btn').forEach(x => x.classList.toggle('active', x===pb));
+    renderAll();
+    return;
+  }
+  // Segmented controls
+  const seg = e.target.closest('.seg button');
+  if (seg) {
+    const parent = seg.parentElement;
+    const id = parent.id;
+    parent.querySelectorAll('button').forEach(x => x.classList.toggle('active', x===seg));
+    const v = seg.dataset.v;
+    if (id==='segTopInsightsDim')      { state.topInsightsDim = v; persist(); renderAll(); }
+    else if (id==='segTopInsightsMetric'){ state.topInsightsMetric = v; persist(); renderAll(); }
+    else if (id==='segPromoCtrDim'){
+      state.promoCtrDim = v;
+      state.promoCtrFilter = '__all__';
+      persist(); renderAll();
+    }
+    else if (id==='segPromoCtrMetric'){ state.promoCtrMetric = v; persist(); renderAll(); }
+    else if (id==='segPromoSellType'){
+      state.promoSellType = v;
+      try { localStorage.setItem('ck_promo_sell_type', v); } catch(_){}
+      // 배너 전환
+      const inEl  = document.getElementById('promoSellInBanner');
+      const outEl = document.getElementById('promoSellOutBanner');
+      if (inEl)  inEl.style.display  = v==='SELL-IN'  ? 'flex' : 'none';
+      if (outEl) outEl.style.display = v==='SELL-OUT' ? 'flex' : 'none';
+      // promoFilter 리셋
+      state.promoFilter = '__all__';
+      persist(); _quickRenderPromo();
+    }
+    else if (id==='segPromoPerf'){
+      state.promoPerfPeriod = v;
+      persist(); _quickRenderPromo();
+    }
+    else if (id==='segRegionMetric'){ state.regionMetric = v; persist(); renderAll(); }
+    else if (id==='segCustTrendGrain'){ state.custTrendGrain = v; persist(); renderAll(); }
+    else if (id==='segCustProdMode'){ state.custTrendProductMode = v; persist(); renderAll(); }
+    else if (id==='segCategoryView'){ state.categoryView = v; persist(); renderAll(); }
+    else if (id==='segPlanExecSort'){ state.planExecSort = v; persist(); renderAll(); }
+    else if (id==='segSkuCmp'){
+      setCmpState('sku', { mode: v, basis: 'auto' });
+      renderAll();
+    }
+    // ── new widgets ──
+    else if (id==='segPotPeriod'){ state.potPeriod = v; persist(); renderAll(); }
+    else if (id==='segPotMetric'){ state.potMetric = v; persist(); renderAll(); }
+    else if (id==='segTopInsightsPeriod'){ state.topInsightsPeriod = v; persist(); renderAll(); }
+    else if (id==='segPromoCtrPeriod'){    state.promoCtrPeriod    = v; persist(); renderAll(); }
+    return;
+  }
+  // Marketing Cost Breakdown Region 탭
+  const bd = e.target.closest('#breakdownTabs button[data-bd]');
+  if (bd) {
+    state.breakdownRegion = bd.dataset.bd;
+    persist(); renderAll();
+    return;
+  }
+  // Activity Timeline 토글
+  const tlP = e.target.closest('#tlPeriod button[data-v]');
+  if (tlP) { state.tlPeriod = tlP.dataset.v; persist(); renderAll(); return; }
+  const tlG = e.target.closest('#tlGroup button[data-v]');
+  if (tlG) { state.tlGroup = tlG.dataset.v; state.tlFocus = null; persist(); renderAll(); return; }
+  // Activity Timeline drill-down: click a group label or activity chip to focus the table below
+  const tlFocusEl = e.target.closest('[data-tl-focus]');
+  if (tlFocusEl) {
+    const type = tlFocusEl.dataset.tlFocus;
+    const value = tlFocusEl.dataset.tlValue;
+    const label = tlFocusEl.dataset.tlLabel || value;
+    if (state.tlFocus && state.tlFocus.type === type && String(state.tlFocus.value) === String(value)) {
+      state.tlFocus = null; // toggle off
+    } else {
+      state.tlFocus = { type, value, label };
+    }
+    renderAll();
+    // Smooth scroll to activities table for visibility
+    const tbl = document.getElementById('tblActivities');
+    if (tbl && state.tlFocus) tbl.scrollIntoView({ behavior:'smooth', block:'center' });
+    return;
+  }
+  // Clear focus button in banner
+  if (e.target.closest('#tlFocusClear')) {
+    state.tlFocus = null; renderAll(); return;
+  }
+  // Activities quick-search clear
+  if (e.target.closest('#actSearchClear')) {
+    state.actSearch = ''; renderAll(); return;
+  }
+  // Activities detail panel close
+  if (e.target.closest('#actDetailClose')) {
+    state.actSelectedId = null; renderAll(); return;
+  }
+  // Activities table row → open detail panel
+  const actRow = e.target.closest('#tblActivities tr[data-act-id]');
+  if (actRow) {
+    const id = actRow.dataset.actId;
+    state.actSelectedId = (String(state.actSelectedId) === String(id)) ? null : id;
+    renderAll();
+    if (state.actSelectedId) {
+      setTimeout(() => {
+        const d = document.getElementById('actDetailPanel');
+        if (d) d.scrollIntoView({ behavior:'smooth', block:'nearest' });
+      }, 30);
+    }
+    return;
+  }
+  // Widget order controls
+  const oc = e.target.closest('.widget-order-controls button');
+  if (oc) {
+    const widget = oc.closest('.widget');
+    const id = widget?.dataset.widgetId;
+    const dir = oc.dataset.dir;
+    if (!id || !dir) return;
+    moveWidget(id, dir);
+    return;
+  }
+});
+
+// Activities quick-search input (debounced, preserves focus by re-rendering only on commit)
+let _actSearchTimer = null;
+document.addEventListener('input', e => {
+  if (e.target && e.target.id === 'actSearchInput') {
+    clearTimeout(_actSearchTimer);
+    const v = e.target.value;
+    _actSearchTimer = setTimeout(() => {
+      state.actSearch = v;
+      renderAll();
+      // Restore focus & caret to the search input after re-render
+      const el = document.getElementById('actSearchInput');
+      if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+    }, 180);
+  }
+});
+
+/* =============== WIDGET ORDER =============== */
+function moveWidget(id, dir) {
+  if (dir === 'hide') {
+    if (!state.hiddenWidgets.includes(id)) state.hiddenWidgets.push(id);
+    persist();
+    applyWidgetOrder();
+    return;
+  }
+  const order = state.widgetOrder.slice();
+  const i = order.indexOf(id);
+  if (i < 0) return;
+  // visible 위젯 기준 인덱스로 swap
+  const visible = order.filter(w => !state.hiddenWidgets.includes(w));
+  const vi = visible.indexOf(id);
+  if (dir === 'up' && vi > 0) {
+    const target = visible[vi-1]; const ti = order.indexOf(target);
+    [order[ti], order[i]] = [order[i], order[ti]];
+  } else if (dir === 'down' && vi < visible.length-1) {
+    const target = visible[vi+1]; const ti = order.indexOf(target);
+    [order[i], order[ti]] = [order[ti], order[i]];
+  } else if (dir === 'top') { order.splice(i,1); order.unshift(id); }
+  else if (dir === 'bottom') { order.splice(i,1); order.push(id); }
+  else return;
+  state.widgetOrder = order;
+  persist();
+  applyWidgetOrder();
+}
+const WIDGET_LABELS = {
+  'promoOrderTrend':'Promotion Order Trends — Region / Annual / Quarterly / Monthly',
+  'skuExplorer':'SKU Analysis — Before/After Promotion · Monthly · Annual',
+  'category':'Sales Trend — Promotion Category & Region',
+  'planexec':'Campaign Plan vs Execution — Drill-down Explorer',
+  'promo':'Promotion Performance',
+  'region':'Region — Order, Marketing & Activity Breakdown',
+  'budgetstatus':'Marketing Budget — Allocation & Status by Region',
+  'customertrend':'Top Customer Order Trend · by Campaign',
+  'activities':'Marketing Activities',
+  'promoctr':'Promotion Category × Top CTR Sales',
+  'topinsights':'Top Insights — Vehicle Models · Products · CTR Codes',
+};
+function applyWidgetOrder() {
+  const area = document.getElementById('widgetArea');
+  if (!area) return;
+  // 누락된 위젯 보정
+  const present = Array.from(area.querySelectorAll('.widget')).map(w => w.dataset.widgetId);
+  state.widgetOrder = state.widgetOrder.filter(id => present.includes(id));
+  present.forEach(id => { if (!state.widgetOrder.includes(id)) state.widgetOrder.push(id); });
+  // 숨김 처리
+  present.forEach(id => {
+    const el = area.querySelector(`.widget[data-widget-id="${id}"]`);
+    if (el) el.style.display = state.hiddenWidgets.includes(id) ? 'none' : '';
+  });
+  // 재배치
+  state.widgetOrder.forEach(id => {
+    const el = area.querySelector(`.widget[data-widget-id="${id}"]`);
+    if (el) area.appendChild(el);
+  });
+  // 컨트롤 버튼 렌더 (각 위젯마다) — 표시 중인 위젯 기준으로 인덱스 계산
+  const visibleIds = state.widgetOrder.filter(id => !state.hiddenWidgets.includes(id));
+  state.widgetOrder.forEach((id) => {
+    const el = area.querySelector(`.widget[data-widget-id="${id}"]`);
+    if (!el) return;
+    const idx = visibleIds.indexOf(id);
+    const last = visibleIds.length - 1;
+    el.querySelectorAll('.widget-order-controls').forEach(host => {
+      host.innerHTML = `
+        <button data-dir="top" ${idx<=0?'disabled':''} title="Move to top">⤒</button>
+        <button data-dir="up" ${idx<=0?'disabled':''} title="Move up">▲</button>
+        <button data-dir="down" ${idx>=last?'disabled':''} title="Move down">▼</button>
+        <button data-dir="bottom" ${idx>=last?'disabled':''} title="Move to bottom">⤓</button>
+        <button data-dir="hide" class="close-btn" title="Hide (re-enable from Settings)">✕</button>
+      `;
+    });
+  });
+}
+
+/* =================== SETTINGS MODAL =================== */
+function openSettingsModal() {
+  const wl = document.getElementById('widgetSettingsList');
+  wl.innerHTML = state.widgetOrder.map(id => {
+    const checked = !state.hiddenWidgets.includes(id) ? 'checked' : '';
+    return `<label><input type="checkbox" data-widget="${id}" ${checked} /><span>${WIDGET_LABELS[id]||id}</span></label>`;
+  }).join('');
+
+  document.getElementById('autoHideEmptyRegionsChk').checked = !!state.autoHideEmptyRegions;
+
+  const dataRegions = new Set([
+    ...state.orders.map(o=>o.region).filter(Boolean),
+    ...state.marketing.map(m=>m.region).filter(Boolean),
+    ...Object.keys(state.regionBudgets),
+    ...Object.keys(state.regionTargets),
+  ]);
+  const allRegions = Array.from(new Set([...REGIONS, ...dataRegions])).sort();
+  const rl = document.getElementById('regionSettingsList');
+  rl.innerHTML = allRegions.map(r => {
+    const checked = !state.hiddenRegions.includes(r) ? 'checked' : '';
+    return `<label><input type="checkbox" data-region="${r}" ${checked} /><span>${r}</span></label>`;
+  }).join('');
+  document.getElementById('settingsModal').classList.add('open');
+}
+function closeSettingsModal() { document.getElementById('settingsModal').classList.remove('open'); }
+function saveSettings() {
+  const hiddenW = [];
+  document.querySelectorAll('#widgetSettingsList input[data-widget]').forEach(el => {
+    if (!el.checked) hiddenW.push(el.dataset.widget);
+  });
+  state.hiddenWidgets = hiddenW;
+  state.autoHideEmptyRegions = document.getElementById('autoHideEmptyRegionsChk').checked;
+  const hiddenR = [];
+  document.querySelectorAll('#regionSettingsList input[data-region]').forEach(el => {
+    if (!el.checked) hiddenR.push(el.dataset.region);
+  });
+  state.hiddenRegions = hiddenR;
+  persist();
+  closeSettingsModal();
+  applyWidgetOrder();
+  renderAll();
+}
+window.openSettingsModal = openSettingsModal;
+window.closeSettingsModal = closeSettingsModal;
+window.saveSettings = saveSettings;
+// Expose remaining inline-onclick handlers to global scope (IIFE workaround)
+window.downloadOrderTemplate = downloadOrderTemplate;
+window.downloadMarketingTemplate = downloadMarketingTemplate;
+window.openAddActivity = openAddActivity;
+window.closeModal = closeModal;
+window.submitActivity = submitActivity;
+window.clearAll = clearAll;
+window.reloadAutoCSV = reloadAutoCSV;
+
+/* =================== PRE-ORDER BASELINE (lazy load) ====================
+   GitHub raw에서 chunked JSON 파일들을 직접 받아와 메모리 캐시.
+   두 manifest를 합쳐서 로드 — `data/` (177K) + `new_data/` (334K) = ~512K rows.
+
+   IMPORTANT — 이 데이터는 메인 흐름(state.orders, 일반 차트/KPI)에 절대 통합되지 않습니다.
+   오직 SKU의 캠페인 적용 전/후 효과 추적을 위해, YoY/QoQ/MoM/WoW 비교 KPI의
+   "이전 기간(previous range)" 집계에서만 baseline으로 활용됩니다.
+
+   - state.preOrders        : 메모리 캐시 (localStorage에는 절대 저장 안 됨)
+   - state.preOrdersEnabled : 로드 여부 플래그 (true면 비교 KPI baseline에 자동 포함)
+================================================================ */
+const PRE_ORDER_MARK = '__preOrder__';
+// Resolve the base URL for repo files.
+//   • When served from GitHub Pages (or any HTTP host) → same-origin URLs.
+//     This bypasses Korean ISP blocks, CORS, and ad-blockers that target
+//     raw.githubusercontent.com. GitHub Pages serves every committed file in
+//     the repo at the same origin as the dashboard itself.
+//   • When opened locally (file://) → raw.githubusercontent.com fallback so
+//     development still works.
+function _resolveGhRepoBase() {
+  if (location.protocol === 'http:' || location.protocol === 'https:') {
+    const path = location.pathname.replace(/index\.html?$/i, '').replace(/\/$/, '');
+    return location.origin + path;
+  }
+  return 'https://raw.githubusercontent.com/masterteamply-stack/choicekit-dashboard/main';
+}
+const GH_REPO_BASE = _resolveGhRepoBase();
+
+const PRE_ORDER_MANIFESTS = [
+  { name: 'baseline_data', url: `${GH_REPO_BASE}/baseline_data/manifest.json` },
+];
+
+/* ── Tiny IndexedDB helpers ── */
+function _idbOpen() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('ckDashboard', 2);
+    req.onupgradeneeded = () => { if (!req.result.objectStoreNames.contains('kv')) req.result.createObjectStore('kv'); };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror   = () => reject(req.error);
+  });
+}
+async function idbGet(key) {
+  try {
+    const db = await _idbOpen();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction('kv','readonly');
+      const r = tx.objectStore('kv').get(key);
+      r.onsuccess = () => resolve(r.result);
+      r.onerror   = () => reject(r.error);
+    });
+  } catch(e) { return undefined; }
+}
+async function idbSet(key, val) {
+  const db = await _idbOpen();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('kv','readwrite');
+    tx.objectStore('kv').put(val, key);
+    tx.oncomplete = () => resolve(true);
+    tx.onerror    = () => reject(tx.error);
+  });
+}
+async function idbDel(key) {
+  try {
+    const db = await _idbOpen();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction('kv','readwrite');
+      tx.objectStore('kv').delete(key);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror    = () => reject(tx.error);
+    });
+  } catch(e) { return false; }
+}
+
+async function fetchPreOrdersOnce() {
+  if (state.preOrders && state.preOrders.length) return state.preOrders;
+  if (location.protocol === 'file:') throw new Error('file:// 환경 불가');
+  const btn = document.getElementById('btnPreOrder');
+  const lbl = (t) => { if (btn) btn.innerHTML = `<span style="animation:ck-spin 0.8s linear infinite;display:inline-block">⟳</span> ${t}`; };
+
+  lbl('Loading manifests…');
+  const manifestResults = await Promise.all(PRE_ORDER_MANIFESTS.map(async m => {
+    try {
+      const res = await fetch(m.url, { cache: 'no-cache' });
+      if (!res.ok) { console.warn(`[baseline] ${m.name}: HTTP ${res.status}`); return { ...m, manifest:null }; }
+      return { ...m, manifest: await res.json() };
+    } catch(e) { console.warn(`[baseline] ${m.name} failed:`, e); return { ...m, manifest:null }; }
+  }));
+  const totalExpected = manifestResults.reduce((s,m) => s + (m.manifest?.total_records||0), 0);
+
+  if (totalExpected > 0) {
+    try {
+      const cached = await idbGet('baselineCache_v1');
+      if (cached && cached.version === totalExpected && cached.rows?.length) {
+        console.log(`[baseline] ⚡ cache: ${cached.rows.length.toLocaleString()} rows`);
+        const rows = cached.rows.map(o => o[PRE_ORDER_MARK] ? o : { ...o, [PRE_ORDER_MARK]:true });
+        state.preOrders = rows; state.preOrdersMeta = { source:'idb', count:rows.length };
+        return rows;
+      }
+    } catch(_) {}
+  }
+
+  const urls = [];
+  for (const { manifest, name } of manifestResults) {
+    if (!manifest) continue;
+    if (Array.isArray(manifest.files)) {
+      manifest.files.forEach(f => urls.push(`${GH_REPO_BASE}/${f}`));
+    } else if (manifest.total_chunks > 0) {
+      for (let i = 0; i < manifest.total_chunks; i++)
+        urls.push(`${GH_REPO_BASE}/${name}/chunk_${String(i).padStart(4,'0')}.json`);
+    }
+  }
+  if (!urls.length) throw new Error('baseline manifest 없음');
+
+  const allRows = []; let done = 0;
+  for (let i = 0; i < urls.length; i += 10) {
+    const batch = await Promise.allSettled(urls.slice(i,i+10).map(u =>
+      fetch(u, { cache:'force-cache' }).then(r => r.ok ? r.json() : Promise.reject(r.status))
+    ));
+    batch.forEach(r => { if (r.status==='fulfilled' && Array.isArray(r.value)) r.value.forEach(o => allRows.push(slimPreOrderRow(o))); });
+    done += batch.length;
+    lbl(`Loading ${fmtNum(allRows.length)} rows… (${done}/${urls.length})`);
+  }
+  if (!allRows.length) throw new Error('baseline 0건');
+  console.log(`[baseline] ✅ ${allRows.length.toLocaleString()} rows`);
+  state.preOrders = allRows; state.preOrdersMeta = { source:'baseline_data', count:allRows.length };
+  try { await idbSet('baselineCache_v1', { rows:allRows, version:totalExpected, savedAt:new Date().toISOString() }); } catch(_) {}
+  return allRows;
+}
+
+function updatePreOrderBadge() {
+  const badge = document.getElementById('preOrderBadge');
+  if (!badge) return;
+  const enabled = state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length > 0;
+  badge.textContent = enabled ? `Baseline ON (${fmtNum(state.preOrders.length)} rows)` : 'Baseline OFF';
+  badge.style.color = enabled ? '#0a7d2e' : '#86868B';
+}
+
+function _buildPreOrdersIndex() {
+  if (!state.preOrdersEnabled || !Array.isArray(state.preOrders) || !state.preOrders.length) {
+    state._preIdx = null; state._preOrdersIndexed = false; return;
+  }
+  if (state._preOrdersIndexed) return;
   const promoIdx = {}, custIdx = {};
   state.preOrders.forEach(o => {
     const p = (o._promo || o.promotion_category || '').trim();
@@ -9457,7 +10325,6 @@ function _buildPreOrdersIndex() {
 // Auto-load baseline_data (~8K rows) on page load
 async function maybeAutoLoadPreOrders() {
   if (location.protocol === 'file:') { updatePreOrderBadge(); return; }
-  // 구버전 캐시 삭제 (51만행 오염 방지)
   try { await idbDel('preOrdersCache_v2'); } catch(_) {}
   let want = null;
   try { want = localStorage.getItem('ck_pre_orders_on'); } catch(_) {}
@@ -9476,6 +10343,7 @@ async function maybeAutoLoadPreOrders() {
   }
   updatePreOrderBadge();
 }
+
 
 window.togglePreOrders = togglePreOrders;
 
