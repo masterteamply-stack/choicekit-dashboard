@@ -4322,19 +4322,19 @@ function renderAll() {
   const elSkuSub = document.getElementById('kSkuSub');
   if (elSkuSub) elSkuSub.textContent = `${fmtNum(totalQty)} pcs total`;
 
-  // ── Phase 1: critical path (KPI + lightweight charts) ──────────────────
+  // ── Phase 1: 핵심 KPI + 가벼운 차트 (즉시 표시) ─────────────────────
   renderPlanExec(fOrders, fMkt);
   renderRegionChart(fOrders, fMkt);
   renderActivityChart(fMkt);
-  renderBudgetStatus(fMkt);
   renderCustomerTrend(fOrders, fMkt);
   renderTopInsights(fOrders);
   renderPromoCtrChart(fOrders);
   renderSalesTrendCombined(fOrders);
   renderActivitiesTable(fMkt);
 
-  // ── Phase 2: heavy widgets — deferred so browser can paint Phase 1 first
+  // ── Phase 2: 무거운 위젯 (Phase 1 페인트 후 실행) ───────────────────
   setTimeout(() => {
+    renderBudgetStatus(fMkt);
     renderPromoChart(fOrders, fMkt);
     // Sync KPI after renderPromoChart sets _promoAfterTotal
     if (_promoAfterTotal !== null) {
