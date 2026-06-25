@@ -6699,29 +6699,32 @@ function renderPromoChart(fOrders, fMkt) {
       cmpSeries[key][pk] = (cmpSeries[key][pk] || 0) + amt;
     });
     window._lastPromoCmpSeries = cmpSeries;  // renderPromoTable에서 참조
-    // ── KPI cards: restrict the window to the campaign's execution buckets ──
-    // For a single-promotion view, "현재 합계" and "전년 동기 합계" should sum
-    // only over the campaign's actual months — not every period in the data.
+
+    // ── KPI cards ──────────────────────────────────────────────────────────
+    // 현재 합계 = 각 캠페인 start~today (baAmt.after 기준, 캠페인별 필터 적용)
+    // 전년 동기 합계 = 각 캠페인 prevFrom~prevTo (baAmt.before 기준, SKU/고객 필터 적용)
+    // → cmpSeries(기간 버킷 합산)가 아닌 baAmt를 단일 소스로 사용하여
+    //   캠페인 시작일·대상 SKU/고객 기준이 현재/전년 양쪽에 동일하게 적용됨.
+    const modeLabelKo = { yoy: '전년 동기', qoq: '전분기', mom: '전년 동월' }[cmpMode] || '이전';
+
+    // single-promo: kpiBuckets은 차트용으로만 사용 (bar chart x-axis)
     const kpiBuckets = (promoFilter !== '__all__' && execBuckets && execBuckets.length)
       ? execBuckets
       : periodBuckets;
-    // ── 현재 합계: use the same baAmt.after values as the table ORDER AMT column ──
-    // Using series[key][pk] accumulation was inconsistent because it (a) only
-    // covers shownKeys (capped at MAX_SERIES), (b) for dim=promotion uses
-    // fOrdersST-only while baAmt scans the full order set, and (c) ignores campaign
-    // start-date filtering that baAmt applies. Using summary.afterAmt ensures all
-    // three displays (KPI card, chart 현재 합계, table ORDER AMT) are identical.
+
     const curTotal = promoFilter === '__all__'
       ? summary.reduce((s, r) => s + (r.afterAmt || 0), 0)
       : (baAmt[promoFilter] ? baAmt[promoFilter].after : 0);
-    const priorTotal = kpiBuckets.reduce((s, pk) => {
-      const ppk = shiftBucket(pk, cmpMode, period);
-      return s + shownKeys.reduce((ss, key) => ss + ((cmpSeries[key] && cmpSeries[key][ppk]) || 0), 0);
-    }, 0);
+
+    // 전년 동기: baAmt.before 합산 (각 캠페인 개시일~today의 전년 동기간)
+    const priorTotal = promoFilter === '__all__'
+      ? summary.reduce((s, r) => s + (r.beforeAmt || 0), 0)
+      : (baAmt[promoFilter] ? baAmt[promoFilter].before : 0);
+
     const dPct = priorTotal > 0 ? ((curTotal - priorTotal) / priorTotal) * 100 : null;
-    const modeLabelKo = { yoy: '전년 동기', qoq: '전분기', mom: '전년 동월' }[cmpMode] || '이전';
     const tag = dPct == null ? '<span class="t-muted">–</span>'
       : dPct >= 0 ? `<span class="t-green">▲ ${dPct.toFixed(1)}%</span>` : `<span class="t-red">▼ ${Math.abs(dPct).toFixed(1)}%</span>`;
+
     if (cmpKpiEl) {
       const card = (label, val, sub) => `
         <div style="background:rgba(0,0,0,0.02);border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:10px 12px">
@@ -6729,18 +6732,37 @@ function renderPromoChart(fOrders, fMkt) {
           <div style="font-size:18px;font-weight:800;margin-top:2px">${val}</div>
           ${sub ? `<div class="label-mono muted" style="font-size:11px;margin-top:3px">${sub}</div>` : ''}
         </div>`;
-      // 기간 표기: kpiBuckets의 첫/마지막 bucket 표시
+
       const _fmt = pk => pk ? pk.replace(/^20(\d\d)-(\d\d)$/, '\'$1.$2').replace(/^20(\d\d)-Q(\d)$/, '\'$1.Q$2').replace(/^(20\d\d)$/, '$1') : '';
-      const curFrom  = kpiBuckets.length ? _fmt(kpiBuckets[0]) : '';
-      const curTo    = kpiBuckets.length > 1 ? _fmt(kpiBuckets[kpiBuckets.length-1]) : '';
-      const curRange = curFrom ? (curTo && curTo !== curFrom ? `${curFrom} ~ ${curTo}` : curFrom) : '';
-      const priorFrom = kpiBuckets.length ? _fmt(shiftBucket(kpiBuckets[0], cmpMode, period)) : '';
-      const priorTo   = kpiBuckets.length > 1 ? _fmt(shiftBucket(kpiBuckets[kpiBuckets.length-1], cmpMode, period)) : '';
-      const priorRange = priorFrom ? (priorTo && priorTo !== priorFrom ? `${priorFrom} ~ ${priorTo}` : priorFrom) : '';
-      const subWindow = (promoFilter !== '__all__')
-        ? `${promoFilter}${curRange ? ' · ' + curRange : ''}`
-        : `전체 캠페인${curRange ? ' · ' + curRange : ''}`;
-      const subPrior = priorRange ? `${modeLabelKo} 동일기간 · ${priorRange}` : `${modeLabelKo} 동일 기간`;
+      const _fmtDate = d => d ? d.replace(/^20(\d\d)-(\d\d).*$/, '\'$1.$2') : '';
+
+      let curRange, priorRange, subWindow, subPrior;
+      if (promoFilter === '__all__') {
+        // __all__: 각 캠페인별 start 중 최솟값 ~ 오늘
+        const allStarts = summary.map(r => r.baStart || '').filter(Boolean).sort();
+        const allPrevFroms = summary.map(r => {
+          const ba = baAmt[r.promotion];
+          return ba ? (ba.prevFrom || '') : '';
+        }).filter(Boolean).sort();
+        const curStart  = allStarts.length  ? _fmtDate(allStarts[0])  : '';
+        const curEnd    = _fmtDate(_todayStr ? _todayStr() : new Date().toISOString().slice(0,10));
+        const prvStart  = allPrevFroms.length ? _fmtDate(allPrevFroms[0]) : '';
+        // prevTo: shift today by cmpMode
+        const _todayD = _todayStr ? _todayStr() : new Date().toISOString().slice(0,10);
+        const prvEnd  = _fmtDate(shiftDate(_todayD, cmpMode));
+        curRange   = curStart  ? (curEnd  && curEnd  !== curStart  ? `${curStart} ~ ${curEnd}`  : curStart)  : '';
+        priorRange = prvStart  ? (prvEnd  && prvEnd  !== prvStart  ? `${prvStart} ~ ${prvEnd}`  : prvStart)  : '';
+        subWindow  = `전체 캠페인${curRange  ? ' · ' + curRange  : ''}`;
+        subPrior   = `${modeLabelKo} 동일기간${priorRange ? ' · ' + priorRange : ''}`;
+      } else {
+        // single promo: baAmt 기준 기간 표시
+        const ba = baAmt[promoFilter] || {};
+        curRange   = (ba.winFrom && ba.winTo)   ? `${_fmtDate(ba.winFrom)} ~ ${_fmtDate(ba.winTo)}`   : '';
+        priorRange = (ba.prevFrom && ba.prevTo)  ? `${_fmtDate(ba.prevFrom)} ~ ${_fmtDate(ba.prevTo)}` : '';
+        subWindow  = `${promoFilter}${curRange  ? ' · ' + curRange  : ''}`;
+        subPrior   = `${modeLabelKo} 동일기간${priorRange ? ' · ' + priorRange : ''}`;
+      }
+
       cmpKpiEl.style.display = 'grid';
       cmpKpiEl.innerHTML =
         card('현재 합계', fmtMoney(curTotal), subWindow) +
