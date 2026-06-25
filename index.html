@@ -11096,7 +11096,9 @@ window.publishSnapshot = publishSnapshot;
     applyWidgetOrder(); // re-apply in case widgetOrder changed
   }
   // Embedded shared data is in-DOM, no fetch required — works on file:// too.
-  try { await loadSharedData(false); } catch (e) { console.warn('Shared data load skipped:', e); }
+  // 항상 강제 로드 (ck_has_personal_data 무시)
+  localStorage.removeItem('ck_has_personal_data');
+  try { await loadSharedData(true); } catch (e) { console.warn('Shared data load skipped:', e); }
   // Load explicit per-campaign target SKU lists (SA_list etc.) — best-effort.
   try { await loadCampaignTargetSkus(); } catch (e) { console.warn('target SKU load skipped:', e); }
   // CTR-Model map + auto CSV refresh still require network — only attempt over http(s).
