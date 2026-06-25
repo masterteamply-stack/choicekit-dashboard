@@ -359,10 +359,7 @@ header.collapsed {
   padding: 8px 32px;
 }
 header.collapsed .header-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
+  display: none;
 }
 /* Tiny chevron button that toggles the collapsed state */
 .header-collapse-btn {
@@ -1709,42 +1706,118 @@ header .mono b.t-orange {
       <option value="budgetstatus">Budget</option>
     </select>
     <span class="fx-loading" id="fxStatus" style="display:none">FX…</span>
-
+    <button class="header-collapse-btn" id="headerCollapseBtn" title="헤더 도구 모음 접기/펼치기" aria-label="Toggle header toolbar">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+    </button>
   </div>
 
   <div class="header-right">
-    <!-- 환종 선택 -->
     <div class="cur-toggle" id="curToggle">
       <button data-cur="USD" class="active">USD</button>
       <button data-cur="KRW">KRW</button>
     </div>
-    <!-- 다크모드 -->
     <button class="btn ghost" id="themeToggle" title="Toggle dark mode">
       <span class="icon-moon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
       <span class="icon-sun"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></span>
     </button>
-    <!-- Baseline 버튼 (전년 비교 데이터) -->
-    <button class="btn ghost" id="btnPreOrder" onclick="togglePreOrders()" style="font-size:11px;padding:4px 10px" title="전년 비교 baseline 로드/해제">
-      📊 Baseline <span id="preOrderBadge" style="display:none;margin-left:4px;padding:1px 6px;border-radius:8px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;">ON</span>
+
+    <input type="file" id="fOrders" accept=".csv" />
+    <input type="file" id="fMkt" accept=".csv" />
+    <input type="file" id="fBudgets" accept=".csv" />
+    <input type="file" id="fBulk" accept=".csv" multiple />
+    <input type="file" id="fCtrModel" accept=".csv" />
+
+    <!-- Import 폴드 메뉴 -->
+    <div class="import-menu" id="importMenu">
+      <button class="btn" id="importToggle" onclick="document.getElementById('importMenu').classList.toggle('open')" title="CSV 파일 업로드">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Import
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="import-pop">
+        <button onclick="document.getElementById('fOrders').click();document.getElementById('importMenu').classList.remove('open')">
+          📋 Order CSV
+        </button>
+        <button onclick="document.getElementById('fMkt').click();document.getElementById('importMenu').classList.remove('open')">
+          📣 Marketing CSV
+        </button>
+        <button onclick="document.getElementById('fBudgets').click();document.getElementById('importMenu').classList.remove('open')" title="Upload Budgets CSV">
+          💰 Budgets CSV
+        </button>
+        <button onclick="document.getElementById('fBulk').click();document.getElementById('importMenu').classList.remove('open')" title="Upload Order / Marketing / Budgets CSV at once">
+          📦 Bulk Upload
+        </button>
+        <button onclick="reloadAutoCSV(true);document.getElementById('importMenu').classList.remove('open')" title="Auto-load from this folder">
+          🔄 Reload CSV
+        </button>
+        <hr style="border:none;border-top:1px solid var(--line-2);margin:4px 0">
+        <button onclick="document.getElementById('fCtrModel').click();document.getElementById('importMenu').classList.remove('open')" title="CTR Code ↔ Vehicle Model 매핑 CSV 업로드">
+          🚗 CTR-Model Mapping
+        </button>
+      </div>
+    </div>
+
+    <button class="btn" id="btnPreOrder" onclick="togglePreOrders()" title="Load pre_orders.json as a baseline reference for YoY / QoQ / MoM / WoW comparisons. Pre-order rows are NEVER merged into the main dashboard — they only fill in 'previous period' values in the comparison KPIs.">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+      Baseline <span id="preOrderBadge" style="display:none;margin-left:4px;padding:1px 6px;border-radius:8px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;">ON</span>
     </button>
-    <!-- 숨겨진 file inputs (JS 기능 유지) -->
-    <input type="file" id="fOrders" accept=".csv" style="display:none"/>
-    <input type="file" id="fMkt" accept=".csv" style="display:none"/>
-    <input type="file" id="fBudgets" accept=".csv" style="display:none"/>
-    <input type="file" id="fBulk" accept=".csv" multiple style="display:none"/>
-    <input type="file" id="fCtrModel" accept=".csv" style="display:none"/>
-    <!-- JS가 참조하는 기타 요소 (숨김) -->
-    <span id="cntOrders" style="display:none">0</span>
-    <span id="cntMkt" style="display:none">0</span>
+
+    <button class="btn" onclick="openAddActivity()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Activity
+    </button>
+
+    <button class="btn" onclick="openBudgetModal()" title="Configure default marketing budgets by region & promotion">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Budgets
+    </button>
+
+    <div class="divider"></div>
+
+    <button class="btn" onclick="publishSnapshot()" title="Publish current data + view as a self-contained snapshot HTML for shared-drive distribution">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+      Publish Snapshot
+    </button>
+
+    <button class="btn" onclick="openSettingsModal()" title="Restore hidden widgets / regions">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Settings
+    </button>
+
+    <div class="divider"></div>
+
+    <span class="mono" style="font-size:14px;color:var(--text-2)">
+      Orders: <b class="t-blue" id="cntOrders">0</b> · Activities: <b class="t-orange" id="cntMkt">0</b>
+    </span>
+    <button class="btn danger" onclick="clearAll()" title="개인 데이터 삭제 후 공유 데이터로 복원">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
+      Reset
+    </button>
+    <button class="btn ghost" onclick="resetToSharedData()" title="공유 데이터로 완전 초기화" style="font-size:12px;">
+      🔄 Shared
+    </button>
+
+    <div class="tpl-menu" id="tplMenu" title="Download CSV import templates">
+      <button class="btn ghost tpl-trigger" onclick="document.getElementById('tplMenu').classList.toggle('open')">
+        📋 Templates
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="tpl-pop">
+        <button onclick="downloadOrderTemplate();document.getElementById('tplMenu').classList.remove('open')">📋 Order Template</button>
+        <button onclick="downloadMarketingTemplate();document.getElementById('tplMenu').classList.remove('open')">📋 Marketing Template</button>
+        <button onclick="downloadBudgetTemplate();document.getElementById('tplMenu').classList.remove('open')">📋 Budgets Template</button>
+      </div>
+    </div>
   </div>
 </header>
 
 <main>
   <!-- Filter bar (collapsible) -->
-  <!-- Filter bar: 기능 유지, UI 숨김 -->
-  <div id="filterBarWrap" style="display:none">
-    <button type="button" id="filterBarToggle" style="display:none" aria-expanded="false">
-      <span id="filterActiveBadge"></span>
+  <div id="filterBarWrap" class="filter-wrap collapsed">
+    <button type="button" id="filterBarToggle" class="filter-toggle" aria-expanded="false">
+      <span class="filter-toggle-arrow">▶</span>
+      <span class="filter-toggle-label">FILTERS</span>
+      <span class="filter-toggle-summary" id="filterActiveBadge"></span>
     </button>
     <div class="panel filter-bar" id="filterBar"></div>
   </div>
@@ -4036,8 +4109,8 @@ function renderAll() {
     state._preIdx = null;
     state._preOrdersIndexed = false;
   }
-  const _eo = document.getElementById('cntOrders'); if (_eo) _eo.textContent = state.orders.length;
-  const _em = document.getElementById('cntMkt'); if (_em) _em.textContent = state.marketing.length;
+  document.getElementById('cntOrders').textContent = state.orders.length;
+  document.getElementById('cntMkt').textContent = state.marketing.length;
 
   if (!state.orders.length && !state.marketing.length) {
     document.getElementById('emptyState').style.display = 'block';
@@ -5874,7 +5947,10 @@ async function renderPromoChart(fOrders, fMkt) {
   document.querySelectorAll('#segPromoSellType button').forEach(b => {
     b.classList.toggle('active', b.dataset.v === sellType);
   });
-  // sell-type banners removed
+  const inEl  = document.getElementById('promoSellInBanner');
+  const outEl = document.getElementById('promoSellOutBanner');
+  if (inEl)  inEl.style.display  = sellType==='SELL-IN'  ? 'flex' : 'none';
+  if (outEl) outEl.style.display = sellType==='SELL-OUT' ? 'flex' : 'none';
 
 
   // ── Marketing start date per promotion (earliest execution_date).
@@ -8802,7 +8878,6 @@ async function rebuildAll() {
 // O(1) target lookups instead of scanning 654K rows each time.
 // Called once after preOrders loads, runs in a deferred setTimeout
 // so it never blocks the initial render or filter response.
-
 function _buildPreOrdersIndex() {
   if (!state.preOrdersEnabled || !Array.isArray(state.preOrders) || !state.preOrders.length) {
     state._preIdx = null; state._preOrdersIndexed = false; return;
@@ -8921,6 +8996,1333 @@ function _buildPreOrdersIndex() {
   console.log(`[preIdx] built — SKU:${Object.keys(skuIdx).length} CTR:${Object.keys(ctrIdx).length} BUYER:${Object.keys(bundleBuyerIdx).length} promoIdx:${total}rows`);
 }
 
+document.getElementById('curToggle').addEventListener('click', e => {
+  const b = e.target.closest('button[data-cur]'); if (!b) return;
+  state.currency = b.dataset.cur;
+  document.querySelectorAll('#curToggle button').forEach(x => x.classList.toggle('active', x.dataset.cur===state.currency));
+  persist(); renderAll();
+});
+
+// (orderTarget input은 Budgets 모달로 이동)
+
+document.getElementById('fOrders').addEventListener('change', async e => {
+  const f = e.target.files?.[0]; e.target.value = '';
+  if (!f) return;
+  try {
+    const rows = await parseOrderCSV(f);
+    rows.forEach(r => { r[SNAPSHOT_USER_MARK] = true; });
+    state.orders = state.orders.concat(rows);
+    localStorage.setItem('ck_has_personal_data', '1');
+    persist();
+    markDataUpdated('orders');
+    await loadFxRates();
+    rebuildAll();
+    alert(`${rows.length} order rows added`);
+  } catch (err) { console.error(err); alert('Failed to parse Order CSV'); }
+});
+document.getElementById('fMkt').addEventListener('change', async e => {
+  const f = e.target.files?.[0]; e.target.value = '';
+  if (!f) return;
+  try {
+    const rows = await parseMarketingCSV(f);
+    rows.forEach(r => { r[SNAPSHOT_USER_MARK] = true; });
+    state.marketing = state.marketing.concat(rows);
+    localStorage.setItem('ck_has_personal_data', '1');
+    persist();
+    markDataUpdated('marketing');
+    await loadFxRates();
+    rebuildAll();
+    alert(`${rows.length} marketing activities added`);
+  } catch (err) { console.error(err); alert('Failed to parse Marketing CSV'); }
+});
+
+function clearAll() {
+  if (!confirm('모든 데이터를 삭제하시겠습니까?')) return;
+  localStorage.removeItem('ck_has_personal_data');
+  localStorage.removeItem('ck_orders_updated_at');
+  localStorage.removeItem('ck_marketing_updated_at');
+  state.orders = []; state.marketing = [];
+  state.regionBudgets = {}; state.regionTargets = {}; state.promoBudgets = {};
+  // Also drop the pre-orders IndexedDB cache so a fresh session re-downloads
+  try { idbDelete('preOrdersCache_v2'); } catch (e) {}
+  persist(); rebuildAll();
+  renderDataTimestamps();
+  showToast('🗑️ 데이터가 초기화됐습니다');
+}
+
+/* Modal */
+function fillSelect(id, opts) { document.getElementById(id).innerHTML = opts.map(o=>`<option value="${o}">${o}</option>`).join(''); }
+fillSelect('m_region', REGIONS);
+fillSelect('m_category', CATEGORIES);
+fillSelect('m_activity_type', ACTIVITY_TYPES);
+fillSelect('m_currency', ['USD','KRW','EUR','RUB','AED','AUD','BRL','GBP','JPY','CNY']);
+document.getElementById('m_date').value = new Date().toISOString().slice(0,10);
+
+function openAddActivity() { document.getElementById('addModal').classList.add('open'); }
+function closeModal() { document.getElementById('addModal').classList.remove('open'); }
+async function submitActivity() {
+  const get = id => document.getElementById(id).value;
+  if (!get('m_title') || !get('m_cost')) { alert('Title and Cost are required'); return; }
+  state.marketing.push({
+    activity_id: 'MKT-' + Date.now(),
+    date: get('m_date'), region: get('m_region'), country: get('m_country'),
+    category: get('m_category'), promotion_id: get('m_promotion_id') || 'CHOICE_KIT',
+    promotion_name: '', activity_type: get('m_activity_type'),
+    title: get('m_title'), target_customer: get('m_target_customer'),
+    target_product: get('m_target_product'), cost: Number(get('m_cost')),
+    currency: get('m_currency'), kpi_metric: get('m_kpi_metric'),
+    kpi_value: Number(get('m_kpi_value'))||0,
+    kpi_status: get('m_kpi_status'),
+    kpi_target: Number(get('m_kpi_target'))||0,
+    note: get('m_note'),
+  });
+  persist(); await loadFxRates(); closeModal(); rebuildAll();
+}
+
+/* Templates */
+function downloadCsv(filename, content) {
+  const blob = new Blob([content], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+}
+function downloadOrderTemplate() {
+  downloadCsv('order_template.csv',
+    'CTR Code,order date,region,country,promotion_category,promotion_theme,product,sku,part_no,position,make_model,qty,unit_price,amount,currency,target,sell_type,customer\n'
+   +'GK0383,2026-01-13,MENA,IRAQ,New segment,CHOICE_KIT,BRAKE PAD ASSY,GK0383,06450S5DA00,FRONT,HONDA_Accord 1990-1991,10,12.72,127.20,USD,B2B,SELL-IN,MESK AL-BARARI\n'
+   +'GY0272G,2026-02-05,CIS,RUSSIA,Asian,CHOICE_KIT,SHOCK ABSORBER,GY0272G,13332639,REAR,CHEVROLET_Cruze 2008-2011,16,14.99,239.84,USD,B2B,SELL-IN,EMEX\n');
+}
+function downloadMarketingTemplate() {
+  downloadCsv('marketing_template.csv',
+    'execution_date,region,country,promotion_theme,promotion_category,target_product,activity_type,title,customer,expected_cost,actual_cost,Bizreward,currency,kpi_metric,target,sell_type,owner,Order_Target($)\n'
+   +'2026-04-09,CIS,RUSSIA,CHOICE_KIT,Asian vehicle,Asian vehicle,CONTENT,Catalog,,0,0,x,USD,DISTRIBUTED,B2B,SELL_IN,HY,175000\n'
+   +'2026-05-04,CIS,RUSSIA,CHOICE_KIT,European vehicle,European vehicle,CONTENT,Catalog,,0,0,x,USD,DISTRIBUTED,B2B,SELL_IN,HY,75000\n'
+   +'2026-01-10,CIS,RUSSIA,CHOICE_KIT,Asian vehicle,Asian vehicle,ONLINE_CONTENT,YouTube Choice Kit Intro,EMEX,2000,1500,promo,USD,VIEWS,B2B,SELL_IN,HY,175000\n');
+}
+
+/* =================== BUDGET (Plan) & ORDER TARGET =================== */
+// Display currency로 환산된 plan budget 합계
+function computePlanBudget() {
+  const f = state.filters;
+  const usdToDisp = usdToDisplay();   // ✅ FX 캐시 기반 정확한 환율
+  const regionKeys = (f.regions && f.regions.length) ? f.regions : Object.keys(state.regionBudgets);
+  let regionSum = 0;
+  regionKeys.forEach(r => { regionSum += Number(state.regionBudgets[r] || 0); });
+  const promoKeys = (f.promotions && f.promotions.length) ? f.promotions : Object.keys(state.promoBudgets);
+  let promoSum = 0;
+  promoKeys.forEach(p => { promoSum += Number(state.promoBudgets[p] || 0); });
+  return (regionSum + promoSum) * usdToDisp;
+}
+// Display currency로 환산된 order target (Region 필터 시 그 Region들 합, 없으면 전체)
+function computeOrderTargetDisp() {
+  const f = state.filters;
+  const usdToDisp = usdToDisplay();
+  // Order Target is a campaign-level baseline — derive from FULL marketing data
+  // (ignore date / category / promotion / activity / customer filters). Only
+  // the Region filter scopes the total, since region targets are independent.
+  const derived = deriveOrderTargets(state.marketing || []);
+  const tForRegion = (r) => getRegionOrderTargetUSD(r, derived); // manual override → derived
+  if (f.regions && f.regions.length) {
+    let s = 0;
+    f.regions.forEach(r => { s += tForRegion(r); });
+    return s * usdToDisp;
+  }
+  // Region 필터 미적용: 모든 Region의 타깃 합계.
+  // ALWAYS start from derived.byRegion (the marketing CSV is the source of truth);
+  // state.regionTargets only contributes additional regions that have a manual
+  // value but no marketing data. This prevents any region from being silently
+  // skipped if state.regionTargets is sparse.
+  const allRegions = new Set([
+    ...Object.keys(derived.byRegion || {}),
+    ...Object.keys(state.regionTargets || {}),
+  ]);
+  let regionSum = 0;
+  allRegions.forEach(r => { regionSum += tForRegion(r); });
+  if (regionSum > 0) return regionSum * usdToDisp;
+  return Number(state.orderTargetUSD||0) * usdToDisp;
+}
+function activeRegionCount() {
+  const f = state.filters;
+  const keys = (f.regions && f.regions.length) ? f.regions : Object.keys(state.regionBudgets);
+  return keys.filter(k => Number(state.regionBudgets[k]||0) > 0).length;
+}
+function activePromoCount() {
+  const f = state.filters;
+  const keys = (f.promotions && f.promotions.length) ? f.promotions : Object.keys(state.promoBudgets);
+  return keys.filter(k => Number(state.promoBudgets[k]||0) > 0).length;
+}
+
+/* =================== BUDGETS MODAL (USD ↔ KRW dual + Live FX) =================== */
+function fxAutoUsdKrw() {
+  // 자동(API) USD→KRW: state.fxManualUsdKrw 무시하고 fx 캐시만 사용
+  const keys = Object.keys(state.fx).filter(k => k.endsWith('|KRW')).sort().reverse();
+  for (const k of keys) { const v = state.fx[k]; if (v && v>0) return 1/v; }
+  return 1 / FALLBACK_TO_USD.KRW;
+}
+function getCurrentUsdKrw() {
+  const m = Number(state.fxManualUsdKrw||0);
+  return m > 0 ? m : fxAutoUsdKrw();
+}
+function refreshFxApplied() {
+  const r = getCurrentUsdKrw();
+  const disp = document.getElementById('fxAppliedDisp');
+  const src = document.getElementById('fxSource');
+  if (disp) disp.textContent = fmtNum(r);
+  if (src) src.textContent = (Number(state.fxManualUsdKrw||0) > 0) ? '(manual)' : '(auto)';
+}
+function syncDualPair(pair, sourceKind) {
+  // sourceKind: 'usd' or 'krw'. pair: 'orderTarget' | 'rb-<region>' | 'rt-<region>' | 'pb-<key>'
+  const r = getCurrentUsdKrw();
+  const usdEl = document.querySelector(`input[data-pair="${pair}"][data-side="usd"], #orderTargetUSDInput[data-pair="${pair}"]`);
+  const krwEl = document.querySelector(`input[data-pair="${pair}"][data-side="krw"], #orderTargetKRWInput[data-pair="${pair}"]`);
+  if (!usdEl || !krwEl) return;
+  if (sourceKind === 'usd') {
+    const v = Number(usdEl.value)||0;
+    krwEl.value = v ? Math.round(v * r) : '';
+  } else {
+    const v = Number(krwEl.value)||0;
+    usdEl.value = v ? Math.round(v / r) : '';
+  }
+}
+function syncAllPairs() {
+  // FX changed → recompute KRW from USD for every pair
+  document.querySelectorAll('input[data-pair]').forEach(el => {
+    if (el.dataset.side === 'krw') return;
+    const pair = el.dataset.pair;
+    syncDualPair(pair, 'usd');
+  });
+  // orderTarget pair (no data-side, special ids)
+  syncDualPair('orderTarget', 'usd');
+}
+
+function dualRow(label, pairId, usdVal) {
+  const r = getCurrentUsdKrw();
+  const krwVal = usdVal ? Math.round(usdVal * r) : '';
+  const usdShow = usdVal ? Math.round(usdVal) : '';
+  return `
+    <div style="display:grid;grid-template-columns:80px 1fr 1fr;gap:8px;align-items:center">
+      <span class="label-mono" style="font-weight:700">${label}</span>
+      <label style="display:flex;align-items:center;gap:6px"><span class="label-mono muted">$</span>
+        <input type="number" data-pair="${pairId}" data-side="usd" value="${usdShow}" style="flex:1;text-align:right" placeholder="USD" />
+      </label>
+      <label style="display:flex;align-items:center;gap:6px"><span class="label-mono muted">₩</span>
+        <input type="number" data-pair="${pairId}" data-side="krw" value="${krwVal}" style="flex:1;text-align:right" placeholder="KRW" />
+      </label>
+    </div>`;
+}
+
+function openBudgetModal() {
+  // FX manual 입력
+  const fxInput = document.getElementById('fxUsdKrwInput');
+  fxInput.value = Number(state.fxManualUsdKrw||0) > 0 ? state.fxManualUsdKrw : '';
+  refreshFxApplied();
+
+  // Total order target (USD 직접 + KRW 동기화)
+  const usdT = Math.round(Number(state.orderTargetUSD)||0);
+  document.getElementById('orderTargetUSDInput').value = usdT || '';
+  document.getElementById('orderTargetKRWInput').value = usdT ? Math.round(usdT * getCurrentUsdKrw()) : '';
+
+  // Region budget grid (USD 저장값 → 양쪽 표시)
+  const rg = document.getElementById('regionBudgetGrid');
+  rg.innerHTML = REGIONS.map(r => dualRow(r, `rb-${r}`, Number(state.regionBudgets[r])||0)).join('');
+
+  // Region target grid
+  const rt = document.getElementById('regionTargetGrid');
+  rt.innerHTML = REGIONS.map(r => dualRow(r, `rt-${r}`, Number(state.regionTargets[r])||0)).join('');
+
+  // Promo rows
+  renderPromoBudgetRows();
+  document.getElementById('budgetModal').classList.add('open');
+}
+
+function renderPromoBudgetRows() {
+  const pg = document.getElementById('promoBudgetGrid');
+  const entries = Object.entries(state.promoBudgets);
+  if (!entries.length) {
+    pg.innerHTML = '<p class="label-mono" style="color:var(--text-3)">No promotions yet. Add one above.</p>';
+    return;
+  }
+  const r = getCurrentUsdKrw();
+  pg.innerHTML = entries.map(([name, valUsd]) => {
+    const usd = Math.round(Number(valUsd)||0);
+    const krw = usd ? Math.round(usd * r) : '';
+    const safe = name.replace(/'/g,"\\'");
+    return `
+      <div style="display:grid;grid-template-columns:1.3fr 1fr 1fr 40px;gap:8px;align-items:center">
+        <input data-promo-name="${name}" value="${name}" />
+        <label style="display:flex;align-items:center;gap:6px"><span class="label-mono muted">$</span>
+          <input type="number" data-pair="pb-${name}" data-side="usd" data-promo-key="${name}" value="${usd||''}" style="flex:1;text-align:right" placeholder="USD" />
+        </label>
+        <label style="display:flex;align-items:center;gap:6px"><span class="label-mono muted">₩</span>
+          <input type="number" data-pair="pb-${name}" data-side="krw" value="${krw}" style="flex:1;text-align:right" placeholder="KRW" />
+        </label>
+        <button class="btn ghost danger" onclick="removePromoBudgetRow('${safe}')" title="Delete">✕</button>
+      </div>`;
+  }).join('');
+}
+function addPromoBudgetRow() {
+  const inp = document.getElementById('newPromoName');
+  const name = (inp.value||'').trim();
+  if (!name) { inp.focus(); return; }
+  if (state.promoBudgets[name] === undefined) state.promoBudgets[name] = 0;
+  inp.value = '';
+  renderPromoBudgetRows();
+}
+function removePromoBudgetRow(name) {
+  const el = document.querySelector(`[data-promo-name="${CSS.escape(name)}"]`);
+  if (el) el.closest('div').remove();
+}
+function prefillRegionBudgetsFromCSV() {
+  // Aggregate state.marketing expected_cost by region, converted to USD via per-row FX.
+  // Region budgets are stored in USD (state.regionBudgets) and the input uses data-side="usd".
+  const byRegionUsd = {};
+  (state.marketing || []).forEach(m => {
+    const r = m.region;
+    if (!r) return;
+    const localExpected = num(m.expected_cost);
+    if (!(localExpected > 0)) return;
+    const usd = localExpected * rateToUsd(ymOf(m.date), m.currency);
+    byRegionUsd[r] = (byRegionUsd[r] || 0) + usd;
+  });
+  const entries = Object.entries(byRegionUsd).filter(([,v]) => v > 0);
+  if (!entries.length) {
+    showToast('⚠️ CSV에서 region별 expected_cost를 찾지 못했습니다');
+    return;
+  }
+  // Warn before overwriting existing manual entries
+  const existing = [];
+  document.querySelectorAll('#regionBudgetGrid input[data-side="usd"]').forEach(el => {
+    if (Number(el.value) > 0) existing.push(el);
+  });
+  if (existing.length && !confirm(`기존에 입력된 region budget ${existing.length}개를 CSV expected_cost 값으로 덮어쓸까요?`)) return;
+
+  let filled = 0;
+  const skippedRegions = [];
+  entries.forEach(([region, usd]) => {
+    const usdEl = document.querySelector(`#regionBudgetGrid input[data-pair="rb-${region}"][data-side="usd"]`);
+    if (!usdEl) { skippedRegions.push(region); return; }
+    usdEl.value = Math.round(usd) || '';
+    // Sync the paired KRW input via existing helper
+    try { syncDualPair(`rb-${region}`, 'usd'); } catch (e) { /* ignore */ }
+    filled++;
+  });
+  const skipNote = skippedRegions.length
+    ? ` · 건너뜀: ${skippedRegions.join(', ')} (REGIONS 마스터에 없음)`
+    : '';
+  showToast(`✅ ${filled}개 region을 CSV expected_cost로 채웠습니다${skipNote} — 검토 후 Save`);
+}
+window.prefillRegionBudgetsFromCSV = prefillRegionBudgetsFromCSV;
+
+function closeBudgetModal() { document.getElementById('budgetModal').classList.remove('open'); }
+
+function saveBudgets() {
+  // Manual FX 저장
+  const fxVal = Number(document.getElementById('fxUsdKrwInput').value)||0;
+  state.fxManualUsdKrw = fxVal > 0 ? fxVal : 0;
+
+  // Total order target: USD 입력 우선
+  const tUsd = Number(document.getElementById('orderTargetUSDInput').value)||0;
+  state.orderTargetUSD = tUsd;
+
+  // Region budgets: USD side 기준
+  const newRegionBud = {};
+  document.querySelectorAll('#regionBudgetGrid input[data-side="usd"]').forEach(el => {
+    const region = el.dataset.pair.replace(/^rb-/, '');
+    const usd = Number(el.value)||0;
+    if (usd > 0) newRegionBud[region] = usd;
+  });
+  state.regionBudgets = newRegionBud;
+
+  // Region targets
+  const newRegionTgt = {};
+  document.querySelectorAll('#regionTargetGrid input[data-side="usd"]').forEach(el => {
+    const region = el.dataset.pair.replace(/^rt-/, '');
+    const usd = Number(el.value)||0;
+    if (usd > 0) newRegionTgt[region] = usd;
+  });
+  state.regionTargets = newRegionTgt;
+
+  // Promo budgets
+  const newPromo = {};
+  document.querySelectorAll('#promoBudgetGrid [data-promo-name]').forEach(el => {
+    const name = (el.value||'').trim(); if (!name) return;
+    const usdEl = document.querySelector(`#promoBudgetGrid input[data-pair="pb-${CSS.escape(el.dataset.promoName)}"][data-side="usd"]`);
+    const usd = Number(usdEl?.value)||0;
+    newPromo[name] = usd;
+  });
+  state.promoBudgets = newPromo;
+
+  persist();
+  closeBudgetModal();
+  renderAll();
+}
+
+function resetFxManual() {
+  state.fxManualUsdKrw = 0;
+  persist();
+  document.getElementById('fxUsdKrwInput').value = '';
+  refreshFxApplied();
+  syncAllPairs();
+  renderPromoBudgetRows();
+}
+
+// Live update: dual pair sync + FX manual sync
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.id === 'fxUsdKrwInput') {
+    const v = Number(t.value)||0;
+    state.fxManualUsdKrw = v > 0 ? v : 0;
+    refreshFxApplied();
+    syncAllPairs();
+    renderPromoBudgetRows();
+    return;
+  }
+  if (t.id === 'orderTargetUSDInput') { syncDualPair('orderTarget', 'usd'); return; }
+  if (t.id === 'orderTargetKRWInput') { syncDualPair('orderTarget', 'krw'); return; }
+  if (t.dataset && t.dataset.pair && t.dataset.side) {
+    syncDualPair(t.dataset.pair, t.dataset.side);
+  }
+});
+
+window.openBudgetModal = openBudgetModal;
+window.closeBudgetModal = closeBudgetModal;
+window.saveBudgets = saveBudgets;
+window.addPromoBudgetRow = addPromoBudgetRow;
+window.removePromoBudgetRow = removePromoBudgetRow;
+window.resetFxManual = resetFxManual;
+
+/* =================== BUDGETS CSV (Template / Import / Export) =================== */
+function downloadBudgetTemplate() {
+  // 헤더는 type,key,value_usd 고정. 모든 금액은 USD.
+  // type: total_order_target | region_budget | region_target | promo_budget
+  const rows = [
+    ['type','key','value_usd'],
+    ['total_order_target','','1000000'],
+  ];
+  REGIONS.forEach(r => rows.push(['region_budget', r, '0']));
+  REGIONS.forEach(r => rows.push(['region_target', r, '0']));
+  rows.push(['promo_budget','CHOICE_KIT','0']);
+  rows.push(['promo_budget','NEW_SEGMENT','0']);
+  const csv = rows.map(r => r.join(',')).join('\n') + '\n';
+  downloadCsv('budgets_template.csv', csv);
+}
+
+function exportBudgetsCSV() {
+  const rows = [['type','key','value_usd']];
+  rows.push(['total_order_target','', String(Math.round(Number(state.orderTargetUSD)||0))]);
+  Object.entries(state.regionBudgets||{}).forEach(([k,v]) => rows.push(['region_budget', k, String(Math.round(Number(v)||0))]));
+  Object.entries(state.regionTargets||{}).forEach(([k,v]) => rows.push(['region_target', k, String(Math.round(Number(v)||0))]));
+  Object.entries(state.promoBudgets||{}).forEach(([k,v]) => rows.push(['promo_budget', k, String(Math.round(Number(v)||0))]));
+  const csv = rows.map(r => r.map(c => /[",\n]/.test(c) ? `"${c.replace(/"/g,'""')}"` : c).join(',')).join('\n') + '\n';
+  downloadCsv('budgets_current.csv', csv);
+}
+
+async function readFileText(file) {
+  const buf = await file.arrayBuffer();
+  try {
+    const utf8 = new TextDecoder('utf-8',{fatal:false}).decode(buf);
+    if (!/\uFFFD/.test(utf8)) return utf8;
+  } catch {}
+  try { return new TextDecoder('euc-kr').decode(buf); }
+  catch { return new TextDecoder('utf-8').decode(buf); }
+}
+
+function parseBudgetsCSV(text) {
+  // strip BOM, split lines, skip blanks/comments
+  const raw = String(text||'').replace(/^\uFEFF/,'').split(/\r?\n/);
+  const lines = raw.map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+  if (!lines.length) return { totalTargetUSD: null, regionBudgets:{}, regionTargets:{}, promoBudgets:{} };
+  const splitCsv = (line) => {
+    const out = []; let cur = ''; let q = false;
+    for (let i=0;i<line.length;i++){
+      const ch = line[i];
+      if (q) {
+        if (ch === '"' && line[i+1] === '"') { cur += '"'; i++; }
+        else if (ch === '"') { q = false; }
+        else cur += ch;
+      } else {
+        if (ch === ',') { out.push(cur); cur=''; }
+        else if (ch === '"') { q = true; }
+        else cur += ch;
+      }
+    }
+    out.push(cur);
+    return out.map(s => s.trim());
+  };
+  const header = splitCsv(lines[0]).map(h => h.toLowerCase().replace(/^\uFEFF/,''));
+  const tIdx = header.indexOf('type');
+  const kIdx = header.indexOf('key');
+  const vIdx = header.findIndex(h => h.startsWith('value'));
+  const out = { totalTargetUSD: null, regionBudgets:{}, regionTargets:{}, promoBudgets:{} };
+  for (let i=1;i<lines.length;i++) {
+    const cols = splitCsv(lines[i]);
+    const type = (cols[tIdx]||'').toLowerCase();
+    const key = (cols[kIdx]||'').trim();
+    const val = Number(String(cols[vIdx]||'').replace(/[, ]/g,''))||0;
+    if (type === 'total_order_target') out.totalTargetUSD = val;
+    else if (type === 'region_budget' && key) out.regionBudgets[key] = val;
+    else if (type === 'region_target' && key) out.regionTargets[key] = val;
+    else if (type === 'promo_budget' && key) out.promoBudgets[key] = val;
+  }
+  return out;
+}
+
+function applyBudgets(parsed) {
+  if (parsed.totalTargetUSD != null) state.orderTargetUSD = parsed.totalTargetUSD;
+  if (Object.keys(parsed.regionBudgets).length) state.regionBudgets = parsed.regionBudgets;
+  if (Object.keys(parsed.regionTargets).length) state.regionTargets = parsed.regionTargets;
+  if (Object.keys(parsed.promoBudgets).length) state.promoBudgets = parsed.promoBudgets;
+  persist();
+}
+
+async function handleBudgetFile(file) {
+  const txt = await readFileText(file);
+  const parsed = parseBudgetsCSV(txt);
+  applyBudgets(parsed);
+  return parsed;
+}
+
+window.downloadBudgetTemplate = downloadBudgetTemplate;
+window.exportBudgetsCSV = exportBudgetsCSV;
+
+// Header & Modal Budgets CSV upload
+document.getElementById('fBudgets').addEventListener('change', async e => {
+  const f = e.target.files?.[0]; e.target.value=''; if (!f) return;
+  try {
+    const p = await handleBudgetFile(f);
+    rebuildAll();
+    alert(`Budgets updated\n· Total Target: ${p.totalTargetUSD!=null?'$'+fmtNum(p.totalTargetUSD):'(unchanged)'}\n· Region Budgets: ${Object.keys(p.regionBudgets).length}\n· Region Targets: ${Object.keys(p.regionTargets).length}\n· Promo Budgets: ${Object.keys(p.promoBudgets).length}`);
+  } catch (err) { console.error(err); alert('Failed to parse Budgets CSV'); }
+});
+document.getElementById('fBudgetsModal').addEventListener('change', async e => {
+  const f = e.target.files?.[0]; e.target.value=''; if (!f) return;
+  try {
+    await handleBudgetFile(f);
+    closeBudgetModal();
+    openBudgetModal(); // refresh inputs
+    rebuildAll();
+  } catch (err) { console.error(err); alert('Failed to parse Budgets CSV'); }
+});
+
+function detectCsvKind(headerLine) {
+  const h = String(headerLine || '').toLowerCase().replace(/^\uFEFF/, '');
+
+  // Budgets
+  if (/(^|,)\s*type\s*(,|$)/.test(h) && /value/.test(h)) return 'budgets';
+
+  // Marketing — 다양한 헤더 조합 인식
+  if (/execution_date/.test(h)) return 'marketing';
+  if (/expected_cost|actual_cost/.test(h)) return 'marketing';
+  if (/order_target/.test(h)) return 'marketing';
+  if (/activity_type/.test(h)) return 'marketing';
+  if (/promotion_category/.test(h) && /title/.test(h)) return 'marketing';
+  if (/promotion_category/.test(h) && /cost/.test(h)) return 'marketing';
+  if (/promotion_category/.test(h) && /region/.test(h) && !/order.?date/.test(h)) return 'marketing';
+
+  // Orders
+  if (/order.?date|order date/.test(h)) return 'orders';
+  if (/ctr.?code|unit.?price/.test(h)) return 'orders';
+  if (/qty/.test(h) && /amount/.test(h) && /region/.test(h) && !/activity/.test(h)) return 'orders';
+
+  return 'unknown';
+}
+
+
+// Bulk Upload + Drag&Drop 공통 처리
+async function processBulkFiles(files, { replace = false } = {}) {
+  const summary = { orders:0, marketing:0, budgets:0, unknown:[] };
+  let replacedOrders = false, replacedMkt = false;
+  for (const f of files) {
+    if (!/\.csv$/i.test(f.name)) { summary.unknown.push(f.name + ' (not .csv)'); continue; }
+    try {
+      const txt = await readFileText(f);
+      const firstLine = (txt.split(/\r?\n/).find(l => l.trim()) || '');
+      const kind = detectCsvKind(firstLine);
+      if (kind === 'orders') {
+        const rows = await parseOrderCSV(txt);
+        rows.forEach(r => { r[SNAPSHOT_USER_MARK] = true; });
+        if (replace && !replacedOrders) { state.orders = rows; replacedOrders = true; }
+        else state.orders = state.orders.concat(rows);
+        summary.orders += rows.length;
+        markDataUpdated('orders');
+      } else if (kind === 'marketing') {
+        const rows = await parseMarketingCSV(txt);
+        rows.forEach(r => { r[SNAPSHOT_USER_MARK] = true; });
+        if (replace && !replacedMkt) { state.marketing = rows; replacedMkt = true; }
+        else state.marketing = state.marketing.concat(rows);
+        summary.marketing += rows.length;
+        markDataUpdated('marketing');
+      } else if (kind === 'budgets') {
+        applyBudgets(parseBudgetsCSV(txt));
+        summary.budgets += 1;
+      } else {
+        summary.unknown.push(f.name);
+      }
+    } catch (err) {
+      console.error(f.name, err);
+      summary.unknown.push(f.name + ' (parse failed)');
+    }
+  }
+  persist();
+  await loadFxRates();
+  rebuildAll();
+  return summary;
+}
+
+document.getElementById('fBulk').addEventListener('change', async e => {
+  const files = Array.from(e.target.files || []); e.target.value = '';
+  if (!files.length) return;
+  const summary = await processBulkFiles(files);
+  const lines = [
+    `✓ Orders: ${summary.orders} added`,
+    `✓ Marketing: ${summary.marketing} added`,
+    `✓ Budgets: ${summary.budgets} files applied`,
+  ];
+  if (summary.unknown.length) lines.push('', 'Unrecognized:', ...summary.unknown);
+  alert(lines.join('\n'));
+});
+
+/* ----- Drag & Drop: 페이지 어디든 CSV를 떨어뜨리면 자동 인식 (file:// 사용자에게 특히 유용) ----- */
+(function installDragDrop(){
+  let depth = 0;
+  let overlay = null;
+  function ensureOverlay() {
+    if (overlay) return overlay;
+    overlay = document.createElement('div');
+    overlay.id = 'dndOverlay';
+    overlay.style.cssText =
+      'position:fixed;inset:0;background:rgba(20,30,60,.55);' +
+      'backdrop-filter:blur(2px);z-index:99999;display:none;' +
+      'align-items:center;justify-content:center;pointer-events:none;' +
+      'color:#fff;font:600 18px/1.4 system-ui,-apple-system,Segoe UI,sans-serif;text-align:center;';
+    overlay.innerHTML =
+      '<div style="border:2px dashed #fff;padding:28px 40px;border-radius:14px;background:rgba(0,0,0,.25)">' +
+      '📥 CSV 파일을 여기에 놓으세요<br>' +
+      '<span style="font-weight:400;font-size:14px;opacity:.85">' +
+      'orders.csv / marketing.csv / budgets.csv — 헤더로 자동 인식</span></div>';
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+  function isFileDrag(e) {
+    return e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
+  }
+  window.addEventListener('dragenter', e => {
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    depth++;
+    ensureOverlay().style.display = 'flex';
+  });
+  window.addEventListener('dragover', e => {
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  });
+  window.addEventListener('dragleave', e => {
+    if (!isFileDrag(e)) return;
+    depth = Math.max(0, depth - 1);
+    if (depth === 0 && overlay) overlay.style.display = 'none';
+  });
+  window.addEventListener('drop', async e => {
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    depth = 0;
+    if (overlay) overlay.style.display = 'none';
+    const files = Array.from(e.dataTransfer.files || []).filter(f => /\.csv$/i.test(f.name));
+    if (!files.length) { alert('CSV 파일만 인식됩니다.'); return; }
+    const summary = await processBulkFiles(files);
+    const lines = [
+      `✓ Orders: ${summary.orders} added`,
+      `✓ Marketing: ${summary.marketing} added`,
+      `✓ Budgets: ${summary.budgets} files applied`,
+    ];
+    if (summary.unknown.length) lines.push('', 'Unrecognized:', ...summary.unknown);
+    alert(lines.join('\n'));
+  });
+})();
+
+// === Filter bar collapse toggle ===
+(function setupFilterToggle() {
+  const wrap = document.getElementById('filterBarWrap');
+  const btn = document.getElementById('filterBarToggle');
+  if (!wrap || !btn) return;
+  // Default is COLLAPSED unless the user has explicitly expanded it.
+  if (localStorage.getItem('ck_filter_collapsed') === '0') {
+    wrap.classList.remove('collapsed');
+    btn.setAttribute('aria-expanded', 'true');
+  }
+  btn.addEventListener('click', () => {
+    const nowOpen = wrap.classList.toggle('collapsed') === false;
+    btn.setAttribute('aria-expanded', String(nowOpen));
+    try { localStorage.setItem('ck_filter_collapsed', nowOpen ? '0' : '1'); } catch(_) {}
+  });
+  // Update the badge with a quick summary of any non-default filter values.
+  // Runs periodically so it reflects state mutations from anywhere in the app.
+  function summarize() {
+    const badge = document.getElementById('filterActiveBadge');
+    if (!badge) return;
+    const f = (state && state.filters) || {};
+    const parts = [];
+    if (f.year && f.year !== 'all')         parts.push(`Year: ${f.year}`);
+    if (f.quarter && f.quarter !== 'all')   parts.push(`Q: ${f.quarter}`);
+    if (f.month && f.month !== 'all')       parts.push(`Month: ${f.month}`);
+    if (f.region && f.region !== 'all')     parts.push(f.region);
+    if (f.country && f.country !== 'all')   parts.push(f.country);
+    if (f.customer && f.customer !== 'all') parts.push(f.customer);
+    if (f.promotion && f.promotion !== 'all') parts.push(f.promotion);
+    if (f.category && f.category !== 'all') parts.push(f.category);
+    if (f.sellType && f.sellType !== 'all') parts.push(f.sellType);
+    if (f.activity && f.activity !== 'all') parts.push(f.activity);
+    if (f.dateFrom || f.dateTo)             parts.push(`Date: ${f.dateFrom || '…'}~${f.dateTo || '…'}`);
+    if (parts.length === 0) {
+      badge.textContent = '(default · click to filter)';
+      badge.classList.remove('has-filters');
+    } else {
+      badge.textContent = `${parts.length} active · ${parts.slice(0,3).join(', ')}${parts.length>3?'…':''}`;
+      badge.classList.add('has-filters');
+    }
+  }
+  summarize();
+  setInterval(summarize, 800);
+})();
+
+// === Jump-to dropdown (in header) + URL-hash deep linking ===
+(function setupJumpTo() {
+  const sel = document.getElementById('jumpToSel');
+  // Scroll helper used both by dropdown selection and URL-hash handling.
+  function jumpTo(id, { updateHash = true, flash = true } = {}) {
+    if (!id) return false;
+    const el = document.querySelector(`.widget[data-widget-id="${id}"]`);
+    if (!el) return false;
+    const headerH = (document.querySelector('header')?.getBoundingClientRect().height || 0) + 12;
+    const y = el.getBoundingClientRect().top + window.scrollY - headerH;
+    window.scrollTo({ top: y, behavior: 'smooth' });
+    if (flash) {
+      el.classList.remove('jump-flash');
+      void el.offsetWidth;       // restart CSS animation
+      el.classList.add('jump-flash');
+    }
+    if (updateHash && location.hash.slice(1) !== id) {
+      // Use replaceState so the back button isn't polluted.
+      try { history.replaceState(null, '', `#${id}`); } catch(_) {}
+    }
+    return true;
+  }
+  // Expose globally so other code or future links can use it.
+  window._jumpToWidget = jumpTo;
+
+  if (sel) {
+    sel.addEventListener('change', () => {
+      const id = sel.value;
+      if (id) jumpTo(id);
+      sel.value = '';            // reset to placeholder
+    });
+  }
+  // Handle the initial URL hash once the dashboard is visible. We wait for
+  // either the #dashboard element to become visible or up to ~6s.
+  function tryInitialHash() {
+    const id = location.hash.replace(/^#/, '').trim();
+    if (!id) return true;        // nothing to do
+    const dash = document.getElementById('dashboard');
+    const visible = dash && dash.style.display !== 'none' && dash.offsetParent !== null;
+    if (!visible) return false;
+    return jumpTo(id, { updateHash: false });   // hash already in URL
+  }
+  function startInitialHashWatch() {
+    if (tryInitialHash()) return;
+    let tries = 0;
+    const iv = setInterval(() => {
+      tries++;
+      if (tryInitialHash() || tries > 30) clearInterval(iv);  // 30 × 200ms = 6s
+    }, 200);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startInitialHashWatch);
+  } else {
+    startInitialHashWatch();
+  }
+  // External hash changes (someone pastes a different link in the address bar).
+  window.addEventListener('hashchange', () => {
+    const id = location.hash.replace(/^#/, '').trim();
+    if (id) jumpTo(id, { updateHash: false });
+  });
+})();
+
+document.addEventListener('change', e => {
+  // Promotion Performance widget controls
+  if (e.target.id === 'ckiPromoSel') {
+    state.ckiPromo = e.target.value;
+    try { localStorage.setItem('ck_cki_promo', state.ckiPromo); } catch(_){}
+    renderAll(); return;
+  }
+  if (e.target.id === 'ckiThresholdSel') {
+    state.ckiThreshold = parseFloat(e.target.value) || 0;
+    try { localStorage.setItem('ck_cki_threshold', String(state.ckiThreshold)); } catch(_){}
+    renderAll(); return;
+  }
+  if (e.target.id === 'ckiCompareSel') {
+    state.ckiCompare = e.target.value;
+    try { localStorage.setItem('ck_cki_compare', state.ckiCompare); } catch(_){}
+    renderAll(); return;
+  }
+  if (e.target.id === 'promoFilterSel') {
+    state.promoFilter = e.target.value;
+    try { localStorage.setItem('ck_promo_filter', state.promoFilter); } catch(_){}
+    _quickRenderPromo(); return;
+  }
+  if (e.target.id === 'promoDimSel') {
+    state.promoDim = e.target.value;
+    try { localStorage.setItem('ck_promo_dim', state.promoDim); } catch(_){}
+    _quickRenderPromo(); return;
+  }
+  if (e.target.id === 'promoTableDimSel') {
+    state.promoTableDim = e.target.value;
+    try { localStorage.setItem('ck_promo_table_dim', state.promoTableDim); } catch(_){}
+    renderAll(); return;
+  }
+  if (e.target.id === 'promoCmpSel') {
+    state.promoCmp = e.target.value;
+    try { localStorage.setItem('ck_promo_cmp', state.promoCmp); } catch(_){}
+    persist(); _quickRenderPromo(); return;
+  }
+  if (e.target.id === 'selTrendDim') renderAll();
+  if (e.target.id === 'selPromoCtrFilter') {
+    state.promoCtrFilter = e.target.value; persist(); renderAll();
+  }
+  if (e.target.id === 'selCustTrendCamp') {
+    state.custTrendCampaign = e.target.value; persist(); renderAll(); return;
+  }
+  if (e.target.id === 'selCustTrendN') {
+    state.custTrendN = Number(e.target.value)||5; persist(); renderAll(); return;
+  }
+  if (e.target.id === 'selTopInsightsRegion') {
+    state.topInsightsRegion = e.target.value;
+    state.topInsightsCountry = '__all__';
+    persist(); renderAll();
+  }
+  if (e.target.id === 'selTopInsightsCountry') {
+    state.topInsightsCountry = e.target.value; persist(); renderAll();
+  }
+  if (e.target.id === 'selTopInsightsPromo') {
+    state.topInsightsPromo = e.target.value; persist(); renderAll();
+  }
+  if (e.target.id === 'inpTopInsightsFrom') {
+    state.topInsightsFrom = e.target.value; persist();
+    if (state.topInsightsPeriod === 'custom') renderAll();
+  }
+  if (e.target.id === 'inpTopInsightsTo') {
+    state.topInsightsTo = e.target.value; persist();
+    if (state.topInsightsPeriod === 'custom') renderAll();
+  }
+  if (e.target.id === 'selPromoCtrPromo') {
+    state.promoCtrPromo = e.target.value; persist(); renderAll();
+  }
+  if (e.target.id === 'inpPromoCtrFrom') {
+    state.promoCtrFrom = e.target.value; persist();
+    if (state.promoCtrPeriod === 'custom') renderAll();
+  }
+  if (e.target.id === 'inpPromoCtrTo') {
+    state.promoCtrTo = e.target.value; persist();
+    if (state.promoCtrPeriod === 'custom') renderAll();
+  }
+  // ── new widgets ──
+  if (e.target.id === 'selPotPromo') {
+    state.potPromo = e.target.value; persist(); renderAll();
+  }
+  if (e.target.id === 'selSkuAggPromo') {
+    state.skuAggPromo = e.target.value;
+    state.skuAggDrillSku = ''; // changing promotion resets drill-in
+    persist(); renderAll();
+  }
+});
+document.addEventListener('click', e => {
+  // SKU Aggregate — "Back to aggregate" link
+  if (e.target && e.target.id === 'lnkClearDrill') {
+    e.preventDefault();
+    state.skuAggDrillSku = '';
+    renderAll();
+    return;
+  }
+  // SKU Aggregate — row click drill-into SKU
+  const skuRow = e.target.closest('[data-drill-sku]');
+  if (skuRow && skuRow.closest('#tblSkuAggBreakdown')) {
+    const picked = skuRow.dataset.drillSku || '';
+    // toggle: clicking the currently-drilled SKU clears the drill
+    state.skuAggDrillSku = (state.skuAggDrillSku === picked) ? '' : picked;
+    renderAll();
+    return;
+  }
+  // PromoCtr column-sort header click (must precede row drill-down so header in same table doesn't trigger pick)
+  const sortHead = e.target.closest('#tblPromoCtrDetail th[data-sort-key]');
+  if (sortHead) {
+    const key = sortHead.dataset.sortKey;
+    if (state.promoCtrSortKey === key) {
+      state.promoCtrSortDir = (state.promoCtrSortDir === 'asc') ? 'desc' : 'asc';
+    } else {
+      state.promoCtrSortKey = key;
+      // sensible defaults: text columns asc, numeric desc
+      state.promoCtrSortDir = (key==='name'||key==='ctr'||key==='product'||key==='region') ? 'asc' : 'desc';
+    }
+    persist(); renderAll();
+    return;
+  }
+  // PromoCtr drill-down via row click
+  const promoRow = e.target.closest('[data-promoctr-pick]');
+  if (promoRow) {
+    state.promoCtrFilter = promoRow.dataset.promoctrPick;
+    const sel = document.getElementById('selPromoCtrFilter');
+    if (sel) sel.value = state.promoCtrFilter;
+    persist(); renderAll();
+    return;
+  }
+  // PlanExec breadcrumb
+  const crumb = e.target.closest('[data-planexec-crumb]');
+  if (crumb) {
+    const lvl = Number(crumb.dataset.planexecCrumb);
+    state.planExecPath = (state.planExecPath || []).slice(0, lvl);
+    persist(); renderAll();
+    return;
+  }
+  // PlanExec card drill-down
+  const peCard = e.target.closest('[data-planexec-pick]');
+  if (peCard) {
+    const path = (state.planExecPath || []).slice();
+    if (path.length < 3) {
+      path.push(peCard.dataset.planexecPick);
+      state.planExecPath = path;
+      persist(); renderAll();
+    }
+    return;
+  }
+  // PlanExec attention chip → jump to that region/country
+  const peJump = e.target.closest('[data-planexec-jump]');
+  if (peJump) {
+    const [r,c] = peJump.dataset.planexecJump.split('|||');
+    state.planExecPath = [r, c];
+    persist(); renderAll();
+    return;
+  }
+  // Period buttons (category trend)
+  const pb = e.target.closest('.period-btn');
+  if (pb) {
+    categoryPeriod = pb.dataset.period;
+    document.querySelectorAll('.period-btn').forEach(x => x.classList.toggle('active', x===pb));
+    renderAll();
+    return;
+  }
+  // Segmented controls
+  const seg = e.target.closest('.seg button');
+  if (seg) {
+    const parent = seg.parentElement;
+    const id = parent.id;
+    parent.querySelectorAll('button').forEach(x => x.classList.toggle('active', x===seg));
+    const v = seg.dataset.v;
+    if (id==='segTopInsightsDim')      { state.topInsightsDim = v; persist(); renderAll(); }
+    else if (id==='segTopInsightsMetric'){ state.topInsightsMetric = v; persist(); renderAll(); }
+    else if (id==='segPromoCtrDim'){
+      state.promoCtrDim = v;
+      state.promoCtrFilter = '__all__';
+      persist(); renderAll();
+    }
+    else if (id==='segPromoCtrMetric'){ state.promoCtrMetric = v; persist(); renderAll(); }
+    else if (id==='segPromoSellType'){
+      state.promoSellType = v;
+      try { localStorage.setItem('ck_promo_sell_type', v); } catch(_){}
+      // 배너 전환
+      const inEl  = document.getElementById('promoSellInBanner');
+      const outEl = document.getElementById('promoSellOutBanner');
+      if (inEl)  inEl.style.display  = v==='SELL-IN'  ? 'flex' : 'none';
+      if (outEl) outEl.style.display = v==='SELL-OUT' ? 'flex' : 'none';
+      // promoFilter 리셋
+      state.promoFilter = '__all__';
+      persist(); _quickRenderPromo();
+    }
+    else if (id==='segPromoPerf'){
+      state.promoPerfPeriod = v;
+      persist(); _quickRenderPromo();
+    }
+    else if (id==='segRegionMetric'){ state.regionMetric = v; persist(); renderAll(); }
+    else if (id==='segCustTrendGrain'){ state.custTrendGrain = v; persist(); renderAll(); }
+    else if (id==='segCustProdMode'){ state.custTrendProductMode = v; persist(); renderAll(); }
+    else if (id==='segCategoryView'){ state.categoryView = v; persist(); renderAll(); }
+    else if (id==='segPlanExecSort'){ state.planExecSort = v; persist(); renderAll(); }
+    else if (id==='segSkuCmp'){
+      setCmpState('sku', { mode: v, basis: 'auto' });
+      renderAll();
+    }
+    // ── new widgets ──
+    else if (id==='segPotPeriod'){ state.potPeriod = v; persist(); renderAll(); }
+    else if (id==='segPotMetric'){ state.potMetric = v; persist(); renderAll(); }
+    else if (id==='segTopInsightsPeriod'){ state.topInsightsPeriod = v; persist(); renderAll(); }
+    else if (id==='segPromoCtrPeriod'){    state.promoCtrPeriod    = v; persist(); renderAll(); }
+    return;
+  }
+  // Marketing Cost Breakdown Region 탭
+  const bd = e.target.closest('#breakdownTabs button[data-bd]');
+  if (bd) {
+    state.breakdownRegion = bd.dataset.bd;
+    persist(); renderAll();
+    return;
+  }
+  // Activity Timeline 토글
+  const tlP = e.target.closest('#tlPeriod button[data-v]');
+  if (tlP) { state.tlPeriod = tlP.dataset.v; persist(); renderAll(); return; }
+  const tlG = e.target.closest('#tlGroup button[data-v]');
+  if (tlG) { state.tlGroup = tlG.dataset.v; state.tlFocus = null; persist(); renderAll(); return; }
+  // Activity Timeline drill-down: click a group label or activity chip to focus the table below
+  const tlFocusEl = e.target.closest('[data-tl-focus]');
+  if (tlFocusEl) {
+    const type = tlFocusEl.dataset.tlFocus;
+    const value = tlFocusEl.dataset.tlValue;
+    const label = tlFocusEl.dataset.tlLabel || value;
+    if (state.tlFocus && state.tlFocus.type === type && String(state.tlFocus.value) === String(value)) {
+      state.tlFocus = null; // toggle off
+    } else {
+      state.tlFocus = { type, value, label };
+    }
+    renderAll();
+    // Smooth scroll to activities table for visibility
+    const tbl = document.getElementById('tblActivities');
+    if (tbl && state.tlFocus) tbl.scrollIntoView({ behavior:'smooth', block:'center' });
+    return;
+  }
+  // Clear focus button in banner
+  if (e.target.closest('#tlFocusClear')) {
+    state.tlFocus = null; renderAll(); return;
+  }
+  // Activities quick-search clear
+  if (e.target.closest('#actSearchClear')) {
+    state.actSearch = ''; renderAll(); return;
+  }
+  // Activities detail panel close
+  if (e.target.closest('#actDetailClose')) {
+    state.actSelectedId = null; renderAll(); return;
+  }
+  // Activities table row → open detail panel
+  const actRow = e.target.closest('#tblActivities tr[data-act-id]');
+  if (actRow) {
+    const id = actRow.dataset.actId;
+    state.actSelectedId = (String(state.actSelectedId) === String(id)) ? null : id;
+    renderAll();
+    if (state.actSelectedId) {
+      setTimeout(() => {
+        const d = document.getElementById('actDetailPanel');
+        if (d) d.scrollIntoView({ behavior:'smooth', block:'nearest' });
+      }, 30);
+    }
+    return;
+  }
+  // Widget order controls
+  const oc = e.target.closest('.widget-order-controls button');
+  if (oc) {
+    const widget = oc.closest('.widget');
+    const id = widget?.dataset.widgetId;
+    const dir = oc.dataset.dir;
+    if (!id || !dir) return;
+    moveWidget(id, dir);
+    return;
+  }
+});
+
+// Activities quick-search input (debounced, preserves focus by re-rendering only on commit)
+let _actSearchTimer = null;
+document.addEventListener('input', e => {
+  if (e.target && e.target.id === 'actSearchInput') {
+    clearTimeout(_actSearchTimer);
+    const v = e.target.value;
+    _actSearchTimer = setTimeout(() => {
+      state.actSearch = v;
+      renderAll();
+      // Restore focus & caret to the search input after re-render
+      const el = document.getElementById('actSearchInput');
+      if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+    }, 180);
+  }
+});
+
+/* =============== WIDGET ORDER =============== */
+function moveWidget(id, dir) {
+  if (dir === 'hide') {
+    if (!state.hiddenWidgets.includes(id)) state.hiddenWidgets.push(id);
+    persist();
+    applyWidgetOrder();
+    return;
+  }
+  const order = state.widgetOrder.slice();
+  const i = order.indexOf(id);
+  if (i < 0) return;
+  // visible 위젯 기준 인덱스로 swap
+  const visible = order.filter(w => !state.hiddenWidgets.includes(w));
+  const vi = visible.indexOf(id);
+  if (dir === 'up' && vi > 0) {
+    const target = visible[vi-1]; const ti = order.indexOf(target);
+    [order[ti], order[i]] = [order[i], order[ti]];
+  } else if (dir === 'down' && vi < visible.length-1) {
+    const target = visible[vi+1]; const ti = order.indexOf(target);
+    [order[i], order[ti]] = [order[ti], order[i]];
+  } else if (dir === 'top') { order.splice(i,1); order.unshift(id); }
+  else if (dir === 'bottom') { order.splice(i,1); order.push(id); }
+  else return;
+  state.widgetOrder = order;
+  persist();
+  applyWidgetOrder();
+}
+const WIDGET_LABELS = {
+  'promoOrderTrend':'Promotion Order Trends — Region / Annual / Quarterly / Monthly',
+  'skuExplorer':'SKU Analysis — Before/After Promotion · Monthly · Annual',
+  'category':'Sales Trend — Promotion Category & Region',
+  'planexec':'Campaign Plan vs Execution — Drill-down Explorer',
+  'promo':'Promotion Performance',
+  'region':'Region — Order, Marketing & Activity Breakdown',
+  'budgetstatus':'Marketing Budget — Allocation & Status by Region',
+  'customertrend':'Top Customer Order Trend · by Campaign',
+  'activities':'Marketing Activities',
+  'promoctr':'Promotion Category × Top CTR Sales',
+  'topinsights':'Top Insights — Vehicle Models · Products · CTR Codes',
+};
+function applyWidgetOrder() {
+  const area = document.getElementById('widgetArea');
+  if (!area) return;
+  // 누락된 위젯 보정
+  const present = Array.from(area.querySelectorAll('.widget')).map(w => w.dataset.widgetId);
+  state.widgetOrder = state.widgetOrder.filter(id => present.includes(id));
+  present.forEach(id => { if (!state.widgetOrder.includes(id)) state.widgetOrder.push(id); });
+  // 숨김 처리
+  present.forEach(id => {
+    const el = area.querySelector(`.widget[data-widget-id="${id}"]`);
+    if (el) el.style.display = state.hiddenWidgets.includes(id) ? 'none' : '';
+  });
+  // 재배치
+  state.widgetOrder.forEach(id => {
+    const el = area.querySelector(`.widget[data-widget-id="${id}"]`);
+    if (el) area.appendChild(el);
+  });
+  // 컨트롤 버튼 렌더 (각 위젯마다) — 표시 중인 위젯 기준으로 인덱스 계산
+  const visibleIds = state.widgetOrder.filter(id => !state.hiddenWidgets.includes(id));
+  state.widgetOrder.forEach((id) => {
+    const el = area.querySelector(`.widget[data-widget-id="${id}"]`);
+    if (!el) return;
+    const idx = visibleIds.indexOf(id);
+    const last = visibleIds.length - 1;
+    el.querySelectorAll('.widget-order-controls').forEach(host => {
+      host.innerHTML = `
+        <button data-dir="top" ${idx<=0?'disabled':''} title="Move to top">⤒</button>
+        <button data-dir="up" ${idx<=0?'disabled':''} title="Move up">▲</button>
+        <button data-dir="down" ${idx>=last?'disabled':''} title="Move down">▼</button>
+        <button data-dir="bottom" ${idx>=last?'disabled':''} title="Move to bottom">⤓</button>
+        <button data-dir="hide" class="close-btn" title="Hide (re-enable from Settings)">✕</button>
+      `;
+    });
+  });
+}
+
+/* =================== SETTINGS MODAL =================== */
+function openSettingsModal() {
+  const wl = document.getElementById('widgetSettingsList');
+  wl.innerHTML = state.widgetOrder.map(id => {
+    const checked = !state.hiddenWidgets.includes(id) ? 'checked' : '';
+    return `<label><input type="checkbox" data-widget="${id}" ${checked} /><span>${WIDGET_LABELS[id]||id}</span></label>`;
+  }).join('');
+
+  document.getElementById('autoHideEmptyRegionsChk').checked = !!state.autoHideEmptyRegions;
+
+  const dataRegions = new Set([
+    ...state.orders.map(o=>o.region).filter(Boolean),
+    ...state.marketing.map(m=>m.region).filter(Boolean),
+    ...Object.keys(state.regionBudgets),
+    ...Object.keys(state.regionTargets),
+  ]);
+  const allRegions = Array.from(new Set([...REGIONS, ...dataRegions])).sort();
+  const rl = document.getElementById('regionSettingsList');
+  rl.innerHTML = allRegions.map(r => {
+    const checked = !state.hiddenRegions.includes(r) ? 'checked' : '';
+    return `<label><input type="checkbox" data-region="${r}" ${checked} /><span>${r}</span></label>`;
+  }).join('');
+  document.getElementById('settingsModal').classList.add('open');
+}
+function closeSettingsModal() { document.getElementById('settingsModal').classList.remove('open'); }
+function saveSettings() {
+  const hiddenW = [];
+  document.querySelectorAll('#widgetSettingsList input[data-widget]').forEach(el => {
+    if (!el.checked) hiddenW.push(el.dataset.widget);
+  });
+  state.hiddenWidgets = hiddenW;
+  state.autoHideEmptyRegions = document.getElementById('autoHideEmptyRegionsChk').checked;
+  const hiddenR = [];
+  document.querySelectorAll('#regionSettingsList input[data-region]').forEach(el => {
+    if (!el.checked) hiddenR.push(el.dataset.region);
+  });
+  state.hiddenRegions = hiddenR;
+  persist();
+  closeSettingsModal();
+  applyWidgetOrder();
+  renderAll();
+}
+window.openSettingsModal = openSettingsModal;
+window.closeSettingsModal = closeSettingsModal;
+window.saveSettings = saveSettings;
+// Expose remaining inline-onclick handlers to global scope (IIFE workaround)
+window.downloadOrderTemplate = downloadOrderTemplate;
+window.downloadMarketingTemplate = downloadMarketingTemplate;
+window.openAddActivity = openAddActivity;
+window.closeModal = closeModal;
+window.submitActivity = submitActivity;
+window.clearAll = clearAll;
+window.reloadAutoCSV = reloadAutoCSV;
+
+/* =================== PRE-ORDER BASELINE (lazy load) ====================
+   GitHub raw에서 chunked JSON 파일들을 직접 받아와 메모리 캐시.
+   두 manifest를 합쳐서 로드 — `data/` (177K) + `new_data/` (334K) = ~512K rows.
+
+   IMPORTANT — 이 데이터는 메인 흐름(state.orders, 일반 차트/KPI)에 절대 통합되지 않습니다.
+   오직 SKU의 캠페인 적용 전/후 효과 추적을 위해, YoY/QoQ/MoM/WoW 비교 KPI의
+   "이전 기간(previous range)" 집계에서만 baseline으로 활용됩니다.
+
+   - state.preOrders        : 메모리 캐시 (localStorage에는 절대 저장 안 됨)
+   - state.preOrdersEnabled : 로드 여부 플래그 (true면 비교 KPI baseline에 자동 포함)
+================================================================ */
+const PRE_ORDER_MARK = '__preOrder__';
+// Resolve the base URL for repo files.
+//   • When served from GitHub Pages (or any HTTP host) → same-origin URLs.
+//     This bypasses Korean ISP blocks, CORS, and ad-blockers that target
+//     raw.githubusercontent.com. GitHub Pages serves every committed file in
+//     the repo at the same origin as the dashboard itself.
+//   • When opened locally (file://) → raw.githubusercontent.com fallback so
+//     development still works.
+function _resolveGhRepoBase() {
+  if (location.protocol === 'http:' || location.protocol === 'https:') {
+    const path = location.pathname.replace(/index\.html?$/i, '').replace(/\/$/, '');
+    return location.origin + path;
+  }
+  return 'https://raw.githubusercontent.com/masterteamply-stack/choicekit-dashboard/main';
+}
+const GH_REPO_BASE = _resolveGhRepoBase();
+
+const PRE_ORDER_MANIFESTS = [
+  { name: 'baseline_data', url: `${GH_REPO_BASE}/baseline_data/manifest.json` },
+];
+
+/* ── Tiny IndexedDB helpers ── */
+function _idbOpen() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('ckDashboard', 2);
+    req.onupgradeneeded = () => { if (!req.result.objectStoreNames.contains('kv')) req.result.createObjectStore('kv'); };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror   = () => reject(req.error);
+  });
+}
+async function idbGet(key) {
+  try {
+    const db = await _idbOpen();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction('kv','readonly');
+      const r = tx.objectStore('kv').get(key);
+      r.onsuccess = () => resolve(r.result);
+      r.onerror   = () => reject(r.error);
+    });
+  } catch(e) { return undefined; }
+}
+async function idbSet(key, val) {
+  const db = await _idbOpen();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('kv','readwrite');
+    tx.objectStore('kv').put(val, key);
+    tx.oncomplete = () => resolve(true);
+    tx.onerror    = () => reject(tx.error);
+  });
+}
+async function idbDel(key) {
+  try {
+    const db = await _idbOpen();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction('kv','readwrite');
+      tx.objectStore('kv').delete(key);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror    = () => reject(tx.error);
+    });
+  } catch(e) { return false; }
+}
+
+async function fetchPreOrdersOnce() {
+  if (state.preOrders && state.preOrders.length) return state.preOrders;
+  if (location.protocol === 'file:') throw new Error('file:// 환경 불가');
+  const btn = document.getElementById('btnPreOrder');
+  const lbl = (t) => { if (btn) btn.innerHTML = `<span style="animation:ck-spin 0.8s linear infinite;display:inline-block">⟳</span> ${t}`; };
+
+  lbl('Loading manifests…');
+  const manifestResults = await Promise.all(PRE_ORDER_MANIFESTS.map(async m => {
+    try {
+      const res = await fetch(m.url, { cache: 'no-cache' });
+      if (!res.ok) { console.warn(`[baseline] ${m.name}: HTTP ${res.status}`); return { ...m, manifest:null }; }
+      return { ...m, manifest: await res.json() };
+    } catch(e) { console.warn(`[baseline] ${m.name} failed:`, e); return { ...m, manifest:null }; }
+  }));
+  const totalExpected = manifestResults.reduce((s,m) => s + (m.manifest?.total_records||0), 0);
+
+  if (totalExpected > 0) {
+    try {
+      const cached = await idbGet('baselineCache_v1');
+      if (cached && cached.version === totalExpected && cached.rows?.length) {
+        console.log(`[baseline] ⚡ cache: ${cached.rows.length.toLocaleString()} rows`);
+        const rows = cached.rows.map(o => o[PRE_ORDER_MARK] ? o : { ...o, [PRE_ORDER_MARK]:true });
+        state.preOrders = rows; state.preOrdersMeta = { source:'idb', count:rows.length };
+        return rows;
+      }
+    } catch(_) {}
+  }
+
+  const urls = [];
+  for (const { manifest, name } of manifestResults) {
+    if (!manifest) continue;
+    if (Array.isArray(manifest.files)) {
+      manifest.files.forEach(f => urls.push(`${GH_REPO_BASE}/${f}`));
+    } else if (manifest.total_chunks > 0) {
+      for (let i = 0; i < manifest.total_chunks; i++)
+        urls.push(`${GH_REPO_BASE}/${name}/chunk_${String(i).padStart(4,'0')}.json`);
+    }
+  }
+  if (!urls.length) throw new Error('baseline manifest 없음');
+
+  const allRows = []; let done = 0;
+  for (let i = 0; i < urls.length; i += 10) {
+    const batch = await Promise.allSettled(urls.slice(i,i+10).map(u =>
+      fetch(u, { cache:'force-cache' }).then(r => r.ok ? r.json() : Promise.reject(r.status))
+    ));
+    batch.forEach(r => { if (r.status==='fulfilled' && Array.isArray(r.value)) r.value.forEach(o => allRows.push(slimPreOrderRow(o))); });
+    done += batch.length;
+    lbl(`Loading ${fmtNum(allRows.length)} rows… (${done}/${urls.length})`);
+  }
+  if (!allRows.length) throw new Error('baseline 0건');
+  console.log(`[baseline] ✅ ${allRows.length.toLocaleString()} rows`);
+  state.preOrders = allRows; state.preOrdersMeta = { source:'baseline_data', count:allRows.length };
+  try { await idbSet('baselineCache_v1', { rows:allRows, version:totalExpected, savedAt:new Date().toISOString() }); } catch(_) {}
+  return allRows;
+}
+
+function updatePreOrderBadge() {
+  const badge = document.getElementById('preOrderBadge');
+  if (!badge) return;
+  const enabled = state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length > 0;
+  badge.textContent = enabled ? `Baseline ON (${fmtNum(state.preOrders.length)} rows)` : 'Baseline OFF';
+  badge.style.color = enabled ? '#0a7d2e' : '#86868B';
+}
+
+function _buildPreOrdersIndex() {
+  if (!state.preOrdersEnabled || !Array.isArray(state.preOrders) || !state.preOrders.length) {
+    state._preIdx = null; state._preOrdersIndexed = false; return;
+  }
+  if (state._preOrdersIndexed) return;
+  const promoIdx = {}, custIdx = {};
+  state.preOrders.forEach(o => {
+    const p = (o._promo || o.promotion_category || '').trim();
+    const c = (o.customer || '').trim();
+    if (p) (promoIdx[p] = promoIdx[p] || []).push(o);
+    if (c) (custIdx[c]  = custIdx[c]  || []).push(o);
+  });
+  state._preIdx = { promoIdx, custIdx, _buyerMap:{} };
+  state._preOrdersIndexed = true;
+  window._promoBundleBuyers = {};
+  console.log(`[baseline] index: ${Object.keys(promoIdx).length} campaigns, ${state.preOrders.length} rows`);
+}
+
+// Auto-load baseline_data (~8K rows) on page load
 async function maybeAutoLoadPreOrders() {
   if (location.protocol === 'file:') { updatePreOrderBadge(); return; }
   try { await idbDel('preOrdersCache_v2'); } catch(_) {}
@@ -8942,600 +10344,6 @@ async function maybeAutoLoadPreOrders() {
   updatePreOrderBadge();
 }
 
-
-window.togglePreOrders = togglePreOrders;
-
-/* =================== REGION VISIBILITY =================== */
-// region이 차트/테이블에 포함되어야 하는지
-function isRegionVisible(region) {
-  if (!region) return true; // 빈 값은 항상 통과 (별도 처리)
-  if (state.hiddenRegions && state.hiddenRegions.includes(region)) return false;
-  if (state.autoHideEmptyRegions) {
-    const hasOrder = state.orders.some(o => o.region === region);
-    const hasMkt = state.marketing.some(m => m.region === region);
-    const hasBudget = Number(state.regionBudgets[region]||0) > 0 || Number(state.regionTargets[region]||0) > 0;
-    if (!hasOrder && !hasMkt && !hasBudget) return false;
-  }
-  return true;
-}
-function visibleRegionFilter(arr) {
-  return arr.filter(x => !x.region || isRegionVisible(x.region));
-}
-
-/* =================== AUTO CSV LOAD ===================
-   HTML 파일과 같은 폴더에 아래 파일명으로 두면 자동 로딩됩니다:
-     - orders.csv      (오더 데이터)
-     - marketing.csv   (마케팅 활동)
-   브라우저 보안 정책상 file:// 프로토콜에서는 fetch가 막힐 수 있어,
-   사내 웹서버 또는 정적 호스팅(http(s)://) 환경에서 사용하세요.
-   실패 시 기존 수동 업로드 버튼으로 보완 가능합니다.
-*/
-const AUTO_CSV_FILES = { orders: 'orders.csv', marketing: 'marketing.csv', budgets: 'budgets.csv' };
-
-/* =================== SUPABASE SHARED DATA ===================
-   ck_shared_data 테이블에서 공유 CSV를 로드합니다.
-   - 모든 사용자가 동일한 기본 데이터를 봅니다.
-   - 사용자가 직접 CSV를 올리면 개인 커스텀 데이터가 localStorage에 저장됩니다.
-   - Reset to Shared Data 버튼으로 공유 데이터로 복원할 수 있습니다.
-================================================================ */
-const SB_SHARED_URL = 'https://waxjtcxdgulbdofycywr.supabase.co';
-const SB_SHARED_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndheGp0Y3hkZ3VsYmRvZnljeXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMjc3NTIsImV4cCI6MjA4ODgwMzc1Mn0.rvkmwG-dsjeFfT2NAMUJaKjCBMm2SOmAQ1SXl3V3jHI';
-
-/* ── CTR-Model 매핑 ──────────────────────────────────── */
-let ctrModelMap = {};   // { 'CB0210R': 'HYUNDAI SONATA', ... }
-
-async function loadCtrModelMap() {
-  try {
-    // 22,000건 이상이므로 페이지네이션으로 전체 로드
-    const PAGE = 1000;
-    let all = [];
-    let from = 0;
-    while (true) {
-      const res = await fetch(
-        `${SB_SHARED_URL}/rest/v1/ck_ctr_model?select=ctr_code,make_model,brand&limit=${PAGE}&offset=${from}`,
-        { headers: { apikey: SB_SHARED_KEY, Authorization: `Bearer ${SB_SHARED_KEY}` } }
-      );
-      if (!res.ok) break;
-      const rows = await res.json();
-      if (!rows.length) break;
-      all = all.concat(rows);
-      if (rows.length < PAGE) break;
-      from += PAGE;
-    }
-    ctrModelMap = {};
-    all.forEach(r => { if (r.ctr_code) ctrModelMap[r.ctr_code.toUpperCase()] = r; });
-    console.log(`✅ CTR-Model map loaded: ${all.length}건`);
-  } catch(e) { console.warn('CTR-Model map load failed:', e); }
-}
-
-async function uploadCtrModelCSV(file) {
-  const text = await file.text();
-  const lines = text.trim().split(/\r?\n/);
-  const header = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/[^a-z0-9_]/g,'_'));
-  const rows = [];
-  for (let i = 1; i < lines.length; i++) {
-    if (!lines[i].trim()) continue;
-    const vals = lines[i].split(',');
-    const row = {};
-    header.forEach((h, idx) => { row[h] = (vals[idx]||'').trim(); });
-    // 컬럼 자동 매핑
-    const ctr = row['ctr_code'] || row['ctr'] || row['code'] || row['part_no'] || '';
-    const model = row['make_model'] || row['model'] || row['vehicle_model'] || row['vehicle'] || '';
-    const brand = row['brand'] || row['make'] || '';
-    const vtype = row['vehicle_type'] || row['type'] || '';
-    if (ctr) rows.push({ ctr_code: ctr.toUpperCase(), make_model: model, brand, vehicle_type: vtype });
-  }
-  if (!rows.length) { alert('유효한 데이터가 없습니다.'); return; }
-
-  // Supabase upsert
-  const res = await fetch(`${SB_SHARED_URL}/rest/v1/ck_ctr_model`, {
-    method: 'POST',
-    headers: {
-      apikey: SB_SHARED_KEY, Authorization: `Bearer ${SB_SHARED_KEY}`,
-      'Content-Type': 'application/json',
-      'Prefer': 'resolution=merge-duplicates'
-    },
-    body: JSON.stringify(rows)
-  });
-  if (res.ok || res.status === 201) {
-    showToast(`✅ CTR-Model 매핑 ${rows.length}건 저장 완료`);
-    await loadCtrModelMap();
-    rebuildAll();
-  } else {
-    const err = await res.text();
-    alert('저장 실패: ' + err);
-  }
-}
-
-// CTR Code → make_model 변환 (매핑 있으면 사용, 없으면 원본)
-function resolveModel(ctrCode, mode) {
-  if (!ctrCode) return '';
-  const entry = ctrModelMap[ctrCode.toUpperCase()];
-  if (!entry) return '';
-  // mode='brand': 브랜드만, mode='full': make_model 전체(C열), default: make_model
-  if (mode === 'brand') return entry.brand || '';
-  // 'full' 또는 default: 매핑 테이블 C열 (make_model) 그대로 반환
-  return entry.make_model || entry.brand || '';
-}
-
-// Shared CSV URLs — same GitHub repo as pre-orders, just files at the repo root.
-function _resolveGhRepoBase() {
-  // GitHub Pages doesn't serve raw CSV — always use raw.githubusercontent.com
-  return 'https://raw.githubusercontent.com/masterteamply-stack/choicekit-dashboard/main';
-}
-const GH_REPO_BASE = _resolveGhRepoBase();
-console.log('[pre-orders] base URL:', GH_REPO_BASE);
-
-const PRE_ORDER_MANIFESTS = [
-  // baseline_data: 511,689행 → 13,263행으로 전처리 완료
-  // 각 캠페인 target SKU/고객에 해당하는 2024-2025 오더만 포함
-  { name: 'baseline_data', url: `${GH_REPO_BASE}/baseline_data/manifest.json` },
-];
-// Legacy Supabase Edge Function — kept as commented reference; CORS / RLS issues
-// made it unreliable in production. Same-origin from GitHub Pages is the dependable path now.
-// const PRE_ORDER_JSON_URL = 'https://waxjtcxdgulbdofycywr.supabase.co/functions/v1/pre-orders-data';
-
-/* ── Tiny IndexedDB key-value helper (for caching the large pre-orders dataset) ── */
-function _idbOpen() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open('ckDashboard', 1);
-    req.onupgradeneeded = () => req.result.createObjectStore('kv');
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-async function idbGet(key) {
-  try {
-    const db = await _idbOpen();
-    return await new Promise((resolve, reject) => {
-      const tx = db.transaction('kv','readonly');
-      const r = tx.objectStore('kv').get(key);
-      r.onsuccess = () => resolve(r.result);
-      r.onerror = () => reject(r.error);
-    });
-  } catch (e) { return undefined; }
-}
-async function idbSet(key, val) {
-  const db = await _idbOpen();
-  return await new Promise((resolve, reject) => {
-    const tx = db.transaction('kv','readwrite');
-    const r = tx.objectStore('kv').put(val, key);
-    r.onsuccess = () => resolve();
-    r.onerror = () => reject(r.error);
-  });
-}
-async function idbDelete(key) {
-  try {
-    const db = await _idbOpen();
-    return await new Promise((resolve) => {
-      const tx = db.transaction('kv','readwrite');
-      const r = tx.objectStore('kv').delete(key);
-      r.onsuccess = () => resolve();
-      r.onerror = () => resolve();
-    });
-  } catch (e) {}
-}
-
-// Only these fields are needed downstream (fillCompareKpis usage). Stripping the
-// other ~30 columns from each pre-order row cuts memory & IndexedDB size by ~60%.
-const PRE_ORDER_SLIM_FIELDS = ['order_id','order_date','amount_usd','amount','qty','sku','ctr_code','region','country','promotion_category','customer','currency','_promo'];
-function slimPreOrderRow(o) {
-  const r = {};
-  for (let i = 0; i < PRE_ORDER_SLIM_FIELDS.length; i++) {
-    const k = PRE_ORDER_SLIM_FIELDS[i];
-    if (o[k] !== undefined) r[k] = o[k];
-  }
-  // baseline_data: _promo가 promotion_category 역할 — 없으면 채워넣기
-  if (!r.promotion_category && r._promo) r.promotion_category = r._promo;
-  // amount_usd fallback
-  if (!r.amount_usd && r.amount) r.amount_usd = r.amount;
-  r.country = normalizeCountry(r.country);
-  // Resolve region with country override applied — fixes baseline rows that
-  // were tagged with the wrong region (e.g. Mexico baseline mistakenly tagged
-  // 'N_AMERICA' → forced to 'LATAM'; Russia → 'RUS'). Date-aware re-classification
-  // (Ukraine/Georgia/Armenia → EUROPE from 2026) also applies via resolveRegion.
-  r.region = resolveRegion(r.region, r.country, r.order_date);
-  // category is derived from promotion_category by callers via promoKeyOfOrder
-  r[PRE_ORDER_MARK] = true;
-  return r;
-}
-
-// Primary fast path: a single columnar + dictionary-encoded bundle file.
-// ~18MB raw / ~5-7MB gzipped over the wire → 3-5s on a decent connection vs
-// 15-30s for 1,025 chunk fetches. Regenerate via scripts/build_pre_orders_bundle.py.
-const PRE_ORDER_BUNDLE_URL   = `${GH_REPO_BASE}/pre_orders_bundle.json`;
-const PRE_ORDER_SUMMARY_URL  = `${GH_REPO_BASE}/pre_orders_summary.json`;
-
-// ── 스냅샷 로드: 26MB 번들 없이 즉시 전년 비교 데이터 표시 ──
-// pre_orders_summary.json (~41KB): 캠페인별×월별 전년 집계 결과
-// 이 데이터만으로 Promotion Performance 전년 동기 수치를 즉시 표시
-async function loadPreOrdersSummary() {
-  try {
-    const res = await fetch(PRE_ORDER_SUMMARY_URL, { cache: 'force-cache' });
-    if (!res.ok) return null;
-    const snap = await res.json();
-    state.preOrdersSummary = snap;
-    // yoy_by_promo_month: { promo → { "2025-04": 210000, ... } }
-    state.yoyByPromoMonth = snap.yoy_by_promo_month || {};
-    state.promoBundleBuyersSnap = snap.promo_bundle_buyers || {};
-    state.promoCTRsSnap = snap.promo_ctrs || {};
-    console.log('[summary] loaded — promos:', Object.keys(state.yoyByPromoMonth).length);
-    return snap;
-  } catch(e) {
-    console.warn('[summary] load failed:', e);
-    return null;
-  }
-}
-
-// Reconstruct full row objects from a v2 (columnar+dict) bundle.
-//   bundle.k     = { order_id:'i', order_date:'d', ... }   (long → short)
-//   bundle.dicts = { i:[...vocab], d:[...vocab], ... }     (string fields)
-//   bundle.idx   = { i:[ix,ix,...], d:[...], ... }         (per-row dict index)
-//   bundle.num   = { a:[29.24,...], q:[4,...] }            (per-row number)
-function decodeV2Bundle(bundle) {
-  const N = bundle.n;
-  // Invert key map: short → long. Skip the short key for assembly, since we
-  // want to write the long names that downstream code expects.
-  const inv = {};
-  for (const longK in bundle.k) inv[bundle.k[longK]] = longK;
-  // Pre-resolve which short keys are dict-encoded vs raw numbers
-  const dictShortKeys = Object.keys(bundle.dicts || {});
-  const numShortKeys  = Object.keys(bundle.num   || {});
-  // Pre-bind arrays for speed (avoid repeated property lookups inside the hot loop)
-  const dictPairs = dictShortKeys.map(sk => ({ longK: inv[sk] || sk, vocab: bundle.dicts[sk], idxArr: bundle.idx[sk] }));
-  const numPairs  = numShortKeys.map (sk => ({ longK: inv[sk] || sk, arr:   bundle.num[sk] }));
-  const out = new Array(N);
-  for (let i = 0; i < N; i++) {
-    const o = {};
-    for (let j = 0; j < dictPairs.length; j++) {
-      const p = dictPairs[j];
-      const ix = p.idxArr[i];
-      if (ix !== -1 && ix !== undefined) o[p.longK] = p.vocab[ix];
-    }
-    for (let j = 0; j < numPairs.length; j++) {
-      const p = numPairs[j];
-      const v = p.arr[i];
-      if (v !== null && v !== undefined) o[p.longK] = v;
-    }
-    o.country = normalizeCountry(o.country);
-    // Resolve region with country override applied — fixes baseline rows that
-    // were tagged with the wrong region. See slimPreOrderRow for full rationale.
-    o.region = resolveRegion(o.region, o.country, o.order_date);
-    o[PRE_ORDER_MARK] = true;
-    out[i] = o;
-  }
-  return out;
-}
-
-// Try to load pre-orders from the single bundle file. Returns
-// { rows, version }  on success, or { error: 'reason' }  on failure.
-// The error reason is shown to the user in the final alert so they can
-// diagnose without needing to open DevTools.
-async function tryLoadPreOrderBundle(setBtnLabel) {
-  try {
-    setBtnLabel('Loading bundle…');
-    let res;
-    try {
-      res = await fetch(PRE_ORDER_BUNDLE_URL, { cache: 'no-cache' });
-    } catch (netErr) {
-      const reason = `network error: ${netErr && netErr.message || netErr}`;
-      console.warn(`[pre-orders] bundle fetch network error:`, netErr);
-      return { error: reason };
-    }
-    if (!res.ok) {
-      const reason = `HTTP ${res.status}${res.status === 404 ? ' (file not found at repo root)' : ''}`;
-      if (res.status === 404) console.log('[pre-orders] no bundle at repo root — falling back to chunk fetcher');
-      else console.warn(`[pre-orders] bundle ${reason}`);
-      return { error: reason };
-    }
-    setBtnLabel('Parsing bundle…');
-    let bundle;
-    try { bundle = await res.json(); }
-    catch (parseErr) {
-      const reason = `JSON parse error: ${parseErr && parseErr.message || parseErr}`;
-      console.warn(`[pre-orders] bundle ${reason}`);
-      return { error: reason };
-    }
-    if (!bundle || typeof bundle.n !== 'number') {
-      const reason = `malformed bundle (top keys: ${Object.keys(bundle||{}).slice(0,5).join(',')})`;
-      console.warn(`[pre-orders] ${reason}`);
-      return { error: reason };
-    }
-    setBtnLabel(`Expanding ${fmtNum(bundle.n)} rows…`);
-    let expanded;
-    if (bundle.v === 2 && bundle.dicts && bundle.idx) {
-      expanded = decodeV2Bundle(bundle);
-    } else if (bundle.v === 1 && Array.isArray(bundle.rows) && bundle.k) {
-      const inv = {};
-      for (const longK in bundle.k) inv[bundle.k[longK]] = longK;
-      expanded = bundle.rows.map(r => {
-        const o = {};
-        for (const k in r) o[inv[k] || k] = r[k];
-        o.region = normalizeRegion(o.region);
-        o.country = normalizeCountry(o.country);
-        o[PRE_ORDER_MARK] = true;
-        return o;
-      });
-    } else {
-      const reason = `unsupported schema v${bundle.v}`;
-      console.warn(`[pre-orders] ${reason}`);
-      return { error: reason };
-    }
-    console.log(`[pre-orders] ✅ bundle loaded: ${expanded.length.toLocaleString()} rows (schema v${bundle.v}, n=${bundle.n})`);
-    // Content-aware version: row count plus a hash of the customer dict so any
-    // customer rename in a regenerated bundle invalidates the IndexedDB cache,
-    // even when row count stays the same.
-    let custSig = 0;
-    const custDict = (bundle.dicts && bundle.dicts.u) || [];
-    const custStr = custDict.join('|');
-    for (let i = 0; i < custStr.length; i++) {
-      custSig = (custSig * 31 + custStr.charCodeAt(i)) | 0;
-    }
-    const version = `${bundle.n}:${custDict.length}:${custSig}`;
-    return { rows: expanded, version };
-  } catch (e) {
-    const reason = `unexpected error: ${e && e.message || e}`;
-    console.warn('[pre-orders] bundle:', reason, e);
-    return { error: reason };
-  }
-}
-
-async function fetchPreOrdersOnce() {
-  if (state.preOrders && state.preOrders.length) return state.preOrders;
-  if (location.protocol === 'file:') {
-    throw new Error('file:// 환경에서는 fetch가 차단됩니다. HTML을 로컬 서버로 열거나 (예: python -m http.server) GitHub Pages에 올려주세요.');
-  }
-  const btn = document.getElementById('btnPreOrder');
-  const setBtnLabel = (txt) => {
-    if (btn) btn.innerHTML = `<span style="display:inline-block;animation:ck-spin 0.8s linear infinite;">⟳</span> ${txt}`;
-  };
-
-  // ── Step 0: Try the single-file bundle first (~18MB / 3-5s) ──
-  const bundleResult = await tryLoadPreOrderBundle(setBtnLabel);
-  const bundleError = bundleResult && bundleResult.error;
-  if (bundleResult && !bundleError) {
-    // Check IndexedDB cache against bundle.n (auto-invalidates when bundle regen)
-    setBtnLabel('Checking cache…');
-    const cachedB = await idbGet('preOrdersCache_v2');
-    if (cachedB && cachedB.version === bundleResult.version && Array.isArray(cachedB.rows) && cachedB.rows.length) {
-      console.log(`[pre-orders] ⚡ IndexedDB cache hit (bundle path): ${cachedB.rows.length.toLocaleString()} rows`);
-      const restoredB = cachedB.rows.map(o => (o[PRE_ORDER_MARK] ? o : { ...o, [PRE_ORDER_MARK]: true }));
-      state.preOrders = restoredB;
-      state.preOrdersMeta = { source: 'indexeddb-cache(bundle)', count: restoredB.length, version: bundleResult.version };
-      return restoredB;
-    }
-    state.preOrders = bundleResult.rows;
-    state.preOrdersMeta = { source: 'github-bundle', count: bundleResult.rows.length, version: bundleResult.version };
-    try {
-      setBtnLabel('Caching…');
-      await idbSet('preOrdersCache_v2', { rows: bundleResult.rows, version: bundleResult.version, savedAt: new Date().toISOString() });
-      console.log(`[pre-orders] 💾 cached ${bundleResult.rows.length} rows to IndexedDB (version ${bundleResult.version})`);
-    } catch (e) {
-      console.warn('[pre-orders] IndexedDB cache save failed (non-fatal):', e);
-    }
-    return bundleResult.rows;
-  }
-
-  // ── Step 1: Load both manifests in parallel (cheap, ~10-20 KB each) ──
-  setBtnLabel('Loading manifests…');
-  const manifestResults = await Promise.all(PRE_ORDER_MANIFESTS.map(async (m) => {
-    try {
-      const res = await fetch(m.url, { cache: 'no-cache' });
-      if (!res.ok) {
-        const reason = `HTTP ${res.status}`;
-        console.warn(`[pre-orders] manifest ${m.name}: ${reason}`);
-        return { ...m, manifest: null, error: reason };
-      }
-      const manifest = await res.json();
-      console.log(`[pre-orders] manifest ${m.name}: ${manifest.total_records?.toLocaleString?.() || '?'} rows / ${manifest.total_chunks} chunks`);
-      return { ...m, manifest, error: null };
-    } catch (e) {
-      const reason = `${e && e.name || 'Error'}: ${e && e.message || e}`;
-      console.warn(`[pre-orders] manifest ${m.name} fetch failed:`, e);
-      return { ...m, manifest: null, error: reason };
-    }
-  }));
-  const totalExpected = manifestResults.reduce((s, m) => s + (m.manifest?.total_records || 0), 0);
-
-  // ── Step 1.5: Check IndexedDB cache — if the cached version matches the
-  // current manifest total_records, skip the network entirely. (When workflows
-  // insert new rows, total_records changes → cache auto-invalidates.) ──
-  if (totalExpected > 0) {
-    setBtnLabel('Checking cache…');
-    const cached = await idbGet('preOrdersCache_v2');
-    if (cached && cached.version === totalExpected && Array.isArray(cached.rows) && cached.rows.length) {
-      console.log(`[pre-orders] ⚡ IndexedDB cache hit: ${cached.rows.length.toLocaleString()} rows (version ${totalExpected})`);
-      // Re-tag PRE_ORDER_MARK in case it was stripped during serialization
-      const restored = cached.rows.map(o => (o[PRE_ORDER_MARK] ? o : { ...o, [PRE_ORDER_MARK]: true }));
-      state.preOrders = restored;
-      state.preOrdersMeta = { source: 'indexeddb-cache', count: restored.length, version: totalExpected };
-      return restored;
-    } else if (cached) {
-      console.log(`[pre-orders] cache stale (cached version=${cached.version} vs current=${totalExpected}) — refetching`);
-    }
-  }
-
-  // ── Step 2: Build chunk URL list from all manifests ──
-  const chunkUrls = [];
-  for (const { name, manifest } of manifestResults) {
-    if (!manifest || !Array.isArray(manifest.files)) continue;
-    for (const filePath of manifest.files) chunkUrls.push(`${GH_REPO_BASE}/${filePath}`);
-  }
-  if (!chunkUrls.length) {
-    // All fetch paths failed. Build a diagnostic message so the alert tells
-    // the user *exactly* what failed and what to check next.
-    const lines = [
-      'Pre-orders 로드 실패 — 모든 fetch 경로 차단됨.',
-      '',
-      `Base URL: ${GH_REPO_BASE}`,
-      '',
-      `번들 (${PRE_ORDER_BUNDLE_URL.split('/').pop()}):`,
-      `  • ${bundleError || 'unknown error'}`,
-      '',
-      'Manifest:',
-      ...manifestResults.map(m => `  • ${m.name}/manifest.json: ${m.error || 'unknown error'}`),
-      '',
-      '확인 사항:',
-      '  1. Ctrl+Shift+R 강제 새로고침 (CDN 캐시 우회)',
-      '  2. DevTools(F12) → Network 탭: pre_orders_bundle.json 응답 상태 확인',
-      '  3. 파일이 git repo 루트에 commit되어 있는지 (404 → 파일 없음)',
-      '  4. VPN/방화벽/광고차단 확장 일시 비활성화',
-    ];
-    throw new Error(lines.join('\n'));
-  }
-  console.log(`[pre-orders] fetching ${chunkUrls.length} chunks (expected ~${totalExpected.toLocaleString()} rows)`);
-
-  // ── Step 3: Fetch all chunks with HIGH parallelism (raw.githubusercontent.com
-  // is HTTP/2 + Fastly CDN — handles 50 concurrent requests easily) ──
-  const PARALLEL = 50;
-  const allRows = [];
-  const failed = [];
-  let done = 0;
-  for (let i = 0; i < chunkUrls.length; i += PARALLEL) {
-    const slice = chunkUrls.slice(i, i + PARALLEL);
-    const batch = await Promise.allSettled(slice.map(url =>
-      fetch(url, { cache: 'force-cache' }).then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
-    ));
-    batch.forEach((r, k) => {
-      if (r.status === 'fulfilled' && Array.isArray(r.value)) {
-        // SLIM each row — drop ~30 unused columns to cut memory & cache size by ~60%
-        for (let j = 0; j < r.value.length; j++) allRows.push(slimPreOrderRow(r.value[j]));
-      } else {
-        failed.push({ url: slice[k], reason: r.reason?.message || String(r.reason) });
-      }
-    });
-    done += slice.length;
-    setBtnLabel(`Loading ${fmtNum(allRows.length)} rows… (${done}/${chunkUrls.length})`);
-  }
-
-  if (failed.length) {
-    console.warn(`[pre-orders] ${failed.length}/${chunkUrls.length} chunks failed. First few:`, failed.slice(0, 5));
-  }
-  if (!allRows.length) {
-    throw new Error(`pre-orders 로드 0건. ${failed.length}/${chunkUrls.length}개 chunk가 모두 실패했습니다. 첫 실패: ${failed[0]?.reason || 'unknown'}`);
-  }
-  console.log(`[pre-orders] ✅ loaded ${allRows.length} rows from ${chunkUrls.length - failed.length}/${chunkUrls.length} chunks`);
-
-  state.preOrders = allRows;
-  state.preOrdersMeta = {
-    source: 'github-raw',
-    count: allRows.length,
-    manifests: manifestResults.map(m => ({ name: m.name, loaded: !!m.manifest, rows: m.manifest?.total_records || 0 })),
-    failedChunks: failed.length,
-  };
-
-  // ── Step 4: Persist to IndexedDB (best-effort) — next session loads instantly ──
-  if (!failed.length && totalExpected > 0) {
-    try {
-      setBtnLabel('Caching…');
-      await idbSet('preOrdersCache_v2', { rows: allRows, version: totalExpected, savedAt: new Date().toISOString() });
-      console.log(`[pre-orders] 💾 cached ${allRows.length} rows to IndexedDB (version ${totalExpected})`);
-    } catch (e) {
-      // Quota exceeded or browser refuses storage — non-fatal, in-memory copy still works
-      console.warn('[pre-orders] IndexedDB cache save failed (non-fatal):', e);
-    }
-  }
-  return allRows;
-}
-
-function updatePreOrderBadge() {
-  const badge = document.getElementById('preOrderBadge');
-  const btn = document.getElementById('btnPreOrder');
-  const on = !!state.preOrdersEnabled;
-  if (badge) {
-    if (on) {
-      const n = (state.preOrders || []).length;
-      badge.textContent = n > 999 ? (Math.round(n/1000) + 'K') : String(n);
-      badge.style.display = 'inline-block';
-    } else {
-      badge.style.display = 'none';
-    }
-  }
-  if (btn) btn.classList.toggle('active', on);
-}
-
-async function togglePreOrders() {
-  const btn = document.getElementById('btnPreOrder');
-  if (state.preOrdersEnabled) {
-    // OFF — unload baseline (data is dropped from memory; toggle state cleared)
-    state.preOrders = [];
-    state.preOrdersMeta = null;
-    state.preOrdersEnabled = false;
-    state._preIdx = null; state._preOrdersIndexed = false;
-    try { localStorage.setItem('ck_pre_orders_on', '0'); } catch(e){}
-    updatePreOrderBadge();
-    rebuildAll();   // re-render KPI panels without the baseline
-    return;
-  }
-  // ON — fetch + enable (NOT merged into state.orders; only used by compare KPIs)
-  const origLabel = btn ? btn.innerHTML : '';
-  if (btn) {
-    btn.disabled = true;
-    btn.innerHTML = '<span style="display:inline-block;animation:ck-spin 0.8s linear infinite;">⟳</span> Loading…';
-  }
-  try {
-    const rows = await fetchPreOrdersOnce();
-    state.preOrdersEnabled = true;
-    try { localStorage.setItem('ck_pre_orders_on', '1'); } catch(e){}
-    // Build lookup index asynchronously so the main thread isn't blocked
-    setTimeout(() => _buildPreOrdersIndex(), 0);
-    rebuildAll();
-    try { showToast(`✅ Pre-order baseline loaded — ${fmtNum(rows.length)} rows`); } catch(_){}
-  } catch (err) {
-    console.error('[pre-orders] toggle failed:', err);
-    alert('Pre-order baseline 로드 실패:\n\n' + (err && err.message || err) +
-          '\n\n자세한 내용은 브라우저 개발자 도구 > Console을 확인하세요.');
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = origLabel;
-    }
-    updatePreOrderBadge();
-  }
-}
-
-// Auto-restore baseline on every page load — unless the user explicitly
-// turned it OFF in a previous session. (Previously this only auto-loaded
-// when 'ck_pre_orders_on' === '1', forcing first-time users to click the
-// Baseline button. The default is now ON so the dashboard is usable
-// immediately.)
-async function maybeAutoLoadPreOrders() {
-  let want = null;
-  try { want = localStorage.getItem('ck_pre_orders_on'); } catch(e){}
-  if (want === '0') { updatePreOrderBadge(); return; }
-  if (location.protocol === 'file:') { updatePreOrderBadge(); return; }
-
-  // ── Step 1: 스냅샷 먼저 로드 (~41KB, 즉시) ──
-  // 26MB 번들 없이도 전년 동기 수치를 바로 표시
-  const snap = await loadPreOrdersSummary();
-  if (snap) {
-    state.preOrdersEnabled = true;  // 스냅샷만으로도 전년 비교 활성화
-    rebuildAll();  // 즉시 화면 업데이트
-  }
-
-  // ── Step 2: 번들은 백그라운드에서 로드 (인터랙티브 상세 분석용) ──
-  // 번들이 있으면 더 세밀한 필터링 가능 — 없어도 스냅샷으로 기본 표시
-  try {
-    await fetchPreOrdersOnce();
-    state.preOrdersEnabled = true;
-    try { localStorage.setItem('ck_pre_orders_on', '1'); } catch(e){}
-    // Build index in background
-    setTimeout(() => { _buildPreOrdersIndex(); rebuildAll(); }, 100);
-    if (want == null) {
-      try {
-        const n = (state.preOrders || []).length;
-        showToast(`✅ Baseline loaded — ${fmtNum(n)} rows`);
-      } catch(_){}
-    }
-  } catch (err) {
-    console.warn('Pre-order bundle load failed (snapshot only mode):', err);
-    // 번들 실패해도 스냅샷으로 전년 비교는 계속 표시
-    state.preOrdersEnabled = !!snap;
-    state._preIdx = null;
-    state._preOrdersIndexed = false;
-  }
-  updatePreOrderBadge();
-}
 
 window.togglePreOrders = togglePreOrders;
 
@@ -9725,9 +10533,8 @@ async function fetchSharedCsv(kind) {
 
 async function loadSharedData(force = false) {
   // Personal data takes priority — skip default load unless forced (Reset to Shared Data button).
-  // hasPersonal 체크 제거 — 항상 shared data 로드 (GitHub Pages 전용)
-  // const hasPersonal = localStorage.getItem('ck_has_personal_data') === '1';
-  // if (hasPersonal && !force) return false;
+  const hasPersonal = localStorage.getItem('ck_has_personal_data') === '1';
+  if (hasPersonal && !force) return false;
 
   // file:// 환경에서는 GitHub raw fetch가 차단됨
   if (location.protocol === 'file:') {
@@ -9822,29 +10629,7 @@ window.resetToSharedData = resetToSharedData;
     document.documentElement.getAttribute('webdriver') !== null;
 
   if (isBot || isAutomated) {
-    document.documentElement.innerHTML = '<body style="background:#000;color:#000;user-select:none">.
-<!-- Stub elements for JS references (display:none, never shown) -->
-<div id="headerCollapseBtn" style="display:none"></div>
-<div id="importMenu" style="display:none"></div>
-<div id="tplMenu" style="display:none"></div>
-<div id="actDetailPanel" style="display:none"></div>
-<div id="promoDimSel" style="display:none"></div>
-<div id="promoTableDimSel" style="display:none"></div>
-<div id="promoTableNote" style="display:none"></div>
-<div id="tlFocusBanner" style="display:none"></div>
-<div id="actSearchBar" style="display:none"></div>
-<div id="skuMeta" style="display:none"></div>
-<div id="promoSellInBanner" style="display:none"></div>
-<div id="promoSellOutBanner" style="display:none"></div>
-<div id="filterActiveBadge" style="display:none"></div>
-<div id="ck-snapshot" style="display:none"></div>
-<div id="snapToast" style="display:none"></div>
-<div id="snapBanner" style="display:none"></div>
-<table id="tblSkuMonthly" style="display:none"></table>
-<table id="tblSkuYearly" style="display:none"></table>
-<canvas id="chSkuMonthly" style="display:none"></canvas>
-<canvas id="chSkuYearly" style="display:none"></canvas>
-</body>';
+    document.documentElement.innerHTML = '<body style="background:#000;color:#000;user-select:none">.</body>';
     return;
   }
 
@@ -9915,9 +10700,7 @@ document.addEventListener('click', e => {
 });
 
 async function fetchCsvText(name) {
-  // name이 절대 URL이면 그대로, 상대 경로면 GH_REPO_BASE 붙이기
-  const base = (name.startsWith('http') ? name : `${GH_REPO_BASE}/${name}`);
-  const url = `${base}${base.includes('?')?'&':'?'}t=${Date.now()}`;
+  const url = `${name}?t=${Date.now()}`;
   const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error(`${name} HTTP ${res.status}`);
   const buf = await res.arrayBuffer();
@@ -9951,19 +10734,19 @@ async function reloadAutoCSV(showAlert = false) {
   }
 
   try {
-    const txt = await fetchCsvText(SHARED_CSV_URLS.orders);
+    const txt = await fetchCsvText(AUTO_CSV_FILES.orders);
     const rows = await parseOrderCSV(txt);
     state.orders = rows; results.orders = rows.length;
     markDataUpdated('orders');
   } catch (e) { results.errors.push(`Orders: ${e.message}`); }
   try {
-    const txt = await fetchCsvText(SHARED_CSV_URLS.marketing);
+    const txt = await fetchCsvText(AUTO_CSV_FILES.marketing);
     const rows = await parseMarketingCSV(txt);
     state.marketing = rows; results.marketing = rows.length;
     markDataUpdated('marketing');
   } catch (e) { results.errors.push(`Marketing: ${e.message}`); }
   try {
-    const txt = await fetchCsvText(SHARED_CSV_URLS.budgets);
+    const txt = await fetchCsvText(AUTO_CSV_FILES.budgets);
     applyBudgets(parseBudgetsCSV(txt));
     results.budgets = 1;
   } catch (e) { /* budgets는 옵션이므로 조용히 */ }
@@ -10312,10 +11095,8 @@ window.publishSnapshot = publishSnapshot;
     showPublishedBanner(embeddedSnap);
     applyWidgetOrder(); // re-apply in case widgetOrder changed
   }
-  // Always try to load shared data — even if personal data flag is set,
-  // if state.orders is empty we force-reload to avoid blank dashboard.
-  // 항상 shared data 로드 시도
-  try { await loadSharedData(true); } catch (e) { console.warn('Shared data load skipped:', e); }
+  // Embedded shared data is in-DOM, no fetch required — works on file:// too.
+  try { await loadSharedData(false); } catch (e) { console.warn('Shared data load skipped:', e); }
   // Load explicit per-campaign target SKU lists (SA_list etc.) — best-effort.
   try { await loadCampaignTargetSkus(); } catch (e) { console.warn('target SKU load skipped:', e); }
   // CTR-Model map + auto CSV refresh still require network — only attempt over http(s).
@@ -10347,13 +11128,6 @@ window.publishSnapshot = publishSnapshot;
     }
   }
   rebuildAll();
-  // 데이터가 없으면 강제 재로드 시도
-  setTimeout(async () => {
-    if (!state.orders.length && !state.marketing.length) {
-      console.warn('[init] No data after init — force-reloading shared data');
-      try { await loadSharedData(true); rebuildAll(); } catch(e) {}
-    }
-  }, 2000);
   // Render cached data-update timestamps on first paint (markDataUpdated handles subsequent updates)
   try { renderDataTimestamps(); } catch (e) { console.warn('renderDataTimestamps init failed:', e); }
   // Try to auto-restore pre-order toggle state from previous session (best-effort)
