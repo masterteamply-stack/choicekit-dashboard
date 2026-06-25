@@ -10187,10 +10187,6 @@ const PRE_ORDER_MARK = '__preOrder__';
 //   • When opened locally (file://) → raw.githubusercontent.com fallback so
 //     development still works.
 function _resolveGhRepoBase() {
-  if (location.protocol === 'http:' || location.protocol === 'https:') {
-    const path = location.pathname.replace(/index\.html?$/i, '').replace(/\/$/, '');
-    return location.origin + path;
-  }
   return 'https://raw.githubusercontent.com/masterteamply-stack/choicekit-dashboard/main';
 }
 const GH_REPO_BASE = _resolveGhRepoBase();
@@ -10734,19 +10730,19 @@ async function reloadAutoCSV(showAlert = false) {
   }
 
   try {
-    const txt = await fetchCsvText(AUTO_CSV_FILES.orders);
+    const txt = await fetchCsvText(SHARED_CSV_URLS.orders);
     const rows = await parseOrderCSV(txt);
     state.orders = rows; results.orders = rows.length;
     markDataUpdated('orders');
   } catch (e) { results.errors.push(`Orders: ${e.message}`); }
   try {
-    const txt = await fetchCsvText(AUTO_CSV_FILES.marketing);
+    const txt = await fetchCsvText(SHARED_CSV_URLS.marketing);
     const rows = await parseMarketingCSV(txt);
     state.marketing = rows; results.marketing = rows.length;
     markDataUpdated('marketing');
   } catch (e) { results.errors.push(`Marketing: ${e.message}`); }
   try {
-    const txt = await fetchCsvText(AUTO_CSV_FILES.budgets);
+    const txt = await fetchCsvText(SHARED_CSV_URLS.budgets);
     applyBudgets(parseBudgetsCSV(txt));
     results.budgets = 1;
   } catch (e) { /* budgets는 옵션이므로 조용히 */ }
