@@ -10368,7 +10368,11 @@ function visibleRegionFilter(arr) {
    사내 웹서버 또는 정적 호스팅(http(s)://) 환경에서 사용하세요.
    실패 시 기존 수동 업로드 버튼으로 보완 가능합니다.
 */
-const AUTO_CSV_FILES = { orders: 'orders.csv', marketing: 'marketing.csv', budgets: 'budgets.csv' };
+const AUTO_CSV_FILES = {
+  orders:    'https://raw.githubusercontent.com/masterteamply-stack/choicekit-dashboard/main/orders.csv',
+  marketing: 'https://raw.githubusercontent.com/masterteamply-stack/choicekit-dashboard/main/marketing.csv',
+  budgets:   'https://raw.githubusercontent.com/masterteamply-stack/choicekit-dashboard/main/budgets.csv',
+};
 
 /* =================== SUPABASE SHARED DATA ===================
    ck_shared_data 테이블에서 공유 CSV를 로드합니다.
