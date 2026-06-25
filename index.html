@@ -10341,6 +10341,46 @@ async function maybeAutoLoadPreOrders() {
 }
 
 
+function togglePreOrders() {
+  const btn = document.getElementById('btnPreOrder');
+  if (state.preOrdersEnabled) {
+    // OFF — unload baseline (data is dropped from memory; toggle state cleared)
+    state.preOrders = [];
+    state.preOrdersMeta = null;
+    state.preOrdersEnabled = false;
+    state._preIdx = null; state._preOrdersIndexed = false;
+    try { localStorage.setItem('ck_pre_orders_on', '0'); } catch(e){}
+    updatePreOrderBadge();
+    rebuildAll();   // re-render KPI panels without the baseline
+    return;
+  }
+  // ON — fetch + enable (NOT merged into state.orders; only used by compare KPIs)
+  const origLabel = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span style="display:inline-block;animation:ck-spin 0.8s linear infinite;">⟳</span> Loading…';
+  }
+  try {
+    const rows = await fetchPreOrdersOnce();
+    state.preOrdersEnabled = true;
+    try { localStorage.setItem('ck_pre_orders_on', '1'); } catch(e){}
+    // Build lookup index asynchronously so the main thread isn't blocked
+    setTimeout(() => _buildPreOrdersIndex(), 0);
+    rebuildAll();
+    try { showToast(`✅ Pre-order baseline loaded — ${fmtNum(rows.length)} rows`); } catch(_){}
+  } catch (err) {
+    console.error('[pre-orders] toggle failed:', err);
+    alert('Pre-order baseline 로드 실패:\n\n' + (err && err.message || err) +
+          '\n\n자세한 내용은 브라우저 개발자 도구 > Console을 확인하세요.');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origLabel;
+    }
+    updatePreOrderBadge();
+  }
+}
+
 window.togglePreOrders = togglePreOrders;
 
 /* =================== REGION VISIBILITY =================== */
