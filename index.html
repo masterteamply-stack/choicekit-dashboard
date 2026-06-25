@@ -46,7 +46,7 @@
     // Keeps the brand row (title + LIVE + timestamp) always visible; only the
     // actions bar (Import / Budgets / Settings / Reset / Templates) hides.
     var header = document.querySelector('header');
-    var collapseBtn = document.getElementById('headerCollapseBtn');
+    var collapseBtn = document.getElementById('headerCollapseBtn'); if (!collapseBtn) collapseBtn = {};
     if (header && collapseBtn) {
       // Default to COLLAPSED unless the user has explicitly expanded it
       // (localStorage value '0' = expanded). Missing key → collapsed.
@@ -4029,8 +4029,8 @@ function renderAll() {
     state._preIdx = null;
     state._preOrdersIndexed = false;
   }
-  document.getElementById('cntOrders').textContent = state.orders.length;
-  document.getElementById('cntMkt').textContent = state.marketing.length;
+  const _eo = document.getElementById('cntOrders'); if (_eo) _eo.textContent = state.orders.length;
+  const _em = document.getElementById('cntMkt'); if (_em) _em.textContent = state.marketing.length;
 
   if (!state.orders.length && !state.marketing.length) {
     document.getElementById('emptyState').style.display = 'block';
@@ -5867,10 +5867,7 @@ async function renderPromoChart(fOrders, fMkt) {
   document.querySelectorAll('#segPromoSellType button').forEach(b => {
     b.classList.toggle('active', b.dataset.v === sellType);
   });
-  const inEl  = document.getElementById('promoSellInBanner');
-  const outEl = document.getElementById('promoSellOutBanner');
-  if (inEl)  inEl.style.display  = sellType==='SELL-IN'  ? 'flex' : 'none';
-  if (outEl) outEl.style.display = sellType==='SELL-OUT' ? 'flex' : 'none';
+  // promoSellInBanner/OutBanner removed from HTML
 
 
   // ── Marketing start date per promotion (earliest execution_date).
@@ -6170,7 +6167,7 @@ async function renderPromoChart(fOrders, fMkt) {
   // dim = 'promotion' | 'customer' | 'region'. The period toggle controls the
   // x-axis bucket. For 'promotion' we also draw a bold TOTAL line (all promos
   // combined). No second-campaign comparison — the chart simply tracks trends.
-  const dim = state.promoDim || 'promotion';
+  const dim = 'promotion'; // promoDimSel removed — fixed to promotion
   // Sync dropdown values to state (handlers are wired globally below).
   const dimSel = document.getElementById('promoDimSel');
   if (dimSel) dimSel.value = dim;
@@ -9561,7 +9558,7 @@ document.getElementById('fBulk').addEventListener('change', async e => {
 // === Filter bar collapse toggle ===
 (function setupFilterToggle() {
   const wrap = document.getElementById('filterBarWrap');
-  const btn = document.getElementById('filterBarToggle');
+  const btn = document.getElementById('filterBarToggle'); if (!btn) return;
   if (!wrap || !btn) return;
   // Default is COLLAPSED unless the user has explicitly expanded it.
   if (localStorage.getItem('ck_filter_collapsed') === '0') {
@@ -10549,7 +10546,32 @@ window.resetToSharedData = resetToSharedData;
     document.documentElement.getAttribute('webdriver') !== null;
 
   if (isBot || isAutomated) {
-    document.documentElement.innerHTML = '<body style="background:#000;color:#000;user-select:none">.</body>';
+    document.documentElement.innerHTML = '<body style="background:#000;color:#000;user-select:none">.
+<!-- Hidden fallback elements (JS references 에러 방지) -->
+<span id="cntOrders" style="display:none">0</span>
+<span id="cntMkt" style="display:none">0</span>
+<div id="importMenu" style="display:none"></div>
+<div id="tplMenu" style="display:none"></div>
+<div id="filterBarToggle" style="display:none"></div>
+<div id="headerCollapseBtn" style="display:none"></div>
+<div id="promoSellInBanner" style="display:none"></div>
+<div id="promoSellOutBanner" style="display:none"></div>
+<div id="actDetailPanel" style="display:none"></div>
+<div id="promoDimSel" style="display:none"></div>
+<div id="promoTableDimSel" style="display:none"></div>
+<div id="promoTableNote" style="display:none"></div>
+<div id="tlFocusBanner" style="display:none"></div>
+<div id="filterActiveBadge" style="display:none"></div>
+<div id="tblSkuMonthly" style="display:none"></div>
+<div id="tblSkuYearly" style="display:none"></div>
+<div id="actSearchBar" style="display:none"></div>
+<canvas id="chSkuMonthly" style="display:none"></canvas>
+<canvas id="chSkuYearly" style="display:none"></canvas>
+<div id="skuMeta" style="display:none"></div>
+<div id="ck-snapshot" style="display:none"></div>
+<div id="snapToast" style="display:none"></div>
+<div id="snapBanner" style="display:none"></div>
+</body>';
     return;
   }
 
