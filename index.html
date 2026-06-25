@@ -4322,22 +4322,24 @@ function renderAll() {
   const elSkuSub = document.getElementById('kSkuSub');
   if (elSkuSub) elSkuSub.textContent = `${fmtNum(totalQty)} pcs total`;
 
-  // ── 각 위젯을 개별 setTimeout으로 분리 → 브라우저가 매 함수 사이에 페인트 가능 ──
-  const _w = (fn) => setTimeout(fn, 0);
-  _w(() => renderPlanExec(fOrders, fMkt));
-  _w(() => renderRegionChart(fOrders, fMkt));
-  _w(() => renderActivityChart(fMkt));
-  _w(() => renderCustomerTrend(fOrders, fMkt));
-  _w(() => renderTopInsights(fOrders));
-  _w(() => renderPromoCtrChart(fOrders));
-  _w(() => renderSalesTrendCombined(fOrders));
-  _w(() => renderActivitiesTable(fMkt));
-  _w(() => renderBudgetStatus(fMkt));
-  _w(() => {
+  // ── Phase 1: critical path (KPI + lightweight charts) ──────────────────
+  renderPlanExec(fOrders, fMkt);
+  renderRegionChart(fOrders, fMkt);
+  renderActivityChart(fMkt);
+  renderBudgetStatus(fMkt);
+  renderCustomerTrend(fOrders, fMkt);
+  renderTopInsights(fOrders);
+  renderPromoCtrChart(fOrders);
+  renderSalesTrendCombined(fOrders);
+  renderActivitiesTable(fMkt);
+
+  // ── Phase 2: heavy widgets — deferred so browser can paint Phase 1 first
+  setTimeout(() => {
     renderPromoChart(fOrders, fMkt);
+    // Sync KPI after renderPromoChart sets _promoAfterTotal
     if (_promoAfterTotal !== null) {
       document.getElementById('kpiOrder').textContent = fmtMoney(_promoAfterTotal);
-      document.getElementById('kpiOrderSub').textContent = 'after campaign start · post-campaign total';
+      document.getElementById('kpiOrderSub').textContent = `after campaign start · post-campaign total`;
       const tgtPctUpd = orderTargetDisp > 0 ? (_promoAfterTotal / orderTargetDisp) * 100 : 0;
       document.getElementById('kpiAchv').textContent = orderTargetDisp > 0 ? fmtPct(tgtPctUpd) : '–';
       const roiUpd = mktCost > 0 ? ((_promoAfterTotal - mktCost) / mktCost) * 100 : 0;
@@ -4345,9 +4347,260 @@ function renderAll() {
       document.getElementById('kpiRoiCard').classList.toggle('neg', roiUpd < 0);
     }
     renderPromoOrderTrend(fOrders, fMkt);
+  }, 0);
+
+  // ── Phase 3: heaviest widgets (preOrders scans) — further deferred ─────
+  setTimeout(() => {
+    renderChoiceKitImpact(fOrders, fMkt);
+    renderSkuExplorer(fOrders, fMkt);
+  }, 0);
+}
+
+/* ===== Plan vs Execution — Drill-down Explorer (Region → Country → Promotion) ===== */
+function planExecHealth(burn, roi) {
+  if ((burn != null && burn > 100) || (roi != null && roi < 0)) return {dot:'🔴', color:'t-red'};
+  if (burn != null && burn >= 80) return {dot:'🟡', color:'t-yellow'};
+  return {dot:'🟢', color:'t-green'};
+}
+function buildPlanExecNodes(fOrders, fMkt) {
+  const usdToDisp = usdToDisplay();
+  const derived = deriveOrderTargets(fMkt);
+  const tree = {};   // tree[r][c][p][cust] = leaf node
+  const today = _todayStr();
+  const currYear = String(today).slice(0,4);          // e.g. '2026'
+  const prevYearStr = String(parseInt(currYear,10)-1); // e.g. '2025'
+
+  // Build customer→promo / sku→promo maps so baseline rows (which lack
+  // promotion_category) can be attributed to the right campaign.
+  const cfgAll = state.campaignTargetSkus || {};
+  const _custToPromo = {}, _skuToPromo = {};
+  Object.keys(cfgAll).forEach(p => {
+    const c = cfgAll[p] || {};
+    if ((c.match_by||'sku') === 'customer') {
+      (c.target_customers||[]).forEach(x => { _custToPromo[String(x).trim()] = p; });
+    } else {
+      (c.target_skus||[]).forEach(x => { _skuToPromo[String(x).trim()] = p; });
+    }
   });
-  _w(() => renderChoiceKitImpact(fOrders, fMkt));
-  _w(() => renderSkuExplorer(fOrders, fMkt));
+
+  const ensure = (r,c,p,cust) => {
+    tree[r] = tree[r] || {};
+    tree[r][c] = tree[r][c] || {};
+    tree[r][c][p] = tree[r][c][p] || {};
+    if (!tree[r][c][p][cust]) tree[r][c][p][cust] = {
+      r, c, p, cust,
+      // current-year metrics
+      orderAmt:0, costActual:0, costExpected:0, costBudget:0, qty:0, ords:0,
+      // prev-year metrics (for YoY comparison)
+      orderAmtPrev:0, costActualPrev:0, costExpectedPrev:0,
+      sellTypes:new Set(), earliestExec:null,
+    };
+    return tree[r][c][p][cust];
+  };
+  fOrders.forEach(o => {
+    if (!isRegionVisible(o.region)) return;
+    const cust = (o.customer || '–').trim() || '–';
+    const x = ensure(o.region||'–', o.country||'–', o.promotion_category||'–', cust);
+    const yr = String(o.order_date||'').slice(0,4);
+    const amt = convOrder(o);
+    if (yr === currYear) {
+      x.orderAmt += amt; x.qty += Number(o.qty)||0; x.ords += 1;
+    } else if (yr === prevYearStr) {
+      x.orderAmtPrev += amt;
+    }
+    if (o.sell_type) x.sellTypes.add(o.sell_type);
+  });
+  // Baseline (pre_orders) — primarily contributes prev-year order amounts
+  // since orders.csv typically only has the current year.
+  if (state.preOrdersEnabled && Array.isArray(state.preOrders)) {
+    state.preOrders.forEach(o => {
+      const reg = normalizeRegion(o.region || '');
+      if (!isRegionVisible(reg)) return;
+      const cust = (o.customer || '–').trim() || '–';
+      // Determine owning promotion: customer→promo, fallback SKU→promo.
+      // REGION GATE: only attribute a baseline row to a campaign when the
+      // row's region matches the campaign's configured region. This prevents
+      // e.g. CIS-only Asian/European vehicle SKUs from showing up under
+      // CANADA (NA region) in Plan vs Execution.
+      const _resolvePromoWithRegionGate = (candidate) => {
+        if (!candidate) return '';
+        const cfg = cfgAll[candidate];
+        if (!cfg) return candidate; // no config → no region constraint
+        const campaignRegions = Array.isArray(cfg.region)
+          ? cfg.region.map(r => normalizeRegion(r))
+          : (cfg.region ? [normalizeRegion(cfg.region)] : []);
+        if (!campaignRegions.length) return candidate; // no region configured → allow all
+        return campaignRegions.includes(reg) ? candidate : '';
+      };
+      const promoForCust = _resolvePromoWithRegionGate(_custToPromo[cust])
+        || _resolvePromoWithRegionGate(_skuToPromo[(o.sku||'').trim()])
+        || '–';
+      // Normalize country (한/영 통합). normalizeCountry returns '' for region
+      // values (CIS, MENA, etc.) that were mistakenly placed in the country cell,
+      // so fall back to '–' rather than echoing the region name as a fake country.
+      const rawCountry = (o.country || '').trim();
+      const country = normalizeCountry(rawCountry) || (rawCountry && !['CIS','MENA','EUROPE','NA','LATAM','ASIA','RUS','OCEANIA','KOREA'].includes(rawCountry.toUpperCase()) ? rawCountry.toUpperCase() : '–');
+      const x = ensure(reg||'–', country, promoForCust, cust);
+      const yr = String(o.order_date||'').slice(0,4);
+      const amt = Number(o.amount_usd||0) * usdToDisp;
+      // preOrders are strictly prior-year comparison data — never add to current orderAmt
+      if (yr === prevYearStr) x.orderAmtPrev += amt;
+      // (currYear preOrders intentionally ignored — current ORDER AMT = orders.csv only)
+    });
+  }
+  fMkt.forEach(m => {
+    if (!isRegionVisible(m.region)) return;
+    const cust = (m.target_customer || m.customer || '–').trim() || '–';
+    // If country is blank or equals the region name (e.g. "CIS"), this is a
+    // region-wide activity. Distribute its cost evenly across all countries
+    // that already exist in the tree for this region. If no countries exist
+    // yet, skip — the cost will be picked up once specific-country rows
+    // create tree entries. Avoids the phantom "–" country card.
+    const mktCountryRaw = normalizeCountry(m.country || '') || '';
+    const mktCountryIsRegion = !mktCountryRaw;  // normalizeCountry returns '' for region values
+    const yr = String(m.date||'').slice(0,4);
+    const actCost = convMktActual(m);
+    const expCost = convMktExpected(m);
+    const budCost = convMktBudget(m);
+    if (mktCountryIsRegion) {
+      // Region-wide activity: spread cost to all existing countries in this region
+      const reg = normalizeRegion(m.region || '');
+      const existingCountries = tree[reg] ? Object.keys(tree[reg]).filter(c => c !== '–') : [];
+      if (existingCountries.length > 0) {
+        const n = existingCountries.length;
+        existingCountries.forEach(c => {
+          const x = ensure(reg, c, m.promotion_category||'–', cust);
+          if (yr === currYear) {
+            x.costActual += actCost/n; x.costExpected += expCost/n; x.costBudget += budCost/n;
+          } else if (yr === prevYearStr) {
+            x.costActualPrev += actCost/n; x.costExpectedPrev += expCost/n;
+          }
+          if (m.sell_type) x.sellTypes.add(m.sell_type);
+          const d = (m.date||'').trim();
+          if (d && (!x.earliestExec || d < x.earliestExec)) x.earliestExec = d;
+        });
+      }
+      // else: no existing country entries yet — skip this row
+      return;  // handled above; skip normal processing
+    }
+    const x = ensure(m.region||'–', mktCountryRaw||'–', m.promotion_category||'–', cust);
+    if (yr === currYear) {
+      x.costActual += actCost; x.costExpected += expCost; x.costBudget += budCost;
+    } else if (yr === prevYearStr) {
+      x.costActualPrev += actCost; x.costExpectedPrev += expCost;
+    }
+    if (m.sell_type) x.sellTypes.add(m.sell_type);
+    const d = (m.date||'').trim();
+    if (d && (!x.earliestExec || d < x.earliestExec)) x.earliestExec = d;
+  });
+  const aggLeaves = (ls) => {
+    const A = {
+      orderAmt:0, costActual:0, costExpected:0, costBudget:0, qty:0, ords:0,
+      orderAmtPrev:0, costActualPrev:0, costExpectedPrev:0,
+      sellTypes:new Set(), earliestExec:null,
+    };
+    ls.forEach(l => {
+      A.orderAmt+=l.orderAmt; A.costActual+=l.costActual; A.costExpected+=l.costExpected; A.costBudget+=(l.costBudget||0);
+      A.orderAmtPrev+=l.orderAmtPrev; A.costActualPrev+=l.costActualPrev; A.costExpectedPrev+=l.costExpectedPrev;
+      A.qty+=l.qty; A.ords+=l.ords;
+      l.sellTypes.forEach(s=>A.sellTypes.add(s));
+      if (l.earliestExec && (!A.earliestExec || l.earliestExec<A.earliestExec)) A.earliestExec=l.earliestExec;
+    });
+    A.mktBudget = A.costBudget>0 ? A.costBudget : A.costExpected;
+    A.mktBudgetPrev = A.costExpectedPrev;
+    A.burn = A.mktBudget>0 ? (A.costActual/A.mktBudget)*100 : null;
+    A.roi  = A.costActual>0 ? ((A.orderAmt-A.costActual)/A.costActual)*100 : null;
+    A.roiPrev = A.costActualPrev>0 ? ((A.orderAmtPrev-A.costActualPrev)/A.costActualPrev)*100 : null;
+    // YoY % for cost (actual vs prev actual)
+    A.costYoYPct = A.costActualPrev>0 ? ((A.costActual-A.costActualPrev)/A.costActualPrev)*100 : null;
+    return A;
+  };
+  // Walk all leaves under a region (tree[r] → countries → promos → customers).
+  // Excludes '–' promotion bucket (preOrders rows not attributable to any campaign).
+  const leavesUnderRegion = (r) => {
+    const out = [];
+    Object.values(tree[r]||{}).forEach(cm =>
+      Object.entries(cm).forEach(([p, pm]) => {
+        if (p === '–') return;
+        Object.values(pm).forEach(l => out.push(l));
+      })
+    );
+    return out;
+  };
+  const regionNodes = Object.keys(tree).sort().map(r => {
+    const a = aggLeaves(leavesUnderRegion(r));
+    const targetUSD = getRegionOrderTargetUSD(r, derived);
+    a.orderTarget = targetUSD * usdToDisp;
+    a.achv = a.orderTarget>0 ? (a.orderAmt/a.orderTarget)*100 : null;
+    const manualBudget = Number(state.regionBudgets[r]||0) * usdToDisp;
+    if (manualBudget > 0) {
+      a.mktBudget = manualBudget;
+      a.burn = (a.costActual/a.mktBudget)*100;
+    }
+    return { level:'region', key:r, name:r, parent:null, ...a };
+  });
+  return { tree, regionNodes, derived, usdToDisp, aggLeaves, leavesUnderRegion, currYear, prevYearStr };
+}
+function getPlanExecLevelData(model, path) {
+  const { tree, regionNodes, derived, usdToDisp, aggLeaves } = model;
+  if (path.length === 0) return { level:'region', items: regionNodes };
+  const r = path[0];
+  if (path.length === 1) {
+    if (!tree[r]) return { level:'country', items: [] };
+    const items = Object.keys(tree[r]).sort().map(c => {
+      // Walk all leaves under this country (promos → customers), excluding '–' promo bucket
+      const leaves = [];
+      Object.entries(tree[r][c]||{}).forEach(([p, pm]) => {
+        if (p === '–') return;  // skip unattributed baseline rows
+        Object.values(pm).forEach(l => leaves.push(l));
+      });
+      const a = aggLeaves(leaves);
+      const regNode = regionNodes.find(x=>x.name===r);
+      const regSum = regNode ? regNode.orderAmt : 0;
+      a.orderTarget = (regNode && regNode.orderTarget>0 && regSum>0) ? regNode.orderTarget*(a.orderAmt/regSum) : 0;
+      a.achv = a.orderTarget>0 ? (a.orderAmt/a.orderTarget)*100 : null;
+      return { level:'country', key:c, name:c, parent:r, ...a };
+    });
+    return { level:'country', items };
+  }
+  const c = path[1];
+  if (path.length === 2) {
+    if (!tree[r] || !tree[r][c]) return { level:'promotion', items: [] };
+    const items = Object.keys(tree[r][c]).sort()
+      // '–' = preOrders rows that couldn't be attributed to any campaign; exclude them.
+      .filter(p => p !== '–')
+      .map(p => {
+        const leaves = Object.values(tree[r][c][p]||{});
+        const a = aggLeaves(leaves);
+        const tUSD = getRegionPromoOrderTargetUSD(r, p, derived);
+        a.orderTarget = tUSD * usdToDisp;
+        a.achv = a.orderTarget>0 ? (a.orderAmt/a.orderTarget)*100 : null;
+        return { level:'promotion', key:p, name:p, parent:`${r} / ${c}`, ...a };
+      });
+    return { level:'promotion', items };
+  }
+  // path.length === 3 → CUSTOMER level
+  const p = path[2];
+  if (!tree[r] || !tree[r][c] || !tree[r][c][p]) return { level:'customer', items: [] };
+  const items = Object.keys(tree[r][c][p]).sort().map(cust => {
+    const l = tree[r][c][p][cust];
+    const a = aggLeaves([l]);
+    a.orderTarget = 0;  // no per-customer target
+    a.achv = null;
+    return { level:'customer', key:cust, name:cust, parent:`${r} / ${c} / ${p}`, ...a };
+  });
+  return { level:'customer', items };
+}
+function sortPlanExec(items, key) {
+  const get = (x) => {
+    if (key==='budget')   return x.mktBudget||0;
+    if (key==='executed') return x.costActual||0;
+    if (key==='orderAmt') return x.orderAmt||0;
+    if (key==='roi')      return x.roi==null ? -Infinity : x.roi;
+    if (key==='burn')     return x.burn==null ? -1 : x.burn;
+    return 0;
+  };
+  return items.slice().sort((a,b)=>get(b)-get(a));
 }
 function renderPlanExec(fOrders, fMkt) {
   const model = buildPlanExecNodes(fOrders, fMkt);
@@ -5696,22 +5949,19 @@ function renderPromoChart(fOrders, fMkt) {
   // SELL-IN: SKU 기반 (Portfolio Expansion, Asian vehicle, European vehicle, Korean & Japanese)
   // SELL-OUT: 고객 기반 (Trade promotion, Strategic Partner, Mexico Awakening, Mexico Worldcup)
   const sellType = state.promoSellType || 'SELL-IN';
-  // _mktSellType 캐시 — marketing이 바뀌지 않으면 재계산 안 함
-  if (!window._cachedMktSellType || window._cachedMktSellTypeLen !== (state.marketing||[]).length) {
-    const _cfg0 = state.campaignTargetSkus || {};
-    window._cachedMktSellType = {};
-    (state.marketing || []).forEach(m => {
-      const p  = (m.promotion_category || '').trim();
-      const st = (m.sell_type || m.sellType || '').trim().toUpperCase().replace(/[_\s]/g,'-');
-      if (p && st && !window._cachedMktSellType[p]) window._cachedMktSellType[p] = st;
-    });
-    Object.keys(_cfg0).forEach(p => {
-      if (!window._cachedMktSellType[p])
-        window._cachedMktSellType[p] = (_cfg0[p].match_by||'sku').toLowerCase()==='customer' ? 'SELL-OUT' : 'SELL-IN';
-    });
-    window._cachedMktSellTypeLen = (state.marketing||[]).length;
-  }
-  const _mktSellType = window._cachedMktSellType;
+  const _mktSellType = {};  // promo → dominant sell_type
+  (state.marketing || []).forEach(m => {
+    const p  = (m.promotion_category || '').trim();
+    const st = (m.sell_type || m.sellType || '').trim().toUpperCase().replace(/[_\s]/g,'-');
+    if (p && st && !_mktSellType[p]) _mktSellType[p] = st;
+  });
+  // sell_type 없으면 match_by로 판단 (sku=SELL-IN, customer=SELL-OUT)
+  const _cfg0 = state.campaignTargetSkus || {};
+  Object.keys(_cfg0).forEach(p => {
+    if (!_mktSellType[p]) {
+      _mktSellType[p] = (_cfg0[p].match_by || 'sku').toLowerCase() === 'customer' ? 'SELL-OUT' : 'SELL-IN';
+    }
+  });
   const sellTypePromos = new Set(
     Object.entries(_mktSellType).filter(([,st]) => st === sellType).map(([p]) => p)
   );
@@ -5743,23 +5993,32 @@ function renderPromoChart(fOrders, fMkt) {
   // (preOrders 로드 후 processBaseline 내에서 채워짐)
   let promoBundleBuyers = {};
 
-  // promoStart 캐시 — marketing이 바뀌지 않으면 재계산 안 함
-  if (!window._cachedPromoStart || window._cachedPromoStartLen !== (state.marketing||[]).length) {
-    const _ps = {}, _psa = {};
-    (state.marketing || []).forEach(m => {
-      const p = (m.promotion_category || m.promotion_id || '').trim();
-      const d = (m.execution_date || m.date || '').trim();
-      const kpi = (m.kpi_metric || '').trim().toUpperCase();
-      if (!p || !d) return;
-      if (!_psa[p] || d < _psa[p]) _psa[p] = d;
-      if (kpi === 'STARTED') { if (!_ps[p] || d < _ps[p]) _ps[p] = d; }
-    });
-    Object.keys(_psa).forEach(p => { if (!_ps[p]) _ps[p] = _psa[p]; });
-    Object.keys(_ps).forEach(p => { if (_ps[p] < '2026-01-01') _ps[p] = '2026-01-01'; });
-    window._cachedPromoStart = _ps;
-    window._cachedPromoStartLen = (state.marketing||[]).length;
-  }
-  const promoStart = window._cachedPromoStart;
+  // promoStart: kpi_metric='STARTED' 행의 최솟값 우선.
+  // STARTED 없는 캠페인은 execution_date 최솟값 fallback.
+  // 이 기준이 "캠페인 공식 시작일"이며 ORDER AMT 집계 기준일이 됨.
+  const promoStart = {};
+  const promoStartAll = {};  // execution_date 최솟값 (fallback)
+  (state.marketing || []).forEach(m => {
+    const p = (m.promotion_category || m.promotion_id || '').trim();
+    const d = (m.execution_date || m.date || '').trim();
+    const kpi = (m.kpi_metric || '').trim().toUpperCase();
+    if (!p || !d) return;
+    // fallback: execution_date 최솟값
+    if (!promoStartAll[p] || d < promoStartAll[p]) promoStartAll[p] = d;
+    // 우선: STARTED 기준 최솟값
+    if (kpi === 'STARTED') {
+      if (!promoStart[p] || d < promoStart[p]) promoStart[p] = d;
+    }
+  });
+  // STARTED 없는 캠페인은 execution_date fallback 사용
+  Object.keys(promoStartAll).forEach(p => {
+    if (!promoStart[p]) promoStart[p] = promoStartAll[p];
+  });
+  // 성과 집계는 항상 2026년 오더부터 — 마케팅이 2025년에 시작됐어도
+  // 올해(2026년) 캠페인 성과에는 2026-01-01 이후 오더만 포함
+  Object.keys(promoStart).forEach(p => {
+    if (promoStart[p] < '2026-01-01') promoStart[p] = '2026-01-01';
+  });
 
   // Build campaign target maps so ORDER AMT can attribute orders via
   // (tag) OR (target SKU) OR (target customer) — broader than tag-only.
@@ -6020,7 +6279,7 @@ function renderPromoChart(fOrders, fMkt) {
   // Scope the current-period order set to the selected promotion (if any).
   const fOrdersScoped = (promoFilter === '__all__')
     ? fOrdersST
-    : fOrdersST.filter(o => (o.promotion_category || '') === promoFilter);
+    : fOrders.filter(o => (o.promotion_category || '') === promoFilter);
   // For the baseline (used by the comparison overlay), match by the campaign's
   // explicit target_customers or target_skus when filtering to one promotion,
   // so prior-period values come from that campaign's actual targets.
