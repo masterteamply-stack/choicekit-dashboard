@@ -9725,8 +9725,9 @@ async function fetchSharedCsv(kind) {
 
 async function loadSharedData(force = false) {
   // Personal data takes priority — skip default load unless forced (Reset to Shared Data button).
-  const hasPersonal = localStorage.getItem('ck_has_personal_data') === '1';
-  if (hasPersonal && !force) return false;
+  // hasPersonal 체크 제거 — 항상 shared data 로드 (GitHub Pages 전용)
+  // const hasPersonal = localStorage.getItem('ck_has_personal_data') === '1';
+  // if (hasPersonal && !force) return false;
 
   // file:// 환경에서는 GitHub raw fetch가 차단됨
   if (location.protocol === 'file:') {
@@ -9914,7 +9915,9 @@ document.addEventListener('click', e => {
 });
 
 async function fetchCsvText(name) {
-  const url = `${name}?t=${Date.now()}`;
+  // name이 절대 URL이면 그대로, 상대 경로면 GH_REPO_BASE 붙이기
+  const base = (name.startsWith('http') ? name : `${GH_REPO_BASE}/${name}`);
+  const url = `${base}${base.includes('?')?'&':'?'}t=${Date.now()}`;
   const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error(`${name} HTTP ${res.status}`);
   const buf = await res.arrayBuffer();
@@ -9948,19 +9951,19 @@ async function reloadAutoCSV(showAlert = false) {
   }
 
   try {
-    const txt = await fetchCsvText(AUTO_CSV_FILES.orders);
+    const txt = await fetchCsvText(SHARED_CSV_URLS.orders);
     const rows = await parseOrderCSV(txt);
     state.orders = rows; results.orders = rows.length;
     markDataUpdated('orders');
   } catch (e) { results.errors.push(`Orders: ${e.message}`); }
   try {
-    const txt = await fetchCsvText(AUTO_CSV_FILES.marketing);
+    const txt = await fetchCsvText(SHARED_CSV_URLS.marketing);
     const rows = await parseMarketingCSV(txt);
     state.marketing = rows; results.marketing = rows.length;
     markDataUpdated('marketing');
   } catch (e) { results.errors.push(`Marketing: ${e.message}`); }
   try {
-    const txt = await fetchCsvText(AUTO_CSV_FILES.budgets);
+    const txt = await fetchCsvText(SHARED_CSV_URLS.budgets);
     applyBudgets(parseBudgetsCSV(txt));
     results.budgets = 1;
   } catch (e) { /* budgets는 옵션이므로 조용히 */ }
@@ -10311,11 +10314,8 @@ window.publishSnapshot = publishSnapshot;
   }
   // Always try to load shared data — even if personal data flag is set,
   // if state.orders is empty we force-reload to avoid blank dashboard.
-  if (!state.orders.length && !state.marketing.length) {
-    try { await loadSharedData(true); } catch (e) { console.warn('Shared data load skipped:', e); }
-  } else {
-    try { await loadSharedData(false); } catch (e) { console.warn('Shared data load skipped:', e); }
-  }
+  // 항상 shared data 로드 시도
+  try { await loadSharedData(true); } catch (e) { console.warn('Shared data load skipped:', e); }
   // Load explicit per-campaign target SKU lists (SA_list etc.) — best-effort.
   try { await loadCampaignTargetSkus(); } catch (e) { console.warn('target SKU load skipped:', e); }
   // CTR-Model map + auto CSV refresh still require network — only attempt over http(s).
