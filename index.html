@@ -5918,11 +5918,12 @@ async function renderPromoChart(fOrders, fMkt) {
       _mktSellType[p] = (_cfg0[p].match_by || 'sku').toLowerCase() === 'customer' ? 'SELL-OUT' : 'SELL-IN';
     }
   });
-  const sellTypePromos = new Set(
-    Object.entries(_mktSellType).filter(([,st]) => st === sellType).map(([p]) => p)
-  );
-  // fOrders를 현재 sell_type 캠페인으로만 필터
-  const fOrdersST = fOrders.filter(o => sellTypePromos.has((o.promotion_category||'').trim()));
+  const sellTypePromos = new Set(Object.keys(_mktSellType));
+  // 모든 캠페인 포함 (SELL-IN/OUT 탭 제거됨)
+  const fOrdersST = fOrders.filter(o => {
+    const p = (o.promotion_category||'').trim();
+    return p && p !== '(none)';
+  });
   // promoFilterSel 옵션을 sell_type에 맞게 동적 업데이트
   const filterSel2 = document.getElementById('promoFilterSel');
   if (filterSel2) {
