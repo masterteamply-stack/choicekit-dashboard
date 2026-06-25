@@ -7115,7 +7115,25 @@ function renderPromoTable() {
   const fOrders = state.orders.filter(matchOrder).filter(o => isRegionVisible(o.region));
   const fMkt    = state.marketing.filter(matchMkt).filter(m => isRegionVisible(m.region));
   // 재사용: renderPromoChart 내 summary 접근 불가 → _lastPromoSummary 전역에서 읽기
-  const summary = window._lastPromoSummary || [];
+  const _allSummary = window._lastPromoSummary || [];
+
+  // SELL-IN / SELL-OUT 필터 적용 — 현재 탭에 해당하는 캠페인만 표시
+  const _sellType = state.promoSellType || 'SELL-IN';
+  const _cfg0 = state.campaignTargetSkus || {};
+  const _mktSellType = {};
+  (state.marketing || []).forEach(m => {
+    const p  = (m.promotion_category || '').trim();
+    const st = (m.sell_type || '').trim().toUpperCase().replace(/[_\s]/g,'-');
+    if (p && st && !_mktSellType[p]) _mktSellType[p] = st;
+  });
+  Object.keys(_cfg0).forEach(p => {
+    if (!_mktSellType[p])
+      _mktSellType[p] = (_cfg0[p].match_by||'sku').toLowerCase()==='customer' ? 'SELL-OUT' : 'SELL-IN';
+  });
+  const summary = _allSummary.filter(p => {
+    const promo = p.promotion || p.key || '';
+    return (_mktSellType[promo] || 'SELL-IN') === _sellType;
+  });
   const cmpSeries = window._lastPromoCmpSeries || {};
 
   function shiftBucket(pk, mode, per) {
@@ -7203,8 +7221,11 @@ function renderPromoTable() {
     return `<th class="text-right mono" style="font-size:10px;${i===0?'border-left:2px solid var(--border)':''}">${label}</th>`;
   }).join('');
 
+  const _stBadge = _sellType === 'SELL-IN'
+    ? '<span style="background:#C8102E;color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;font-weight:700;vertical-align:middle">📦 SELL-IN</span>'
+    : '<span style="background:#0A84FF;color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;font-weight:700;vertical-align:middle">🤝 SELL-OUT</span>';
   const head = `<thead><tr>
-    <th>PROMOTION</th>
+    <th>PROMOTION ${_stBadge}</th>
     <th class="text-right">ORDERS</th>
     <th class="text-right">현재 ORDER AMT</th>
     ${_cmpModeNow!=='off'?`<th class="text-right">${_prevColLabel}</th>`:''}
@@ -7243,7 +7264,7 @@ function renderPromoTable() {
     </tr>`;
   }).join('')}
   <tr style="border-top:2px solid var(--border);font-weight:800;background:rgba(0,0,0,0.03)">
-    <td>TOTAL (${summary.length}개 캠페인)</td>
+    <td><b>TOTAL</b> <span class="muted" style="font-size:10px">${_sellType === 'SELL-IN' ? '📦 SELL-IN' : '🤝 SELL-OUT'} · ${summary.length}개 캠페인</span></td>
     <td class="text-right mono">${fmtNum(totalOrd)}</td>
     <td class="text-right mono t-green" style="font-weight:800">${fmtMoney(totalCur)}</td>
     ${_cmpModeNow!=='off'?`<td class="text-right mono muted">${fmtMoney(totalPrv)}</td>`:''}
