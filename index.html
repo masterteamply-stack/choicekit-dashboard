@@ -9059,6 +9059,605 @@ function resolveModel(ctrCode, mode) {
 }
 
 // Shared CSV URLs — same GitHub repo as pre-orders, just files at the repo root.
+function _resolveGhRepoBase() {
+  if (location.protocol === 'http:' || location.protocol === 'https:') {
+    // location.pathname is like '/choicekit-dashboard/' or '/choicekit-dashboard/index.html'
+    // Strip any trailing 'index.html' so we land at the folder containing the dashboard.
+    const path = location.pathname.replace(/index\.html?$/i, '').replace(/\/$/, '');
+    return location.origin + path; // e.g. 'https://masterteamply-stack.github.io/choicekit-dashboard'
+  }
+  return 'https://raw.githubusercontent.com/masterteamply-stack/choicekit-dashboard/main';
+}
+const GH_REPO_BASE = _resolveGhRepoBase();
+console.log('[pre-orders] base URL:', GH_REPO_BASE);
+
+const PRE_ORDER_MANIFESTS = [
+  // baseline_data: 511,689행 → 13,263행으로 전처리 완료
+  // 각 캠페인 target SKU/고객에 해당하는 2024-2025 오더만 포함
+  { name: 'baseline_data', url: `${GH_REPO_BASE}/baseline_data/manifest.json` },
+];
+// Legacy Supabase Edge Function — kept as commented reference; CORS / RLS issues
+// made it unreliable in production. Same-origin from GitHub Pages is the dependable path now.
+// const PRE_ORDER_JSON_URL = 'https://waxjtcxdgulbdofycywr.supabase.co/functions/v1/pre-orders-data';
+
+/* ── Tiny IndexedDB key-value helper (for caching the large pre-orders dataset) ── */
+function _idbOpen() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('ckDashboard', 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('kv');
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function idbGet(key) {
+  try {
+    const db = await _idbOpen();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction('kv','readonly');
+      const r = tx.objectStore('kv').get(key);
+      r.onsuccess = () => resolve(r.result);
+      r.onerror = () => reject(r.error);
+    });
+  } catch (e) { return undefined; }
+}
+async function idbSet(key, val) {
+  const db = await _idbOpen();
+  return await new Promise((resolve, reject) => {
+    const tx = db.transaction('kv','readwrite');
+    const r = tx.objectStore('kv').put(val, key);
+    r.onsuccess = () => resolve();
+    r.onerror = () => reject(r.error);
+  });
+}
+async function idbDelete(key) {
+  try {
+    const db = await _idbOpen();
+    return await new Promise((resolve) => {
+      const tx = db.transaction('kv','readwrite');
+      const r = tx.objectStore('kv').delete(key);
+      r.onsuccess = () => resolve();
+      r.onerror = () => resolve();
+    });
+  } catch (e) {}
+}
+
+// Only these fields are needed downstream (fillCompareKpis usage). Stripping the
+// other ~30 columns from each pre-order row cuts memory & IndexedDB size by ~60%.
+const PRE_ORDER_SLIM_FIELDS = ['order_id','order_date','amount_usd','amount','qty','sku','ctr_code','region','country','promotion_category','customer','currency','_promo'];
+function slimPreOrderRow(o) {
+  const r = {};
+  for (let i = 0; i < PRE_ORDER_SLIM_FIELDS.length; i++) {
+    const k = PRE_ORDER_SLIM_FIELDS[i];
+    if (o[k] !== undefined) r[k] = o[k];
+  }
+  // baseline_data: _promo가 promotion_category 역할 — 없으면 채워넣기
+  if (!r.promotion_category && r._promo) r.promotion_category = r._promo;
+  // amount_usd fallback
+  if (!r.amount_usd && r.amount) r.amount_usd = r.amount;
+  r.country = normalizeCountry(r.country);
+  // Resolve region with country override applied — fixes baseline rows that
+  // were tagged with the wrong region (e.g. Mexico baseline mistakenly tagged
+  // 'N_AMERICA' → forced to 'LATAM'; Russia → 'RUS'). Date-aware re-classification
+  // (Ukraine/Georgia/Armenia → EUROPE from 2026) also applies via resolveRegion.
+  r.region = resolveRegion(r.region, r.country, r.order_date);
+  // category is derived from promotion_category by callers via promoKeyOfOrder
+  r[PRE_ORDER_MARK] = true;
+  return r;
+}
+
+// Primary fast path: a single columnar + dictionary-encoded bundle file.
+// ~18MB raw / ~5-7MB gzipped over the wire → 3-5s on a decent connection vs
+// 15-30s for 1,025 chunk fetches. Regenerate via scripts/build_pre_orders_bundle.py.
+const PRE_ORDER_BUNDLE_URL   = `${GH_REPO_BASE}/pre_orders_bundle.json`;
+const PRE_ORDER_SUMMARY_URL  = `${GH_REPO_BASE}/pre_orders_summary.json`;
+
+// ── 스냅샷 로드: 26MB 번들 없이 즉시 전년 비교 데이터 표시 ──
+// pre_orders_summary.json (~41KB): 캠페인별×월별 전년 집계 결과
+// 이 데이터만으로 Promotion Performance 전년 동기 수치를 즉시 표시
+async function loadPreOrdersSummary() {
+  try {
+    const res = await fetch(PRE_ORDER_SUMMARY_URL, { cache: 'force-cache' });
+    if (!res.ok) return null;
+    const snap = await res.json();
+    state.preOrdersSummary = snap;
+    // yoy_by_promo_month: { promo → { "2025-04": 210000, ... } }
+    state.yoyByPromoMonth = snap.yoy_by_promo_month || {};
+    state.promoBundleBuyersSnap = snap.promo_bundle_buyers || {};
+    state.promoCTRsSnap = snap.promo_ctrs || {};
+    console.log('[summary] loaded — promos:', Object.keys(state.yoyByPromoMonth).length);
+    return snap;
+  } catch(e) {
+    console.warn('[summary] load failed:', e);
+    return null;
+  }
+}
+
+// Reconstruct full row objects from a v2 (columnar+dict) bundle.
+//   bundle.k     = { order_id:'i', order_date:'d', ... }   (long → short)
+//   bundle.dicts = { i:[...vocab], d:[...vocab], ... }     (string fields)
+//   bundle.idx   = { i:[ix,ix,...], d:[...], ... }         (per-row dict index)
+//   bundle.num   = { a:[29.24,...], q:[4,...] }            (per-row number)
+function decodeV2Bundle(bundle) {
+  const N = bundle.n;
+  // Invert key map: short → long. Skip the short key for assembly, since we
+  // want to write the long names that downstream code expects.
+  const inv = {};
+  for (const longK in bundle.k) inv[bundle.k[longK]] = longK;
+  // Pre-resolve which short keys are dict-encoded vs raw numbers
+  const dictShortKeys = Object.keys(bundle.dicts || {});
+  const numShortKeys  = Object.keys(bundle.num   || {});
+  // Pre-bind arrays for speed (avoid repeated property lookups inside the hot loop)
+  const dictPairs = dictShortKeys.map(sk => ({ longK: inv[sk] || sk, vocab: bundle.dicts[sk], idxArr: bundle.idx[sk] }));
+  const numPairs  = numShortKeys.map (sk => ({ longK: inv[sk] || sk, arr:   bundle.num[sk] }));
+  const out = new Array(N);
+  for (let i = 0; i < N; i++) {
+    const o = {};
+    for (let j = 0; j < dictPairs.length; j++) {
+      const p = dictPairs[j];
+      const ix = p.idxArr[i];
+      if (ix !== -1 && ix !== undefined) o[p.longK] = p.vocab[ix];
+    }
+    for (let j = 0; j < numPairs.length; j++) {
+      const p = numPairs[j];
+      const v = p.arr[i];
+      if (v !== null && v !== undefined) o[p.longK] = v;
+    }
+    o.country = normalizeCountry(o.country);
+    // Resolve region with country override applied — fixes baseline rows that
+    // were tagged with the wrong region. See slimPreOrderRow for full rationale.
+    o.region = resolveRegion(o.region, o.country, o.order_date);
+    o[PRE_ORDER_MARK] = true;
+    out[i] = o;
+  }
+  return out;
+}
+
+// Try to load pre-orders from the single bundle file. Returns
+// { rows, version }  on success, or { error: 'reason' }  on failure.
+// The error reason is shown to the user in the final alert so they can
+// diagnose without needing to open DevTools.
+async function tryLoadPreOrderBundle(setBtnLabel) {
+  try {
+    setBtnLabel('Loading bundle…');
+    let res;
+    try {
+      res = await fetch(PRE_ORDER_BUNDLE_URL, { cache: 'no-cache' });
+    } catch (netErr) {
+      const reason = `network error: ${netErr && netErr.message || netErr}`;
+      console.warn(`[pre-orders] bundle fetch network error:`, netErr);
+      return { error: reason };
+    }
+    if (!res.ok) {
+      const reason = `HTTP ${res.status}${res.status === 404 ? ' (file not found at repo root)' : ''}`;
+      if (res.status === 404) console.log('[pre-orders] no bundle at repo root — falling back to chunk fetcher');
+      else console.warn(`[pre-orders] bundle ${reason}`);
+      return { error: reason };
+    }
+    setBtnLabel('Parsing bundle…');
+    let bundle;
+    try { bundle = await res.json(); }
+    catch (parseErr) {
+      const reason = `JSON parse error: ${parseErr && parseErr.message || parseErr}`;
+      console.warn(`[pre-orders] bundle ${reason}`);
+      return { error: reason };
+    }
+    if (!bundle || typeof bundle.n !== 'number') {
+      const reason = `malformed bundle (top keys: ${Object.keys(bundle||{}).slice(0,5).join(',')})`;
+      console.warn(`[pre-orders] ${reason}`);
+      return { error: reason };
+    }
+    setBtnLabel(`Expanding ${fmtNum(bundle.n)} rows…`);
+    let expanded;
+    if (bundle.v === 2 && bundle.dicts && bundle.idx) {
+      expanded = decodeV2Bundle(bundle);
+    } else if (bundle.v === 1 && Array.isArray(bundle.rows) && bundle.k) {
+      const inv = {};
+      for (const longK in bundle.k) inv[bundle.k[longK]] = longK;
+      expanded = bundle.rows.map(r => {
+        const o = {};
+        for (const k in r) o[inv[k] || k] = r[k];
+        o.region = normalizeRegion(o.region);
+        o.country = normalizeCountry(o.country);
+        o[PRE_ORDER_MARK] = true;
+        return o;
+      });
+    } else {
+      const reason = `unsupported schema v${bundle.v}`;
+      console.warn(`[pre-orders] ${reason}`);
+      return { error: reason };
+    }
+    console.log(`[pre-orders] ✅ bundle loaded: ${expanded.length.toLocaleString()} rows (schema v${bundle.v}, n=${bundle.n})`);
+    // Content-aware version: row count plus a hash of the customer dict so any
+    // customer rename in a regenerated bundle invalidates the IndexedDB cache,
+    // even when row count stays the same.
+    let custSig = 0;
+    const custDict = (bundle.dicts && bundle.dicts.u) || [];
+    const custStr = custDict.join('|');
+    for (let i = 0; i < custStr.length; i++) {
+      custSig = (custSig * 31 + custStr.charCodeAt(i)) | 0;
+    }
+    const version = `${bundle.n}:${custDict.length}:${custSig}`;
+    return { rows: expanded, version };
+  } catch (e) {
+    const reason = `unexpected error: ${e && e.message || e}`;
+    console.warn('[pre-orders] bundle:', reason, e);
+    return { error: reason };
+  }
+}
+
+async function fetchPreOrdersOnce() {
+  if (state.preOrders && state.preOrders.length) return state.preOrders;
+  if (location.protocol === 'file:') {
+    throw new Error('file:// 환경에서는 fetch가 차단됩니다. HTML을 로컬 서버로 열거나 (예: python -m http.server) GitHub Pages에 올려주세요.');
+  }
+  const btn = document.getElementById('btnPreOrder');
+  const setBtnLabel = (txt) => {
+    if (btn) btn.innerHTML = `<span style="display:inline-block;animation:ck-spin 0.8s linear infinite;">⟳</span> ${txt}`;
+  };
+
+  // ── Step 0: Try the single-file bundle first (~18MB / 3-5s) ──
+  const bundleResult = await tryLoadPreOrderBundle(setBtnLabel);
+  const bundleError = bundleResult && bundleResult.error;
+  if (bundleResult && !bundleError) {
+    // Check IndexedDB cache against bundle.n (auto-invalidates when bundle regen)
+    setBtnLabel('Checking cache…');
+    const cachedB = await idbGet('preOrdersCache_v2');
+    if (cachedB && cachedB.version === bundleResult.version && Array.isArray(cachedB.rows) && cachedB.rows.length) {
+      console.log(`[pre-orders] ⚡ IndexedDB cache hit (bundle path): ${cachedB.rows.length.toLocaleString()} rows`);
+      const restoredB = cachedB.rows.map(o => (o[PRE_ORDER_MARK] ? o : { ...o, [PRE_ORDER_MARK]: true }));
+      state.preOrders = restoredB;
+      state.preOrdersMeta = { source: 'indexeddb-cache(bundle)', count: restoredB.length, version: bundleResult.version };
+      return restoredB;
+    }
+    state.preOrders = bundleResult.rows;
+    state.preOrdersMeta = { source: 'github-bundle', count: bundleResult.rows.length, version: bundleResult.version };
+    try {
+      setBtnLabel('Caching…');
+      await idbSet('preOrdersCache_v2', { rows: bundleResult.rows, version: bundleResult.version, savedAt: new Date().toISOString() });
+      console.log(`[pre-orders] 💾 cached ${bundleResult.rows.length} rows to IndexedDB (version ${bundleResult.version})`);
+    } catch (e) {
+      console.warn('[pre-orders] IndexedDB cache save failed (non-fatal):', e);
+    }
+    return bundleResult.rows;
+  }
+
+  // ── Step 1: Load both manifests in parallel (cheap, ~10-20 KB each) ──
+  setBtnLabel('Loading manifests…');
+  const manifestResults = await Promise.all(PRE_ORDER_MANIFESTS.map(async (m) => {
+    try {
+      const res = await fetch(m.url, { cache: 'no-cache' });
+      if (!res.ok) {
+        const reason = `HTTP ${res.status}`;
+        console.warn(`[pre-orders] manifest ${m.name}: ${reason}`);
+        return { ...m, manifest: null, error: reason };
+      }
+      const manifest = await res.json();
+      console.log(`[pre-orders] manifest ${m.name}: ${manifest.total_records?.toLocaleString?.() || '?'} rows / ${manifest.total_chunks} chunks`);
+      return { ...m, manifest, error: null };
+    } catch (e) {
+      const reason = `${e && e.name || 'Error'}: ${e && e.message || e}`;
+      console.warn(`[pre-orders] manifest ${m.name} fetch failed:`, e);
+      return { ...m, manifest: null, error: reason };
+    }
+  }));
+  const totalExpected = manifestResults.reduce((s, m) => s + (m.manifest?.total_records || 0), 0);
+
+  // ── Step 1.5: Check IndexedDB cache — if the cached version matches the
+  // current manifest total_records, skip the network entirely. (When workflows
+  // insert new rows, total_records changes → cache auto-invalidates.) ──
+  if (totalExpected > 0) {
+    setBtnLabel('Checking cache…');
+    const cached = await idbGet('preOrdersCache_v2');
+    if (cached && cached.version === totalExpected && Array.isArray(cached.rows) && cached.rows.length) {
+      console.log(`[pre-orders] ⚡ IndexedDB cache hit: ${cached.rows.length.toLocaleString()} rows (version ${totalExpected})`);
+      // Re-tag PRE_ORDER_MARK in case it was stripped during serialization
+      const restored = cached.rows.map(o => (o[PRE_ORDER_MARK] ? o : { ...o, [PRE_ORDER_MARK]: true }));
+      state.preOrders = restored;
+      state.preOrdersMeta = { source: 'indexeddb-cache', count: restored.length, version: totalExpected };
+      return restored;
+    } else if (cached) {
+      console.log(`[pre-orders] cache stale (cached version=${cached.version} vs current=${totalExpected}) — refetching`);
+    }
+  }
+
+  // ── Step 2: Build chunk URL list from all manifests ──
+  const chunkUrls = [];
+  for (const { name, manifest } of manifestResults) {
+    if (!manifest || !Array.isArray(manifest.files)) continue;
+    for (const filePath of manifest.files) chunkUrls.push(`${GH_REPO_BASE}/${filePath}`);
+  }
+  if (!chunkUrls.length) {
+    // All fetch paths failed. Build a diagnostic message so the alert tells
+    // the user *exactly* what failed and what to check next.
+    const lines = [
+      'Pre-orders 로드 실패 — 모든 fetch 경로 차단됨.',
+      '',
+      `Base URL: ${GH_REPO_BASE}`,
+      '',
+      `번들 (${PRE_ORDER_BUNDLE_URL.split('/').pop()}):`,
+      `  • ${bundleError || 'unknown error'}`,
+      '',
+      'Manifest:',
+      ...manifestResults.map(m => `  • ${m.name}/manifest.json: ${m.error || 'unknown error'}`),
+      '',
+      '확인 사항:',
+      '  1. Ctrl+Shift+R 강제 새로고침 (CDN 캐시 우회)',
+      '  2. DevTools(F12) → Network 탭: pre_orders_bundle.json 응답 상태 확인',
+      '  3. 파일이 git repo 루트에 commit되어 있는지 (404 → 파일 없음)',
+      '  4. VPN/방화벽/광고차단 확장 일시 비활성화',
+    ];
+    throw new Error(lines.join('\n'));
+  }
+  console.log(`[pre-orders] fetching ${chunkUrls.length} chunks (expected ~${totalExpected.toLocaleString()} rows)`);
+
+  // ── Step 3: Fetch all chunks with HIGH parallelism (raw.githubusercontent.com
+  // is HTTP/2 + Fastly CDN — handles 50 concurrent requests easily) ──
+  const PARALLEL = 50;
+  const allRows = [];
+  const failed = [];
+  let done = 0;
+  for (let i = 0; i < chunkUrls.length; i += PARALLEL) {
+    const slice = chunkUrls.slice(i, i + PARALLEL);
+    const batch = await Promise.allSettled(slice.map(url =>
+      fetch(url, { cache: 'force-cache' }).then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
+    ));
+    batch.forEach((r, k) => {
+      if (r.status === 'fulfilled' && Array.isArray(r.value)) {
+        // SLIM each row — drop ~30 unused columns to cut memory & cache size by ~60%
+        for (let j = 0; j < r.value.length; j++) allRows.push(slimPreOrderRow(r.value[j]));
+      } else {
+        failed.push({ url: slice[k], reason: r.reason?.message || String(r.reason) });
+      }
+    });
+    done += slice.length;
+    setBtnLabel(`Loading ${fmtNum(allRows.length)} rows… (${done}/${chunkUrls.length})`);
+  }
+
+  if (failed.length) {
+    console.warn(`[pre-orders] ${failed.length}/${chunkUrls.length} chunks failed. First few:`, failed.slice(0, 5));
+  }
+  if (!allRows.length) {
+    throw new Error(`pre-orders 로드 0건. ${failed.length}/${chunkUrls.length}개 chunk가 모두 실패했습니다. 첫 실패: ${failed[0]?.reason || 'unknown'}`);
+  }
+  console.log(`[pre-orders] ✅ loaded ${allRows.length} rows from ${chunkUrls.length - failed.length}/${chunkUrls.length} chunks`);
+
+  state.preOrders = allRows;
+  state.preOrdersMeta = {
+    source: 'github-raw',
+    count: allRows.length,
+    manifests: manifestResults.map(m => ({ name: m.name, loaded: !!m.manifest, rows: m.manifest?.total_records || 0 })),
+    failedChunks: failed.length,
+  };
+
+  // ── Step 4: Persist to IndexedDB (best-effort) — next session loads instantly ──
+  if (!failed.length && totalExpected > 0) {
+    try {
+      setBtnLabel('Caching…');
+      await idbSet('preOrdersCache_v2', { rows: allRows, version: totalExpected, savedAt: new Date().toISOString() });
+      console.log(`[pre-orders] 💾 cached ${allRows.length} rows to IndexedDB (version ${totalExpected})`);
+    } catch (e) {
+      // Quota exceeded or browser refuses storage — non-fatal, in-memory copy still works
+      console.warn('[pre-orders] IndexedDB cache save failed (non-fatal):', e);
+    }
+  }
+  return allRows;
+}
+
+function updatePreOrderBadge() {
+  const badge = document.getElementById('preOrderBadge');
+  const btn = document.getElementById('btnPreOrder');
+  const on = !!state.preOrdersEnabled;
+  if (badge) {
+    if (on) {
+      const n = (state.preOrders || []).length;
+      badge.textContent = n > 999 ? (Math.round(n/1000) + 'K') : String(n);
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+  if (btn) btn.classList.toggle('active', on);
+}
+
+async function togglePreOrders() {
+  const btn = document.getElementById('btnPreOrder');
+  if (state.preOrdersEnabled) {
+    // OFF — unload baseline (data is dropped from memory; toggle state cleared)
+    state.preOrders = [];
+    state.preOrdersMeta = null;
+    state.preOrdersEnabled = false;
+    state._preIdx = null; state._preOrdersIndexed = false;
+    try { localStorage.setItem('ck_pre_orders_on', '0'); } catch(e){}
+    updatePreOrderBadge();
+    rebuildAll();   // re-render KPI panels without the baseline
+    return;
+  }
+  // ON — fetch + enable (NOT merged into state.orders; only used by compare KPIs)
+  const origLabel = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span style="display:inline-block;animation:ck-spin 0.8s linear infinite;">⟳</span> Loading…';
+  }
+  try {
+    const rows = await fetchPreOrdersOnce();
+    state.preOrdersEnabled = true;
+    try { localStorage.setItem('ck_pre_orders_on', '1'); } catch(e){}
+    // Build lookup index asynchronously so the main thread isn't blocked
+    setTimeout(() => _buildPreOrdersIndex(), 0);
+    rebuildAll();
+    try { showToast(`✅ Pre-order baseline loaded — ${fmtNum(rows.length)} rows`); } catch(_){}
+  } catch (err) {
+    console.error('[pre-orders] toggle failed:', err);
+    alert('Pre-order baseline 로드 실패:\n\n' + (err && err.message || err) +
+          '\n\n자세한 내용은 브라우저 개발자 도구 > Console을 확인하세요.');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origLabel;
+    }
+    updatePreOrderBadge();
+  }
+}
+
+// Auto-restore baseline on every page load — unless the user explicitly
+// turned it OFF in a previous session. (Previously this only auto-loaded
+// when 'ck_pre_orders_on' === '1', forcing first-time users to click the
+// Baseline button. The default is now ON so the dashboard is usable
+// immediately.)
+async function maybeAutoLoadPreOrders() {
+  let want = null;
+  try { want = localStorage.getItem('ck_pre_orders_on'); } catch(e){}
+  if (want === '0') { updatePreOrderBadge(); return; }
+  if (location.protocol === 'file:') { updatePreOrderBadge(); return; }
+
+  // ── Step 1: 스냅샷 먼저 로드 (~41KB, 즉시) ──
+  // 26MB 번들 없이도 전년 동기 수치를 바로 표시
+  const snap = await loadPreOrdersSummary();
+  if (snap) {
+    state.preOrdersEnabled = true;  // 스냅샷만으로도 전년 비교 활성화
+    rebuildAll();  // 즉시 화면 업데이트
+  }
+
+  // ── Step 2: 번들은 백그라운드에서 로드 (인터랙티브 상세 분석용) ──
+  // 번들이 있으면 더 세밀한 필터링 가능 — 없어도 스냅샷으로 기본 표시
+  try {
+    await fetchPreOrdersOnce();
+    state.preOrdersEnabled = true;
+    try { localStorage.setItem('ck_pre_orders_on', '1'); } catch(e){}
+    // Build index in background
+    setTimeout(() => { _buildPreOrdersIndex(); rebuildAll(); }, 100);
+    if (want == null) {
+      try {
+        const n = (state.preOrders || []).length;
+        showToast(`✅ Baseline loaded — ${fmtNum(n)} rows`);
+      } catch(_){}
+    }
+  } catch (err) {
+    console.warn('Pre-order bundle load failed (snapshot only mode):', err);
+    // 번들 실패해도 스냅샷으로 전년 비교는 계속 표시
+    state.preOrdersEnabled = !!snap;
+    state._preIdx = null;
+    state._preOrdersIndexed = false;
+  }
+  updatePreOrderBadge();
+}
+
+window.togglePreOrders = togglePreOrders;
+
+/* =================== REGION VISIBILITY =================== */
+// region이 차트/테이블에 포함되어야 하는지
+function isRegionVisible(region) {
+  if (!region) return true; // 빈 값은 항상 통과 (별도 처리)
+  if (state.hiddenRegions && state.hiddenRegions.includes(region)) return false;
+  if (state.autoHideEmptyRegions) {
+    const hasOrder = state.orders.some(o => o.region === region);
+    const hasMkt = state.marketing.some(m => m.region === region);
+    const hasBudget = Number(state.regionBudgets[region]||0) > 0 || Number(state.regionTargets[region]||0) > 0;
+    if (!hasOrder && !hasMkt && !hasBudget) return false;
+  }
+  return true;
+}
+function visibleRegionFilter(arr) {
+  return arr.filter(x => !x.region || isRegionVisible(x.region));
+}
+
+/* =================== AUTO CSV LOAD ===================
+   HTML 파일과 같은 폴더에 아래 파일명으로 두면 자동 로딩됩니다:
+     - orders.csv      (오더 데이터)
+     - marketing.csv   (마케팅 활동)
+   브라우저 보안 정책상 file:// 프로토콜에서는 fetch가 막힐 수 있어,
+   사내 웹서버 또는 정적 호스팅(http(s)://) 환경에서 사용하세요.
+   실패 시 기존 수동 업로드 버튼으로 보완 가능합니다.
+*/
+const AUTO_CSV_FILES = { orders: 'orders.csv', marketing: 'marketing.csv', budgets: 'budgets.csv' };
+
+/* =================== SUPABASE SHARED DATA ===================
+   ck_shared_data 테이블에서 공유 CSV를 로드합니다.
+   - 모든 사용자가 동일한 기본 데이터를 봅니다.
+   - 사용자가 직접 CSV를 올리면 개인 커스텀 데이터가 localStorage에 저장됩니다.
+   - Reset to Shared Data 버튼으로 공유 데이터로 복원할 수 있습니다.
+================================================================ */
+const SB_SHARED_URL = 'https://waxjtcxdgulbdofycywr.supabase.co';
+const SB_SHARED_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndheGp0Y3hkZ3VsYmRvZnljeXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMjc3NTIsImV4cCI6MjA4ODgwMzc1Mn0.rvkmwG-dsjeFfT2NAMUJaKjCBMm2SOmAQ1SXl3V3jHI';
+
+/* ── CTR-Model 매핑 ──────────────────────────────────── */
+let ctrModelMap = {};   // { 'CB0210R': 'HYUNDAI SONATA', ... }
+
+async function loadCtrModelMap() {
+  try {
+    // 22,000건 이상이므로 페이지네이션으로 전체 로드
+    const PAGE = 1000;
+    let all = [];
+    let from = 0;
+    while (true) {
+      const res = await fetch(
+        `${SB_SHARED_URL}/rest/v1/ck_ctr_model?select=ctr_code,make_model,brand&limit=${PAGE}&offset=${from}`,
+        { headers: { apikey: SB_SHARED_KEY, Authorization: `Bearer ${SB_SHARED_KEY}` } }
+      );
+      if (!res.ok) break;
+      const rows = await res.json();
+      if (!rows.length) break;
+      all = all.concat(rows);
+      if (rows.length < PAGE) break;
+      from += PAGE;
+    }
+    ctrModelMap = {};
+    all.forEach(r => { if (r.ctr_code) ctrModelMap[r.ctr_code.toUpperCase()] = r; });
+    console.log(`✅ CTR-Model map loaded: ${all.length}건`);
+  } catch(e) { console.warn('CTR-Model map load failed:', e); }
+}
+
+async function uploadCtrModelCSV(file) {
+  const text = await file.text();
+  const lines = text.trim().split(/\r?\n/);
+  const header = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/[^a-z0-9_]/g,'_'));
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const vals = lines[i].split(',');
+    const row = {};
+    header.forEach((h, idx) => { row[h] = (vals[idx]||'').trim(); });
+    // 컬럼 자동 매핑
+    const ctr = row['ctr_code'] || row['ctr'] || row['code'] || row['part_no'] || '';
+    const model = row['make_model'] || row['model'] || row['vehicle_model'] || row['vehicle'] || '';
+    const brand = row['brand'] || row['make'] || '';
+    const vtype = row['vehicle_type'] || row['type'] || '';
+    if (ctr) rows.push({ ctr_code: ctr.toUpperCase(), make_model: model, brand, vehicle_type: vtype });
+  }
+  if (!rows.length) { alert('유효한 데이터가 없습니다.'); return; }
+
+  // Supabase upsert
+  const res = await fetch(`${SB_SHARED_URL}/rest/v1/ck_ctr_model`, {
+    method: 'POST',
+    headers: {
+      apikey: SB_SHARED_KEY, Authorization: `Bearer ${SB_SHARED_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'resolution=merge-duplicates'
+    },
+    body: JSON.stringify(rows)
+  });
+  if (res.ok || res.status === 201) {
+    showToast(`✅ CTR-Model 매핑 ${rows.length}건 저장 완료`);
+    await loadCtrModelMap();
+    rebuildAll();
+  } else {
+    const err = await res.text();
+    alert('저장 실패: ' + err);
+  }
+}
+
+// CTR Code → make_model 변환 (매핑 있으면 사용, 없으면 원본)
+function resolveModel(ctrCode, mode) {
+  if (!ctrCode) return '';
+  const entry = ctrModelMap[ctrCode.toUpperCase()];
+  if (!entry) return '';
+  // mode='brand': 브랜드만, mode='full': make_model 전체(C열), default: make_model
+  if (mode === 'brand') return entry.brand || '';
+  // 'full' 또는 default: 매핑 테이블 C열 (make_model) 그대로 반환
+  return entry.make_model || entry.brand || '';
+}
+
+// Shared CSV URLs — same GitHub repo as pre-orders, just files at the repo root.
 const SHARED_CSV_URLS = {
   orders:    `${GH_REPO_BASE}/orders.csv`,
   marketing: `${GH_REPO_BASE}/marketing.csv`,
