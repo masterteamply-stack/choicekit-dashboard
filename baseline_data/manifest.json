@@ -1,8 +1,14 @@
 {
-  "total_records": 0,
-  "total_chunks": 0,
+  "total_records": 13263,
+  "total_chunks": 27,
   "chunk_size": 500,
-  "campaigns": {},
+  "campaigns": {
+    "Mexico Awakening Campaign": 564,
+    "Asian vehicle": 10261,
+    "European vehicle": 2368,
+    "Portfolio Expansion Program": 70
+  },
   "date_range": "2024-01-01 to 2025-12-31",
-  "description": "Pre-filtered baseline data: target SKU/customer only per campaign"
+  "generated_at": "2026-06-25T05:38:38Z",
+  "description": "Pre-filtered baseline: target SKU/customer only per campaign"
 }
