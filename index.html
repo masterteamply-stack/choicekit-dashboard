@@ -11076,9 +11076,9 @@ const GH_REPO_BASE = _resolveGhRepoBase();
 console.log('[pre-orders] base URL:', GH_REPO_BASE);
 
 const PRE_ORDER_MANIFESTS = [
-  { name: 'data',     url: `${GH_REPO_BASE}/data/manifest.json` },       // 177,036 (initial baseline)
-  { name: 'new_data', url: `${GH_REPO_BASE}/new_data/manifest.json` },   // 334,653 (insert_new_orders.yml)
-  // cis_data는 2026년 현재 오더 → preOrders(전년 비교 baseline)에 포함하지 않음
+  // baseline_data: 511,689행 → 13,263행으로 전처리 완료
+  // 각 캠페인 target SKU/고객에 해당하는 2024-2025 오더만 포함
+  { name: 'baseline_data', url: `${GH_REPO_BASE}/baseline_data/manifest.json` },
 ];
 // Legacy Supabase Edge Function — kept as commented reference; CORS / RLS issues
 // made it unreliable in production. Same-origin from GitHub Pages is the dependable path now.
@@ -11127,13 +11127,17 @@ async function idbDelete(key) {
 
 // Only these fields are needed downstream (fillCompareKpis usage). Stripping the
 // other ~30 columns from each pre-order row cuts memory & IndexedDB size by ~60%.
-const PRE_ORDER_SLIM_FIELDS = ['order_id','order_date','amount_usd','qty','sku','region','country','promotion_category','customer'];
+const PRE_ORDER_SLIM_FIELDS = ['order_id','order_date','amount_usd','amount','qty','sku','ctr_code','region','country','promotion_category','customer','currency','_promo'];
 function slimPreOrderRow(o) {
   const r = {};
   for (let i = 0; i < PRE_ORDER_SLIM_FIELDS.length; i++) {
     const k = PRE_ORDER_SLIM_FIELDS[i];
     if (o[k] !== undefined) r[k] = o[k];
   }
+  // baseline_data: _promo가 promotion_category 역할 — 없으면 채워넣기
+  if (!r.promotion_category && r._promo) r.promotion_category = r._promo;
+  // amount_usd fallback
+  if (!r.amount_usd && r.amount) r.amount_usd = r.amount;
   r.country = normalizeCountry(r.country);
   // Resolve region with country override applied — fixes baseline rows that
   // were tagged with the wrong region (e.g. Mexico baseline mistakenly tagged
