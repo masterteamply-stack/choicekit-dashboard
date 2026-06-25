@@ -4151,7 +4151,6 @@ function chartOpts(currencyAware) {
 let categoryPeriod = 'month'; // month | quarter | year
 
 function renderAll() {
-  console.log('[renderAll] START orders:', state.orders.length, 'mkt:', state.marketing.length);
   _orderMatchCache = new WeakMap();
   if (!state.preOrdersEnabled || !state.preOrders || !state.preOrders.length) {
     state._preIdx = null; state._preOrdersIndexed = false;
@@ -4160,7 +4159,6 @@ function renderAll() {
   document.getElementById('cntMkt').textContent = state.marketing.length;
 
   if (!state.orders.length && !state.marketing.length) {
-    console.warn('[renderAll] NO DATA — showing emptyState');
     document.getElementById('emptyState').style.display = 'block';
     document.getElementById('dashboard').style.display = 'none';
     return;
@@ -4196,7 +4194,7 @@ function renderAll() {
   const mktBizreward = fMkt.reduce((s,m)=>s+convMktBizreward(m),0);
   const mktBudgetCsv = fMkt.reduce((s,m)=>s+convMktBudget(m),0);
   const roi          = mktCost>0 ? ((orderAmt-mktCost)/mktCost)*100 : 0;
-  const orderTargetDisp = getOrderTargetDisp();
+  const orderTargetDisp = computeOrderTargetDisp();
 
   // KPI DOM 업데이트 (인라인)
   const orderAmtDisp   = orderAmt;
@@ -6748,10 +6746,6 @@ function renderPromoChart(fOrders, fMkt) {
   renderPromoTable();
   } catch(e) {
     console.error('[renderPromoChart]', e.message, e.stack);
-    const el = document.getElementById('chPromo');
-    if (el && el.parentElement) {
-      el.parentElement.innerHTML = `<div style="color:red;padding:16px;font:12px monospace"><b>[renderPromoChart ERROR]</b><br>${e.message}<br><pre style="font-size:10px;white-space:pre-wrap">${(e.stack||'').slice(0,400)}</pre></div>`;
-    }
     renderPromoTable();
   }
 }
@@ -11650,7 +11644,6 @@ window.publishSnapshot = publishSnapshot;
       } catch (e) { console.warn(e); }
     }
   }
-  console.log("[init] rebuildAll called, orders:", state.orders.length, "mkt:", state.marketing.length);
   rebuildAll();
   // Render cached data-update timestamps on first paint (markDataUpdated handles subsequent updates)
   try { renderDataTimestamps(); } catch (e) { console.warn('renderDataTimestamps init failed:', e); }
