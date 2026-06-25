@@ -5973,11 +5973,17 @@ async function renderPromoChart(fOrders, fMkt) {
   // SELL-IN: SKU 기반 (Portfolio Expansion, Asian vehicle, European vehicle, Korean & Japanese)
   // SELL-OUT: 고객 기반 (Trade promotion, Strategic Partner, Mexico Awakening, Mexico Worldcup)
   const sellType = state.promoSellType || 'SELL-IN';
-  const _mktSellType = {};  // promo → dominant sell_type
+  const _mktSellType = {};  // promo → dominant sell_type (SELL-IN or SELL-OUT)
+  // SELL_IN/SELL_OUT 값만 사용, STARTED/RELEASED/B2C 등은 무시
+  const _validSellTypes = new Set(['SELL-IN','SELL-OUT','SELL_IN','SELL_OUT']);
   (state.marketing || []).forEach(m => {
     const p  = (m.promotion_category || '').trim();
-    const st = (m.sell_type || m.sellType || '').trim().toUpperCase().replace(/[_\s]/g,'-');
-    if (p && st && !_mktSellType[p]) _mktSellType[p] = st;
+    const st = (m.sell_type || m.sellType || '').trim().toUpperCase().replace(/_/g,'-');
+    if (!p || !st) return;
+    // SELL-IN 또는 SELL-OUT만 인정, 이미 세팅된 경우 덮어쓰지 않음
+    const norm = st === 'SELL-IN' || st === 'SELL_IN' ? 'SELL-IN'
+               : st === 'SELL-OUT' || st === 'SELL_OUT' ? 'SELL-OUT' : null;
+    if (norm && !_mktSellType[p]) _mktSellType[p] = norm;
   });
   // sell_type 없으면 match_by로 판단 (sku=SELL-IN, customer=SELL-OUT)
   const _cfg0 = state.campaignTargetSkus || {};
@@ -7207,8 +7213,10 @@ function renderPromoTable() {
   const _mktSellType = {};
   (state.marketing || []).forEach(m => {
     const p  = (m.promotion_category || '').trim();
-    const st = (m.sell_type || '').trim().toUpperCase().replace(/[_\s]/g,'-');
-    if (p && st && !_mktSellType[p]) _mktSellType[p] = st;
+    const st = (m.sell_type || '').trim().toUpperCase().replace(/_/g,'-');
+    if (!p || !st) return;
+    const norm = (st === 'SELL-IN') ? 'SELL-IN' : (st === 'SELL-OUT') ? 'SELL-OUT' : null;
+    if (norm && !_mktSellType[p]) _mktSellType[p] = norm;
   });
   Object.keys(_cfg0).forEach(p => {
     if (!_mktSellType[p])
@@ -7353,9 +7361,8 @@ function renderPromoTable() {
   });
 
   const monthColsHead = curPeriods.map((pk,i)=>{
-    const ppk = _cmpModeNow!=='off'?shiftBucket(pk,_cmpModeNow,period):'';
-    const label = ppk?`${_fmtPk(ppk)}<br><span style="color:var(--blue)">${_fmtPk(pk)}</span>`:_fmtPk(pk);
-    return `<th class="text-right mono" style="font-size:10px;${i===0?'border-left:2px solid var(--border)':''}">${label}</th>`;
+    // 현재 기간만 표시 (paired label 제거)
+    return `<th class="text-right mono" style="font-size:10px;${i===0?'border-left:2px solid var(--border)':''}">${_fmtPk(pk)}</th>`;
   }).join('');
 
   const _stBadge = _sellType === 'SELL-IN'
