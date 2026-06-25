@@ -6086,9 +6086,18 @@ async function renderPromoChart(fOrders, fMkt) {
   });
   // Initial summary built (orderAmt=0). orderAmt is filled from baAmt.after
   // below, and roi/burn are recomputed at that point.
+  const _promoRegionLabel = {};
+  Object.keys(state.campaignTargetSkus || {}).forEach(p => {
+    const r = (state.campaignTargetSkus[p] || {}).region;
+    if (r) {
+      const arr = Array.isArray(r) ? r : [r];
+      _promoRegionLabel[p] = arr.join(', ');
+    }
+  });
   const summary = Object.entries(sum).map(([p,v])=>({
     promotion:p, ...v,
     roi: null, burn: v.expected>0 ? (v.actual/v.expected)*100 : null,
+    regionLabel: _promoRegionLabel[p] || '',
   }));
   window._lastPromoSummary = summary;  // renderPromoTable에서 참조
 
@@ -7176,18 +7185,14 @@ async function renderPromoChart(fOrders, fMkt) {
 }
 function renderPromoTable() {
   try {
-  // tableDim, summary, buildEntitySummary, cmpSeries, period, shiftBucket 등은
-  // renderPromoChart 클로저 변수에 접근 불가 → 전역 state에서 직접 재계산
   const tableDim = state.promoTableDim || 'promotion';
   const period   = state.promoPerfPeriod || 'month';
   const _cmpModeNow = state.promoCmp || 'yoy';
   const _prevColLabel = { yoy:'전년 동기', qoq:'전분기', mom:'전년 동월', off:'–' }[_cmpModeNow] || '전년 동기';
   const fOrders = state.orders.filter(matchOrder).filter(o => isRegionVisible(o.region));
   const fMkt    = state.marketing.filter(matchMkt).filter(m => isRegionVisible(m.region));
-  // 재사용: renderPromoChart 내 summary 접근 불가 → _lastPromoSummary 전역에서 읽기
   const _allSummary = window._lastPromoSummary || [];
 
-  // SELL-IN / SELL-OUT 필터 적용 — 현재 탭에 해당하는 캠페인만 표시
   const _sellType = state.promoSellType || 'SELL-IN';
   const _cfg0 = state.campaignTargetSkus || {};
   const _mktSellType = {};
@@ -7217,7 +7222,6 @@ function renderPromoTable() {
     const [ys,ms]=pk.split('-'); let y=+ys,m=+ms;
     if (mode==='yoy'){return `${y-1}-${String(m).padStart(2,'0')}`;}
     if (mode==='qoq'){m-=3;while(m<1){m+=12;y-=1;}return `${y}-${String(m).padStart(2,'0')}`;}
-    // mom → 전년 동월
     return `${y-1}-${String(m).padStart(2,'0')}`;
   }
 
@@ -7256,8 +7260,6 @@ function renderPromoTable() {
     return d==null?'<span class="muted">–</span>':d>=0?`<span class="t-green" style="font-size:10px">▲${d.toFixed(0)}%</span>`:`<span class="t-red" style="font-size:10px">▼${Math.abs(d).toFixed(0)}%</span>`;
   };
 
-  // ── 전년 동기 합계: period/cmpMode 기준으로 cmpSeries에서 계산 ──
-  // p.beforeAmt(baAmt 기반 전체 동기간)가 아닌, 현재 표시 중인 period bucket의 전년 버킷 합산
   const _calcPrv = (promo) => {
     if (_cmpModeNow === 'off') return 0;
     return curPeriods.reduce((s, pk) => {
@@ -7265,6 +7267,21 @@ function renderPromoTable() {
       return s + ((periodPrvByPromo[promo] && periodPrvByPromo[promo][ppk]) || 0);
     }, 0);
   };
+
+  // ── 드릴다운 데이터: 프로모션 → 국가 → 고객 ──
+  const drillData = {};  // promo → { country → { customer → { amt, orders, qty } } }
+  (fOrders).forEach(o => {
+    const promo = o.promotion_category || '';
+    if (!summary.find(s => (s.promotion||s.key) === promo)) return;
+    const country = o.country || o.region || '–';
+    const cust = o.customer || '–';
+    if (!drillData[promo]) drillData[promo] = {};
+    if (!drillData[promo][country]) drillData[promo][country] = {};
+    if (!drillData[promo][country][cust]) drillData[promo][country][cust] = { amt:0, orders:0, qty:0 };
+    drillData[promo][country][cust].amt    += convOrder(o);
+    drillData[promo][country][cust].orders += 1;
+    drillData[promo][country][cust].qty    += Number(o.qty)||0;
+  });
 
   const totalCur = summary.reduce((s,p)=>s+(p.afterAmt||p.orderAmt||0),0);
   const totalPrv = summary.reduce((s,p)=>s+_calcPrv(p.promotion||p.key||''),0);
@@ -7294,6 +7311,9 @@ function renderPromoTable() {
   const _stBadge = _sellType === 'SELL-IN'
     ? '<span style="background:#C8102E;color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;font-weight:700;vertical-align:middle">📦 SELL-IN</span>'
     : '<span style="background:#0A84FF;color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;font-weight:700;vertical-align:middle">🤝 SELL-OUT</span>';
+
+  const colCount = 4 + (_cmpModeNow!=='off'?1:0) + (showMktCols?3:0) + curPeriods.length;
+
   const head = `<thead><tr>
     <th>PROMOTION ${_stBadge}</th>
     <th class="text-right">ORDERS</th>
@@ -7305,6 +7325,68 @@ function renderPromoTable() {
     ${showMktCols?'<th class="text-right">ROI</th>':''}
     ${curPeriods.length?`<th colspan="${curPeriods.length}" class="text-center" style="border-left:2px solid var(--border)">MONTH — <span style="color:#86868B">${_prevColLabel}</span> / <span style="color:var(--blue)">현재</span></th>`:''}
   </tr>${curPeriods.length?`<tr style="background:rgba(0,0,0,0.02)">${monthColsHead}</tr>`:''}</thead>`;
+
+  // 권역 뱃지 색상 맵
+  const regionColors = {
+    'CIS':'#5856D6','MENA':'#FF9500','LATAM':'#34C759','SEA':'#00C7BE',
+    'ASIA':'#0A84FF','EUROPE':'#FF375F','NA':'#BF5AF2','GCC':'#FF6B35'
+  };
+  const regionBadge = (label) => {
+    if (!label) return '';
+    return label.split(',').map(r => {
+      const key = r.trim().toUpperCase();
+      const color = regionColors[key] || '#86868B';
+      return `<span style="display:inline-block;background:${color}18;color:${color};border:1px solid ${color}40;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;margin-left:4px;vertical-align:middle">${r.trim()}</span>`;
+    }).join('');
+  };
+
+  // ── 드릴다운 행 생성 ──
+  const buildDrillRows = (promo) => {
+    const dd = drillData[promo] || {};
+    const countries = Object.entries(dd).sort((a,b)=>{
+      const aAmt = Object.values(a[1]).reduce((s,v)=>s+v.amt,0);
+      const bAmt = Object.values(b[1]).reduce((s,v)=>s+v.amt,0);
+      return bAmt - aAmt;
+    });
+    let rows = '';
+    for (const [country, custs] of countries) {
+      const countryAmt = Object.values(custs).reduce((s,v)=>s+v.amt,0);
+      const countryOrd = Object.values(custs).reduce((s,v)=>s+v.orders,0);
+      const countryPct = totalCur > 0 ? (countryAmt/totalCur*100).toFixed(1) : '0';
+      const custEntries = Object.entries(custs).sort((a,b)=>b[1].amt-a[1].amt);
+      // 국가 행
+      rows += `<tr class="promo-drill-country" data-promo="${promo.replace(/"/g,'&quot;')}" style="background:rgba(0,0,0,0.025);cursor:pointer" onclick="toggleCustomerDrill(this,'${promo.replace(/'/g,"\\'")}','${country.replace(/'/g,"\\'")}')">
+        <td style="padding-left:28px;font-size:12px">
+          <span style="color:#86868B;margin-right:4px">▶</span>
+          <b style="font-size:12px">${country}</b>
+          <span class="muted" style="font-size:10px;margin-left:6px">${countryOrd} orders</span>
+        </td>
+        <td class="text-right mono" style="font-size:11px">${fmtNum(countryOrd)}</td>
+        <td class="text-right mono t-green" style="font-size:12px;font-weight:700">${fmtMoney(countryAmt)}</td>
+        ${_cmpModeNow!=='off'?'<td></td>':''}
+        <td class="text-right mono muted" style="font-size:10px">${countryPct}%</td>
+        ${showMktCols?'<td></td><td></td><td></td>':''}
+        ${curPeriods.map(()=>'<td></td>').join('')}
+      </tr>`;
+      // 고객 행 (초기 hidden)
+      for (const [cust, cv] of custEntries) {
+        const custPct = countryAmt > 0 ? (cv.amt/countryAmt*100).toFixed(1) : '0';
+        rows += `<tr class="promo-drill-cust" data-promo="${promo.replace(/"/g,'&quot;')}" data-country="${country.replace(/"/g,'&quot;')}" style="display:none;background:rgba(0,0,0,0.012)">
+          <td style="padding-left:52px;font-size:11px">
+            <span style="color:var(--blue)">└</span>
+            <span style="margin-left:4px">${cust}</span>
+          </td>
+          <td class="text-right mono muted" style="font-size:11px">${fmtNum(cv.orders)}</td>
+          <td class="text-right mono" style="font-size:11px;color:var(--blue)">${fmtMoney(cv.amt)}</td>
+          ${_cmpModeNow!=='off'?'<td></td>':''}
+          <td class="text-right mono muted" style="font-size:10px">${custPct}%</td>
+          ${showMktCols?'<td></td><td></td><td></td>':''}
+          ${curPeriods.map(()=>'<td></td>').join('')}
+        </tr>`;
+      }
+    }
+    return rows;
+  };
 
   const body = `<tbody>${summary.map(p => {
     const promo = p.promotion||p.key||'';
@@ -7321,8 +7403,14 @@ function renderPromoTable() {
       const curTxt=cur>0?`<span style="color:var(--blue);font-weight:700">${fmtMoney(cur)}</span>`:'<span class="muted">–</span>';
       return `<td class="text-right mono" style="font-size:11px;${i===0?'border-left:2px solid var(--border)':''}">${prvTxt}${curTxt}${cur>0&&prv>0?' '+dTag(cur,prv):''}</td>`;
     }).join('');
-    return `<tr>
-      <td><b>${promo||'–'}</b>${p.baStart?`<br><span class="muted" style="font-size:10px">from ${p.baStart}</span>`:''}</td>
+    const promoKey = promo.replace(/"/g,'&quot;');
+    return `<tr class="promo-main-row" data-promo="${promoKey}" style="cursor:pointer" onclick="togglePromoDrill(this,'${promo.replace(/'/g,"\\'")}')">
+      <td>
+        <span style="color:#86868B;font-size:11px;margin-right:4px" class="promo-drill-arrow">▶</span>
+        <b>${promo||'–'}</b>
+        ${regionBadge(p.regionLabel)}
+        ${p.baStart?`<br><span class="muted" style="font-size:10px;padding-left:16px">from ${p.baStart}</span>`:''}
+      </td>
       <td class="text-right mono">${fmtNum(p.orders)}</td>
       <td class="text-right mono t-green" style="font-weight:700">${fmtMoney(p.afterAmt||p.orderAmt||0)}</td>
       ${_cmpModeNow!=='off'?`<td class="text-right mono muted">${_prvAmt>0?fmtMoney(_prvAmt):'–'}</td>`:''}
@@ -7331,7 +7419,8 @@ function renderPromoTable() {
       ${showMktCols?`<td class="text-right mono t-orange">${fmtMoney(p.actual||0)}</td>`:''}
       ${showMktCols?`<td class="text-right mono ${roiCls}" style="font-weight:700">${roiTxt}</td>`:''}
       ${monthCells}
-    </tr>`;
+    </tr>
+    ${buildDrillRows(promo)}`;
   }).join('')}
   <tr style="border-top:2px solid var(--border);font-weight:800;background:rgba(0,0,0,0.03)">
     <td><b>TOTAL</b> <span class="muted" style="font-size:10px">${_sellType === 'SELL-IN' ? '📦 SELL-IN' : '🤝 SELL-OUT'} · ${summary.length}개 캠페인</span></td>
@@ -7353,6 +7442,56 @@ function renderPromoTable() {
   </tr></tbody>`;
   document.getElementById('tblPromo').innerHTML = head + body;
   } catch(e) { console.error('[renderPromoTable]', e); }
+}
+
+// ── 드릴다운 토글 함수 ──
+function togglePromoDrill(row, promo) {
+  const tbl = row.closest('table') || document.getElementById('tblPromo');
+  const arrow = row.querySelector('.promo-drill-arrow');
+  const isOpen = row.dataset.drillOpen === '1';
+  // 다른 열린 프로모션 닫기
+  tbl.querySelectorAll('.promo-main-row[data-drill-open="1"]').forEach(r => {
+    if (r !== row) {
+      r.dataset.drillOpen = '0';
+      const a = r.querySelector('.promo-drill-arrow');
+      if (a) a.textContent = '▶';
+      const rPromo = r.dataset.promo;
+      tbl.querySelectorAll(`.promo-drill-country[data-promo="${CSS.escape(rPromo)}"]`).forEach(dr => {
+        dr.style.display = 'none';
+        dr.dataset.custOpen = '0';
+        const da = dr.querySelector('span');
+        if (da) da.textContent = '▶';
+      });
+      tbl.querySelectorAll(`.promo-drill-cust[data-promo="${CSS.escape(rPromo)}"]`).forEach(dr => dr.style.display = 'none');
+    }
+  });
+  if (isOpen) {
+    row.dataset.drillOpen = '0';
+    if (arrow) arrow.textContent = '▶';
+    tbl.querySelectorAll(`.promo-drill-country[data-promo="${CSS.escape(row.dataset.promo)}"]`).forEach(r => r.style.display = 'none');
+    tbl.querySelectorAll(`.promo-drill-cust[data-promo="${CSS.escape(row.dataset.promo)}"]`).forEach(r => r.style.display = 'none');
+  } else {
+    row.dataset.drillOpen = '1';
+    if (arrow) arrow.textContent = '▼';
+    tbl.querySelectorAll(`.promo-drill-country[data-promo="${CSS.escape(row.dataset.promo)}"]`).forEach(r => r.style.display = '');
+  }
+}
+
+function toggleCustomerDrill(row, promo, country) {
+  const tbl = row.closest('table') || document.getElementById('tblPromo');
+  const arrow = row.querySelector('span');
+  const isOpen = row.dataset.custOpen === '1';
+  const escaped = CSS.escape(row.dataset.country || country);
+  const pEscaped = CSS.escape(row.dataset.promo || promo);
+  if (isOpen) {
+    row.dataset.custOpen = '0';
+    if (arrow) arrow.textContent = '▶';
+    tbl.querySelectorAll(`.promo-drill-cust[data-promo="${pEscaped}"][data-country="${escaped}"]`).forEach(r => r.style.display = 'none');
+  } else {
+    row.dataset.custOpen = '1';
+    if (arrow) arrow.textContent = '▼';
+    tbl.querySelectorAll(`.promo-drill-cust[data-promo="${pEscaped}"][data-country="${escaped}"]`).forEach(r => r.style.display = '');
+  }
 }
 
 
