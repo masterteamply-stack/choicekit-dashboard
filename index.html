@@ -4359,8 +4359,8 @@ function renderAll() {
   }, 160);
 
   // ── Phase 3: PromoChart + PromoOrderTrend ──
-  _deferRender(() => {
-    renderPromoChart(fOrders, fMkt);
+  _deferRender(async () => {
+    await renderPromoChart(fOrders, fMkt);
     if (_promoAfterTotal !== null) {
       document.getElementById('kpiOrder').textContent = fmtMoney(_promoAfterTotal);
       document.getElementById('kpiOrderSub').textContent = `after campaign start · post-campaign total`;
@@ -5964,7 +5964,7 @@ function renderPromoCtrDetail(fOrders, dim, filterVal) {
 function periodLabelOf(period) {
   return period === 'year' ? 'Year' : (period === 'quarter' ? 'Quarter' : 'Month');
 }
-function renderPromoChart(fOrders, fMkt) {
+async function renderPromoChart(fOrders, fMkt) {
   try {
   const period = state.promoPerfPeriod || 'month';
 
@@ -6213,12 +6213,15 @@ function renderPromoChart(fOrders, fMkt) {
       cmpMode: tableCmpMode,
       region: promoRegion,
     };
-    // ── BEFORE (prior-period comparison) — SKU/customer mapping + preOrders ──
-    // Keep the mapping-based approach for the historical before window so the
-    // YoY/QoQ delta is still meaningful (pre-campaign baseline via same SKUs).
+    // hasTargets 체크만 — 실제 집계는 아래 단일 패스에서 수행
     const hasTargets = mb === 'customer' ? (custSet && custSet.size) : (skuSet && skuSet.size);
     if (!start || !hasTargets) return;
-    const prevFrom = baAmt[p].prevFrom, prevTo = baAmt[p].prevTo;
+  });
+
+  // ── BEFORE: 단일 패스로 전체 _baPrevSource 순회 (O(N) 로 최적화) ──
+  // 기존: summary 캠페인 수 × _baPrevSource 행 수 = O(M×N) 블로킹
+  // 개선: _baPrevSource 1회 순회로 모든 캠페인 집계
+  {
     const _preIdx = state._preIdx;
     const _buyerMapBA = (_preIdx && _preIdx._buyerMap) || {};
     const _PAT_PO_BA = /^PO-([^-]+)-(\d+)-\d+$/;
@@ -6226,31 +6229,37 @@ function renderPromoChart(fOrders, fMkt) {
       const oSku  = (o.sku  || '').trim();
       const oCust = (o.customer || '').trim();
       const oOid  = (o.order_id || '').trim();
-      let match = false;
-      if (mb === 'customer') {
-        match = custSet.has(oCust);
-        if (!match) {
-          // buyer_code 역추적
-          const pm = oOid.match(_PAT_PO_BA);
-          if (pm) { const mc = _buyerMapBA[pm[2]]; if (mc) match = custSet.has(mc); }
-        }
-      } else {
-        match = skuSet.has(oSku);
-        if (!match) {
-          // CTR code 역추적
-          const pm = oOid.match(_PAT_PO_BA);
-          if (pm) match = skuSet.has(pm[1]);
-        }
-      }
-      if (!match) return;
       const d = o.order_date || '';
       if (!d) return;
       const amt = (o.amount_usd != null && o[PRE_ORDER_MARK])
         ? Number(o.amount_usd) * usdToDisplay()
         : convOrder(o);
-      if (d >= prevFrom && d <= prevTo) baAmt[p].before += amt;
+      // CTR/buyer 역추적 (1회만)
+      const pm = oOid.match(_PAT_PO_BA);
+      const ctrCode  = pm ? pm[1] : '';
+      const buyerCode = pm ? pm[2] : '';
+      const buyerCust = buyerCode ? (_buyerMapBA[buyerCode] || '') : '';
+      // 각 캠페인에 매칭되는지 확인
+      for (const p of Object.keys(baAmt)) {
+        const ba = baAmt[p];
+        if (!ba.prevFrom || !ba.prevTo) continue;
+        if (d < ba.prevFrom || d > ba.prevTo) continue;
+        const mb = promoMatchBy[p] || 'sku';
+        const skuSet  = promoTargetSkus[p];
+        const custSet = promoTargetCust[p];
+        let match = false;
+        if (mb === 'customer') {
+          match = (custSet && (custSet.has(oCust) || (buyerCust && custSet.has(buyerCust))));
+        } else {
+          match = (skuSet && (skuSet.has(oSku) || (ctrCode && skuSet.has(ctrCode))));
+        }
+        if (match) ba.before += amt;
+      }
     });
-  });
+  }
+  // ── 메인스레드 양보 — BEFORE 스캔 완료 후 브라우저가 paint할 기회 제공 ──
+  await new Promise(r => setTimeout(r, 0));
+
   // Attach onto each summary row (so the table can show them).
   summary.forEach(s => {
     const ba = baAmt[s.promotion] || { before: 0, after: 0, skuCount: 0, custCount: 0, matchBy: 'sku', winFrom:'', winTo:'', prevFrom:'', prevTo:'', cmpMode: tableCmpMode };
@@ -6641,7 +6650,13 @@ function renderPromoChart(fOrders, fMkt) {
     const _custToPromoCmp = { ...custToPromo };
     _custBasedCmp.forEach(p => { (_cmpActualCusts[p]||new Set()).forEach(c=>{ if(!_custToPromoCmp[c]) _custToPromoCmp[c]=p; }); });
 
-    // preOrders row → 캠페인명 역추적
+    // preOrders row → 캠페인명 역추적 (tSkus를 미리 캐싱하여 row당 new Set() 방지)
+    const _tSkuCache = {};
+    for (const p of _skuBasedCmp) {
+      _tSkuCache[p] = new Set((_cfgCmp[p].target_skus || []).map(s => s.trim()));
+    }
+    const _pbb = window._promoBundleBuyers || {};
+    const _bm = (preIdx && preIdx._buyerMap) || _buyerMap;
     const _resolvePreOrderPromo = (o) => {
       const sku  = (o.sku  || '').trim();
       const cust = (o.customer || '').trim();
@@ -6649,17 +6664,15 @@ function renderPromoChart(fOrders, fMkt) {
       const pm   = oid.match(_PAT_PO);
       const ctr  = pm ? pm[1] : '';
       const buyer = pm ? pm[2] : '';
-      const bm   = (preIdx && preIdx._buyerMap) || _buyerMap;
-      const buyerCust = pm ? (bm[buyer] || '') : '';
-      // SKU 기반: target SKU/CTR code + 참여 고객 bundle buyer_code 2중 필터
-      const _pbb = window._promoBundleBuyers || {};
+      const buyerCust = buyer ? (_bm[buyer] || '') : '';
+      // SKU 기반: 캐싱된 tSkus 사용
       for (const p of _skuBasedCmp) {
-        const tSkus = new Set((_cfgCmp[p].target_skus || []).map(s => s.trim()));
+        const tSkus = _tSkuCache[p];
         const skuMatch = tSkus.has(sku) || tSkus.has(ctr);
         const buyerMatch = _pbb[p] && buyer && _pbb[p].has(buyer);
         if (skuMatch && buyerMatch) return p;
       }
-      // Customer 기반: 실제 참여 고객 전체 오더
+      // Customer 기반
       if (cust && _custToPromoCmp[cust] && _custBasedCmp.has(_custToPromoCmp[cust])) return _custToPromoCmp[cust];
       if (buyerCust && _custToPromoCmp[buyerCust] && _custBasedCmp.has(_custToPromoCmp[buyerCust])) return _custToPromoCmp[buyerCust];
       return null;
