@@ -1757,7 +1757,7 @@ header .mono b.t-orange {
       </div>
     </div>
 
-    <button class="btn" id="btnPreOrder" onclick="togglePreOrders()" title="Load pre_orders.json as a baseline reference for YoY / QoQ / MoM / WoW comparisons. Pre-order rows are NEVER merged into the main dashboard — they only fill in 'previous period' values in the comparison KPIs.">
+    <button class="btn" id="btnPreOrder" onclick="if(typeof togglePreOrders==='function')togglePreOrders()" title="Load pre_orders.json as a baseline reference for YoY / QoQ / MoM / WoW comparisons. Pre-order rows are NEVER merged into the main dashboard — they only fill in 'previous period' values in the comparison KPIs.">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
       Baseline <span id="preOrderBadge" style="display:none;margin-left:4px;padding:1px 6px;border-radius:8px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;">ON</span>
     </button>
