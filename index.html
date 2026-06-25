@@ -2162,73 +2162,36 @@ header .mono b.t-orange {
       <div class="panel widget" data-widget-id="choicekitImpact">
         <div class="widget-head">
           <div>
-            <h3 class="h-section">Choice Kit Impact — Dormant Activation</h3>
-            <p class="label-mono" style="margin-top:4px;font-size:13px">Dormant → Active 전환</p>
+            <h3 class="h-section">Choice Kit Impact</h3>
+            <p class="label-mono" style="margin-top:4px">대상 SKU 월별 오더 변화 추이</p>
           </div>
           <div class="chart-tools">
-            <span class="label-mono muted">Campaign</span>
             <select id="ckiPromoSel" style="min-width:200px;font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface)"></select>
-            <span class="label-mono muted" style="margin-left:8px">Compare</span>
-            <select id="ckiCompareSel" style="font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface)">
-              <option value="baseline">All-time Baseline</option>
-              <option value="mom" selected>vs Same-period Last Month (MoM)</option>
-              <option value="qoq">vs Same-period Last Quarter (QoQ)</option>
-              <option value="yoy">vs Same-period Last Year (YoY)</option>
-            </select>
-            <span class="label-mono muted" style="margin-left:8px">Dormancy</span>
-            <select id="ckiThresholdSel" style="font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface)">
-              <option value="0">Zero sales ($0)</option>
-              <option value="100">&lt; $100</option>
-              <option value="1000">&lt; $1,000</option>
-              <option value="5000" selected>&lt; $5,000 (default)</option>
-            </select>
+            <div class="seg" id="ckiCmpSeg">
+              <button data-v="mom" class="active">전월</button>
+              <button data-v="qoq">전분기</button>
+              <button data-v="yoy">전년</button>
+            </div>
             <div class="widget-order-controls"></div>
           </div>
         </div>
-        <!-- CK Impact 해석 가이드 -->
-        <div id="ckiImpactGuide" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-          <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:rgba(200,16,46,.06);border-radius:8px;border-left:3px solid #C8102E">
-            <span style="font-size:16px;margin-top:1px">📦</span>
-            <div>
-              <span class="label-mono" style="font-size:10px;font-weight:700;color:#C8102E">SELL-IN 캠페인 해석</span>
-              <p style="font-size:11px;color:var(--text-2);margin:3px 0 0;line-height:1.5">캠페인 대상 <b>SKU</b>를 이전에 주문하지 않던 고객이 얼마나 신규 구매했는가? → SKU 저변 확대 효과</p>
-            </div>
-          </div>
-          <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:rgba(10,132,255,.06);border-radius:8px;border-left:3px solid #0A84FF">
-            <span style="font-size:16px;margin-top:1px">🤝</span>
-            <div>
-              <span class="label-mono" style="font-size:10px;font-weight:700;color:#0A84FF">SELL-OUT 캠페인 해석</span>
-              <p style="font-size:11px;color:var(--text-2);margin:3px 0 0;line-height:1.5">캠페인 집행 <b>고객</b>의 오더 규모가 캠페인 이후 어떻게 변화했는가? → 고객 충성도 및 구매 증가 효과</p>
-            </div>
-          </div>
-        </div>
-        <!-- KPI cards (6) -->
-        <div id="ckiKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:18px"></div>
-        <!-- Before vs After comparison (target SKU/customer volume) -->
-        <div id="ckiBeforeAfter" style="margin-bottom:18px"></div>
-        <!-- 2-column layout: funnel + activation matrix -->
-        <div style="display:grid;grid-template-columns:1.1fr 0.9fr;gap:18px;margin-bottom:18px">
+        <!-- KPI 카드 -->
+        <div id="ckiKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:16px"></div>
+        <!-- 차트 2열 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
           <div>
-            <div class="label-mono" style="font-size:12px;font-weight:700;margin-bottom:8px;color:#1D1D1F">DORMANT FUNNEL — Stage-by-stage Conversion</div>
-            <div class="chart-wrap" style="height:280px"><canvas id="chCkiFunnel"></canvas></div>
+            <div class="label-mono" style="font-size:11px;font-weight:700;margin-bottom:6px;color:var(--text-2)">📦 월별 오더 전환 SKU 수</div>
+            <div class="chart-wrap" style="height:220px"><canvas id="chCkiSkuCount"></canvas></div>
           </div>
           <div>
-            <div class="label-mono" style="font-size:12px;font-weight:700;margin-bottom:8px;color:#1D1D1F">ACTIVATION MATRIX (2×2)</div>
-            <div id="ckiMatrix" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+            <div class="label-mono" style="font-size:11px;font-weight:700;margin-bottom:6px;color:var(--text-2)">💰 월별 ORDER AMT</div>
+            <div class="chart-wrap" style="height:220px"><canvas id="chCkiAmt"></canvas></div>
           </div>
         </div>
-        <!-- Full-set analysis (SKU campaigns only) -->
-        <div id="ckiFullsetWrap" style="margin-bottom:18px">
-          <div class="label-mono" style="font-size:12px;font-weight:700;margin-bottom:8px;color:#1D1D1F">FULL-SET ORDERS — Target SKUs Co-ordered by Make / Model</div>
-          <div id="ckiFullsetSummary" style="display:flex;gap:18px;flex-wrap:wrap;align-items:center;font-size:14px"></div>
-        </div>
-        <!-- Activated SKU / Customer table -->
-        <div>
-          <div class="label-mono" style="font-size:12px;font-weight:700;margin-bottom:8px;color:#1D1D1F">ACTIVATED — Dormant → Active Conversion Detail (Top 50)</div>
-          <div style="overflow:auto;max-height:300px"><table id="tblCkiActivated" style="font-size:13px"></table></div>
-        </div>
+        <!-- 캠페인별 비교 테이블 -->
+        <div class="label-mono" style="font-size:11px;font-weight:700;margin-bottom:8px;color:var(--text-2)">캠페인별 대상 SKU 오더 현황</div>
+        <div style="overflow:auto"><table id="tblCkiCmp" style="font-size:12px"></table></div>
       </div>
-      <!-- Region — Order/Marketing + Activity Breakdown (merged) -->
       <div class="panel widget" data-widget-id="skuExplorer">
         <div class="widget-head">
           <div>
@@ -2236,9 +2199,9 @@ header .mono b.t-orange {
             <p class="label-mono" style="margin-top:4px">프로모션 전/후 SKU 오더 비교</p>
           </div>
           <div class="chart-tools">
-            <span class="label-mono muted">Promotion</span>
-            <select id="selSkuAggPromo" style="min-width:220px"></select>
-            <span class="label-mono muted" style="margin-left:8px">비교</span>
+            <span class="label-mono muted" style="font-size:11px">Promotion</span>
+            <select id="selSkuAggPromo" style="min-width:220px;font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface)"></select>
+            <span class="label-mono muted" style="margin-left:8px;font-size:11px">비교</span>
             <div class="seg" id="segSkuCmp">
               <button data-v="off" class="active">없음</button>
               <button data-v="yoy">전년</button>
@@ -2248,26 +2211,23 @@ header .mono b.t-orange {
             <div class="widget-order-controls"></div>
           </div>
         </div>
-        <div id="skuPanel-ba" class="sku-tab-panel">
-          <div id="skuCompareKpis" style="display:none;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px"></div>
-          <div id="skuBaSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px"></div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-            <div>
-              <div class="label-mono muted" style="font-size:10px;margin-bottom:4px;text-align:center">
-                ORDER AMOUNT — <span id="skuBaAmtTotal" class="t-orange" style="font-weight:700">–</span>
-              </div>
-              <div class="chart-wrap" style="height:320px"><canvas id="chSkuBeforeAfterAmt"></canvas></div>
-            </div>
-            <div>
-              <div class="label-mono muted" style="font-size:10px;margin-bottom:4px;text-align:center">
-                QUANTITY — <span id="skuBaQtyTotal" class="t-orange" style="font-weight:700">–</span>
-              </div>
-              <div class="chart-wrap" style="height:320px"><canvas id="chSkuBeforeAfterQty"></canvas></div>
-            </div>
+        <div id="skuAggMeta" class="label-mono muted" style="font-size:11px;margin-bottom:10px"></div>
+        <!-- KPI + Before/After -->
+        <div id="skuCompareKpis" style="display:none;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px"></div>
+        <div id="skuBaSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px"></div>
+        <!-- 차트 2열 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div>
+            <div class="label-mono muted" style="font-size:10px;margin-bottom:4px;text-align:center">ORDER AMOUNT — <span id="skuBaAmtTotal" class="t-orange" style="font-weight:700">–</span></div>
+            <div class="chart-wrap" style="height:260px"><canvas id="chSkuBeforeAfterAmt"></canvas></div>
           </div>
-          <!-- Per-SKU breakdown table -->
-          <div id="skuAggBreakdown" style="overflow:auto;max-height:280px;margin-top:14px"><table id="tblSkuAggBreakdown" style="font-size:12px"></table></div>
+          <div>
+            <div class="label-mono muted" style="font-size:10px;margin-bottom:4px;text-align:center">QUANTITY — <span id="skuBaQtyTotal" class="t-orange" style="font-weight:700">–</span></div>
+            <div class="chart-wrap" style="height:260px"><canvas id="chSkuBeforeAfterQty"></canvas></div>
+          </div>
         </div>
+        <!-- SKU 목록 -->
+        <div id="skuAggBreakdown" style="overflow:auto;max-height:280px"><table id="tblSkuAggBreakdown" style="font-size:12px"></table></div>
       </div>
 
       <!-- Sales Trend (merged: Promotion Category + Region/Country Monthly) -->
@@ -8357,6 +8317,16 @@ function populateSkuUI(fOrders) {
                        promoKeys.map(k => `<option value="${k}">${k}</option>`).join('');
     aggSel.value = (cur === '__all__' || promoKeys.includes(cur)) ? cur : '__all__';
     if (state.skuAggPromo !== aggSel.value) state.skuAggPromo = aggSel.value;
+    // 핸들러 중복 등록 방지
+    if (!aggSel._ckHandler) {
+      aggSel._ckHandler = true;
+      aggSel.addEventListener('change', e => {
+        state.skuAggPromo = e.target.value;
+        try { localStorage.setItem('ck_sku_agg_promo', state.skuAggPromo); } catch(_) {}
+        const fO = state.orders.filter(matchOrder).filter(o => isRegionVisible(o.region));
+        renderSkuExplorer(fO, []);
+      });
+    }
   }
   // Mode/tab are fixed now: always aggregate + before/after.
   state.skuMode = 'aggregate';
@@ -8794,538 +8764,298 @@ function buildAnnualSeries(orders) {
      2개 이상 함께 주문된 건수 → Full-range 동시 주문 효과.
    ========================================================================= */
 function renderChoiceKitImpact(fOrders, fMkt) {
-  const wrap = document.querySelector('[data-widget-id="choicekitImpact"]');
-  if (!wrap) return;
   const cfg = state.campaignTargetSkus || {};
   const promoNames = Object.keys(cfg);
-  if (!promoNames.length) { wrap.style.display = 'none'; return; }
-  wrap.style.display = '';
+  if (!promoNames.length) return;
 
-  // Populate campaign selector with an "All Promotions" option at the top.
+  // ── Populate selector ──
   const sel = document.getElementById('ckiPromoSel');
   if (sel) {
-    sel.innerHTML = `<option value="__all__">All Promotions (aggregate)</option>` +
-      promoNames.map(p => `<option value="${p.replace(/"/g,'&quot;')}">${p}</option>`).join('');
-    const DEFAULT_PROMO = 'Asian vehicle';
-    const cur = state.ckiPromo || DEFAULT_PROMO;
-    sel.value = (cur === '__all__' || promoNames.includes(cur))
-      ? cur
-      : (promoNames.includes(DEFAULT_PROMO) ? DEFAULT_PROMO : '__all__');
+    const cur = state.ckiPromo || '__all__';
+    sel.innerHTML = `<option value="__all__">All Promotions</option>` +
+      promoNames.map(p => `<option value="${p.replace(/"/g,'&quot;')}"${p===cur?' selected':''}>${p}</option>`).join('');
     if (state.ckiPromo !== sel.value) state.ckiPromo = sel.value;
+    if (!sel._ckHandler) {
+      sel._ckHandler = true;
+      sel.addEventListener('change', e => {
+        state.ckiPromo = e.target.value;
+        try { localStorage.setItem('ck_cki_promo', state.ckiPromo); } catch(_) {}
+        const fO = state.orders.filter(matchOrder).filter(o => isRegionVisible(o.region));
+        const fM = state.marketing.filter(matchMkt).filter(m => isRegionVisible(m.region));
+        renderChoiceKitImpact(fO, fM);
+      });
+    }
   }
-  // Threshold selector.
-  const thSel = document.getElementById('ckiThresholdSel');
-  if (thSel) thSel.value = String(state.ckiThreshold);
-  // Compare-mode selector.
-  const cmpSel = document.getElementById('ckiCompareSel');
-  if (cmpSel) cmpSel.value = state.ckiCompare || 'mom';
+  // Compare mode buttons
+  const cmpMode = state.ckiCompare || 'mom';
+  document.querySelectorAll('#ckiCmpSeg button').forEach(b => {
+    b.classList.toggle('active', b.dataset.v === cmpMode);
+    if (!b._ckHandler) {
+      b._ckHandler = true;
+      b.addEventListener('click', () => {
+        state.ckiCompare = b.dataset.v;
+        try { localStorage.setItem('ck_cki_compare', state.ckiCompare); } catch(_) {}
+        const fO = state.orders.filter(matchOrder).filter(o => isRegionVisible(o.region));
+        const fM = state.marketing.filter(matchMkt).filter(m => isRegionVisible(m.region));
+        renderChoiceKitImpact(fO, fM);
+      });
+    }
+  });
 
-  const promo = state.ckiPromo || 'Asian vehicle';
-  const threshold = Number(state.ckiThreshold) || 0;
-  const thresholdLabel = threshold === 0 ? '$0 (zero sales)' : `< ${fmtMoney(threshold)}`;
-  const compareMode = state.ckiCompare || 'mom';   // baseline | mom | qoq | yoy
-  const isAll = (promo === '__all__');
-  const activeCampaigns = isAll ? promoNames : [promo];
+  const selPromo = state.ckiPromo || '__all__';
+  const isAll    = selPromo === '__all__';
+  const activeCampaigns = isAll ? promoNames : [selPromo];
+  const ordersAll = state.orders || [];
+  const today = _todayStr();
 
-  // Date-shift helper for same-period comparison (MoM/QoQ/YoY).
-  function shiftDate(dateStr, mode) {
-    if (!dateStr) return '';
-    const [y,m,d] = dateStr.split('-').map(Number);
-    let ny=y, nm=m;
-    if (mode === 'yoy') ny = y - 1;
-    else if (mode === 'qoq') { nm = m - 3; while (nm < 1) { nm += 12; ny -= 1; } }
-    else if (mode === 'mom') { ny -= 1; nm = m; }  // 전년 동월
-    return `${ny}-${String(nm).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  // 비교 레이블
+  const cmpLabel = { mom:'전년 동월', qoq:'전분기', yoy:'전년 동기' }[cmpMode] || '비교';
+
+  // ── 날짜 shift helper ──
+  function shiftYM(ym, mode) {
+    let [y, m] = ym.split('-').map(Number);
+    if (mode === 'yoy') y -= 1;
+    else if (mode === 'qoq') { m -= 3; if (m < 1) { m += 12; y -= 1; } }
+    else { y -= 1; } // mom → 전년 동월
+    return `${y}-${String(m).padStart(2,'0')}`;
   }
-  const _todayCki = _todayStr();
 
-  // ──────────────────────────────────────────────────────────────────────
-  // Per-campaign metrics computation — used for both single and aggregate modes
-  // ──────────────────────────────────────────────────────────────────────
-  function computeForPromo(promoName) {
-    const pcfg = cfg[promoName] || {};
-    const matchBy = (pcfg.match_by || 'sku').toLowerCase();
-    // Region can be a string or an array (for multi-region campaigns).
-    // Used here only for display; the data scans no longer filter by region.
-    const _r = pcfg.region;
-    const targetRegion = Array.isArray(_r) ? _r.join(' + ') : (_r || '');
-    // First marketing date of this campaign = activation window start.
-    let startDate = '';
-    (state.marketing || []).forEach(m => {
-      if ((m.promotion_category||'') !== promoName) return;
-      const d = (m.date || '').trim();
-      if (!d) return;
-      if (!startDate || d < startDate) startDate = d;
-    });
-    const targetList = matchBy === 'customer'
-      ? (pcfg.target_customers || []).map(c => String(c).trim()).filter(Boolean)
-      : (pcfg.target_skus || []).map(s => String(s).trim()).filter(Boolean);
-    const targetSet = new Set(targetList);
-    // Baseline aggregation — region constraint REMOVED so same SKU/customer
-    // matches across ALL regions in the bundle. Asian vehicle (CIS): baseline
-    // includes matching SKU sales in EUROPE/N_AMERICA/ASIA_PACIFIC ($2.18M
-    // previously hidden by the region filter).
-    const baseAmt = {}, baseQty = {};
-    targetList.forEach(k => { baseAmt[k]=0; baseQty[k]=0; });
-    if (state.preOrdersEnabled && Array.isArray(state.preOrders)) {
-      // Use pre-built index if available (O(1) lookup per target vs O(n) full scan)
-      const preIdx = state._preIdx;
-      const scanFn = o => {
-        const key = (matchBy === 'customer') ? normalizeCustomer(o) : (o.sku || '').trim();
-        if (!targetSet.has(key)) return;
-        const amt = Number(o.amount_usd || 0) * usdToDisplay();
-        baseAmt[key] = (baseAmt[key] || 0) + amt;
-        baseQty[key] = (baseQty[key] || 0) + Number(o.qty || 0);
-      };
-      if (preIdx) {
-        // Only scan rows for target keys, not the entire 654K array
-        targetList.forEach(k => {
-          const rows = (matchBy === 'customer' ? preIdx.custIdx[k] : preIdx.skuIdx[k]) || [];
-          rows.forEach(scanFn);
-        });
+  // ── 캠페인별 target SKU set ──
+  function getTargetSkus(promoName) {
+    const pc = cfg[promoName] || {};
+    if ((pc.match_by||'sku') !== 'sku') return null; // customer-based: N/A
+    const explicit = (pc.target_skus || []).map(s => s.trim()).filter(Boolean);
+    if (explicit.length) return new Set(explicit);
+    // fallback: tagged orders
+    return new Set(ordersAll.filter(o=>(o.promotion_category||'')===promoName).map(o=>(o.sku||'').trim()).filter(Boolean));
+  }
+  function getTargetCusts(promoName) {
+    const pc = cfg[promoName] || {};
+    return new Set((pc.target_customers||[]).map(c=>c.trim()).filter(Boolean));
+  }
+
+  // ── 캠페인별 월별 집계 ──
+  // 반환: { ym → { skuCount: Set, amt, orders } }
+  function monthlyForPromo(promoName) {
+    const pc  = cfg[promoName] || {};
+    const mb  = (pc.match_by||'sku').toLowerCase();
+    const skuSet  = mb==='sku'  ? getTargetSkus(promoName)  : null;
+    const custSet = mb==='customer' ? getTargetCusts(promoName) : null;
+    const byYm = {};
+    ordersAll.forEach(o => {
+      // 필터: SKU 기반은 SKU 매칭, 고객 기반은 고객 매칭
+      if (mb === 'sku') {
+        if (!skuSet || !skuSet.size) return;
+        const oSku = (o.sku || o.ctr_code || '').trim();
+        if (!skuSet.has(oSku)) return;
       } else {
-        state.preOrders.forEach(scanFn);
+        if (!custSet || !custSet.size) return;
+        if (!custSet.has((o.customer||'').trim())) return;
       }
-    }
-    // Post-campaign orders for this campaign.
-    const postAmt = {}, postQty = {}, postOrders = {}, postOrderIds = {};
-    targetList.forEach(k => { postAmt[k]=0; postQty[k]=0; postOrders[k]=[]; postOrderIds[k]=new Set(); });
-    const allOrderIds = new Set();   // distinct orders this campaign generated (across all targets)
-    (state.orders || []).forEach(o => {
-      if ((o.promotion_category || '') !== promoName) return;
-      if (startDate && (o.order_date || '') < startDate) return;
-      const key = (matchBy === 'customer') ? (o.customer || '').trim() : (o.sku || '').trim();
-      if (!targetSet.has(key)) return;
-      const amt = convOrder(o);
-      postAmt[key] = (postAmt[key] || 0) + amt;
-      postQty[key] = (postQty[key] || 0) + Number(o.qty || 0);
-      postOrders[key].push(o);
-      const oid = (o.order_id || '').trim();
-      if (oid) { postOrderIds[key].add(oid); allOrderIds.add(oid); }
+      const ym = (o.order_date||'').slice(0,7);
+      if (!ym) return;
+      if (!byYm[ym]) byYm[ym] = { skuSet: new Set(), amt: 0, orders: 0 };
+      byYm[ym].skuSet.add((o.sku||'').trim());
+      byYm[ym].amt    += convOrder(o);
+      byYm[ym].orders += 1;
     });
-    // Prior-period order amounts/qty/order-count for same-period comparison
-    // (MoM/QoQ/YoY). The window is [startDate, today] shifted back by the
-    // chosen period. No region constraint — same SKU/customer globally.
-    const priorAmt = {}, priorQty = {}, priorOrderIds = {};
-    targetList.forEach(k => { priorAmt[k]=0; priorQty[k]=0; priorOrderIds[k]=new Set(); });
-    let priorFrom = '', priorTo = '';
-    if (compareMode !== 'baseline' && startDate) {
-      priorFrom = shiftDate(startDate, compareMode);
-      priorTo   = shiftDate(_todayCki, compareMode);
-      if (state.preOrdersEnabled && Array.isArray(state.preOrders)) {
-        const preIdx = state._preIdx;
-        const scanPrior = o => {
-          const d = (o.order_date || '');
-          if (!d || d < priorFrom || d > priorTo) return;
-          const key = (matchBy === 'customer') ? normalizeCustomer(o) : (o.sku || '').trim();
-          if (!targetSet.has(key)) return;
-          const amt = Number(o.amount_usd || 0) * usdToDisplay();
-          priorAmt[key] = (priorAmt[key] || 0) + amt;
-          priorQty[key] = (priorQty[key] || 0) + Number(o.qty || 0);
-          const oid = (o.order_id || '').trim();
-          if (oid) priorOrderIds[key].add(oid);
-        };
-        if (preIdx) {
-          targetList.forEach(k => {
-            const rows = (matchBy === 'customer' ? preIdx.custIdx[k] : preIdx.skuIdx[k]) || [];
-            rows.forEach(scanPrior);
-          });
-        } else {
-          state.preOrders.forEach(scanPrior);
-        }
-      }
-    }
-    // Classify into 2×2.
-    const dormant = [], active = [];
-    targetList.forEach(k => (baseAmt[k] < threshold ? dormant : active).push(k));
-    const newlyActivated = dormant.filter(k => postAmt[k] > 0);
-    const retainedActive = active.filter(k => postAmt[k] > 0);
-    const lostActive     = active.filter(k => postAmt[k] === 0);
-    const stillDormant   = dormant.filter(k => postAmt[k] === 0);
-    // Full-set analysis (SKU only).
-    const fullsetBuckets = new Map();
-    let fullsetCount = 0, singleCount = 0, fullsetTargetAmt = 0, fullsetTargetSkuTotal = 0;
-    let fullsetRelatedAmt = 0;
-    let bestModel = null, bestSkuCount = 0;
-    const fullsetModels = new Set();
-    if (matchBy === 'sku') {
-      Object.values(postOrders).forEach(arr => arr.forEach(o => {
-        const mm = (o.make_model || '').trim();
-        if (!mm) return;
-        const key = `${o.order_date}|${(o.customer||'').trim()}|${mm}`;
-        if (!fullsetBuckets.has(key)) fullsetBuckets.set(key, { skus:new Set(), amt:0, qty:0, model:mm });
-        const g = fullsetBuckets.get(key);
-        g.skus.add((o.sku || '').trim());
-        g.amt += convOrder(o);
-        g.qty += Number(o.qty || 0);
-      }));
-      const fullsetKeys = new Set();
-      fullsetBuckets.forEach((g, key) => {
-        if (g.skus.size >= 2) {
-          fullsetCount++;
-          fullsetTargetAmt += g.amt;
-          fullsetTargetSkuTotal += g.skus.size;
-          fullsetKeys.add(key);
-          fullsetModels.add(g.model);
-          if (g.skus.size > bestSkuCount) { bestSkuCount = g.skus.size; bestModel = g.model; }
-        } else { singleCount++; }
-      });
-      (state.orders || []).forEach(o => {
-        if ((o.promotion_category || '') !== promoName) return;
-        if (startDate && (o.order_date || '') < startDate) return;
-        const mm = (o.make_model || '').trim();
-        if (!mm) return;
-        const key = `${o.order_date}|${(o.customer||'').trim()}|${mm}`;
-        if (fullsetKeys.has(key)) fullsetRelatedAmt += convOrder(o);
-      });
-    }
-    // Distinct models touched by activated targets.
-    const activatedModels = new Set();
-    [...newlyActivated, ...retainedActive].forEach(k => {
-      (postOrders[k] || []).forEach(o => {
-        const mm = (o.make_model || '').trim();
-        if (mm) activatedModels.add(mm);
-      });
-    });
-    return {
-      promoName, matchBy, targetRegion, startDate,
-      targetList, targetSet, baseAmt, baseQty, postAmt, postQty, postOrders,
-      postOrderIds, allOrderIds,
-      priorAmt, priorQty, priorOrderIds, priorFrom, priorTo,
-      dormant, retainedActive, lostActive, stillDormant, newlyActivated,
-      fullsetCount, singleCount, fullsetTargetAmt, fullsetRelatedAmt,
-      fullsetTargetSkuTotal, fullsetModels, bestModel, bestSkuCount,
-      activatedModels,
-    };
+    return byYm;
   }
-  const metricsList = activeCampaigns.map(computeForPromo);
 
-  // Aggregate sums helper
-  const sumKeys = (arr, mapObj) => arr.reduce((s, k) => s + (mapObj[k] || 0), 0);
-
-  // ──────────────────────────────────────────────────────────────────────
-  // Aggregation across selected campaigns (works for 1 or many)
-  // For "newly activated key" disambiguation across campaigns we use
-  // "<campaign>::<key>" so the same key under different campaigns counts twice.
-  // ──────────────────────────────────────────────────────────────────────
-  let agg = {
-    targetCount: 0,
-    dormantCount: 0,
-    newlyCount: 0,
-    retainedCount: 0,
-    lostCount: 0,
-    stillDormantCount: 0,
-    newlyAmt: 0, newlyQty: 0,
-    activatedAmt: 0, activatedQty: 0,
-    activatedSkuBaselineAmt: 0,     // baseline revenue of activated targets (for "activated-only" before/after)
-    allTargetBaselineAmt: 0,         // baseline revenue of ALL targets
-    allTargetPostAmt: 0,             // post-campaign revenue of ALL targets
-    // Order-count metrics (distinct orders by order_id)
-    activatedOrderCount: 0,          // # distinct orders that hit any activated target
-    newlyOrderCount: 0,              // # distinct orders that hit any newly-activated target
-    allTargetOrderCount: 0,          // # distinct orders involving any target (campaign-tagged)
-    // Prior-period (MoM/QoQ/YoY) metrics — same-window comparison
-    allTargetPriorAmt: 0,            // prior-period order amount for ALL targets
-    activatedPriorAmt: 0,            // prior-period order amount for activated targets only
-    allTargetPriorOrderCount: 0,
-    activatedPriorOrderCount: 0,
-    priorWindowFrom: '',
-    priorWindowTo: '',
-    fullsetCount: 0, singleCount: 0,
-    fullsetTargetAmt: 0, fullsetRelatedAmt: 0,
-    fullsetTargetSkuTotal: 0,
-    fullsetModels: new Set(),
-    activatedModels: new Set(),
-    bestModel: null, bestSkuCount: 0,
-    hasSku: false,
-    hasCustomer: false,
-    regions: new Set(),
-    activatedRows: [],
-  };
-  metricsList.forEach(M => {
-    agg.targetCount += M.targetList.length;
-    agg.dormantCount += M.dormant.length;
-    agg.newlyCount += M.newlyActivated.length;
-    agg.retainedCount += M.retainedActive.length;
-    agg.lostCount += M.lostActive.length;
-    agg.stillDormantCount += M.stillDormant.length;
-    agg.newlyAmt += sumKeys(M.newlyActivated, M.postAmt);
-    agg.newlyQty += sumKeys(M.newlyActivated, M.postQty);
-    const activatedAll = M.newlyActivated.concat(M.retainedActive);
-    agg.activatedAmt += sumKeys(activatedAll, M.postAmt);
-    agg.activatedQty += sumKeys(activatedAll, M.postQty);
-    agg.activatedSkuBaselineAmt += sumKeys(activatedAll, M.baseAmt);
-    agg.allTargetBaselineAmt += sumKeys(M.targetList, M.baseAmt);
-    agg.allTargetPostAmt += sumKeys(M.targetList, M.postAmt);
-    // Distinct order counts. Note: same order can hit multiple targets, but
-    // the campaign-level Set already de-duplicates.
-    agg.allTargetOrderCount += M.allOrderIds.size;
-    const actOrderSet = new Set(), newOrderSet = new Set();
-    activatedAll.forEach(k => (M.postOrderIds[k] || new Set()).forEach(id => actOrderSet.add(id)));
-    M.newlyActivated.forEach(k => (M.postOrderIds[k] || new Set()).forEach(id => newOrderSet.add(id)));
-    agg.activatedOrderCount += actOrderSet.size;
-    agg.newlyOrderCount += newOrderSet.size;
-    // Prior-period (only meaningful when compareMode != 'baseline')
-    agg.allTargetPriorAmt += sumKeys(M.targetList, M.priorAmt);
-    agg.activatedPriorAmt += sumKeys(activatedAll, M.priorAmt);
-    const priorAllSet = new Set(), priorActSet = new Set();
-    M.targetList.forEach(k => (M.priorOrderIds[k] || new Set()).forEach(id => priorAllSet.add(id)));
-    activatedAll.forEach(k => (M.priorOrderIds[k] || new Set()).forEach(id => priorActSet.add(id)));
-    agg.allTargetPriorOrderCount += priorAllSet.size;
-    agg.activatedPriorOrderCount += priorActSet.size;
-    // Window labels — use the widest range across campaigns.
-    if (M.priorFrom && (!agg.priorWindowFrom || M.priorFrom < agg.priorWindowFrom)) agg.priorWindowFrom = M.priorFrom;
-    if (M.priorTo && (!agg.priorWindowTo || M.priorTo > agg.priorWindowTo)) agg.priorWindowTo = M.priorTo;
-    agg.fullsetCount += M.fullsetCount;
-    agg.singleCount += M.singleCount;
-    agg.fullsetTargetAmt += M.fullsetTargetAmt;
-    agg.fullsetRelatedAmt += M.fullsetRelatedAmt;
-    agg.fullsetTargetSkuTotal += M.fullsetTargetSkuTotal;
-    M.fullsetModels.forEach(m => agg.fullsetModels.add(m));
-    M.activatedModels.forEach(m => agg.activatedModels.add(m));
-    if (M.bestSkuCount > agg.bestSkuCount) { agg.bestSkuCount = M.bestSkuCount; agg.bestModel = M.bestModel; }
-    if (M.matchBy === 'sku') agg.hasSku = true; else agg.hasCustomer = true;
-    if (M.targetRegion) String(M.targetRegion).split(/\s*\+\s*/).filter(Boolean).forEach(r => agg.regions.add(r));
-    [...M.newlyActivated, ...M.retainedActive].forEach(k => {
-      const orders = M.postOrders[k] || [];
-      orders.sort((a,b) => String(a.order_date).localeCompare(String(b.order_date)));
-      const first = orders[0];
-      agg.activatedRows.push({
-        kind: M.newlyActivated.includes(k) ? '🔵' : '🟢',
-        campaign: M.promoName,
-        matchBy: M.matchBy,
-        key: k,
-        baseAmt: M.baseAmt[k] || 0,
-        postAmt: M.postAmt[k] || 0,
-        postQty: M.postQty[k] || 0,
-        orderCount: (M.postOrderIds[k] || new Set()).size,
-        firstDate: first ? first.order_date : '',
-        model: (M.matchBy === 'sku' && first) ? (first.make_model || '') : '',
-      });
+  // ── 비교 기간 집계 (baseline preOrders) ──
+  function cmpMonthlyForPromo(promoName, cmp) {
+    const pc  = cfg[promoName] || {};
+    const mb  = (pc.match_by||'sku').toLowerCase();
+    const skuSet  = mb==='sku'  ? getTargetSkus(promoName)  : null;
+    const custSet = mb==='customer' ? getTargetCusts(promoName) : null;
+    const src = (state.preOrdersEnabled && Array.isArray(state.preOrders)) ? state.preOrders : [];
+    const byYm = {};
+    src.forEach(o => {
+      const target = o._promo || o.promotion_category || '';
+      // 해당 캠페인 대상만
+      if (mb === 'sku') {
+        if (!skuSet || !skuSet.size) return;
+        const oSku = (o.sku || o.ctr_code || '').trim();
+        if (!skuSet.has(oSku)) return;
+      } else {
+        if (!custSet || !custSet.size) return;
+        if (!custSet.has((o.customer||'').trim())) return;
+      }
+      const ym = (o.order_date||'').slice(0,7);
+      if (!ym) return;
+      if (!byYm[ym]) byYm[ym] = { skuSet: new Set(), amt: 0, orders: 0 };
+      byYm[ym].skuSet.add((o.sku||'').trim());
+      byYm[ym].amt    += (o.amount_usd!=null ? Number(o.amount_usd)*usdToDisplay() : convOrder(o));
+      byYm[ym].orders += 1;
     });
+    return byYm;
+  }
+
+  // 현재 기간 월 목록 (orders.csv 기준)
+  const curYms = Array.from(new Set(ordersAll.map(o=>(o.order_date||'').slice(0,7)).filter(Boolean))).sort();
+
+  // ── 전체/캠페인별 집계 ──
+  // cur: ym → { skuCount, amt, orders }
+  // prv: ym → { skuCount, amt, orders }  (비교 기간)
+  const curByYm = {}, prvByYm = {};
+  curYms.forEach(ym => { curByYm[ym] = { skuCount: 0, amt: 0, orders: 0 }; });
+
+  const campaignStats = {}; // promoName → { curByYm, prvByYm, totalCur, totalPrv }
+  activeCampaigns.forEach(pn => {
+    const cur = monthlyForPromo(pn);
+    const prv = cmpMonthlyForPromo(pn, cmpMode);
+    let totalCurAmt=0, totalPrvAmt=0, totalCurSku=0, totalPrvSku=0, totalCurOrd=0, totalPrvOrd=0;
+    curYms.forEach(ym => {
+      const c = cur[ym] || { skuSet: new Set(), amt:0, orders:0 };
+      const ppym = shiftYM(ym, cmpMode);
+      const p = prv[ppym] || { skuSet: new Set(), amt:0, orders:0 };
+      curByYm[ym].skuCount += c.skuSet.size;
+      curByYm[ym].amt      += c.amt;
+      curByYm[ym].orders   += c.orders;
+      totalCurAmt += c.amt; totalCurSku += c.skuSet.size; totalCurOrd += c.orders;
+      totalPrvAmt += p.amt; totalPrvSku += p.skuSet.size; totalPrvOrd += p.orders;
+    });
+    campaignStats[pn] = { cur, prv, totalCurAmt, totalPrvAmt, totalCurSku, totalPrvSku, totalCurOrd, totalPrvOrd };
   });
 
-  // dimWord — for headlines. In mixed/all mode, use generic "Target".
-  const dimWord = isAll
-    ? 'Target'
-    : (metricsList[0].matchBy === 'customer' ? 'Customer' : 'SKU');
-  const regionLabel = isAll
-    ? `${activeCampaigns.length} campaigns · ${[...agg.regions].join(' / ')}`
-    : `${promo} · ${metricsList[0].targetRegion}`;
-  const showFullset = agg.hasSku;
-  const dormantConvRate = agg.dormantCount ? (agg.newlyCount / agg.dormantCount) : 0;
-  const activatedAllCount = agg.newlyCount + agg.retainedCount;
-
-  // ── KPI cards ──
+  // ── KPI 카드 ──
   const kpiEl = document.getElementById('ckiKpis');
-  const card = (label, val, sub, accent) => `
-    <div style="background:rgba(0,0,0,0.02);border:1px solid ${accent||'rgba(0,0,0,0.08)'};border-radius:10px;padding:14px 16px;${accent?'border-left:4px solid '+accent:''}">
-      <div class="label-mono" style="font-size:11px;color:#86868B;letter-spacing:0.06em;font-weight:600;text-transform:uppercase">${label}</div>
-      <div style="font-size:22px;font-weight:800;margin-top:6px;line-height:1.2">${val}</div>
-      ${sub ? `<div class="label-mono muted" style="font-size:12px;margin-top:4px;line-height:1.4">${sub}</div>` : ''}
-    </div>`;
-  if (kpiEl) kpiEl.innerHTML =
-    card(`Total Target ${dimWord}s`,         `${agg.targetCount.toLocaleString()} ${dimWord}s`,    `${regionLabel}${agg.hasSku ? ` · ${agg.activatedModels.size} models activated` : ''}`) +
-    card(`Dormant ${dimWord}s`,               `${agg.dormantCount.toLocaleString()} ${dimWord}s`,   `Baseline Order Amount ${thresholdLabel}`) +
-    card(`🔵 Newly Activated (Choice Kit Effect)`, `${agg.newlyCount.toLocaleString()} ${dimWord}s`, `${(dormantConvRate*100).toFixed(1)}% of ${agg.dormantCount.toLocaleString()} dormant · Order Amount ${fmtMoney(agg.newlyAmt)} · ${agg.newlyQty.toLocaleString()} pcs · ${agg.newlyOrderCount.toLocaleString()} orders`, '#0A84FF') +
-    card(`Activated ${dimWord} Order Amount`, `${fmtMoney(agg.activatedAmt)}`,           `${activatedAllCount.toLocaleString()} ${dimWord}s activated · ${agg.activatedQty.toLocaleString()} pcs · ${agg.activatedOrderCount.toLocaleString()} orders`, '#C8102E') +
-    (showFullset ? card(
-      `🎯 Full-set Related Order Amount`,
-      `${fmtMoney(agg.fullsetRelatedAmt)}`,
-      `${agg.fullsetCount.toLocaleString()} full-set orders · target-only Order Amount: ${fmtMoney(agg.fullsetTargetAmt)}`,
-      '#34C759'
-    ) : '') +
-    card(`Still Dormant ${dimWord}s`,         `${agg.stillDormantCount.toLocaleString()} ${dimWord}s`, `Next action target (${(100*agg.stillDormantCount/Math.max(1,agg.targetCount)).toFixed(0)}% of total)`);
-
-  // ── Before vs After comparison block ──
-  const baEl = document.getElementById('ckiBeforeAfter');
-  if (baEl) {
-    // Choose comparison source (baseline = all-time prior, others = same-period shifted).
-    const usePrior = (compareMode !== 'baseline');
-    const allBefore = usePrior ? agg.allTargetPriorAmt : agg.allTargetBaselineAmt;
-    const actBefore = usePrior ? agg.activatedPriorAmt : agg.activatedSkuBaselineAmt;
-    const allBeforeOrderCount = usePrior ? agg.allTargetPriorOrderCount : 0;
-    const actBeforeOrderCount = usePrior ? agg.activatedPriorOrderCount : 0;
-    const allDelta = allBefore > 0
-      ? ((agg.allTargetPostAmt - allBefore) / allBefore * 100)
-      : (agg.allTargetPostAmt > 0 ? Infinity : 0);
-    const actDelta = actBefore > 0
-      ? ((agg.activatedAmt - actBefore) / actBefore * 100)
-      : (agg.activatedAmt > 0 ? Infinity : 0);
-    const deltaPill = (d) => {
-      if (!isFinite(d)) return `<span style="color:#34C759;font-weight:800">▲ NEW</span>`;
-      if (d > 0) return `<span style="color:#34C759;font-weight:800">▲ +${d.toFixed(1)}%</span>`;
-      if (d < 0) return `<span style="color:#C8102E;font-weight:800">▼ ${d.toFixed(1)}%</span>`;
-      return `<span style="color:#86868B;font-weight:800">— 0%</span>`;
-    };
-    // Dynamic title + "Before" column label depend on the chosen compare mode.
-    const cmpTitle = ({
-      baseline: 'BEFORE vs AFTER — Target Order Amount Comparison (All-time Baseline)',
-      mom:      'BEFORE vs AFTER — Same-period Last Month (MoM)',
-      qoq:      'BEFORE vs AFTER — Same-period Last Quarter (QoQ)',
-      yoy:      'BEFORE vs AFTER — Same-period Last Year (YoY)',
-    })[compareMode] || 'BEFORE vs AFTER';
-    const beforeLabel = ({
-      baseline: 'Baseline Order Amount (All-time Before)',
-      mom:      'Prior-month Order Amount (Same-period MoM)',
-      qoq:      'Prior-quarter Order Amount (Same-period QoQ)',
-      yoy:      'Prior-year Order Amount (Same-period YoY)',
-    })[compareMode] || 'Order Amount (Before)';
-    const windowNote = (usePrior && agg.priorWindowFrom && agg.priorWindowTo)
-      ? `<span class="label-mono muted" style="font-size:11px;font-weight:500;margin-left:8px">window: ${agg.priorWindowFrom} ~ ${agg.priorWindowTo}</span>`
-      : '';
-    const allBeforeOrders = (usePrior && allBeforeOrderCount > 0) ? ` · ${allBeforeOrderCount.toLocaleString()} orders` : '';
-    const actBeforeOrders = (usePrior && actBeforeOrderCount > 0) ? ` · ${actBeforeOrderCount.toLocaleString()} orders` : '';
-
-    baEl.innerHTML = `
-      <div class="label-mono" style="font-size:12px;font-weight:700;margin-bottom:8px;color:#1D1D1F">${cmpTitle}${windowNote}</div>
-      <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 0.8fr;gap:14px;padding:12px 16px;background:rgba(0,0,0,0.02);border:1px solid rgba(0,0,0,0.08);border-radius:10px;align-items:center;margin-bottom:6px">
-        <div>
-          <div class="label-mono" style="font-size:11px;font-weight:600;color:#86868B;letter-spacing:0.05em;text-transform:uppercase">All Target ${dimWord}s</div>
-          <div style="font-size:14px;font-weight:600;margin-top:2px">${agg.targetCount.toLocaleString()} total · ${agg.allTargetOrderCount.toLocaleString()} post-campaign orders</div>
-        </div>
-        <div>
-          <div class="label-mono muted" style="font-size:11px">${beforeLabel}${allBeforeOrders}</div>
-          <div style="font-size:20px;font-weight:800">${fmtMoney(allBefore)}</div>
-        </div>
-        <div>
-          <div class="label-mono muted" style="font-size:11px">Post-Campaign Order Amount (After)</div>
-          <div style="font-size:20px;font-weight:800;color:#1D1D1F">${fmtMoney(agg.allTargetPostAmt)}</div>
-        </div>
-        <div style="text-align:right">
-          <div class="label-mono muted" style="font-size:11px">Order Amount Uplift</div>
-          <div style="font-size:18px">${deltaPill(allDelta)}</div>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 0.8fr;gap:14px;padding:12px 16px;background:rgba(10,132,255,0.06);border:1px solid rgba(10,132,255,0.25);border-left:4px solid #0A84FF;border-radius:10px;align-items:center">
-        <div>
-          <div class="label-mono" style="font-size:11px;font-weight:600;color:#0A84FF;letter-spacing:0.05em;text-transform:uppercase">└ Activated ${dimWord}s only</div>
-          <div style="font-size:14px;font-weight:600;margin-top:2px">${activatedAllCount.toLocaleString()} of ${agg.targetCount.toLocaleString()} (${(100*activatedAllCount/Math.max(1,agg.targetCount)).toFixed(1)}%) · ${agg.activatedOrderCount.toLocaleString()} orders</div>
-        </div>
-        <div>
-          <div class="label-mono muted" style="font-size:11px">${beforeLabel}${actBeforeOrders}</div>
-          <div style="font-size:20px;font-weight:800">${fmtMoney(actBefore)}</div>
-        </div>
-        <div>
-          <div class="label-mono muted" style="font-size:11px">Post-Campaign Order Amount (After)</div>
-          <div style="font-size:20px;font-weight:800;color:#C8102E">${fmtMoney(agg.activatedAmt)}</div>
-        </div>
-        <div style="text-align:right">
-          <div class="label-mono muted" style="font-size:11px">Order Amount Uplift</div>
-          <div style="font-size:18px">${deltaPill(actDelta)}</div>
-        </div>
+  if (kpiEl) {
+    const gCurAmt = activeCampaigns.reduce((s,pn)=>s+campaignStats[pn].totalCurAmt, 0);
+    const gPrvAmt = activeCampaigns.reduce((s,pn)=>s+campaignStats[pn].totalPrvAmt, 0);
+    const gCurSku = curYms.reduce((s,ym)=>s+curByYm[ym].skuCount, 0);
+    const gCurOrd = curYms.reduce((s,ym)=>s+curByYm[ym].orders, 0);
+    const dAmt = gPrvAmt>0 ? ((gCurAmt-gPrvAmt)/gPrvAmt*100) : null;
+    const dTag = v => v==null ? '<span class="muted">데이터 없음</span>'
+      : v>=0 ? `<span class="t-green" style="font-size:18px;font-weight:800">▲${v.toFixed(1)}%</span>`
+             : `<span class="t-red"   style="font-size:18px;font-weight:800">▼${Math.abs(v).toFixed(1)}%</span>`;
+    const card = (label, val, sub='') => `
+      <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:12px 14px">
+        <div class="label-mono" style="font-size:10px;color:var(--text-2);letter-spacing:.05em">${label}</div>
+        <div style="font-size:20px;font-weight:800;margin-top:4px">${val}</div>
+        ${sub?`<div class="label-mono muted" style="font-size:11px;margin-top:3px">${sub}</div>`:''}
       </div>`;
+    kpiEl.innerHTML =
+      card('현재 ORDER AMT', fmtMoney(gCurAmt), gPrvAmt>0?`${cmpLabel}: ${fmtMoney(gPrvAmt)}`:'baseline 없음') +
+      card(`vs ${cmpLabel}`, dTag(dAmt), gPrvAmt>0?`${gCurAmt>gPrvAmt?'+':'-'}${fmtMoney(Math.abs(gCurAmt-gPrvAmt))}`:cmpLabel+' 데이터 로딩 중') +
+      card('누적 오더 SKU 수', fmtNum(gCurSku), `${activeCampaigns.length}개 캠페인 합산`) +
+      card('누적 오더 수', fmtNum(gCurOrd), '현재 기간');
+    kpiEl.style.display = 'grid';
   }
 
-  // ── Funnel chart ──
-  if (charts.ckiFunnel) charts.ckiFunnel.destroy();
-  const funnelLabels = [`Total ${dimWord}s`, `Dormant`, `Newly Activated`, `Orders Generated`];
-  const funnelData   = [agg.targetCount, agg.dormantCount, agg.newlyCount, agg.newlyCount];  // revenue-generated count == newly activated with postAmt>0 (same since we only push newly when amt>0... but we filter postAmt>0)
-  charts.ckiFunnel = new Chart(document.getElementById('chCkiFunnel'), {
-    type: 'bar',
-    data: { labels: funnelLabels, datasets: [{
-      data: funnelData,
-      backgroundColor: ['#1D1D1F','#A1A1A6','#0A84FF','#34C759'],
-      hoverBackgroundColor: ['#1D1D1F','#A1A1A6','#0A84FF','#34C759'],
-      borderRadius: 4, maxBarThickness: 38,
-    }] },
-    options: {
-      indexAxis: 'y', responsive:true, maintainAspectRatio:false,
-      plugins: {
-        legend: { display:false }, datalabels: { display:false },
-        tooltip: {
-          callbacks: {
-            label: c => `${c.parsed.x.toLocaleString()} ${dimWord}s`,
-            footer: items => {
-              const i = items[0].dataIndex;
-              if (i === 0) return '';
-              const prev = funnelData[i-1] || 0;
-              const pct = prev ? (funnelData[i]/prev*100) : 0;
-              return `${pct.toFixed(1)}% of previous stage`;
-            },
-          },
-        },
-      },
-      scales: {
-        x: { beginAtZero:true, ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',size:12}}, grid:{color:'rgba(0,0,0,0.06)'} },
-        y: { ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:700,size:12}}, grid:{display:false} },
-      },
-    },
+  // ── 차트: 월별 SKU 수 ──
+  const fmtYm = ym => ym ? ym.replace(/^20(\d\d)-(\d\d)$/,"'$1.$2") : ym;
+  const labels = curYms.map(fmtYm);
+  const curSkuData = curYms.map(ym => curByYm[ym].skuCount);
+  const prvSkuData = curYms.map(ym => {
+    const ppym = shiftYM(ym, cmpMode);
+    return activeCampaigns.reduce((s,pn) => {
+      const p = campaignStats[pn].prv[ppym];
+      return s + (p ? p.skuSet.size : 0);
+    }, 0);
   });
+  const hasPrv = prvSkuData.some(v=>v>0);
 
-  // ── 2×2 Activation matrix ──
-  const matrixEl = document.getElementById('ckiMatrix');
-  if (matrixEl) {
-    const cell = (icon, title, count, amt, color, bg) => `
-      <div style="background:${bg};border:1px solid ${color}40;border-radius:10px;padding:14px 16px;min-height:96px">
-        <div style="font-size:15px;font-weight:700;color:${color}">${icon} ${title}</div>
-        <div style="font-size:24px;font-weight:800;margin-top:6px;line-height:1.2">${count.toLocaleString()} <span class="label-mono muted" style="font-size:12px;font-weight:500">${dimWord}s</span></div>
-        <div class="label-mono muted" style="font-size:12px;margin-top:2px">Order Amount ${fmtMoney(amt)}</div>
-      </div>`;
-    matrixEl.innerHTML =
-      cell('🔵', 'Newly Active', agg.newlyCount, agg.newlyAmt, '#0A84FF', 'rgba(10,132,255,0.06)') +
-      cell('🟢', 'Retained Active', agg.retainedCount, agg.activatedAmt - agg.newlyAmt, '#34C759', 'rgba(52,199,89,0.06)') +
-      cell('⚪', 'Still Dormant', agg.stillDormantCount, 0, '#86868B', 'rgba(134,134,139,0.04)') +
-      cell('🟡', 'Lost Active',  agg.lostCount,         0, '#FF9500', 'rgba(255,149,0,0.06)');
+  try { if (charts.ckiSkuCount) { charts.ckiSkuCount.destroy(); charts.ckiSkuCount = null; } } catch(_){}
+  const ctxSku = document.getElementById('chCkiSkuCount');
+  if (ctxSku) {
+    charts.ckiSkuCount = new Chart(ctxSku, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          ...(hasPrv ? [{ label: cmpLabel, data: prvSkuData, backgroundColor:'#A1A1A680', borderRadius:3, maxBarThickness:28 }] : []),
+          { label: '현재', data: curSkuData, backgroundColor:'#C8102E', borderRadius:3, maxBarThickness:28 },
+        ]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins: { legend:{position:'top',labels:{font:{family:'IBM Plex Mono',size:10},boxWidth:10}}, datalabels:{display:false},
+          tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y} SKUs`}} },
+        scales: {
+          x:{ticks:{font:{family:'IBM Plex Mono',size:9}},grid:{display:false}},
+          y:{beginAtZero:true,ticks:{font:{family:'IBM Plex Mono',size:10},stepSize:1},grid:{color:'rgba(0,0,0,0.05)'}},
+        },
+      }
+    });
   }
 
-  // ── Full-set summary (only when at least one SKU campaign in scope) ──
-  const fsWrap = document.getElementById('ckiFullsetWrap');
-  const fsSum  = document.getElementById('ckiFullsetSummary');
-  if (showFullset && fsWrap && fsSum) {
-    fsWrap.style.display = '';
-    const total = agg.fullsetCount + agg.singleCount;
-    const fsRate = total ? (agg.fullsetCount/total*100) : 0;
-    const avgSkuPerSet = agg.fullsetCount ? (agg.fullsetTargetSkuTotal/agg.fullsetCount) : 0;
-    fsSum.innerHTML = `
-      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Full-set Orders (2+ SKUs / Model)</span><div style="font-size:22px;font-weight:800;color:#C8102E;margin-top:2px">${agg.fullsetCount.toLocaleString()} · ${fsRate.toFixed(1)}%</div></div>
-      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Single-line Orders</span><div style="font-size:18px;font-weight:700;margin-top:2px">${agg.singleCount.toLocaleString()}</div></div>
-      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Full-set Target SKU Order Amount</span><div style="font-size:18px;font-weight:700;margin-top:2px">${fmtMoney(agg.fullsetTargetAmt)}</div></div>
-      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Full-set Related Order Amount (all lines)</span><div style="font-size:18px;font-weight:700;color:#34C759;margin-top:2px">${fmtMoney(agg.fullsetRelatedAmt)}</div></div>
-      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Full-set Models</span><div style="font-size:18px;font-weight:700;margin-top:2px">${agg.fullsetModels.size}</div></div>
-      <div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Avg SKU / Set</span><div style="font-size:18px;font-weight:700;margin-top:2px">${avgSkuPerSet.toFixed(1)}</div></div>
-      ${agg.bestModel ? `<div><span class="label-mono muted" style="font-size:12px;font-weight:600;text-transform:uppercase">Largest Set</span><div style="font-size:15px;font-weight:700;margin-top:2px">${agg.bestModel} <span class="muted" style="font-size:12px;font-weight:500">(${agg.bestSkuCount} SKUs co-ordered)</span></div></div>` : ''}`;
-  } else if (fsWrap) {
-    fsWrap.style.display = 'none';
+  // ── 차트: 월별 AMT ──
+  const curAmtData = curYms.map(ym => Math.round(curByYm[ym].amt));
+  const prvAmtData = curYms.map(ym => {
+    const ppym = shiftYM(ym, cmpMode);
+    return Math.round(activeCampaigns.reduce((s,pn) => {
+      const p = campaignStats[pn].prv[ppym];
+      return s + (p ? p.amt : 0);
+    }, 0));
+  });
+  const hasPrvAmt = prvAmtData.some(v=>v>0);
+
+  try { if (charts.ckiAmt) { charts.ckiAmt.destroy(); charts.ckiAmt = null; } } catch(_){}
+  const ctxAmt = document.getElementById('chCkiAmt');
+  if (ctxAmt) {
+    charts.ckiAmt = new Chart(ctxAmt, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          ...(hasPrvAmt ? [{ label: cmpLabel, data: prvAmtData, backgroundColor:'#A1A1A680', borderRadius:3, maxBarThickness:28 }] : []),
+          { label: '현재', data: curAmtData, backgroundColor:'#0A84FF', borderRadius:3, maxBarThickness:28 },
+        ]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins: { legend:{position:'top',labels:{font:{family:'IBM Plex Mono',size:10},boxWidth:10}}, datalabels:{display:false},
+          tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtMoney(c.parsed.y||0)}`}} },
+        scales: {
+          x:{ticks:{font:{family:'IBM Plex Mono',size:9}},grid:{display:false}},
+          y:{beginAtZero:true,ticks:{font:{family:'IBM Plex Mono',size:10},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v},grid:{color:'rgba(0,0,0,0.05)'}},
+        },
+      }
+    });
   }
 
-  // ── Activated detail table ──
-  const tbl = document.getElementById('tblCkiActivated');
-  if (tbl) {
-    const rows = agg.activatedRows.slice().sort((a,b) => b.postAmt - a.postAmt);
-    const shown = rows.slice(0, 50);
-    if (!shown.length) {
-      tbl.innerHTML = '<thead><tr><th style="text-align:center;padding:24px;color:#86868B;font-size:14px">No activated targets yet</th></tr></thead>';
-    } else {
-      const showCampaignCol = isAll;
-      const showModelCol = agg.hasSku;
-      tbl.innerHTML = `
-        <thead><tr>
-          <th>Type</th>
-          ${showCampaignCol?'<th>Campaign</th>':''}
-          <th>${dimWord}</th>
-          ${showModelCol?'<th>Make / Model</th>':''}
-          <th class="text-right">Baseline Order Amount</th>
-          <th class="text-right">Post-Campaign Order Amount</th>
-          <th class="text-right">Qty</th>
-          <th class="text-right">Orders</th>
-          <th>First Order</th>
-        </tr></thead>
-        <tbody>${shown.map(r => {
-          return `<tr>
-            <td style="font-size:15px">${r.kind}</td>
-            ${showCampaignCol?`<td class="muted" style="font-size:12px">${r.campaign}</td>`:''}
-            <td><b>${r.key}</b></td>
-            ${showModelCol?`<td class="muted" style="font-size:12px">${r.matchBy==='sku' ? (r.model || '–') : '–'}</td>`:''}
-            <td class="text-right ${r.baseAmt===0?'muted':''}">${r.baseAmt===0?'–':fmtMoney(r.baseAmt)}</td>
-            <td class="text-right" style="font-weight:700;color:#C8102E">${fmtMoney(r.postAmt)}</td>
-            <td class="text-right">${r.postQty.toLocaleString()}</td>
-            <td class="text-right">${(r.orderCount||0).toLocaleString()}</td>
-            <td class="muted" style="font-size:12px">${r.firstDate || '–'}</td>
-          </tr>`;
-        }).join('')}</tbody>`;
-    }
-  }
+  // ── 캠페인별 테이블 ──
+  const tbl = document.getElementById('tblCkiCmp');
+  if (!tbl) return;
+  const colCmp = hasPrvAmt ? `<th class="text-right">${cmpLabel} AMT</th><th class="text-right">Δ%</th>` : '';
+  const head = `<thead><tr>
+    <th>캠페인</th>
+    <th>타입</th>
+    <th class="text-right">현재 AMT</th>
+    ${colCmp}
+    <th class="text-right">오더 SKU 수</th>
+    <th class="text-right">오더 수</th>
+  </tr></thead>`;
+
+  const mktST = {};
+  (state.marketing||[]).forEach(m=>{
+    const p=(m.promotion_category||'').trim(), st=(m.sell_type||'').trim().toUpperCase().replace(/_/g,'-');
+    if(p&&(st==='SELL-IN'||st==='SELL-OUT')&&!mktST[p]) mktST[p]=st;
+  });
+  Object.keys(cfg).forEach(p=>{ if(!mktST[p]) mktST[p]=(cfg[p].match_by||'sku').toLowerCase()==='customer'?'SELL-OUT':'SELL-IN'; });
+
+  const rows = activeCampaigns.map(pn => {
+    const s = campaignStats[pn];
+    const dPct = s.totalPrvAmt>0 ? ((s.totalCurAmt-s.totalPrvAmt)/s.totalPrvAmt*100) : null;
+    const dTag = dPct==null ? '–' : dPct>=0
+      ? `<span class="t-green">▲${dPct.toFixed(1)}%</span>`
+      : `<span class="t-red">▼${Math.abs(dPct).toFixed(1)}%</span>`;
+    const st = mktST[pn]||'SELL-IN';
+    const stBadge = st==='SELL-IN'
+      ? '<span style="background:#C8102E;color:#fff;font-size:8px;padding:1px 5px;border-radius:6px;font-weight:700">SELL-IN</span>'
+      : '<span style="background:#0A84FF;color:#fff;font-size:8px;padding:1px 5px;border-radius:6px;font-weight:700">SELL-OUT</span>';
+    return `<tr>
+      <td style="font-weight:700">${pn}</td>
+      <td>${stBadge}</td>
+      <td class="text-right mono t-green" style="font-weight:700">${fmtMoney(s.totalCurAmt)}</td>
+      ${hasPrvAmt?`<td class="text-right mono muted">${s.totalPrvAmt>0?fmtMoney(s.totalPrvAmt):'–'}</td><td class="text-right mono">${dTag}</td>`:''}
+      <td class="text-right mono">${fmtNum(s.totalCurSku)}</td>
+      <td class="text-right mono">${fmtNum(s.totalCurOrd)}</td>
+    </tr>`;
+  }).join('');
+
+  tbl.innerHTML = head + `<tbody>${rows}</tbody>`;
 }
 
 function renderSkuExplorer(fOrders, fMkt) {
@@ -9662,14 +9392,15 @@ function renderSkuAggregate(fOrders) {
   }
 
   // ── Period Comparison KPIs ──
-  // Pass orders.csv-only rows so that fillCompareKpis current-period ORDER AMOUNT
-  // is never inflated by preOrders. preOrders are added internally for previous
-  // period only (fillCompareKpis already calls state.preOrders for prevSource).
+  // cmpScope: baseline rows use _promo tag; current orders use promotion_category
   const cmpScope = (promo && promo !== '__all__')
-    ? ((o) => o && promoKeyOfOrder(o) === promo)
+    ? ((o) => {
+        if (!o) return false;
+        // baseline rows tagged with _promo
+        if (o[PRE_ORDER_MARK]) return (o._promo || o.promotion_category || '') === promo;
+        return promoKeyOfOrder(o) === promo;
+      })
     : null;
-  // ordersCsv = orders.csv only (no baseline). Filter same way useOrders was filtered
-  // but without the baseline rows so current ORDER AMOUNT = orders.csv only.
   const cmpOrders = promo === '__all__'
     ? ordersCsv
     : ordersCsv.filter(o => promoKeyOfOrder(o) === promo);
