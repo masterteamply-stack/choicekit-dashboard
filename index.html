@@ -6970,73 +6970,63 @@ async function renderPromoChart(fOrders, fMkt) {
       });
       renderPromoTable(); return;  // skip the default line chart below
     }
-    // ── ALL promotions + compare on: grouped bar (전년/전분기/전월 x 월별 쌍) ──
-    const windowBuckets = periodBuckets.length ? periodBuckets
+    // ── ALL promotions + cmpMode on: line chart (현재 + 전년 dashed overlay) ──
+    // 전년 데이터를 dashed line으로 추가해 trend를 그대로 보여줌
+    const _fmtPkLabel = pk => pk ? pk.replace(/^20(\d\d)-(\d\d)$/, "'$1.$2").replace(/^20(\d\d)-Q(\d)$/, "'$1.Q$2").replace(/^(20\d\d)$/, '$1') : pk;
+    // 현재 + 전년 버킷 모두 포함한 전체 시간축 생성
+    const allBuckets = new Set(periodBuckets);
+    shownKeys.forEach(key => {
+      if (cmpSeries[key]) Object.keys(cmpSeries[key]).forEach(ppk => {
+        // ppk는 전년 bucket → 현재 bucket으로 forward shift해서 같은 x축에 표시
+        // 단 그냥 periodBuckets에 있는 것만 표시
+      });
+    });
+    const chartBuckets = periodBuckets.length
+      ? periodBuckets
       : Array.from(new Set((state.orders||[]).map(o=>periodKey(o.order_date,period)).filter(Boolean))).sort();
-    if (!windowBuckets.length) { renderPromoTable(); return; }
-    const curBarsAll  = windowBuckets.map(pk =>
-      Math.round(shownKeys.reduce((s, key) => s + ((series[key] && series[key][pk]) || 0), 0))
-    );
-    const priorBarsAll = windowBuckets.map(pk => {
+    if (!chartBuckets.length) { renderPromoTable(); return; }
+
+    // 현재 datasets (per campaign line)
+    const cmpLineDatasets = shownKeys.map((key, i) => {
+      const col = PALETTE[i % PALETTE.length];
+      return {
+        label: key,
+        data: chartBuckets.map(pk => Math.round((series[key] && series[key][pk]) || 0)),
+        borderColor: col, backgroundColor: col + '22',
+        borderWidth: 2, pointRadius: 2.5, tension: 0.25, fill: false,
+      };
+    });
+    // 전년 TOTAL dashed line
+    const priorTotalLine = chartBuckets.map(pk => {
       const ppk = shiftBucket(pk, cmpMode, period);
       return Math.round(shownKeys.reduce((s, key) => s + ((cmpSeries[key] && cmpSeries[key][ppk]) || 0), 0));
     });
-    // x축 레이블: 현재 기간만 ("'26.04" 형태) — 이전기간 정보는 legend에만 표시
-    const pairedLabels = windowBuckets.map(pk =>
-      pk ? pk.replace(/^20(\d\d)-(\d\d)$/, "'$1.$2").replace(/^20(\d\d)-Q(\d)$/, "'$1.Q$2").replace(/^(20\d\d)$/, '$1') : pk
+    const curTotalLine = chartBuckets.map(pk =>
+      Math.round(shownKeys.reduce((s, key) => s + ((series[key] && series[key][pk]) || 0), 0))
+    );
+    cmpLineDatasets.unshift(
+      { label: `전체 (${modeLabelKo})`, data: priorTotalLine, borderColor:'#A1A1A6', backgroundColor:'transparent', borderWidth:2, borderDash:[6,3], pointRadius:0, tension:0.25, fill:false },
+      { label: '전체 (현재)', data: curTotalLine, borderColor:'#1D1D1F', backgroundColor:'transparent', borderWidth:3, pointRadius:0, tension:0.25, fill:false }
     );
     try { if (charts.promo) { charts.promo.destroy(); charts.promo = null; } } catch(_) {}
     charts.promo = new Chart(document.getElementById('chPromo'), {
-      type: 'bar',
-      data: {
-        labels: pairedLabels,
-        datasets: [
-          { label: modeLabelKo, data: priorBarsAll, backgroundColor:'#A1A1A6', borderRadius:3, maxBarThickness:36 },
-          { label: '현재',      data: curBarsAll,   backgroundColor:'#C8102E', borderRadius:3, maxBarThickness:36 },
-        ],
-      },
+      type: 'line',
+      data: { labels: chartBuckets.map(_fmtPkLabel), datasets: cmpLineDatasets },
       options: {
         responsive:true, maintainAspectRatio:false,
+        interaction: { mode:'index', intersect:false },
         plugins: {
           legend: { position:'top', labels:{ color:'#1D1D1F', font:{family:'IBM Plex Mono',weight:600,size:11}, boxWidth:14, padding:8 } },
-          datalabels: {
-            display: ctx => ctx.parsed && ctx.parsed.y > 0,
-            anchor: 'end', align: 'end', offset: 2,
-            color: ctx => ctx.datasetIndex === 1 ? '#C8102E' : '#888',
-            font: { family:'IBM Plex Mono', weight:700, size:10 },
-            formatter: (v, ctx) => {
-              const money = v >= 1000 ? '$'+(v/1000).toFixed(1)+'k' : '$'+v.toLocaleString();
-              if (ctx.datasetIndex === 1) {
-                const prv = ctx.chart.data.datasets[0].data[ctx.dataIndex] || 0;
-                if (prv > 0) {
-                  const d = ((v - prv) / prv) * 100;
-                  return [money, (d>=0?'▲':'▼')+Math.abs(d).toFixed(0)+'%'];
-                }
-                return money;
-              }
-              return money;
-            },
-            clip: false,
-          },
-          tooltip: {
-            callbacks: {
-              label: c => `${c.dataset.label}: ${fmtMoney(c.parsed && c.parsed.y || 0)}`,
-              footer: items => {
-                const i = items[0].dataIndex;
-                const cur = curBarsAll[i], prv = priorBarsAll[i];
-                const d = prv > 0 ? ((cur - prv) / prv) * 100 : null;
-                return d == null ? '' : `Δ ${d >= 0 ? '+' : ''}${d.toFixed(1)}%`;
-              },
-            },
-          },
+          datalabels: { display: false },
+          tooltip: { callbacks: { label: c => `${c.dataset.label}: ${fmtMoney(c.parsed.y||0)}` } },
         },
         scales: {
-          x: { ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:10},maxRotation:40,minRotation:0}, grid:{display:false} },
+          x: { ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:10},maxRotation:30}, grid:{display:false} },
           y: { beginAtZero:true, ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',size:12},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'} },
         },
       },
     });
-    renderPromoTable(); return; // grouped bar 완료 — 아래 line chart 렌더링 생략
+    renderPromoTable(); return;
   } else if (cmpKpiEl) {
     cmpKpiEl.style.display = 'none';
     cmpKpiEl.innerHTML = '';
@@ -7383,8 +7373,7 @@ function renderPromoTable() {
     ${showMktCols?'<th class="text-right">MKT BUDGET</th>':''}
     ${showMktCols?'<th class="text-right">EXECUTED</th>':''}
     ${showMktCols?'<th class="text-right">ROI</th>':''}
-    ${curPeriods.length?`<th colspan="${curPeriods.length}" class="text-center" style="border-left:2px solid var(--border)">MONTH — <span style="color:#86868B">${_prevColLabel}</span> / <span style="color:var(--blue)">현재</span></th>`:''}
-  </tr>${curPeriods.length?`<tr style="background:rgba(0,0,0,0.02)">${monthColsHead}</tr>`:''}</thead>`;
+  </tr></thead>`;
 
   // 권역 뱃지 색상 맵
   const regionColors = {
@@ -7503,20 +7492,21 @@ function renderPromoTable() {
     const dPctTag = _pctDelta==null?'<span class="muted">–</span>':_pctDelta>=0?`<span class="t-green">▲${_pctDelta.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(_pctDelta).toFixed(1)}%</span>`;
     const roiTxt = p.roi==null?'–':fmtPct(p.roi);
     const roiCls = p.roi==null?'muted':p.roi<0?'t-red':'t-green';
-    const monthCells = curPeriods.map((pk,i)=>{
-      const cur=(periodCurByPromo[promo]&&periodCurByPromo[promo][pk])||0;
-      const ppk=_cmpModeNow!=='off'?shiftBucket(pk,_cmpModeNow,period):'';
-      const prv=ppk?((periodPrvByPromo[promo]&&periodPrvByPromo[promo][ppk])||0):0;
-      const prvTxt=prv>0?`<span class="muted" style="font-size:10px">${fmtMoney(prv)}</span><br>`:'';
-      const curTxt=cur>0?`<span style="color:var(--blue);font-weight:700">${fmtMoney(cur)}</span>`:'<span class="muted">–</span>';
-      return `<td class="text-right mono" style="font-size:11px;${i===0?'border-left:2px solid var(--border)':''}">${prvTxt}${curTxt}${cur>0&&prv>0?' '+dTag(cur,prv):''}</td>`;
-    }).join('');
+    // 월별 컬럼 제거 — 기간은 프로모션명 옆에 표기
+    const monthCells = '';
     const promoKey = promo.replace(/"/g,'&quot;');
     return `<tr class="promo-main-row" data-promo="${promoKey}" style="cursor:pointer" onclick="togglePromoDrill(this,'${promo.replace(/'/g,"\\'")}')">
       <td>
         <span style="color:#86868B;font-size:11px;margin-right:4px" class="promo-drill-arrow">▶</span>
         <b>${promo||'–'}</b>
         ${regionBadge(p.regionLabel)}
+        ${(() => {
+          const ba = window._lastBaAmt && window._lastBaAmt[promo];
+          if (!ba || !ba.winFrom) return '';
+          const _fd = d => d ? d.replace(/^20(\d\d)-(\d\d).*$/, "'$1.$2") : '';
+          const from = _fd(ba.winFrom), to = _fd(ba.winTo);
+          return `<span class="muted" style="font-size:9px;margin-left:6px;vertical-align:middle">${from}${to&&to!==from?' ~ '+to:''}</span>`;
+        })()}
         ${p.baStart?`<br><span class="muted" style="font-size:10px;padding-left:16px">from ${p.baStart}</span>`:''}
       </td>
       <td class="text-right mono">${fmtNum(p.orders)}</td>
@@ -7526,7 +7516,6 @@ function renderPromoTable() {
       ${showMktCols?`<td class="text-right mono t-yellow">${fmtMoney(p.expected||0)}</td>`:''}
       ${showMktCols?`<td class="text-right mono t-orange">${fmtMoney(p.actual||0)}</td>`:''}
       ${showMktCols?`<td class="text-right mono ${roiCls}" style="font-weight:700">${roiTxt}</td>`:''}
-      ${monthCells}
     </tr>
     ${buildDrillRows(promo)}`;
   }).join('')}
@@ -7539,14 +7528,6 @@ function renderPromoTable() {
     ${showMktCols?`<td class="text-right mono t-yellow">${fmtMoney(totalBudget)}</td>`:''}
     ${showMktCols?`<td class="text-right mono t-orange">${fmtMoney(totalExec)}</td>`:''}
     ${showMktCols?`<td class="text-right mono">${totalExec>0?fmtPct((totalCur-totalExec)/totalExec*100):'–'}</td>`:''}
-    ${curPeriods.map((pk,i)=>{
-      const cur=totalCurByPk[pk]||0;
-      const ppk=_cmpModeNow!=='off'?shiftBucket(pk,_cmpModeNow,period):'';
-      const prv=ppk?(totalPrvByPk[ppk]||0):0;
-      const prvTxt=prv>0?`<span class="muted" style="font-size:10px">${fmtMoney(prv)}</span><br>`:'';
-      const curTxt=cur>0?`<span style="color:var(--blue);font-weight:700">${fmtMoney(cur)}</span>`:'<span class="muted">–</span>';
-      return `<td class="text-right mono" style="font-size:11px;${i===0?'border-left:2px solid var(--border)':''}">${prvTxt}${curTxt}${cur>0&&prv>0?' '+dTag(cur,prv):''}</td>`;
-    }).join('')}
   </tr></tbody>`;
   document.getElementById('tblPromo').innerHTML = head + body;
   } catch(e) { console.error('[renderPromoTable]', e); }
