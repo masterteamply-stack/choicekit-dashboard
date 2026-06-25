@@ -11129,6 +11129,26 @@ window.publishSnapshot = publishSnapshot;
       } catch (e) { console.warn(e); }
     }
   }
+  // 데이터가 없으면 raw.githubusercontent.com에서 직접 로드
+  if (!state.orders.length || !state.marketing.length) {
+    try {
+      console.log('[init] No data — fetching from raw.githubusercontent.com');
+      const [oRes, mRes] = await Promise.all([
+        fetch('https://raw.githubusercontent.com/masterteamply-stack/choicekit-dashboard/main/orders.csv?t=' + Date.now(), {cache:'no-store'}),
+        fetch('https://raw.githubusercontent.com/masterteamply-stack/choicekit-dashboard/main/marketing.csv?t=' + Date.now(), {cache:'no-store'}),
+      ]);
+      if (oRes.ok) {
+        const txt = await oRes.text();
+        const rows = await parseOrderCSV(txt);
+        if (rows.length) { state.orders = rows; persist(); console.log('[init] orders:', rows.length); }
+      }
+      if (mRes.ok) {
+        const txt = await mRes.text();
+        const rows = await parseMarketingCSV(txt);
+        if (rows.length) { state.marketing = rows; persist(); console.log('[init] marketing:', rows.length); }
+      }
+    } catch(e) { console.warn('[init] direct fetch failed:', e); }
+  }
   rebuildAll();
   // Render cached data-update timestamps on first paint (markDataUpdated handles subsequent updates)
   try { renderDataTimestamps(); } catch (e) { console.warn('renderDataTimestamps init failed:', e); }
