@@ -4195,10 +4195,22 @@ function renderAll() {
   const roi          = mktCost>0 ? ((orderAmt-mktCost)/mktCost)*100 : 0;
   const orderTargetDisp = getOrderTargetDisp();
 
-  // KPI DOM 즉시 업데이트
-  _updateKpiDom({ totalOrders, totalQty, orderAmt, mktCost, mktExpected,
-    mktBizreward, mktBudgetCsv, roi, orderTargetDisp, fOrders, fOrdersAfter });
-
+  // KPI DOM 업데이트 (인라인)
+  const orderAmtDisp   = orderAmt;
+  const tgtPct = orderTargetDisp>0 ? (orderAmtDisp/orderTargetDisp)*100 : 0;
+  const burnPct = (mktExpected+mktBizreward)>0 ? (mktCost/(mktExpected+mktBizreward))*100 : 0;
+  _set('kpiOrder', fmtMoney(orderAmtDisp));
+  _set('kpiOrderSub', 'after campaign start · post-campaign total');
+  _set('kpiAchv', orderTargetDisp>0 ? fmtPct(tgtPct) : '–');
+  _set('kpiPlan', fmtMoney(mktExpected+mktBizreward));
+  _set('kpiPlanUse', burnPct>0 ? fmtPct(burnPct) : '–');
+  _set('kpiBudget', fmtMoney(mktBudgetCsv||mktExpected));
+  _set('kpiRoi', mktCost>0 ? fmtPct(roi) : '–');
+  document.getElementById('kpiRoiCard')?.classList.toggle('neg', roi<0);
+  // Campaigns badge
+  const _cfgA = state.campaignTargetSkus||{};
+  const activePromos = new Set(fOrdersAfter.map(o=>(o.promotion_category||'').trim()).filter(Boolean));
+  _set('kpiCamps', `${activePromos.size} / ${Object.keys(_cfgA).length}`);
   buildFilterBar();
 
   // ── Phase 1: 가벼운 위젯들 (동기 — 빠름) ─────────────────────────────
@@ -4212,26 +4224,25 @@ function renderAll() {
   renderSalesTrendCombined(fOrders);
   renderActivitiesTable(fMkt);
 
-  // ── Phase 2: Promotion Performance — 브라우저가 Phase 1 먼저 그리도록 ─
+  // ── Phase 2: Promotion Performance ─────────────────────────────────────
   setTimeout(() => {
     renderPromoChart(fOrders, fMkt);
     renderPromoOrderTrend(fOrders, fMkt);
     if (_promoAfterTotal !== null) {
-      const tgtPct = orderTargetDisp>0 ? (_promoAfterTotal/orderTargetDisp)*100 : 0;
-      const roiUpd = mktCost>0 ? ((_promoAfterTotal-mktCost)/mktCost)*100 : 0;
+      const tgtPct2 = orderTargetDisp>0 ? (_promoAfterTotal/orderTargetDisp)*100 : 0;
+      const roiUpd  = mktCost>0 ? ((_promoAfterTotal-mktCost)/mktCost)*100 : 0;
       _set('kpiOrder', fmtMoney(_promoAfterTotal));
       _set('kpiOrderSub', 'after campaign start · post-campaign total');
-      if (orderTargetDisp>0) _set('kpiAchv', fmtPct(tgtPct));
+      if (orderTargetDisp>0) _set('kpiAchv', fmtPct(tgtPct2));
       if (mktCost>0) { _set('kpiRoi', fmtPct(roiUpd)); document.getElementById('kpiRoiCard')?.classList.toggle('neg', roiUpd<0); }
-      if (window._promoEngagedCustomers!=null) _set('kpiEngaged', String(window._promoEngagedCustomers));
     }
-  }, 0);
+  }, 50);
 
-  // ── Phase 3: 가장 무거운 위젯 — Phase 2 후 ─────────────────────────────
+  // ── Phase 3: 가장 무거운 위젯 ───────────────────────────────────────────
   setTimeout(() => {
     renderChoiceKitImpact(fOrders, fMkt);
     renderSkuExplorer(fOrders, fMkt);
-  }, 0);
+  }, 150);
 }
 
 
@@ -4239,48 +4250,6 @@ function _set(id, val) {
   const el = document.getElementById(id);
   if (el) el.textContent = val;
 }
-
-
-function _updateKpiDom({ totalOrders, totalQty, orderAmt, mktCost, mktExpected,
-    mktBizreward, mktBudgetCsv, roi, orderTargetDisp, fOrders, fOrdersAfter }) {
-  const disp = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
-  disp('kpiTotalOrders', fmtNum(totalOrders));
-  disp('kpiQty', fmtNum(totalQty));
-  const orderAmtDisp = orderAmt;
-  disp('kpiOrder', fmtMoney(orderAmtDisp));
-  disp('kpiOrderSub', 'after campaign start · post-campaign total');
-  const tgtPct = orderTargetDisp>0 ? (orderAmtDisp/orderTargetDisp)*100 : 0;
-  disp('kpiAchv', orderTargetDisp>0 ? fmtPct(tgtPct) : '–');
-  if (orderTargetDisp>0) document.getElementById('kpiAchvCard')?.classList.toggle('neg', tgtPct<100);
-  disp('kpiCost', fmtMoney(mktCost));
-  const burnPct = (mktExpected+mktBizreward)>0 ? (mktCost/(mktExpected+mktBizreward))*100 : 0;
-  disp('kpiBurn', (mktExpected+mktBizreward)>0 ? fmtPct(burnPct) : '–');
-  disp('kpiRoi', mktCost>0 ? fmtPct(roi) : '–');
-  if (mktCost>0) document.getElementById('kpiRoiCard')?.classList.toggle('neg', roi<0);
-  // Active campaigns, customers, SKUs — 단일 순회
-  const _cfgA = state.campaignTargetSkus||{};
-  const activePromos = new Set(), engCusts = new Set(), skuItems = new Set();
-  fOrdersAfter.forEach(o => {
-    const p=(o.promotion_category||'').trim(); if(p) activePromos.add(p);
-    const c=(o.customer||'').trim(); if(c) engCusts.add(c);
-    const s=(o.sku||'').trim(); if(s) skuItems.add(s);
-  });
-  disp('kpiActiveCampaigns', `${activePromos.size} / ${Object.keys(_cfgA).length}`);
-  disp('kpiEngaged', String(engCusts.size));
-  window._promoEngagedCustomers = engCusts.size;
-  disp('kpiSkuItems', fmtNum(skuItems.size));
-  // Cost per order
-  disp('kpiCpo', totalOrders>0 ? fmtMoney(mktCost/totalOrders) : '–');
-  // Order amt per customer
-  disp('kpiAov', engCusts.size>0 ? fmtMoney(orderAmtDisp/engCusts.size) : '–');
-  // Avg order value
-  disp('kpiAvgOrder', totalOrders>0 ? fmtMoney(orderAmtDisp/totalOrders) : '–');
-}
-
-function syncFilterBar(fOrders, fMkt) {
-  buildFilterBar();
-}
-
 
 
 function renderPlanExec(fOrders, fMkt) {
