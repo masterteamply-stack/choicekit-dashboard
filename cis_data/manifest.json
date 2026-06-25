@@ -1,0 +1,11 @@
+{
+  "total_records": 1465,
+  "total_chunks": 3,
+  "chunk_size": 500,
+  "source": "CK_CIS_orders_2026",
+  "files": [
+    "cis_data/chunk_0000.json",
+    "cis_data/chunk_0001.json",
+    "cis_data/chunk_0002.json"
+  ]
+}
