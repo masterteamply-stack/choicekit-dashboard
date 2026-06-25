@@ -9715,8 +9715,13 @@ window.publishSnapshot = publishSnapshot;
     showPublishedBanner(embeddedSnap);
     applyWidgetOrder(); // re-apply in case widgetOrder changed
   }
-  // Embedded shared data is in-DOM, no fetch required — works on file:// too.
-  try { await loadSharedData(false); } catch (e) { console.warn('Shared data load skipped:', e); }
+  // Always try to load shared data — even if personal data flag is set,
+  // if state.orders is empty we force-reload to avoid blank dashboard.
+  if (!state.orders.length && !state.marketing.length) {
+    try { await loadSharedData(true); } catch (e) { console.warn('Shared data load skipped:', e); }
+  } else {
+    try { await loadSharedData(false); } catch (e) { console.warn('Shared data load skipped:', e); }
+  }
   // Load explicit per-campaign target SKU lists (SA_list etc.) — best-effort.
   try { await loadCampaignTargetSkus(); } catch (e) { console.warn('target SKU load skipped:', e); }
   // CTR-Model map + auto CSV refresh still require network — only attempt over http(s).
@@ -9748,6 +9753,13 @@ window.publishSnapshot = publishSnapshot;
     }
   }
   rebuildAll();
+  // 데이터가 없으면 강제 재로드 시도
+  setTimeout(async () => {
+    if (!state.orders.length && !state.marketing.length) {
+      console.warn('[init] No data after init — force-reloading shared data');
+      try { await loadSharedData(true); rebuildAll(); } catch(e) {}
+    }
+  }, 2000);
   // Render cached data-update timestamps on first paint (markDataUpdated handles subsequent updates)
   try { renderDataTimestamps(); } catch (e) { console.warn('renderDataTimestamps init failed:', e); }
   // Try to auto-restore pre-order toggle state from previous session (best-effort)
