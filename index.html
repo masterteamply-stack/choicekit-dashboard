@@ -359,7 +359,10 @@ header.collapsed {
   padding: 8px 32px;
 }
 header.collapsed .header-right {
-  display: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 /* Tiny chevron button that toggles the collapsed state */
 .header-collapse-btn {
@@ -1706,119 +1709,36 @@ header .mono b.t-orange {
       <option value="budgetstatus">Budget</option>
     </select>
     <span class="fx-loading" id="fxStatus" style="display:none">FX…</span>
-    <button class="header-collapse-btn" id="headerCollapseBtn" title="헤더 도구 모음 접기/펼치기" aria-label="Toggle header toolbar">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-    </button>
   </div>
 
-  <div class="header-right">
+  <div class="header-right" style="gap:10px">
+    <!-- 환종 선택 — 오른쪽 고정 -->
     <div class="cur-toggle" id="curToggle">
       <button data-cur="USD" class="active">USD</button>
       <button data-cur="KRW">KRW</button>
     </div>
+    <!-- 다크모드 -->
     <button class="btn ghost" id="themeToggle" title="Toggle dark mode">
       <span class="icon-moon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
       <span class="icon-sun"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></span>
     </button>
-
-    <input type="file" id="fOrders" accept=".csv" />
-    <input type="file" id="fMkt" accept=".csv" />
-    <input type="file" id="fBudgets" accept=".csv" />
-    <input type="file" id="fBulk" accept=".csv" multiple />
-    <input type="file" id="fCtrModel" accept=".csv" />
-
-    <!-- Import 폴드 메뉴 -->
-    <div class="import-menu" id="importMenu">
-      <button class="btn" id="importToggle" onclick="document.getElementById('importMenu').classList.toggle('open')" title="CSV 파일 업로드">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        Import
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
-      </button>
-      <div class="import-pop">
-        <button onclick="document.getElementById('fOrders').click();document.getElementById('importMenu').classList.remove('open')">
-          📋 Order CSV
-        </button>
-        <button onclick="document.getElementById('fMkt').click();document.getElementById('importMenu').classList.remove('open')">
-          📣 Marketing CSV
-        </button>
-        <button onclick="document.getElementById('fBudgets').click();document.getElementById('importMenu').classList.remove('open')" title="Upload Budgets CSV">
-          💰 Budgets CSV
-        </button>
-        <button onclick="document.getElementById('fBulk').click();document.getElementById('importMenu').classList.remove('open')" title="Upload Order / Marketing / Budgets CSV at once">
-          📦 Bulk Upload
-        </button>
-        <button onclick="reloadAutoCSV(true);document.getElementById('importMenu').classList.remove('open')" title="Auto-load from this folder">
-          🔄 Reload CSV
-        </button>
-        <hr style="border:none;border-top:1px solid var(--line-2);margin:4px 0">
-        <button onclick="document.getElementById('fCtrModel').click();document.getElementById('importMenu').classList.remove('open')" title="CTR Code ↔ Vehicle Model 매핑 CSV 업로드">
-          🚗 CTR-Model Mapping
-        </button>
-      </div>
-    </div>
-
-    <button class="btn" id="btnPreOrder" onclick="togglePreOrders()" title="Load pre_orders.json as a baseline reference for YoY / QoQ / MoM / WoW comparisons. Pre-order rows are NEVER merged into the main dashboard — they only fill in 'previous period' values in the comparison KPIs.">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
-      Baseline <span id="preOrderBadge" style="display:none;margin-left:4px;padding:1px 6px;border-radius:8px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;">ON</span>
+    <!-- Baseline (preOrders) 토글 — 데이터 로딩용 유지 -->
+    <button class="btn ghost" id="btnPreOrder" onclick="togglePreOrders()" style="font-size:11px;padding:4px 10px" title="전년 비교 baseline 데이터 로드/해제">
+      📊 Baseline <span id="preOrderBadge" style="display:none;margin-left:4px;padding:1px 6px;border-radius:8px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;">ON</span>
     </button>
-
-    <button class="btn" onclick="openAddActivity()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Add Activity
-    </button>
-
-    <button class="btn" onclick="openBudgetModal()" title="Configure default marketing budgets by region & promotion">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-      Budgets
-    </button>
-
-    <div class="divider"></div>
-
-    <button class="btn" onclick="publishSnapshot()" title="Publish current data + view as a self-contained snapshot HTML for shared-drive distribution">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-      Publish Snapshot
-    </button>
-
-    <button class="btn" onclick="openSettingsModal()" title="Restore hidden widgets / regions">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      Settings
-    </button>
-
-    <div class="divider"></div>
-
-    <span class="mono" style="font-size:14px;color:var(--text-2)">
-      Orders: <b class="t-blue" id="cntOrders">0</b> · Activities: <b class="t-orange" id="cntMkt">0</b>
-    </span>
-    <button class="btn danger" onclick="clearAll()" title="개인 데이터 삭제 후 공유 데이터로 복원">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
-      Reset
-    </button>
-    <button class="btn ghost" onclick="resetToSharedData()" title="공유 데이터로 완전 초기화" style="font-size:12px;">
-      🔄 Shared
-    </button>
-
-    <div class="tpl-menu" id="tplMenu" title="Download CSV import templates">
-      <button class="btn ghost tpl-trigger" onclick="document.getElementById('tplMenu').classList.toggle('open')">
-        📋 Templates
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
-      </button>
-      <div class="tpl-pop">
-        <button onclick="downloadOrderTemplate();document.getElementById('tplMenu').classList.remove('open')">📋 Order Template</button>
-        <button onclick="downloadMarketingTemplate();document.getElementById('tplMenu').classList.remove('open')">📋 Marketing Template</button>
-        <button onclick="downloadBudgetTemplate();document.getElementById('tplMenu').classList.remove('open')">📋 Budgets Template</button>
-      </div>
-    </div>
+    <!-- 숨겨진 file inputs (기능 유지) -->
+    <input type="file" id="fOrders" accept=".csv" style="display:none"/>
+    <input type="file" id="fMkt" accept=".csv" style="display:none"/>
+    <input type="file" id="fBudgets" accept=".csv" style="display:none"/>
+    <input type="file" id="fBulk" accept=".csv" multiple style="display:none"/>
+    <input type="file" id="fCtrModel" accept=".csv" style="display:none"/>
   </div>
 </header>
 
 <main>
   <!-- Filter bar (collapsible) -->
-  <div id="filterBarWrap" class="filter-wrap collapsed">
-    <button type="button" id="filterBarToggle" class="filter-toggle" aria-expanded="false">
-      <span class="filter-toggle-arrow">▶</span>
-      <span class="filter-toggle-label">FILTERS</span>
-      <span class="filter-toggle-summary" id="filterActiveBadge"></span>
-    </button>
+  <!-- filterBar: 기능만 유지, UI 숨김 -->
+  <div id="filterBarWrap" style="display:none">
     <div class="panel filter-bar" id="filterBar"></div>
   </div>
 
