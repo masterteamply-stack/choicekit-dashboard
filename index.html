@@ -4150,7 +4150,20 @@ function chartOpts(currencyAware) {
 /* =================== UI STATE =================== */
 let categoryPeriod = 'month'; // month | quarter | year
 
+let _renderPhaseTimers = [];
+function _cancelRenderPhases() {
+  _renderPhaseTimers.forEach(t => clearTimeout(t));
+  _renderPhaseTimers = [];
+}
+function _deferRender(fn, ms) {
+  const t = setTimeout(fn, ms);
+  _renderPhaseTimers.push(t);
+  return t;
+}
+
 function renderAll() {
+  // 이전 지연 렌더 타이머 전부 취소 (stale render 방지)
+  _cancelRenderPhases();
   // ACHIEVEMENT cache is order-set-dependent; clear on every full render.
   _orderMatchCache = new WeakMap();
 
@@ -4322,21 +4335,32 @@ function renderAll() {
   const elSkuSub = document.getElementById('kSkuSub');
   if (elSkuSub) elSkuSub.textContent = `${fmtNum(totalQty)} pcs total`;
 
-  // ── Phase 1: critical path (KPI + lightweight charts) ──────────────────
-  renderPlanExec(fOrders, fMkt);
-  renderRegionChart(fOrders, fMkt);
+  // ── Phase 1a: 즉시 — 가장 가벼운 위젯 (KPI 카드 이미 위에서 렌더됨) ──
   renderActivityChart(fMkt);
   renderBudgetStatus(fMkt);
-  renderCustomerTrend(fOrders, fMkt);
-  renderTopInsights(fOrders);
-  renderPromoCtrChart(fOrders);
-  renderSalesTrendCombined(fOrders);
   renderActivitiesTable(fMkt);
 
-  // ── Phase 2: heavy widgets — deferred so browser can paint Phase 1 first
-  setTimeout(() => {
+  // ── Phase 1b: Region, TopInsights ──
+  _deferRender(() => {
+    renderRegionChart(fOrders, fMkt);
+    renderTopInsights(fOrders);
+  }, 16);
+
+  // ── Phase 2a: PlanExec, CustomerTrend ──
+  _deferRender(() => {
+    renderPlanExec(fOrders, fMkt);
+    renderCustomerTrend(fOrders, fMkt);
+  }, 80);
+
+  // ── Phase 2b: SalesTrend, PromoCtr ──
+  _deferRender(() => {
+    renderSalesTrendCombined(fOrders);
+    renderPromoCtrChart(fOrders);
+  }, 160);
+
+  // ── Phase 3: PromoChart + PromoOrderTrend ──
+  _deferRender(() => {
     renderPromoChart(fOrders, fMkt);
-    // Sync KPI after renderPromoChart sets _promoAfterTotal
     if (_promoAfterTotal !== null) {
       document.getElementById('kpiOrder').textContent = fmtMoney(_promoAfterTotal);
       document.getElementById('kpiOrderSub').textContent = `after campaign start · post-campaign total`;
@@ -4347,13 +4371,13 @@ function renderAll() {
       document.getElementById('kpiRoiCard').classList.toggle('neg', roiUpd < 0);
     }
     renderPromoOrderTrend(fOrders, fMkt);
-  }, 0);
+  }, 260);
 
-  // ── Phase 3: heaviest widgets (preOrders scans) — further deferred ─────
-  setTimeout(() => {
+  // ── Phase 4: ChoiceKitImpact, SkuExplorer ──
+  _deferRender(() => {
     renderChoiceKitImpact(fOrders, fMkt);
     renderSkuExplorer(fOrders, fMkt);
-  }, 0);
+  }, 400);
 }
 
 /* ===== Plan vs Execution — Drill-down Explorer (Region → Country → Promotion) ===== */
@@ -9453,11 +9477,12 @@ function renderSkuAggregate(fOrders) {
 let _rebuildTimer = null;
 async function rebuildAll() {
   if (_rebuildTimer) clearTimeout(_rebuildTimer);
+  _cancelRenderPhases();   // 진행 중인 지연 렌더 즉시 취소
   _rebuildTimer = setTimeout(() => {
     _rebuildTimer = null;
     buildFilterBar();
     renderAll();
-  }, 120);
+  }, 80);
 }
 
 // Build SKU/customer lookup index from preOrders so widgets can do
