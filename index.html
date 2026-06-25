@@ -6966,10 +6966,10 @@ async function renderPromoChart(fOrders, fMkt) {
       const ppk = shiftBucket(pk, cmpMode, period);
       return Math.round(shownKeys.reduce((s, key) => s + ((cmpSeries[key] && cmpSeries[key][ppk]) || 0), 0));
     });
-    // x축 레이블: 현재 기간만 표시 ("26.04" 형태)
-    const pairedLabels = windowBuckets.map(pk => {
-      return pk ? pk.replace(/^20(\d\d)-(\d\d)$/, '\'$1.$2').replace(/^20(\d\d)-Q(\d)$/, '\'$1.Q$2').replace(/^(20\d\d)$/, '$1') : pk;
-    });
+    // x축 레이블: 현재 기간만 ("'26.04" 형태) — 이전기간 정보는 legend에만 표시
+    const pairedLabels = windowBuckets.map(pk =>
+      pk ? pk.replace(/^20(\d\d)-(\d\d)$/, "'$1.$2").replace(/^20(\d\d)-Q(\d)$/, "'$1.Q$2").replace(/^(20\d\d)$/, '$1') : pk
+    );
     try { if (charts.promo) { charts.promo.destroy(); charts.promo = null; } } catch(_) {}
     charts.promo = new Chart(document.getElementById('chPromo'), {
       type: 'bar',
@@ -7205,9 +7205,12 @@ function renderPromoTable() {
     if (!_mktSellType[p])
       _mktSellType[p] = (_cfg0[p].match_by||'sku').toLowerCase()==='customer' ? 'SELL-OUT' : 'SELL-IN';
   });
+  const _promoFilter = state.promoFilter || '__all__';
   const summary = _allSummary.filter(p => {
     const promo = p.promotion || p.key || '';
-    return (_mktSellType[promo] || 'SELL-IN') === _sellType;
+    if ((_mktSellType[promo] || 'SELL-IN') !== _sellType) return false;
+    if (_promoFilter !== '__all__' && promo !== _promoFilter) return false;
+    return true;
   });
   const cmpSeries = window._lastPromoCmpSeries || {};
 
@@ -7311,11 +7314,14 @@ function renderPromoTable() {
   const _stBadge = _sellType === 'SELL-IN'
     ? '<span style="background:#C8102E;color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;font-weight:700;vertical-align:middle">📦 SELL-IN</span>'
     : '<span style="background:#0A84FF;color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;font-weight:700;vertical-align:middle">🤝 SELL-OUT</span>';
+  const _filterBadge = _promoFilter !== '__all__'
+    ? `<span style="background:rgba(200,16,46,.1);color:#C8102E;font-size:9px;padding:1px 8px;border-radius:10px;font-weight:700;vertical-align:middle;margin-left:6px;border:1px solid rgba(200,16,46,.3)">🔍 ${_promoFilter}</span>`
+    : '';
 
   const colCount = 4 + (_cmpModeNow!=='off'?1:0) + (showMktCols?3:0) + curPeriods.length;
 
   const head = `<thead><tr>
-    <th>PROMOTION ${_stBadge}</th>
+    <th>PROMOTION ${_stBadge}${_filterBadge}</th>
     <th class="text-right">ORDERS</th>
     <th class="text-right">현재 ORDER AMT</th>
     ${_cmpModeNow!=='off'?`<th class="text-right">${_prevColLabel}</th>`:''}
@@ -9626,6 +9632,19 @@ function renderSkuAggregate(fOrders) {
 }
 
 /* =================== ACTIONS =================== */
+// ── Promo 위젯만 빠르게 재렌더 (필터 변경 시 전체 renderAll 불필요) ──
+let _quickPromoTimer = null;
+function _quickRenderPromo() {
+  if (_quickPromoTimer) clearTimeout(_quickPromoTimer);
+  _quickPromoTimer = setTimeout(async () => {
+    _quickPromoTimer = null;
+    const fOrders = state.orders.filter(matchOrder).filter(o => isRegionVisible(o.region));
+    const fMkt    = state.marketing.filter(matchMkt).filter(m => isRegionVisible(m.region));
+    await renderPromoChart(fOrders, fMkt);
+    renderPromoTable();
+  }, 60);
+}
+
 let _rebuildTimer = null;
 async function rebuildAll() {
   if (_rebuildTimer) clearTimeout(_rebuildTimer);
@@ -10528,12 +10547,12 @@ document.addEventListener('change', e => {
   if (e.target.id === 'promoFilterSel') {
     state.promoFilter = e.target.value;
     try { localStorage.setItem('ck_promo_filter', state.promoFilter); } catch(_){}
-    renderAll(); return;
+    _quickRenderPromo(); return;
   }
   if (e.target.id === 'promoDimSel') {
     state.promoDim = e.target.value;
     try { localStorage.setItem('ck_promo_dim', state.promoDim); } catch(_){}
-    renderAll(); return;
+    _quickRenderPromo(); return;
   }
   if (e.target.id === 'promoTableDimSel') {
     state.promoTableDim = e.target.value;
@@ -10543,7 +10562,7 @@ document.addEventListener('change', e => {
   if (e.target.id === 'promoCmpSel') {
     state.promoCmp = e.target.value;
     try { localStorage.setItem('ck_promo_cmp', state.promoCmp); } catch(_){}
-    persist(); renderAll(); return;
+    persist(); _quickRenderPromo(); return;
   }
   if (e.target.id === 'selTrendDim') renderAll();
   if (e.target.id === 'selPromoCtrFilter') {
@@ -10695,11 +10714,11 @@ document.addEventListener('click', e => {
       if (outEl) outEl.style.display = v==='SELL-OUT' ? 'flex' : 'none';
       // promoFilter 리셋
       state.promoFilter = '__all__';
-      persist(); renderAll();
+      persist(); _quickRenderPromo();
     }
     else if (id==='segPromoPerf'){
       state.promoPerfPeriod = v;
-      persist(); renderAll();
+      persist(); _quickRenderPromo();
     }
     else if (id==='segRegionMetric'){ state.regionMetric = v; persist(); renderAll(); }
     else if (id==='segCustTrendGrain'){ state.custTrendGrain = v; persist(); renderAll(); }
