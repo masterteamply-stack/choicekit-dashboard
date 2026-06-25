@@ -4171,7 +4171,7 @@ function renderAll() {
   const fOrders = state.orders.filter(matchOrder).filter(o => isRegionVisible(o.region));
   const fMkt    = state.marketing.filter(matchMkt).filter(m => isRegionVisible(m.region));
 
-  // ── KPI Cards (동기 — 즉시 표시) ──────────────────────────────────────
+  // KPI 계산
   const _promoStartByCat = {};
   (state.marketing || []).forEach(m => {
     const p = m.promotion_category || '–';
@@ -4185,78 +4185,55 @@ function renderAll() {
     if (!start) return false;
     return (o.order_date || '') >= start;
   });
-  const totalOrders   = fOrdersAfter.length;
-  const totalQty      = fOrdersAfter.reduce((s,o)=>s+(Number(o.qty)||0),0);
-  const orderAmt      = fOrdersAfter.reduce((s,o)=>s+convOrder(o),0);
-  const mktCost       = fMkt.reduce((s,m)=>s+convMktActual(m),0);
-  const mktExpected   = fMkt.reduce((s,m)=>s+convMktExpected(m),0);
-  const mktBizreward  = fMkt.reduce((s,m)=>s+convMktBizreward(m),0);
-  const mktBudgetCsv  = fMkt.reduce((s,m)=>s+convMktBudget(m),0);
-  const roi           = mktCost>0 ? ((orderAmt-mktCost)/mktCost)*100 : 0;
-
-  const _cfgAllKpi = state.campaignTargetSkus || {};
-  const _skuToPKpi = {}, _custToPKpi = {};
-  Object.keys(_cfgAllKpi).forEach(p => {
-    const c = _cfgAllKpi[p];
-    if ((c.match_by||'sku').toLowerCase()==='customer') {
-      (c.target_customers||[]).forEach(cu=>{ if(!_custToPKpi[cu.trim()]) _custToPKpi[cu.trim()]=p; });
-    } else {
-      (c.target_skus||[]).forEach(s=>{ if(!_skuToPKpi[s.trim()]) _skuToPKpi[s.trim()]=p; });
-    }
-  });
-
+  const totalOrders  = fOrdersAfter.length;
+  const totalQty     = fOrdersAfter.reduce((s,o)=>s+(Number(o.qty)||0),0);
+  const orderAmt     = fOrdersAfter.reduce((s,o)=>s+convOrder(o),0);
+  const mktCost      = fMkt.reduce((s,m)=>s+convMktActual(m),0);
+  const mktExpected  = fMkt.reduce((s,m)=>s+convMktExpected(m),0);
+  const mktBizreward = fMkt.reduce((s,m)=>s+convMktBizreward(m),0);
+  const mktBudgetCsv = fMkt.reduce((s,m)=>s+convMktBudget(m),0);
+  const roi          = mktCost>0 ? ((orderAmt-mktCost)/mktCost)*100 : 0;
   const orderTargetDisp = getOrderTargetDisp();
-  const mktCostDisp     = mktCost;
-  const orderAmtDisp    = orderAmt;
 
   // KPI DOM 즉시 업데이트
   _updateKpiDom({ totalOrders, totalQty, orderAmt, mktCost, mktExpected,
     mktBizreward, mktBudgetCsv, roi, orderTargetDisp, fOrders, fOrdersAfter });
 
-  // sync UI 컨트롤
-  syncFilterBar(fOrders, fMkt);
+  buildFilterBar();
 
-  // ── 비동기 렌더링 파이프라인 ──────────────────────────────────────────
-  // 각 함수를 개별 매크로태스크로 분리 → 브라우저가 프레임마다 페인트 가능
-  const _pipe = [
-    () => renderPlanExec(fOrders, fMkt),
-    () => renderRegionChart(fOrders, fMkt),
-    () => renderActivityChart(fMkt),
-    () => renderBudgetStatus(fMkt),
-    () => renderTopInsights(fOrders),
-    () => renderPromoCtrChart(fOrders),
-    () => renderSalesTrendCombined(fOrders),
-    () => renderActivitiesTable(fMkt),
-    () => renderCustomerTrend(fOrders, fMkt),
-    () => renderPromoOrderTrend(fOrders, fMkt),
-    () => {
-      renderPromoChart(fOrders, fMkt);
-      // KPI 동기화
-      if (_promoAfterTotal !== null) {
-        const tgtPct = orderTargetDisp>0 ? (_promoAfterTotal/orderTargetDisp)*100 : 0;
-        const roiUpd = mktCost>0 ? ((_promoAfterTotal-mktCost)/mktCost)*100 : 0;
-        _set('kpiOrder', fmtMoney(_promoAfterTotal));
-        _set('kpiOrderSub', 'after campaign start · post-campaign total');
-        if (orderTargetDisp>0) _set('kpiAchv', fmtPct(tgtPct));
-        if (mktCost>0) { _set('kpiRoi', fmtPct(roiUpd)); document.getElementById('kpiRoiCard')?.classList.toggle('neg', roiUpd<0); }
-        const engEl = document.getElementById('kpiEngaged');
-        if (engEl && window._promoEngagedCustomers!=null) engEl.textContent = String(window._promoEngagedCustomers);
-      }
-    },
-    () => renderChoiceKitImpact(fOrders, fMkt),
-    () => renderSkuExplorer(fOrders, fMkt),
-  ];
+  // ── Phase 1: 가벼운 위젯들 (동기 — 빠름) ─────────────────────────────
+  renderPlanExec(fOrders, fMkt);
+  renderRegionChart(fOrders, fMkt);
+  renderActivityChart(fMkt);
+  renderBudgetStatus(fMkt);
+  renderCustomerTrend(fOrders, fMkt);
+  renderTopInsights(fOrders);
+  renderPromoCtrChart(fOrders);
+  renderSalesTrendCombined(fOrders);
+  renderActivitiesTable(fMkt);
 
-  // 파이프라인 실행: 매 함수마다 setTimeout(0)으로 브라우저에 제어권 반환
-  let _idx = 0;
-  function _runNext() {
-    if (_idx >= _pipe.length) return;
-    const fn = _pipe[_idx++];
-    try { fn(); } catch(e) { console.error('[renderAll pipe]', e); }
-    setTimeout(_runNext, 0);
-  }
-  setTimeout(_runNext, 0);
+  // ── Phase 2: Promotion Performance — 브라우저가 Phase 1 먼저 그리도록 ─
+  setTimeout(() => {
+    renderPromoChart(fOrders, fMkt);
+    renderPromoOrderTrend(fOrders, fMkt);
+    if (_promoAfterTotal !== null) {
+      const tgtPct = orderTargetDisp>0 ? (_promoAfterTotal/orderTargetDisp)*100 : 0;
+      const roiUpd = mktCost>0 ? ((_promoAfterTotal-mktCost)/mktCost)*100 : 0;
+      _set('kpiOrder', fmtMoney(_promoAfterTotal));
+      _set('kpiOrderSub', 'after campaign start · post-campaign total');
+      if (orderTargetDisp>0) _set('kpiAchv', fmtPct(tgtPct));
+      if (mktCost>0) { _set('kpiRoi', fmtPct(roiUpd)); document.getElementById('kpiRoiCard')?.classList.toggle('neg', roiUpd<0); }
+      if (window._promoEngagedCustomers!=null) _set('kpiEngaged', String(window._promoEngagedCustomers));
+    }
+  }, 0);
+
+  // ── Phase 3: 가장 무거운 위젯 — Phase 2 후 ─────────────────────────────
+  setTimeout(() => {
+    renderChoiceKitImpact(fOrders, fMkt);
+    renderSkuExplorer(fOrders, fMkt);
+  }, 0);
 }
+
 
 function _set(id, val) {
   const el = document.getElementById(id);
@@ -4280,17 +4257,17 @@ function _updateKpiDom({ totalOrders, totalQty, orderAmt, mktCost, mktExpected,
   disp('kpiBurn', (mktExpected+mktBizreward)>0 ? fmtPct(burnPct) : '–');
   disp('kpiRoi', mktCost>0 ? fmtPct(roi) : '–');
   if (mktCost>0) document.getElementById('kpiRoiCard')?.classList.toggle('neg', roi<0);
-  // Active campaigns badge
+  // Active campaigns, customers, SKUs — 단일 순회
   const _cfgA = state.campaignTargetSkus||{};
-  const activePromos = new Set(fOrdersAfter.map(o=>(o.promotion_category||'').trim()).filter(Boolean));
-  const totalPromos = Object.keys(_cfgA).length;
-  disp('kpiActiveCampaigns', `${activePromos.size} / ${totalPromos}`);
-  // Engaged customers
-  const engCusts = new Set(fOrdersAfter.map(o=>(o.customer||'').trim()).filter(Boolean));
+  const activePromos = new Set(), engCusts = new Set(), skuItems = new Set();
+  fOrdersAfter.forEach(o => {
+    const p=(o.promotion_category||'').trim(); if(p) activePromos.add(p);
+    const c=(o.customer||'').trim(); if(c) engCusts.add(c);
+    const s=(o.sku||'').trim(); if(s) skuItems.add(s);
+  });
+  disp('kpiActiveCampaigns', `${activePromos.size} / ${Object.keys(_cfgA).length}`);
   disp('kpiEngaged', String(engCusts.size));
   window._promoEngagedCustomers = engCusts.size;
-  // SKU items
-  const skuItems = new Set(fOrdersAfter.map(o=>(o.sku||'').trim()).filter(Boolean));
   disp('kpiSkuItems', fmtNum(skuItems.size));
   // Cost per order
   disp('kpiCpo', totalOrders>0 ? fmtMoney(mktCost/totalOrders) : '–');
@@ -5653,19 +5630,22 @@ function renderPromoChart(fOrders, fMkt) {
   // SELL-IN: SKU 기반 (Portfolio Expansion, Asian vehicle, European vehicle, Korean & Japanese)
   // SELL-OUT: 고객 기반 (Trade promotion, Strategic Partner, Mexico Awakening, Mexico Worldcup)
   const sellType = state.promoSellType || 'SELL-IN';
-  const _mktSellType = {};  // promo → dominant sell_type
-  (state.marketing || []).forEach(m => {
-    const p  = (m.promotion_category || '').trim();
-    const st = (m.sell_type || m.sellType || '').trim().toUpperCase().replace(/[_\s]/g,'-');
-    if (p && st && !_mktSellType[p]) _mktSellType[p] = st;
-  });
-  // sell_type 없으면 match_by로 판단 (sku=SELL-IN, customer=SELL-OUT)
-  const _cfg0 = state.campaignTargetSkus || {};
-  Object.keys(_cfg0).forEach(p => {
-    if (!_mktSellType[p]) {
-      _mktSellType[p] = (_cfg0[p].match_by || 'sku').toLowerCase() === 'customer' ? 'SELL-OUT' : 'SELL-IN';
-    }
-  });
+  // _mktSellType 캐시 — marketing이 바뀌지 않으면 재계산 안 함
+  if (!window._cachedMktSellType || window._cachedMktSellTypeLen !== (state.marketing||[]).length) {
+    const _cfg0 = state.campaignTargetSkus || {};
+    window._cachedMktSellType = {};
+    (state.marketing || []).forEach(m => {
+      const p  = (m.promotion_category || '').trim();
+      const st = (m.sell_type || m.sellType || '').trim().toUpperCase().replace(/[_\s]/g,'-');
+      if (p && st && !window._cachedMktSellType[p]) window._cachedMktSellType[p] = st;
+    });
+    Object.keys(_cfg0).forEach(p => {
+      if (!window._cachedMktSellType[p])
+        window._cachedMktSellType[p] = (_cfg0[p].match_by||'sku').toLowerCase()==='customer' ? 'SELL-OUT' : 'SELL-IN';
+    });
+    window._cachedMktSellTypeLen = (state.marketing||[]).length;
+  }
+  const _mktSellType = window._cachedMktSellType;
   const sellTypePromos = new Set(
     Object.entries(_mktSellType).filter(([,st]) => st === sellType).map(([p]) => p)
   );
@@ -5697,32 +5677,23 @@ function renderPromoChart(fOrders, fMkt) {
   // (preOrders 로드 후 processBaseline 내에서 채워짐)
   let promoBundleBuyers = {};
 
-  // promoStart: kpi_metric='STARTED' 행의 최솟값 우선.
-  // STARTED 없는 캠페인은 execution_date 최솟값 fallback.
-  // 이 기준이 "캠페인 공식 시작일"이며 ORDER AMT 집계 기준일이 됨.
-  const promoStart = {};
-  const promoStartAll = {};  // execution_date 최솟값 (fallback)
-  (state.marketing || []).forEach(m => {
-    const p = (m.promotion_category || m.promotion_id || '').trim();
-    const d = (m.execution_date || m.date || '').trim();
-    const kpi = (m.kpi_metric || '').trim().toUpperCase();
-    if (!p || !d) return;
-    // fallback: execution_date 최솟값
-    if (!promoStartAll[p] || d < promoStartAll[p]) promoStartAll[p] = d;
-    // 우선: STARTED 기준 최솟값
-    if (kpi === 'STARTED') {
-      if (!promoStart[p] || d < promoStart[p]) promoStart[p] = d;
-    }
-  });
-  // STARTED 없는 캠페인은 execution_date fallback 사용
-  Object.keys(promoStartAll).forEach(p => {
-    if (!promoStart[p]) promoStart[p] = promoStartAll[p];
-  });
-  // 성과 집계는 항상 2026년 오더부터 — 마케팅이 2025년에 시작됐어도
-  // 올해(2026년) 캠페인 성과에는 2026-01-01 이후 오더만 포함
-  Object.keys(promoStart).forEach(p => {
-    if (promoStart[p] < '2026-01-01') promoStart[p] = '2026-01-01';
-  });
+  // promoStart 캐시 — marketing이 바뀌지 않으면 재계산 안 함
+  if (!window._cachedPromoStart || window._cachedPromoStartLen !== (state.marketing||[]).length) {
+    const _ps = {}, _psa = {};
+    (state.marketing || []).forEach(m => {
+      const p = (m.promotion_category || m.promotion_id || '').trim();
+      const d = (m.execution_date || m.date || '').trim();
+      const kpi = (m.kpi_metric || '').trim().toUpperCase();
+      if (!p || !d) return;
+      if (!_psa[p] || d < _psa[p]) _psa[p] = d;
+      if (kpi === 'STARTED') { if (!_ps[p] || d < _ps[p]) _ps[p] = d; }
+    });
+    Object.keys(_psa).forEach(p => { if (!_ps[p]) _ps[p] = _psa[p]; });
+    Object.keys(_ps).forEach(p => { if (_ps[p] < '2026-01-01') _ps[p] = '2026-01-01'; });
+    window._cachedPromoStart = _ps;
+    window._cachedPromoStartLen = (state.marketing||[]).length;
+  }
+  const promoStart = window._cachedPromoStart;
 
   // Build campaign target maps so ORDER AMT can attribute orders via
   // (tag) OR (target SKU) OR (target customer) — broader than tag-only.
