@@ -10341,7 +10341,7 @@ async function maybeAutoLoadPreOrders() {
 }
 
 
-function togglePreOrders() {
+async function togglePreOrders() {
   const btn = document.getElementById('btnPreOrder');
   if (state.preOrdersEnabled) {
     // OFF — unload baseline (data is dropped from memory; toggle state cleared)
