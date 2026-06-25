@@ -2125,6 +2125,11 @@ header .mono b.t-orange {
             <p class="label-mono" style="margin-top:4px">Order trend by promotion</p>
           </div>
           <div class="chart-tools">
+            <!-- SELL-IN / SELL-OUT 탭 -->
+            <div class="seg" id="segPromoSellType" style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
+              <button data-v="SELL-IN"  class="active" style="font-size:11px;font-weight:700;padding:5px 12px">📦 SELL-IN<span class="label-mono" style="font-size:9px;display:block;font-weight:400;opacity:.7">SKU 기반</span></button>
+              <button data-v="SELL-OUT" style="font-size:11px;font-weight:700;padding:5px 12px">🤝 SELL-OUT<span class="label-mono" style="font-size:9px;display:block;font-weight:400;opacity:.7">고객 기반</span></button>
+            </div>
             <div class="seg" id="segPromoPerf">
               <button data-v="month" class="active">Month</button>
               <button data-v="quarter">Quarter</button>
@@ -2145,6 +2150,22 @@ header .mono b.t-orange {
               <option value="mom">전년 동월 (MoM)</option>
             </select>
             <div class="widget-order-controls"></div>
+          </div>
+        </div>
+        <!-- SELL-IN 설명 배너 -->
+        <div id="promoSellInBanner" style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(200,16,46,.06);border-radius:8px;margin-bottom:10px;border-left:3px solid #C8102E">
+          <span style="font-size:18px">📦</span>
+          <div>
+            <span class="label-mono" style="font-size:11px;font-weight:700;color:#C8102E">SELL-IN · SKU 기반 성과</span>
+            <p style="font-size:11px;color:var(--text-2);margin:2px 0 0">해당 SKU가 캠페인 이후 얼마나 더 잘 팔리는지 추적합니다. <b>Portfolio Expansion · Asian vehicle · European vehicle · Korean &amp; Japanese vehicles</b></p>
+          </div>
+        </div>
+        <!-- SELL-OUT 설명 배너 -->
+        <div id="promoSellOutBanner" style="display:none;align-items:center;gap:10px;padding:8px 12px;background:rgba(10,132,255,.06);border-radius:8px;margin-bottom:10px;border-left:3px solid #0A84FF">
+          <span style="font-size:18px">🤝</span>
+          <div>
+            <span class="label-mono" style="font-size:11px;font-weight:700;color:#0A84FF">SELL-OUT · 고객 기반 성과</span>
+            <p style="font-size:11px;color:var(--text-2);margin:2px 0 0">캠페인 집행 고객의 오더가 캠페인 이후 어떻게 변화했는지 추적합니다. <b>Trade promotion · Strategic Partner · Mexico Awakening · Mexico Worldcup</b></p>
           </div>
         </div>
         <div id="promoInsight" class="label-mono" style="margin-bottom:10px;font-size:11px;color:#525257"></div>
@@ -2177,6 +2198,23 @@ header .mono b.t-orange {
               <option value="5000" selected>&lt; $5,000 (default)</option>
             </select>
             <div class="widget-order-controls"></div>
+          </div>
+        </div>
+        <!-- CK Impact 해석 가이드 -->
+        <div id="ckiImpactGuide" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+          <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:rgba(200,16,46,.06);border-radius:8px;border-left:3px solid #C8102E">
+            <span style="font-size:16px;margin-top:1px">📦</span>
+            <div>
+              <span class="label-mono" style="font-size:10px;font-weight:700;color:#C8102E">SELL-IN 캠페인 해석</span>
+              <p style="font-size:11px;color:var(--text-2);margin:3px 0 0;line-height:1.5">캠페인 대상 <b>SKU</b>를 이전에 주문하지 않던 고객이 얼마나 신규 구매했는가? → SKU 저변 확대 효과</p>
+            </div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:rgba(10,132,255,.06);border-radius:8px;border-left:3px solid #0A84FF">
+            <span style="font-size:16px;margin-top:1px">🤝</span>
+            <div>
+              <span class="label-mono" style="font-size:10px;font-weight:700;color:#0A84FF">SELL-OUT 캠페인 해석</span>
+              <p style="font-size:11px;color:var(--text-2);margin:3px 0 0;line-height:1.5">캠페인 집행 <b>고객</b>의 오더 규모가 캠페인 이후 어떻게 변화했는가? → 고객 충성도 및 구매 증가 효과</p>
+            </div>
           </div>
         </div>
         <!-- KPI cards (6) -->
@@ -2586,6 +2624,7 @@ let state = {
   planExecPath: JSON.parse(localStorage.getItem('ck_planexec_path') || '[]'),
   planExecSort: localStorage.getItem('ck_planexec_sort') || 'orderAmt',
   promoPerfPeriod: _promoDefaultsApplied ? (localStorage.getItem('ck_promo_perf_period') || 'month') : 'month',
+  promoSellType: localStorage.getItem('ck_promo_sell_type') || 'SELL-IN',
   promoDim: _promoDefaultsApplied ? (localStorage.getItem('ck_promo_dim') || 'promotion') : 'promotion',
   promoCmp: _promoDefaultsApplied ? (localStorage.getItem('ck_promo_cmp') || 'yoy') : 'yoy',
   promoTableDim: _promoDefaultsApplied ? (localStorage.getItem('ck_promo_table_dim') || 'promotion') : 'promotion',
@@ -5905,6 +5944,49 @@ function renderPromoChart(fOrders, fMkt) {
   try {
   const period = state.promoPerfPeriod || 'month';
 
+  // ── SELL-IN / SELL-OUT 필터 ──
+  // marketing.csv의 sell_type 기준으로 캠페인을 분류
+  // SELL-IN: SKU 기반 (Portfolio Expansion, Asian vehicle, European vehicle, Korean & Japanese)
+  // SELL-OUT: 고객 기반 (Trade promotion, Strategic Partner, Mexico Awakening, Mexico Worldcup)
+  const sellType = state.promoSellType || 'SELL-IN';
+  const _mktSellType = {};  // promo → dominant sell_type
+  (state.marketing || []).forEach(m => {
+    const p  = (m.promotion_category || '').trim();
+    const st = (m.sell_type || m.sellType || '').trim().toUpperCase().replace(/[_\s]/g,'-');
+    if (p && st && !_mktSellType[p]) _mktSellType[p] = st;
+  });
+  // sell_type 없으면 match_by로 판단 (sku=SELL-IN, customer=SELL-OUT)
+  const _cfg0 = state.campaignTargetSkus || {};
+  Object.keys(_cfg0).forEach(p => {
+    if (!_mktSellType[p]) {
+      _mktSellType[p] = (_cfg0[p].match_by || 'sku').toLowerCase() === 'customer' ? 'SELL-OUT' : 'SELL-IN';
+    }
+  });
+  const sellTypePromos = new Set(
+    Object.entries(_mktSellType).filter(([,st]) => st === sellType).map(([p]) => p)
+  );
+  // fOrders를 현재 sell_type 캠페인으로만 필터
+  const fOrdersST = fOrders.filter(o => sellTypePromos.has((o.promotion_category||'').trim()));
+  // promoFilterSel 옵션을 sell_type에 맞게 동적 업데이트
+  const filterSel2 = document.getElementById('promoFilterSel');
+  if (filterSel2) {
+    const cur = filterSel2.value;
+    filterSel2.innerHTML = '<option value="__all__">All promotions</option>' +
+      [...sellTypePromos].sort().map(p => `<option value="${p}"${cur===p?' selected':''}>${p}</option>`).join('');
+    if (![...sellTypePromos].includes(cur) && cur !== '__all__') {
+      filterSel2.value = '__all__';
+      state.promoFilter = '__all__';
+    }
+  }
+  // sync 탭 버튼
+  document.querySelectorAll('#segPromoSellType button').forEach(b => {
+    b.classList.toggle('active', b.dataset.v === sellType);
+  });
+  const inEl  = document.getElementById('promoSellInBanner');
+  const outEl = document.getElementById('promoSellOutBanner');
+  if (inEl)  inEl.style.display  = sellType==='SELL-IN'  ? 'flex' : 'none';
+  if (outEl) outEl.style.display = sellType==='SELL-OUT' ? 'flex' : 'none';
+
 
   // ── Marketing start date per promotion (earliest execution_date).
   // promoBundleBuyers: preOrders 로드 전에도 안전하게 참조할 수 있도록 미리 초기화
@@ -5954,14 +6036,14 @@ function renderPromoChart(fOrders, fMkt) {
   const _validCampaigns = new Set(Object.keys(_cfgAll));
 
   // 요약 누적:
-  // - ORDERS: tag-based count over fOrders (filtered to user's filters)
-  // - ORDER AMT: assigned LATER as baAmt[p].after — scans fOrders (same
+  // - ORDERS: tag-based count over fOrdersST (filtered to user's filters)
+  // - ORDER AMT: assigned LATER as baAmt[p].after — scans fOrdersST (same
   //   filtered set) so Promotion Performance and By Customers always agree.
   //   Uses each campaign's match_by criterion (SKU or customer) over the
   //   campaign window [promoStart, today].
   const sum = {};
   const ensureSum = k => sum[k] = sum[k] || {orders:0, orderAmt:0, actual:0, expected:0, activities:0, byPeriod:{}};
-  fOrders.forEach(o => {
+  fOrdersST.forEach(o => {
     const k = o.promotion_category||o.promotion_id||'–';
     ensureSum(k).orders++;
   });
@@ -6063,19 +6145,19 @@ function renderPromoChart(fOrders, fMkt) {
   });
 
   // ── ORDER AMT scan sources ───────────────────────────────────────────────
-  // Use fOrders (same filtered set as By Customers / all other panels) so that
+  // Use fOrdersST (same filtered set as By Customers / all other panels) so that
   // year / region / period filters produce consistent numbers everywhere.
   // preOrders are strictly for prior-period (before) comparison.
-  const _baScanSource = fOrders;   // orders.csv, user filters applied
+  const _baScanSource = fOrdersST;   // orders.csv, user filters applied
   const _fPreOrders = (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length)
     ? state.preOrders : [];
   // For the BEFORE window we need both current filtered orders AND baseline rows
   // that match the same promotion target (SKU/customer).
-  const _baPrevSource = _fPreOrders.length ? fOrders.concat(_fPreOrders) : fOrders;
+  const _baPrevSource = _fPreOrders.length ? fOrdersST.concat(_fPreOrders) : fOrdersST;
   const baAmt = {};   // p → { before, after, skuCount, custCount, matchBy, winFrom, winTo, prevFrom, prevTo }
 
   // ── AFTER (current ORDER AMT) ────────────────────────────────────────────
-  // Single source of truth: sum of fOrders rows whose promotion_category tag
+  // Single source of truth: sum of fOrdersST rows whose promotion_category tag
   // AFTER = 각 캠페인의 promoStart 이후 주문만 합산
   // 날짜 필터 없이 전체 합산하면 시작 전 주문까지 포함되어 과대계상됨
   const _afterByPromo = {};
@@ -6196,7 +6278,7 @@ function renderPromoChart(fOrders, fMkt) {
   }
   // Scope the current-period order set to the selected promotion (if any).
   const fOrdersScoped = (promoFilter === '__all__')
-    ? fOrders
+    ? fOrdersST
     : fOrders.filter(o => (o.promotion_category || '') === promoFilter);
   // For the baseline (used by the comparison overlay), match by the campaign's
   // explicit target_customers or target_skus when filtering to one promotion,
@@ -6573,7 +6655,7 @@ function renderPromoChart(fOrders, fMkt) {
     } else {
       scopedBaseline = [];  // preIdx 미준비 → 빈 배열, 인덱스 완료 후 rebuildAll로 재시도
     }
-    // promoFilter === '__all__' 일 때: fOrders 전체(날짜 필터 무관) + baseline을 포함
+    // promoFilter === '__all__' 일 때: fOrdersST 전체(날짜 필터 무관) + baseline을 포함
     // promotion_category 태그가 있는 orders.csv rows를 연도 관계없이 모두 포함
     const allOrdersForCmp = (promoFilter === '__all__')
       ? (state.orders || []).filter(o => o.promotion_category && o.promotion_category !== '(none)' && o.promotion_category !== 'PRE_ORDER')
@@ -6610,7 +6692,7 @@ function renderPromoChart(fOrders, fMkt) {
     // ── 현재 합계: use the same baAmt.after values as the table ORDER AMT column ──
     // Using series[key][pk] accumulation was inconsistent because it (a) only
     // covers shownKeys (capped at MAX_SERIES), (b) for dim=promotion uses
-    // fOrders-only while baAmt scans the full order set, and (c) ignores campaign
+    // fOrdersST-only while baAmt scans the full order set, and (c) ignores campaign
     // start-date filtering that baAmt applies. Using summary.afterAmt ensures all
     // three displays (KPI card, chart 현재 합계, table ORDER AMT) are identical.
     const curTotal = promoFilter === '__all__'
@@ -6905,7 +6987,7 @@ function renderPromoChart(fOrders, fMkt) {
     // useful even when a single promotion is selected as the chart filter.
     if (dim === 'region' || dim === 'promotion') {
       const rp = {}; // region → { promo → amt }
-      fOrders.forEach(o => {
+      fOrdersST.forEach(o => {
         const r = normalizeRegion(o.region || '') || '(none)';
         const p = o.promotion_category || '(none)';
         rp[r] = rp[r] || {}; rp[r][p] = (rp[r][p] || 0) + convOrder(o);
@@ -10372,6 +10454,18 @@ document.addEventListener('click', e => {
       persist(); renderAll();
     }
     else if (id==='segPromoCtrMetric'){ state.promoCtrMetric = v; persist(); renderAll(); }
+    else if (id==='segPromoSellType'){
+      state.promoSellType = v;
+      try { localStorage.setItem('ck_promo_sell_type', v); } catch(_){}
+      // 배너 전환
+      const inEl  = document.getElementById('promoSellInBanner');
+      const outEl = document.getElementById('promoSellOutBanner');
+      if (inEl)  inEl.style.display  = v==='SELL-IN'  ? 'flex' : 'none';
+      if (outEl) outEl.style.display = v==='SELL-OUT' ? 'flex' : 'none';
+      // promoFilter 리셋
+      state.promoFilter = '__all__';
+      persist(); renderAll();
+    }
     else if (id==='segPromoPerf'){
       state.promoPerfPeriod = v;
       persist(); renderAll();
@@ -11829,6 +11923,7 @@ window.publishSnapshot = publishSnapshot;
   sync('segPromoCtrDim', state.promoCtrDim);
   sync('segPromoCtrMetric', state.promoCtrMetric);
   sync('segPromoPerf', state.promoPerfPeriod);
+  sync('segPromoSellType', state.promoSellType || 'SELL-IN');
   sync('segRegionMetric', state.regionMetric);
   sync('segCategoryView', state.categoryView);
   sync('segPlanExecSort', state.planExecSort);
