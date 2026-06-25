@@ -10754,6 +10754,7 @@ console.log('[pre-orders] base URL:', GH_REPO_BASE);
 const PRE_ORDER_MANIFESTS = [
   { name: 'data',     url: `${GH_REPO_BASE}/data/manifest.json` },       // 177,036 (initial baseline)
   { name: 'new_data', url: `${GH_REPO_BASE}/new_data/manifest.json` },   // 334,653 (insert_new_orders.yml)
+  { name: 'cis_data', url: `${GH_REPO_BASE}/cis_data/manifest.json` },   // 1,465 CIS 2026 Choice Kit orders
 ];
 // Legacy Supabase Edge Function — kept as commented reference; CORS / RLS issues
 // made it unreliable in production. Same-origin from GitHub Pages is the dependable path now.
