@@ -7228,6 +7228,9 @@ function renderPromoTable() {
   const curPeriods=Array.from(new Set(fOrders.map(o=>periodKey(o.order_date,period)).filter(Boolean))).sort();
   const ovEl=document.getElementById('tblPromoMonthly'),rnEl=document.getElementById('promoOverviewRange');
   if(ovEl&&_cmpMode!=='off'&&curPeriods.length){
+    // 캠페인 역추적 맵 (SKU행과 pPA 공유)
+    const _ctrToPromo={}, _custToPromo2={};
+    Object.keys(_cfgOv).forEach(p=>{ const c2=_cfgOv[p]||{},mb2=(c2.match_by||"sku").toLowerCase(); if(mb2==="sku"){ (c2.target_skus||[]).forEach(s=>_ctrToPromo[s.trim()]=p); } else { (c2.target_customers||[]).forEach(c=>_custToPromo2[c.trim()]=p); } });
     const pCA={},pPA={};
 
     // pCA: 각 캠페인 시작일 이후 오더만 (= curTotal = baAmt.after와 동일)
@@ -7246,13 +7249,7 @@ function renderPromoTable() {
     const _baAmtOv=window._lastBaAmt||{};
     const _cfgOv=state.campaignTargetSkus||{};
     // 역추적용: CTR code → promo, customer → promo
-    const _ctrToPromo={}, _custToPromo2={};
-    Object.keys(_cfgOv).forEach(p=>{
-      const cfg2=_cfgOv[p]||{};
-      const mb2=(cfg2.match_by||'sku').toLowerCase();
-      if(mb2==='sku'){ (cfg2.target_skus||[]).forEach(s=>{ _ctrToPromo[s.trim()]=p; }); }
-      else { (cfg2.target_customers||[]).forEach(c=>{ _custToPromo2[c.trim()]=p; }); }
-    });
+    // _ctrToPromo, _custToPromo2는 위에서 빌드됨
     const _prevSrcOv=(state.preOrdersEnabled&&Array.isArray(state.preOrders)&&state.preOrders.length)
       ?(state.orders||[]).concat(state.preOrders):(state.orders||[]);
     _prevSrcOv.forEach(o=>{
@@ -7312,7 +7309,7 @@ function renderPromoTable() {
       fOrders.forEach(o=>{
         const p2=(o.promotion_category||'').trim();
         if(!_summaryPromos.has(p2))return;
-        const start2=_ovPromoStart[p2];
+        const start2=(_ovPromoStart||_ovPromoStartAll||{})[p2];
         if(start2&&o.order_date<start2)return;
         const pk2=periodKey(o.order_date,period);if(!pk2)return;
         const sku2=(o.sku||o.ctr_code||o['CTR Code']||'').trim();
