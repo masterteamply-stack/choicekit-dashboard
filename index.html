@@ -10988,6 +10988,16 @@ async function loadSharedData(force = false) {
     }
   } catch (e) { console.warn('[shared] budgets parse error:', e); }
 
+  // ── pre_orders_summary.json (YoY 스냅샷) 로드 ──
+  try {
+    const _psRes = await fetch(_resolveGhRepoBase() + '/pre_orders_summary.json');
+    if (_psRes.ok) {
+      const _psData = await _psRes.json();
+      state.yoyByPromoMonth = _psData.yoy_by_promo_month || {};
+      console.log('[shared] yoyByPromoMonth loaded:', Object.keys(state.yoyByPromoMonth).length, 'campaigns');
+    } else { state.yoyByPromoMonth = state.yoyByPromoMonth || {}; }
+  } catch(e) { state.yoyByPromoMonth = state.yoyByPromoMonth || {}; }
+
   if (loaded) {
     persist();
     console.log(`✅ Shared data loaded from GitHub — ${state.orders.length} orders, ${state.marketing.length} marketing`);
