@@ -1,19 +1,18 @@
 {
-  "total_records": 23794,
-  "total_chunks": 48,
+  "total_records": 21907,
+  "total_chunks": 44,
   "chunk_size": 500,
-  "campaigns": {
-    "SKU-based (Asian/European/Portfolio)": 14303,
-    "Customer-based (Trade/Strategic/Mexico/KJ)": 9491
-  },
-  "date_range": "2024-01-04 to 2026-05-14",
+  "filter_basis": "SKU (Asian/European/Portfolio) + Customer+Country (Trade/Strategic/Mexico/K&J)",
+  "date_range": "2025-01-01 to 2026-12-31 (2024 excluded)",
   "by_year": {
-    "2024": 4937,
-    "2025": 9965,
-    "2026": 8892
+    "2025": 11311,
+    "2026": 10596
   },
-  "customer_matches": {
+  "sku_matched": 9936,
+  "customer_matched": 11971,
+  "top_customers": {
     "TAN CO INVESTMENT AND DEVELOPMENT JOINT": 2720,
+    "CHUAN LAM AUTO SUPPLY": 1615,
     "GP Mobility Public Company Limited": 1311,
     "MAST MOTORING AUTOPARTS SOLUTIONS AND": 1106,
     "Seri Wathana Enterprise Co., Ltd": 1021,
@@ -21,11 +20,8 @@
     "REFATRIX": 564,
     "SAI GON MAST MOTORING AUTOPARTS": 516,
     "NAM BAC AUTO SPARE PART CORPORATION.": 467,
-    "GTB LIMITED.,CO": 367,
-    "NAM BAC AUTO SERVICE JOINT STOCK COMPANY": 366,
-    "YOUNG AUTO SUPPLY CO., INC.": 245,
-    "LIFEPRO AUTO .,JSC": 3
+    "GTB LIMITED.,CO": 367
   },
-  "description": "Pre-filtered baseline: SKU + customer based campaigns, 2024-2026",
-  "generated_at": "2026-06-26T00:00:00Z"
+  "generated_at": "2026-06-26",
+  "description": "Baseline pre-orders: target SKU/customer+country only, 2025+ only"
 }
