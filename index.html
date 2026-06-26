@@ -9083,21 +9083,31 @@ function renderSkuAggregate(fOrders) {
   //   - skuOrdsAll  : csv + preOrders  → passed to buildBaStats so "before"
   //                   window can draw on the full baseline history
   const perSku = skus.map(sku => {
-    const skuOrdsCsv = ordersCsv.filter(o => o.sku === sku);   // orders.csv only
-    const skuOrdsAll = allOrd.filter(o => o.sku === sku);      // + preOrders (for before)
+    const skuOrdsAll_raw = allOrd.filter(o => o.sku === sku);      // + preOrders (for before)
+    // anchor 계산을 먼저 (total.amt 필터에도 사용)
     let anchor = baStartDate;
-    if (baStartDate && typeof baStartDate === 'object' && baStartDate.byPromo) {
-      const ownerPromo = skuToPromo[sku]
-        || custToPromo[(skuOrdsCsv[0]?.customer || '').trim()]
-        || (skuOrdsCsv[0]?.promotion_category)
-        || null;
-      anchor = ownerPromo ? baStartDate.byPromo[ownerPromo] : null;
+    {
+      const _firstOrd = ordersCsv.find(o => o.sku === sku);
+      if (baStartDate && typeof baStartDate === 'object' && baStartDate.byPromo) {
+        const ownerPromo = skuToPromo[sku]
+          || custToPromo[(_firstOrd?.customer || '').trim()]
+          || (_firstOrd?.promotion_category)
+          || null;
+        anchor = ownerPromo ? baStartDate.byPromo[ownerPromo] : null;
+      }
     }
+    // skuOrdsCsv: anchor(캠페인 시작일) 이후 오더만 — PP와 동일 기준
+    const skuOrdsCsv = ordersCsv.filter(o => {
+      if (o.sku !== sku) return false;
+      if (anchor && o.order_date && o.order_date < anchor) return false;
+      return true;
+    });
+    const skuOrdsAll = skuOrdsAll_raw;
     return {
       sku,
-      product: (skuOrdsCsv[0] && skuOrdsCsv[0].product) || '',
-      orders: skuOrdsCsv,           // charts / totals use orders.csv only
-      ba: buildBaStats(skuOrdsAll, anchor),   // before uses full set incl. preOrders
+      product: (ordersCsv.find(o=>o.sku===sku)?.product) || '',
+      orders: skuOrdsCsv,
+      ba: buildBaStats(skuOrdsAll, anchor),
       total: {
         amt:  skuOrdsCsv.reduce((s,o)=>s+convOrder(o),0),
         qty:  skuOrdsCsv.reduce((s,o)=>s+(Number(o.qty)||0),0),
