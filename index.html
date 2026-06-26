@@ -7373,6 +7373,27 @@ function renderPromoTable() {
     if(!ddP[pr])ddP[pr]={};if(!ddP[pr][country])ddP[pr][country]={};
     ddP[pr][country][cust]=(ddP[pr][country][cust]||0)+amt;
   });
+  // ddP 보완: 스냅샷 합계를 현재 오더 비율로 배분 (baseline 기간 없을 때)
+  const _sn2=state.yoyByPromoMonth||{};
+  Object.keys(_sn2).forEach(pr=>{
+    if(!_sp.has(pr))return;
+    const ba=_baAmt[pr];if(!ba||!ba.prevFrom||!ba.prevTo)return;
+    let snapT=0;
+    Object.entries(_sn2[pr]||{}).forEach(([ym,v])=>{if((ym+'-28')>=ba.prevFrom&&(ym+'-01')<=ba.prevTo)snapT+=Number(v)*usdToDisplay();});
+    if(snapT<=0)return;
+    const existT=Object.values(ddP[pr]||{}).reduce((s,cv)=>s+Object.values(cv).reduce((a,b)=>a+b,0),0);
+    if(existT>0)return;
+    const ddC=dd[pr]||{};
+    const curT=Object.values(ddC).reduce((s,cv)=>s+Object.values(cv).reduce((a,v2)=>a+v2.amt,0),0);
+    if(curT<=0)return;
+    if(!ddP[pr])ddP[pr]={};
+    Object.entries(ddC).forEach(([country,custs])=>{
+      if(!ddP[pr][country])ddP[pr][country]={};
+      Object.entries(custs).forEach(([cust,cv])=>{
+        ddP[pr][country][cust]=(ddP[pr][country][cust]||0)+snapT*(cv.amt/curT);
+      });
+    });
+  });
   const ddM={};fMkt.forEach(m=>{const pr=(m.promotion_category||'').trim();if(!_sp.has(pr))return;const country=m.country||m.region||'–';if(!ddM[pr])ddM[pr]={};if(!ddM[pr][country])ddM[pr][country]={actual:0,expected:0};ddM[pr][country].actual+=convMktActual(m);ddM[pr][country].expected+=convMktExpected(m);});
   const rc={CIS:'#5856D6',MENA:'#FF9500',LATAM:'#34C759',ASIA:'#0A84FF',EUROPE:'#FF375F',NA:'#BF5AF2'};
   const rbadge=label=>{if(!label)return'';return label.split(',').map(r=>{const k=r.trim().toUpperCase(),c=rc[k]||'#86868B';return`<span style="display:inline-block;background:${c}18;color:${c};border:1px solid ${c}40;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;margin-left:4px;vertical-align:middle">${r.trim()}</span>`;}).join('');};
@@ -7429,7 +7450,7 @@ function renderPromoTable() {
     const d=prv>0?((tot-prv)/prv*100):null;
     const dt=d==null?'–':d>=0?`<span class="t-green">▲${d.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(d).toFixed(1)}%</span>`;
     const exp=rows.reduce((s,p)=>s+(p.expected||0),0),act=rows.reduce((s,p)=>s+(p.actual||0),0);
-    return`<tr style="background:${color};font-weight:700;border-top:1px solid var(--border)"><td style="padding-left:8px;font-size:12px"><b>${label}</b><span class="muted" style="font-size:10px;margin-left:6px">${rows.length}개 캠페인</span></td><td class="text-right mono">${fmtNum(rows.reduce((s,p)=>s+(p.orders||0),0))}</td><td class="text-right mono t-green" style="font-weight:800">${fmtMoney(tot)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted">${prv>0?fmtMoney(prv):'–'}</td>`:''}<td class="text-right mono">${dt}</td><td class="text-right mono t-yellow">${fmtMoney(exp)}</td><td class="text-right mono t-orange">${fmtMoney(act)}</td><td class="text-right mono muted">${(()=>{const s=rows.reduce((t,p)=>t+(_prevMktCost[p.promotion||p.key||'']||0),0);return s>0?fmtMoney(s):'–';})()}</td><td class="text-right mono">${act>0?fmtPct(((tot-act)/act)*100):'–'}</td></tr>`;
+    return`<tr style="background:${color};font-weight:700;border-top:1px solid var(--border)"><td style="padding-left:8px;font-size:12px"><b>${label}</b><span class="muted" style="font-size:10px;margin-left:6px">${rows.length}개 캠페인</span></td><td class="text-right mono">${fmtNum(rows.reduce((s,p)=>s+(p.orders||0),0))}</td><td class="text-right mono t-green" style="font-weight:800">${fmtMoney(tot)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted">${prv>0?fmtMoney(prv):'–'}</td>`:''}<td class="text-right mono">${dt}</td><td class="text-right mono t-yellow">${fmtMoney(exp)}</td><td class="text-right mono t-orange">${fmtMoney(act)}</td><td class="text-right mono muted">${(()=>{const s=rows.reduce((t,p)=>t+(_prevMktCost[p.promotion||p.key||'']||0),0);return s>0?fmtMoney(s):'–';})()}</td><td class="text-right mono muted">–</td><td class="text-right mono muted">–</td><td class="text-right mono">${act>0?fmtPct(((tot-act)/act)*100):'–'}</td></tr>`;
   };
   const siS=summary.filter(p=>(_mktST[p.promotion||p.key||'']||'SELL-IN')==='SELL-IN');
   const soS=summary.filter(p=>(_mktST[p.promotion||p.key||'']||'SELL-IN')==='SELL-OUT');
