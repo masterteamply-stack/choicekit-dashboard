@@ -5924,6 +5924,7 @@ async function renderPromoChart(fOrders, fMkt) {
     const p = (o.promotion_category||'').trim();
     return p && p !== '(none)';
   });
+  console.log('[promo] fOrders:', fOrders.length, 'fOrdersST:', fOrdersST.length, 'period:', period, 'cmpMode:', state.promoCmp);
   // promoFilterSel 옵션을 sell_type에 맞게 동적 업데이트
   const filterSel2 = document.getElementById('promoFilterSel');
   if (filterSel2) {
@@ -6283,6 +6284,7 @@ async function renderPromoChart(fOrders, fMkt) {
   const periodBuckets = Array.from(new Set(
     fOrdersScoped.map(o => periodKey(o.order_date, period)).filter(Boolean)
   )).sort();
+  console.log('[promo] periodBuckets:', periodBuckets, 'shownKeys will come after series build');
 
   // Aggregate amount by (seriesKey → periodKey).
   const series = {};   // key → { pk → amount }
