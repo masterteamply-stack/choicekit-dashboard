@@ -8020,7 +8020,28 @@ function renderActivitiesTable(fMkt) {
 
 /* =================== NEW WIDGET ① Promotion Order Trends =================== */
 // 도우미: promotion 그룹 키. promotion_category 우선, 없으면 promotion_id, 그것도 없으면 'OTHER'
-function promoKeyOfOrder(o) { return o.promotion_category || o.promotion_id || 'OTHER'; }
+function promoKeyOfOrder(o) {
+  const pc = o.promotion_category || o.promotion_id || '';
+  // baseline(PRE_ORDER) 행: order_id의 CTR code 또는 sku/customer로 캠페인 역추적
+  if (pc === 'PRE_ORDER' || pc === '') {
+    if (!window._promoKeyMaps) {
+      const ctrMap = {}, custMap = {};
+      const cfg = state.campaignTargetSkus || {};
+      Object.keys(cfg).forEach(p => {
+        const c = cfg[p] || {}, mb = (c.match_by||'sku').toLowerCase();
+        if (mb === 'sku') (c.target_skus||[]).forEach(s => { ctrMap[s.trim()] = p; });
+        else (c.target_customers||[]).forEach(cu => { custMap[cu.trim()] = p; });
+      });
+      window._promoKeyMaps = { ctrMap, custMap };
+    }
+    const { ctrMap, custMap } = window._promoKeyMaps;
+    const sk = (o.sku || '').trim();
+    const m = (o.order_id || '').match(/^PO-([^-]+)-/);
+    const ctr = m ? m[1] : sk;
+    return ctrMap[ctr] || ctrMap[sk] || custMap[(o.customer||'').trim()] || pc || 'OTHER';
+  }
+  return pc || 'OTHER';
+}
 function promoKeyOfMkt(m)   { return m.promotion_category || m.promotion_id || 'OTHER'; }
 
 function listPromotionKeys(orders, marketing) {
