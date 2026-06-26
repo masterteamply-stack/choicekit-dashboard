@@ -9235,7 +9235,7 @@ function _buildPreOrdersIndex() {
 
 
 
-document.getElementById('curToggle').addEventListener('click', e => {
+document.getElementById('curToggle')?.addEventListener('click', e => {
   const b = e.target.closest('button[data-cur]'); if (!b) return;
   state.currency = b.dataset.cur;
   document.querySelectorAll('#curToggle button').forEach(x => x.classList.toggle('active', x.dataset.cur===state.currency));
