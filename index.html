@@ -4082,6 +4082,22 @@ function renderAll() {
   const fOrders = state.orders.filter(matchOrder).filter(o => isRegionVisible(o.region));
   const fMkt = state.marketing.filter(matchMkt).filter(m => isRegionVisible(m.region));
 
+  // ── PP 기준 스코프: promotion_category 유효 + 캠페인 시작일 이후 ──
+  // (Promotion × CTR, Top Insights, Customer Trend, Region Breakdown 등에서 사용)
+  const _ppScope = (() => {
+    const ps = window._lastPromoStart || {};
+    const cfg = state.campaignTargetSkus || {};
+    const validPromos = new Set(Object.keys(cfg));
+    return fOrders.filter(o => {
+      const p = (o.promotion_category || '').trim();
+      if (!p || p === '(none)' || !validPromos.has(p)) return false;
+      const st = ps[p];
+      if (st && o.order_date && o.order_date < st) return false;
+      return true;
+    });
+  })();
+  const fOrdersPP = _ppScope;
+
   // ── Marketing KPI "after-campaign" subset ──
   // Per the user's spec, the headline Marketing KPI cards count orders that
   // landed ON OR AFTER each promotion's earliest marketing-execution date.
@@ -4233,20 +4249,20 @@ function renderAll() {
 
   // ── Phase 1b: Region, TopInsights ──
   _deferRender(() => {
-    renderRegionChart(fOrders, fMkt);
-    renderTopInsights(fOrders);
+    renderRegionChart(fOrdersPP, fMkt);
+    renderTopInsights(fOrdersPP);
   }, 16);
 
   // ── Phase 2a: PlanExec, CustomerTrend ──
   _deferRender(() => {
-    renderPlanExec(fOrders, fMkt);
-    renderCustomerTrend(fOrders, fMkt);
+    renderPlanExec(fOrdersPP, fMkt);
+    renderCustomerTrend(fOrdersPP, fMkt);
   }, 80);
 
   // ── Phase 2b: SalesTrend, PromoCtr ──
   _deferRender(() => {
     renderSalesTrendCombined(fOrders);
-    renderPromoCtrChart(fOrders);
+    renderPromoCtrChart(fOrdersPP);
   }, 160);
 
   // ── Phase 3: PromoChart + PromoOrderTrend ──
@@ -5258,7 +5274,7 @@ function renderCustomerTrend(fOrders, fMkt) {
       tr.addEventListener('click', () => {
         state.custTrendCustomer = tr.dataset.cust;
         persist();
-        renderCustomerTrend(fOrders, fMkt);
+        renderCustomerTrend(fOrdersPP, fMkt);
       });
     });
   }
