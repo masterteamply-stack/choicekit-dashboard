@@ -3650,9 +3650,10 @@ function findCampaignStartByKey(promoKey) {
   if (!promoKey || promoKey === '__all__') return '';
   let earliest = '';
   for (const m of (state.marketing || [])) {
-    if (!m || !m.date) continue;
+    const d = (m && (m.date || m.execution_date) || '').trim();
+    if (!d) continue;
     if (promoKeyOfMkt(m) !== promoKey) continue;
-    if (!earliest || m.date < earliest) earliest = m.date;
+    if (!earliest || d < earliest) earliest = d;
   }
   return earliest;
 }
@@ -5974,7 +5975,7 @@ async function renderPromoChart(fOrders, fMkt) {
     s.actual += convMktActual(m);
     s.expected += convMktExpected(m);
     s.activities += 1;
-    const pk = periodKey(m.date, period);
+    const pk = periodKey(m.date || m.execution_date, period);
     if (pk) {
       s.byPeriod[pk] = s.byPeriod[pk] || {actual:0, activities:0};
       s.byPeriod[pk].actual += convMktActual(m);
@@ -8245,24 +8246,22 @@ function renderPromoOrderTrend(fOrders, fMkt) {
 // Earliest marketing-activity date that matches the SKU's promotion key (and ideally region).
 // Used as the "promotion start" boundary for Before/After.
 function findPromoStartDate(skuOrders, promoKey) {
-  // marketing.csv: date 컬럼 없음 → execution_date 사용
-  const _getD = m => (m.date || m.execution_date || '').trim();
+  // STARTED kpi 우선, 없으면 execution_date 최솟값
   let candidates;
   if (!promoKey || promoKey === '__auto__' || promoKey === '__all__') {
-    candidates = state.marketing.filter(m => _getD(m));
+    candidates = state.marketing.filter(m => m.date);
   } else {
-    candidates = state.marketing.filter(m => promoKeyOfMkt(m) === promoKey && _getD(m));
+    candidates = state.marketing.filter(m => promoKeyOfMkt(m) === promoKey && m.date);
   }
   if (!candidates.length) {
     if (!skuOrders.length) return null;
     const dates = skuOrders.map(o => o.order_date).filter(Boolean).sort();
     return dates[Math.floor(dates.length / 2)] || dates[0];
   }
+  // STARTED kpi 있으면 우선 사용
   const started = candidates.filter(m => (m.kpi_metric || '').trim().toUpperCase() === 'STARTED');
   const pool = started.length ? started : candidates;
-  const d = pool.map(m => _getD(m)).filter(Boolean).sort()[0];
-  // 2026-01-02 이전 날짜 보정
-  return (d && d < '2026-01-02') ? '2026-01-02' : d;
+  return pool.map(m => m.date).sort()[0];
 }
 
 function listSkus(orders) {
@@ -9042,7 +9041,6 @@ function renderSkuAggregate(fOrders) {
       const sorted = useOrders.map(o=>o.order_date).filter(Boolean).sort();
       s = sorted[Math.floor(sorted.length / 2)] || sorted[0];
     }
-    if (s && s < '2026-01-02') s = '2026-01-02';
     baStartDate = s;
     displayStartDate = s;
   }
