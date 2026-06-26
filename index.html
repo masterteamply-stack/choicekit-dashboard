@@ -7186,6 +7186,26 @@ async function renderPromoChart(fOrders, fMkt) {
 function renderPromoTable() {
   try {
   const period=state.promoPerfPeriod||'month',_cmpMode=state.promoCmp||'yoy';
+  // 전년 MKT COST (Cost_customer.csv 기반, KRW→USD 환산)
+  const _prevMktCost = {};
+  if (state.costCustomer && state.costCustomer.length) {
+    const _krwRate = (state.fxRates && state.fxRates['KRW']) ? state.fxRates['KRW'] : 1350;
+    const _c2p = {};
+    Object.keys(state.campaignTargetSkus||{}).forEach(p => {
+      ((state.campaignTargetSkus[p]||{}).target_customers||[]).forEach(c => { _c2p[c.trim().toUpperCase()] = p; });
+    });
+    state.costCustomer.forEach(cr => {
+      const d = (cr['Date']||'').trim();
+      if (!d) return;
+      const yr = parseInt(d.slice(0,4));
+      if (yr < 2023 || yr > 2025) return;
+      const buyer = (cr['Buyer']||'').trim().toUpperCase();
+      const total = parseFloat((cr['Total Spend']||'0').replace(/,/g,'')) || 0;
+      if (!total) return;
+      const promo = _c2p[buyer] || Object.keys(_c2p).find(k => buyer.includes(k.slice(0,8))) || null;
+      if (promo) _prevMktCost[promo] = (_prevMktCost[promo]||0) + (total / _krwRate);
+    });
+  }
   const _prevLabel={yoy:'전년 동기',qoq:'전분기',mom:'전년 동월',off:'–'}[_cmpMode]||'전년 동기';
   const fOrders=state.orders.filter(matchOrder).filter(o=>isRegionVisible(o.region));
   const fMkt=state.marketing.filter(matchMkt).filter(m=>isRegionVisible(m.region));
@@ -9215,7 +9235,7 @@ function _buildPreOrdersIndex() {
 
 
 
-document.getElementById('curToggle')?.addEventListener('click', e => {
+document.getElementById('curToggle').addEventListener('click', e => {
   const b = e.target.closest('button[data-cur]'); if (!b) return;
   state.currency = b.dataset.cur;
   document.querySelectorAll('#curToggle button').forEach(x => x.classList.toggle('active', x.dataset.cur===state.currency));
