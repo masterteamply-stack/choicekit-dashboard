@@ -5971,10 +5971,11 @@ async function renderPromoChart(fOrders, fMkt) {
   Object.keys(promoStartAll).forEach(p => {
     if (!promoStart[p]) promoStart[p] = promoStartAll[p];
   });
-  // 성과 집계는 항상 2026년 오더부터 — 마케팅이 2025년에 시작됐어도
-  // 올해(2026년) 캠페인 성과에는 2026-01-01 이후 오더만 포함
+  // 성과 집계 시작일: 각 캠페인의 실제 STARTED 날짜 사용
+  // (Portfolio는 2025-12-04, 나머지는 2026년 이후)
+  // 단, 2026-01-02 이전이면 2026-01-02로 고정 (요청 기준)
   Object.keys(promoStart).forEach(p => {
-    if (promoStart[p] < '2026-01-01') promoStart[p] = '2026-01-01';
+    if (promoStart[p] < '2026-01-02') promoStart[p] = '2026-01-02';
   });
 
   // Build campaign target maps so ORDER AMT can attribute orders via
@@ -8006,24 +8007,22 @@ function renderPromoOrderTrend(fOrders, fMkt) {
 // Earliest marketing-activity date that matches the SKU's promotion key (and ideally region).
 // Used as the "promotion start" boundary for Before/After.
 function findPromoStartDate(skuOrders, promoKey) {
-  const regions = new Set(skuOrders.map(o => o.region).filter(Boolean));
+  // STARTED kpi 우선, 없으면 execution_date 최솟값
   let candidates;
-  if (!promoKey || promoKey === '__auto__') {
-    candidates = state.marketing.filter(m => m.date);
-  } else if (promoKey === '__all__') {
+  if (!promoKey || promoKey === '__auto__' || promoKey === '__all__') {
     candidates = state.marketing.filter(m => m.date);
   } else {
     candidates = state.marketing.filter(m => promoKeyOfMkt(m) === promoKey && m.date);
   }
-  if (candidates.length) {
-    const sameRegion = candidates.filter(m => regions.size === 0 || regions.has(m.region));
-    const pool = sameRegion.length ? sameRegion : candidates;
-    return pool.map(m => m.date).sort()[0];
+  if (!candidates.length) {
+    if (!skuOrders.length) return null;
+    const dates = skuOrders.map(o => o.order_date).filter(Boolean).sort();
+    return dates[Math.floor(dates.length / 2)] || dates[0];
   }
-  // 마케팅 데이터 없으면 오더 중간점 기준 (중앙값 날짜)
-  if (!skuOrders.length) return null;
-  const dates = skuOrders.map(o => o.order_date).filter(Boolean).sort();
-  return dates[Math.floor(dates.length / 2)] || dates[0];
+  // STARTED kpi 있으면 우선 사용
+  const started = candidates.filter(m => (m.kpi_metric || '').trim().toUpperCase() === 'STARTED');
+  const pool = started.length ? started : candidates;
+  return pool.map(m => m.date).sort()[0];
 }
 
 function listSkus(orders) {
@@ -8670,11 +8669,22 @@ function renderSkuAggregate(fOrders) {
   let displayStartDate;  // single date string for charts/meta display only
   if (promo === '__all__') {
     const byPromo = {};
+    // STARTED kpi 날짜 우선, 없으면 execution_date 최솟값
     state.marketing.forEach(m => {
       if (!m.date) return;
       const k = m.promotion_category || '–';
-      if (!byPromo[k] || m.date < byPromo[k]) byPromo[k] = m.date;
+      const kpi = (m.kpi_metric || '').trim().toUpperCase();
+      if (kpi === 'STARTED') {
+        // STARTED가 있으면 이것만 사용 (더 이른 non-STARTED는 무시)
+        if (!byPromo[k] || m.date < byPromo[k]) byPromo[k] = m.date;
+        byPromo[k + '__hasStarted'] = true;
+      } else if (!byPromo[k + '__hasStarted']) {
+        // STARTED 없는 캠페인만 execution_date 최솟값 fallback
+        if (!byPromo[k] || m.date < byPromo[k]) byPromo[k] = m.date;
+      }
     });
+    // __hasStarted 플래그 제거
+    Object.keys(byPromo).filter(k => k.endsWith('__hasStarted')).forEach(k => delete byPromo[k]);
     baStartDate = { byPromo };
     // For chart marker / meta only: still expose the earliest overall date
     // (so the monthly-trend chart can highlight a vertical line), but the
