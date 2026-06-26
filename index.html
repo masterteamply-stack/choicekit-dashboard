@@ -7156,35 +7156,45 @@ function renderPromoTable() {
   }
   const _fd=d=>d?d.replace(/^20(\d\d)-(\d\d).*$/,"'$1.$2"):'';
   const dtag=(cur,prv)=>{const d=prv>0?((cur-prv)/prv)*100:null;return d==null?'<span class="muted">–</span>':d>=0?`<span class="t-green" style="font-size:10px">▲${d.toFixed(0)}%</span>`:`<span class="t-red" style="font-size:10px">▼${Math.abs(d).toFixed(0)}%</span>`;};
-  // monthly overview
-  const _promoStartForOv = window._lastPromoStart || {};
-  const _promoMatchByOv  = window._lastPromoMatchBy || {};
-  const _promoTSkusOv    = window._lastPromoTargetSkus || {};
-  const _promoTCustOv    = window._lastPromoTargetCust || {};
-  const _summaryPromos   = new Set(summary.map(s=>s.promotion||s.key||''));
+  // monthly overview — pCA: 캠페인 시작일 이후 오더만, pPA: _baPrevSource 직접 월별 집계
+  // promoStart 빌드 (renderPromoChart와 동일 로직, marketing.csv STARTED kpi 기준)
+  const _ovPromoStart = {};
+  const _ovPromoStartAll = {};
+  (state.marketing||[]).forEach(m=>{
+    const p=(m.promotion_category||m.promotion_id||'').trim();
+    const d=(m.execution_date||m.date||'').trim();
+    const kpi=(m.kpi_metric||'').trim().toUpperCase();
+    if(!p||!d)return;
+    if(!_ovPromoStartAll[p]||d<_ovPromoStartAll[p])_ovPromoStartAll[p]=d;
+    if(kpi==='STARTED'){if(!_ovPromoStart[p]||d<_ovPromoStart[p])_ovPromoStart[p]=d;}
+  });
+  Object.keys(_ovPromoStartAll).forEach(p=>{if(!_ovPromoStart[p])_ovPromoStart[p]=_ovPromoStartAll[p];});
+  Object.keys(_ovPromoStart).forEach(p=>{if(_ovPromoStart[p]<'2026-01-02')_ovPromoStart[p]='2026-01-02';});
+
+  const _summaryPromos=new Set(summary.map(s=>s.promotion||s.key||''));
   const curPeriods=Array.from(new Set(fOrders.map(o=>periodKey(o.order_date,period)).filter(Boolean))).sort();
   const ovEl=document.getElementById('tblPromoMonthly'),rnEl=document.getElementById('promoOverviewRange');
   if(ovEl&&_cmpMode!=='off'&&curPeriods.length){
     const pCA={},pPA={};
 
-    // pCA: 각 캠페인 시작일 이후 오더만 (curTotal = baAmt.after와 동일 기준)
+    // pCA: 각 캠페인 시작일 이후 오더만 (= curTotal = baAmt.after와 동일)
     fOrders.forEach(o=>{
-      const p=o.promotion_category||'';
+      const p=(o.promotion_category||'').trim();
       if(!_summaryPromos.has(p))return;
-      const start=_promoStartForOv[p];
+      const start=_ovPromoStart[p];
       if(start&&o.order_date<start)return;
       const pk=periodKey(o.order_date,period);
       if(!pk)return;
       pCA[pk]=(pCA[pk]||0)+convOrder(o);
     });
 
-    // pPA: _baPrevSource(preOrders+orders)에서 전년 동기 기간 오더를 월별 집계
-    // 각 캠페인의 prevFrom~prevTo 기간 내 오더를 현재 기간으로 forward-shift해서 표시
-    const _prevSrc = (state.preOrdersEnabled&&Array.isArray(state.preOrders)&&state.preOrders.length)
-      ? (state.orders||[]).concat(state.preOrders)
-      : (state.orders||[]);
-    const _baAmtOv = window._lastBaAmt || {};
-    _prevSrc.forEach(o=>{
+    // pPA: preOrders + orders에서 전년 동기 기간(prevFrom~prevTo) 오더를 월별 집계
+    // prevFrom = shift1y(start), prevTo = shift1y(today) — baAmt와 동일 기준
+    const _baAmtOv=window._lastBaAmt||{};
+    const _cfgOv=state.campaignTargetSkus||{};
+    const _prevSrcOv=(state.preOrdersEnabled&&Array.isArray(state.preOrders)&&state.preOrders.length)
+      ?(state.orders||[]).concat(state.preOrders):(state.orders||[]);
+    _prevSrcOv.forEach(o=>{
       const p=(o.promotion_category||o._promo||'').trim();
       if(!_summaryPromos.has(p))return;
       const ba=_baAmtOv[p];
@@ -7192,24 +7202,30 @@ function renderPromoTable() {
       const d=o.order_date||'';
       if(!d||d<ba.prevFrom||d>ba.prevTo)return;
       // customer/sku 필터
-      const mb=_promoMatchByOv[p]||'sku';
-      if(mb==='sku'){const ss=_promoTSkusOv[p];if(ss&&ss.size>0&&!ss.has((o.sku||o.ctr_code||'').trim()))return;}
-      else{
-        const cs=_promoTCustOv[p];
-        // full name set (target_customers)
-        const cfgCusts=new Set(((state.campaignTargetSkus||{})[p]?.target_customers||[]).map(c=>c.trim()));
-        const cust=(o.customer||'').trim();
-        if(cfgCusts.size>0&&!cfgCusts.has(cust))return;
+      const mb=((_cfgOv[p]||{}).match_by||'sku').toLowerCase();
+      if(mb==='sku'){
+        const tCtrs=new Set(((_cfgOv[p]||{}).target_skus||[]).map(s=>s.trim()));
+        // CTR code from order_id
+        const oid=(o.order_id||'').trim();
+        const pm2=oid.match(/^PO-([^-]+)-/);
+        const ctr=pm2?pm2[1]:'';
+        if(tCtrs.size>0&&!tCtrs.has(ctr)&&!tCtrs.has((o.sku||'').trim()))return;
+      }else{
+        const tCusts=new Set(((_cfgOv[p]||{}).target_customers||[]).map(c=>c.trim()));
+        if(tCusts.size>0&&!tCusts.has((o.customer||'').trim()))return;
       }
-      const amt=(o[PRE_ORDER_MARK]&&o.amount_usd!=null)?Number(o.amount_usd)*usdToDisplay():convOrder(o);
-      // 전년 날짜 → 현재 연도로 shift해서 같은 기간 버킷에 표시
-      const shiftedDate=d.replace(/^(\d{4})/,(y)=>String(parseInt(y)+1));
+      const amt=o[PRE_ORDER_MARK]&&o.amount_usd!=null?Number(o.amount_usd)*usdToDisplay():convOrder(o);
+      // 전년 날짜 → +1년 shift → 현재 기간 버킷으로
+      const dy=d.slice(0,4);const dm=d.slice(5);
+      const shiftedDate=`${parseInt(dy)+1}-${dm}`;
       const pk=periodKey(shiftedDate,period);
       if(!pk)return;
       pPA[pk]=(pPA[pk]||0)+amt;
     });
 
+    // gC = pCA 합산 (= curTotal), gP = baAmt.before 합산 (= priorTotal)
     const gC=Object.values(pCA).reduce((s,v)=>s+v,0);
+    const gP=summary.reduce((s,p)=>s+(p.beforeAmt||0),0);
     const gP=summary.reduce((s,p)=>s+(p.beforeAmt||0),0);
     if(rnEl){const st=summary.map(r=>r.baStart||'').filter(Boolean).sort();const fr=st.length?_fd(st[0]):'';const to=_fd((_todayStr||(() => new Date().toISOString().slice(0,10)))());rnEl.textContent=fr?`${fr} ~ ${to}`:''}
     const cs='padding:4px 10px;text-align:right;font-family:var(--font-mono);white-space:nowrap;border-bottom:1px solid var(--border)';
