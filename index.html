@@ -6735,14 +6735,14 @@ async function renderPromoChart(fOrders, fMkt) {
         curRange   = curStart  ? (curEnd  && curEnd  !== curStart  ? `${curStart} ~ ${curEnd}`  : curStart)  : '';
         priorRange = prvStart  ? (prvEnd  && prvEnd  !== prvStart  ? `${prvStart} ~ ${prvEnd}`  : prvStart)  : '';
         subWindow  = `전체 캠페인${curRange  ? ' · ' + curRange  : ''}`;
-        subPrior   = `${modeLabelKo} 동일기간${priorRange ? ' · ' + priorRange : ''}`;
+        subPrior   = `${modeLabelKo} Same Period${priorRange ? ' · ' + priorRange : ''}`;
       } else {
         // single promo: baAmt 기준 기간 표시
         const ba = baAmt[promoFilter] || {};
         curRange   = (ba.winFrom && ba.winTo)   ? `${_fmtDate(ba.winFrom)} ~ ${_fmtDate(ba.winTo)}`   : '';
         priorRange = (ba.prevFrom && ba.prevTo)  ? `${_fmtDate(ba.prevFrom)} ~ ${_fmtDate(ba.prevTo)}` : '';
         subWindow  = `${promoFilter}${curRange  ? ' · ' + curRange  : ''}`;
-        subPrior   = `${modeLabelKo} 동일기간${priorRange ? ' · ' + priorRange : ''}`;
+        subPrior   = `${modeLabelKo} Same Period${priorRange ? ' · ' + priorRange : ''}`;
       }
 
       // 활성화된 target SKU 수 집계 (중복 제거, target_skus 교집합)
@@ -6787,8 +6787,8 @@ async function renderPromoChart(fOrders, fMkt) {
       cmpKpiEl.style.display = 'grid';
       cmpKpiEl.innerHTML =
         card('Current Total', _skuSub(curTotal), subWindow) +
-        card(`${modeLabelKo} 합계`, _prvSkuSub(priorTotal), subPrior) +
-        card('Δ Change', `${tag} ${_dSkuTag}`, `현재 vs ${modeLabelKo}`);
+        card(`${modeLabelKo} Total`, _prvSkuSub(priorTotal), subPrior) +
+        card('Δ Change', `${tag} ${_dSkuTag}`, `Current vs ${modeLabelKo}`);
     }
     // ── For single-promotion compare view, switch the chart to a grouped BAR ──
     // Build a bar chart whose x-axis = the campaign's execution months and
