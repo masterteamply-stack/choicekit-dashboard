@@ -1,14 +1,12 @@
 {
-  "total_records": 27876,
-  "total_chunks": 56,
+  "total_records": 28239,
+  "total_chunks": 57,
   "chunk_size": 500,
   "filter": "CTR code (order_id) for SKU campaigns + exact customer name for customer campaigns",
   "date_range": "2025-2026 (2024 excluded)",
   "by_year": {
-    "2025": 18694,
+    "2025": 19057,
     "2026": 9182
   },
-  "sku_matched": 15107,
-  "customer_matched": 12769,
   "generated_at": "2026-06-26"
 }
