@@ -6213,6 +6213,27 @@ async function renderPromoChart(fOrders, fMkt) {
       if (ba._custSet) { ba.custCount = ba._custSet.size; delete ba._custSet; }
     });
   }
+  // ── 스냅샷으로 baAmt.before 보완 (baseline 미로드 시 fallback) ──
+  // pre_orders_summary.json의 yoy_by_promo_month[promo][ym] → prevFrom~prevTo 달만 합산
+  const _snap = state.yoyByPromoMonth || {};
+  if (Object.keys(_snap).length > 0) {
+    Object.keys(baAmt).forEach(p => {
+      const ba = baAmt[p];
+      if (ba.before > 0) return; // 이미 baseline에서 집계됨 → 스킵
+      const monthData = _snap[p] || {};
+      if (!monthData || !ba.prevFrom || !ba.prevTo) return;
+      let snapSum = 0;
+      Object.entries(monthData).forEach(([ym, amt]) => {
+        // ym='2025-04' → 해당 달이 prevFrom~prevTo 범위에 있으면 포함
+        const ymStart = ym + '-01';
+        const ymEnd = ym + '-31';
+        if (ymEnd >= ba.prevFrom && ymStart <= ba.prevTo) {
+          snapSum += Number(amt) * usdToDisplay();
+        }
+      });
+      if (snapSum > 0) ba.before = snapSum;
+    });
+  }
   // ── 메인스레드 양보 — BEFORE 스캔 완료 후 브라우저가 paint할 기회 제공 ──
   await new Promise(r => setTimeout(r, 0));
 
