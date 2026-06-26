@@ -10912,7 +10912,7 @@ const CAMPAIGN_TARGET_SKUS_URL = `${GH_REPO_BASE}/campaign_target_skus.json`;
 // SA_list). Populates state.campaignTargetSkus = { promo: {region, target_skus[]} }.
 // 404 is non-fatal — campaigns then fall back to tagged-order SKUs.
 async function loadCampaignTargetSkus() {
-  if (location.protocol === 'file:') return;
+  if (location.protocol === 'file:') return; window._promoKeyMaps = null;
   try {
     const res = await fetch(CAMPAIGN_TARGET_SKUS_URL, { cache: 'no-cache' });
     if (!res.ok) {
