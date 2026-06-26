@@ -7138,11 +7138,11 @@ function renderPromoTable() {
   const curPeriods=Array.from(new Set(fOrders.map(o=>periodKey(o.order_date,period)).filter(Boolean))).sort();
   const ovEl=document.getElementById('tblPromoMonthly'),rnEl=document.getElementById('promoOverviewRange');
   if(ovEl&&_cmpMode!=='off'&&curPeriods.length){
-    const gC=Object.values(pCA).reduce((s,v)=>s+v,0),gP=Object.values(pPA).reduce((s,v)=>s+v,0);
-    if(rnEl){const st=summary.map(r=>r.baStart||'').filter(Boolean).sort();const fr=st.length?_fd(st[0]):'';const to=_fd((_todayStr||(() => new Date().toISOString().slice(0,10)))());rnEl.textContent=fr?`${fr} ~ ${to}`:''}
     const pCA={},pPA={};
     fOrders.forEach(o=>{const p=o.promotion_category||'';if(!summary.find(s=>(s.promotion||s.key)===p))return;const pk=periodKey(o.order_date,period);if(!pk)return;pCA[pk]=(pCA[pk]||0)+convOrder(o);});
     curPeriods.forEach(pk=>{const ppk=shiftBucket(pk,_cmpMode,period);const prv=summary.reduce((s,p)=>s+((cmpSeries[p.promotion||p.key||'']&&cmpSeries[p.promotion||p.key||''][ppk])||0),0);if(prv)pPA[ppk]=prv;});
+    const gC=Object.values(pCA).reduce((s,v)=>s+v,0),gP=Object.values(pPA).reduce((s,v)=>s+v,0);
+    if(rnEl){const st=summary.map(r=>r.baStart||'').filter(Boolean).sort();const fr=st.length?_fd(st[0]):'';const to=_fd((_todayStr||(() => new Date().toISOString().slice(0,10)))());rnEl.textContent=fr?`${fr} ~ ${to}`:''}
     const cs='padding:4px 10px;text-align:right;font-family:var(--font-mono);white-space:nowrap;border-bottom:1px solid var(--border)';
     const hs='padding:4px 10px;text-align:right;font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--text-2);border-bottom:2px solid var(--border)';
     const ls='padding:4px 8px;font-size:10px;font-weight:700;color:var(--text-2);border-bottom:1px solid var(--border)';
