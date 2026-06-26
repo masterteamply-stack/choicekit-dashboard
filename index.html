@@ -6767,7 +6767,7 @@ async function renderPromoChart(fOrders, fMkt) {
       const _curSkuSet = new Set(), _prvSkuSet = new Set();
       fOrders.forEach(o=>{
         const p=(o.promotion_category||'').trim();
-        const start=promoStart[p]||(_ovPromoStart||{})[p];
+        const start=promoStart[p];
         if(start&&o.order_date<start)return;
         if(o.sku)_curSkuSet.add(o.sku);
       });
