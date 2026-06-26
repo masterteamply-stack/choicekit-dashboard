@@ -6164,15 +6164,6 @@ async function renderPromoChart(fOrders, fMkt) {
   });
 
   // ── BEFORE: 단일 패스로 전체 _baPrevSource 순회 (O(N) 로 최적화) ──
-  console.log('[baAmt] _baPrevSource size:', _baPrevSource.length, '| preOrders:', _fPreOrders.length, '| fOrdersST:', fOrdersST.length);
-  // customer 기반 캠페인 custSet 확인
-  Object.keys(baAmt).forEach(p => {
-    const mb = promoMatchBy[p] || 'sku';
-    if (mb === 'customer') {
-      const custSet = promoTargetCust[p];
-      console.log('[baAmt]', p, '| custSet size:', custSet ? custSet.size : 0, '| skipBefore:', baAmt[p]._skipBefore, '| prevFrom:', baAmt[p].prevFrom, '| prevTo:', baAmt[p].prevTo);
-    }
-  });
   // 기존: summary 캠페인 수 × _baPrevSource 행 수 = O(M×N) 블로킹
   // 개선: _baPrevSource 1회 순회로 모든 캠페인 집계
   {
@@ -6649,10 +6640,6 @@ async function renderPromoChart(fOrders, fMkt) {
       }
     } else {
       scopedBaseline = [];  // preIdx 미준비 → 빈 배열, 인덱스 완료 후 rebuildAll로 재시도
-      console.log('[cmpSeries] preIdx not ready — preOrdersEnabled:', state.preOrdersEnabled, 'preOrders:', (state.preOrders||[]).length);
-    }
-    if (promoFilter !== '__all__') {
-      console.log('[cmpSeries] scopedBaseline for', promoFilter, ':', scopedBaseline.length, 'rows');
     }
     // promoFilter === '__all__' 일 때: fOrdersST 전체(날짜 필터 무관) + baseline을 포함
     // promotion_category 태그가 있는 orders.csv rows를 연도 관계없이 모두 포함
@@ -6669,8 +6656,15 @@ async function renderPromoChart(fOrders, fMkt) {
         if (promoFilter !== '__all__') {
           key = promoFilter;
         } else if (o[PRE_ORDER_MARK]) {
-          // preOrders: SKU/고객/CTR code/buyer_code 순으로 역추적
+          // preOrders: CTR code → SKU 캠페인, customer → customer 캠페인
           key = _resolvePreOrderPromo(o);
+          if (!key) {
+            // fallback: customer 직접 매칭
+            const _oc = (o.customer || '').trim();
+            if (_oc && _custToPromoCmp[_oc] && _custBasedCmp.has(_custToPromoCmp[_oc])) {
+              key = _custToPromoCmp[_oc];
+            }
+          }
           if (!key) return;
         } else {
           key = o.promotion_category || null;
