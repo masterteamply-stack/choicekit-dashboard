@@ -2136,7 +2136,16 @@ header .mono b.t-orange {
           </div>
           <div style="overflow-x:auto"><table id="tblPromoMonthly" style="font-size:11px;width:100%;border-collapse:collapse"></table></div>
         </div>
-        <div class="chart-wrap" style="height:300px;min-height:300px;margin-bottom:16px"><canvas id="chPromo"></canvas></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <div>
+            <div class="label-mono" style="font-size:10px;font-weight:700;margin-bottom:6px;color:var(--text-2)">🔥 월별 ORDER AMT</div>
+            <div class="chart-wrap" style="height:260px"><canvas id="chPromo"></canvas></div>
+          </div>
+          <div>
+            <div class="label-mono" style="font-size:10px;font-weight:700;margin-bottom:6px;color:var(--text-2)">📦 월별 오더 전환 SKU 수</div>
+            <div class="chart-wrap" style="height:260px"><canvas id="chPromoSku"></canvas></div>
+          </div>
+        </div></div>
         <div id="promoInsight" class="label-mono" style="margin-bottom:8px;font-size:11px;color:#525257"></div>
         <div style="overflow:auto"><table id="tblPromo"></table></div>
 
