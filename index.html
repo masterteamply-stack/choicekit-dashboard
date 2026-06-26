@@ -3093,8 +3093,8 @@ const convMktActual   = m => {
 // the user), even when the row's `currency` column says otherwise. Convert
 // them to USD using a robust KRW→USD rate, then to the display currency.
 // (krwToUsd already does manual-override → latest-cached → fallback.)
-const convMktExpected = m => num(m.expected_cost) * krwToUsd() * usdToDisplay();
-const convMktBizreward = m => num(m.bizreward_amount) * krwToUsd() * usdToDisplay();
+const convMktExpected = m => { const _c=(m.currency||'KRW').toUpperCase(); return num(m.expected_cost) * (_c==='USD'?usdToDisplay():krwToUsd()*usdToDisplay()); };
+const convMktBizreward = m => { const _c=(m.currency||'KRW').toUpperCase(); return num(m.bizreward_amount) * (_c==='USD'?usdToDisplay():krwToUsd()*usdToDisplay()); };
 // USD-pinned variants — always return USD regardless of the display-currency
 // toggle. Used for Plan Budget, which the user wants always shown in USD.
 const convMktExpectedUsd  = m => num(m.expected_cost)    * krwToUsd();
