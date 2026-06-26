@@ -8631,7 +8631,15 @@ function renderChoiceKitImpact(fOrders, fMkt) {
   const cYms=Array.from(new Set(oA.map(o=>(o.order_date||'').slice(0,7)).filter(Boolean))).sort();
   const cBY={};cYms.forEach(ym=>{cBY[ym]={skuCount:0,amt:0,orders:0};});
   const cS2={};
-  aC.forEach(pn=>{const cur=mFP(pn),prv=cFP(pn);let tCA=0,tPA=0,tCS=0,tPS=0,tCO=0;cYms.forEach(ym=>{const c=cur[ym]||{skuSet:new Set(),amt:0,orders:0},ppym=sYM(ym,cmpMode),p=prv[ppym]||{skuSet:new Set(),amt:0,orders:0};cBY[ym].skuCount+=c.skuSet.size;cBY[ym].amt+=c.amt;cBY[ym].orders+=c.orders;tCA+=c.amt;tCS+=c.skuSet.size;tCO+=c.orders;tPA+=p.amt;tPS+=p.skuSet.size;});cS2[pn]={cur,prv,totalCurAmt:tCA,totalPrvAmt:tPA,totalCurSku:tCS,totalPrvSku:tPS,totalCurOrd:tCO};});
+  aC.forEach(pn=>{const cur=mFP(pn),prv=cFP(pn);let tCA=0,tPA=0,tCS=0,tPS=0,tCO=0;
+    // 현재 기간 집계
+    cYms.forEach(ym=>{const c=cur[ym]||{skuSet:new Set(),amt:0,orders:0};cBY[ym].skuCount+=c.skuSet.size;cBY[ym].amt+=c.amt;cBY[ym].orders+=c.orders;tCA+=c.amt;tCS+=c.skuSet.size;tCO+=c.orders;});
+    // 비교 기간 전체 합산 (전분기=3개월, 전년=현재기간 전체, 전월=1개월)
+    const _prvYms=prvPeriodYms(cYms,cmpMode);
+    const _prvSkuSet=new Set();
+    _prvYms.forEach(ppym=>{const p=prv[ppym]||{skuSet:new Set(),amt:0,orders:0};tPA+=p.amt;p.skuSet.forEach(s=>_prvSkuSet.add(s));tPS=_prvSkuSet.size;});
+    cYms.forEach(ym=>{const ppym=sYM(ym,cmpMode),p=prv[ppym]||{skuSet:new Set(),amt:0,orders:0};});// chart용 1:1 매핑은 유지
+    cS2[pn]={cur,prv,totalCurAmt:tCA,totalPrvAmt:tPA,totalCurSku:tCS,totalPrvSku:tPS,totalCurOrd:tCO};});
   const kE=document.getElementById('ckiKpis');
   if(kE){const gCA=aC.reduce((s,pn)=>s+cS2[pn].totalCurAmt,0),gPA=aC.reduce((s,pn)=>s+cS2[pn].totalPrvAmt,0),gCS=cYms.reduce((s,ym)=>s+cBY[ym].skuCount,0),gCO=cYms.reduce((s,ym)=>s+cBY[ym].orders,0),dA=gPA>0?((gCA-gPA)/gPA*100):null;const dT=v=>v==null?'<span class="muted" style="font-size:20px">–</span>':v>=0?`<span class="t-green" style="font-size:20px;font-weight:800">▲${v.toFixed(1)}%</span>`:`<span class="t-red" style="font-size:20px;font-weight:800">▼${Math.abs(v).toFixed(1)}%</span>`;const card=(l,v,s='')=>`<div style="background:rgba(0,0,0,0.02);border:1px solid var(--border);border-radius:10px;padding:12px 14px"><div class="label-mono" style="font-size:10px;color:var(--text-2);letter-spacing:.05em">${l}</div><div style="font-size:20px;font-weight:800;margin-top:4px">${v}</div>${s?`<div class="label-mono muted" style="font-size:11px;margin-top:3px">${s}</div>`:''}</div>`;// 이달(최근 월) 데이터
     const _thisYm=cYms[cYms.length-1]||'';
