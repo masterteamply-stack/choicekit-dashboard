@@ -5924,7 +5924,6 @@ async function renderPromoChart(fOrders, fMkt) {
     const p = (o.promotion_category||'').trim();
     return p && p !== '(none)';
   });
-  console.log('[promo] fOrders:', fOrders.length, 'fOrdersST:', fOrdersST.length, 'period:', period, 'cmpMode:', state.promoCmp);
   // promoFilterSel 옵션을 sell_type에 맞게 동적 업데이트
   const filterSel2 = document.getElementById('promoFilterSel');
   if (filterSel2) {
@@ -6034,12 +6033,8 @@ async function renderPromoChart(fOrders, fMkt) {
     regionLabel: _promoRegionLabel[p] || '',
   }));
   window._lastPromoSummary = summary;  // renderPromoTable에서 참조
-  // renderPromoTable에서 정확한 집계를 위해 추가 노출
-  window._lastPromoStart        = promoStart;
-  window._lastPromoTargetSkus   = promoTargetSkus;
-  window._lastPromoTargetCust   = promoTargetCust;
-  window._lastPromoMatchBy      = promoMatchBy;
   // baAmt는 summary.forEach 이후에 완성되므로 아래에서 별도 노출
+  // promoTargetSkus/Cust/MatchBy는 아래 선언 후 노출
 
   // (promoStart was already built above for ORDER AMT filtering)
 
@@ -6284,7 +6279,6 @@ async function renderPromoChart(fOrders, fMkt) {
   const periodBuckets = Array.from(new Set(
     fOrdersScoped.map(o => periodKey(o.order_date, period)).filter(Boolean)
   )).sort();
-  console.log('[promo] periodBuckets:', periodBuckets, 'shownKeys will come after series build');
 
   // Aggregate amount by (seriesKey → periodKey).
   const series = {};   // key → { pk → amount }
@@ -6688,6 +6682,10 @@ async function renderPromoChart(fOrders, fMkt) {
       cmpSeries[key][pk] = (cmpSeries[key][pk] || 0) + amt;
     });
     window._lastPromoCmpSeries = cmpSeries;  // renderPromoTable에서 참조
+  window._lastPromoStart        = promoStart;
+  window._lastPromoTargetSkus   = promoTargetSkus;
+  window._lastPromoTargetCust   = promoTargetCust;
+  window._lastPromoMatchBy      = promoMatchBy;
   window._lastBaAmt = baAmt;              // renderPromoTable에서 전년 드릴다운에 사용
 
     // ── KPI cards ──────────────────────────────────────────────────────────
@@ -10238,6 +10236,25 @@ async function idbDel(key) {
       tx.onerror    = () => reject(tx.error);
     });
   } catch(e) { return false; }
+}
+
+function slimPreOrderRow(o) {
+  return {
+    order_id:   o.order_id   || '',
+    order_date: o.order_date || '',
+    region:     o.region     || '',
+    country:    o.country    || '',
+    sku:        o.sku || o.ctr_code || '',
+    product:    o.product    || '',
+    qty:        o.qty        || 0,
+    amount_usd: o.amount_usd != null ? o.amount_usd : (o.amount || 0),
+    currency:   o.currency   || 'USD',
+    customer:   o.customer   || '',
+    sell_type:  o.sell_type  || '',
+    target:     o.target     || '',
+    promotion_category: o.promotion_category || '',
+    [PRE_ORDER_MARK]: true,
+  };
 }
 
 async function fetchPreOrdersOnce() {
