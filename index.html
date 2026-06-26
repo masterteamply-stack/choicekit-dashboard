@@ -2131,7 +2131,7 @@ header .mono b.t-orange {
         <div id="promoCmpKpis" style="display:none;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:14px;min-height:0"></div>
         <div id="promoMonthlyOverview" style="margin-bottom:16px;padding:14px 16px;background:rgba(0,0,0,0.02);border-radius:10px;border:1px solid var(--border)">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <span class="label-mono" style="font-size:11px;font-weight:700">📊 Monthly Overview (All Campaigns)</span>
+            <span class="label-mono" style="font-size:11px;font-weight:700">📊 Monthly Overview · All Campaigns</span>
             <span id="promoOverviewRange" class="label-mono muted" style="font-size:10px"></span>
           </div>
           <div style="overflow-x:auto"><table id="tblPromoMonthly" style="font-size:11px;width:100%;border-collapse:collapse"></table></div>
@@ -6478,7 +6478,7 @@ async function renderPromoChart(fOrders, fMkt) {
       Math.round(Object.keys(series).reduce((s, k) => s + ((series[k] && series[k][pk]) || 0), 0))
     );
     lineDatasets.unshift({
-      label: '전체 (Total)',
+      label: 'All (Total)',
       data: totalByPk,
       borderColor: '#1D1D1F', backgroundColor: 'transparent',
       borderWidth: 3, borderDash: [6, 3], pointRadius: 0, pointHoverRadius: 4, tension: 0.25, fill: false,
@@ -6800,7 +6800,7 @@ async function renderPromoChart(fOrders, fMkt) {
       cmpKpiEl.innerHTML =
         card('Current Total', _skuSub(curTotal), subWindow) +
         card(`${modeLabelKo} 합계`, _prvSkuSub(priorTotal), subPrior) +
-        card('Change', `${tag} ${_dSkuTag}`, `현재 vs ${modeLabelKo}`);
+        card('Δ Change', `${tag} ${_dSkuTag}`, `현재 vs ${modeLabelKo}`);
     }
     // ── For single-promotion compare view, switch the chart to a grouped BAR ──
     // Build a bar chart whose x-axis = the campaign's execution months and
@@ -6832,7 +6832,7 @@ async function renderPromoChart(fOrders, fMkt) {
         if (charts.promo) charts.promo.destroy();
         const xTitleSuffix = (promoFilter !== '__all__')
           ? `${promoFilter} · 집행 ${periodLabelOf(period)} 합산`
-          : `전체 ${periodLabelOf(period)} 합산`;
+          : `All ${periodLabelOf(period)}`;
         const dimNoun = dim === 'customer' ? '고객' : '권역';
         charts.promo = new Chart(document.getElementById('chPromo'), {
           type: 'bar',
@@ -6988,7 +6988,7 @@ async function renderPromoChart(fOrders, fMkt) {
     );
     cmpLineDatasets.unshift(
       { label: `전체 (${modeLabelKo})`, data: priorTotalLine, borderColor:'#A1A1A6', backgroundColor:'transparent', borderWidth:2, borderDash:[6,3], pointRadius:0, tension:0.25, fill:false },
-      { label: '전체 (현재)', data: curTotalLine, borderColor:'#1D1D1F', backgroundColor:'transparent', borderWidth:3, pointRadius:0, tension:0.25, fill:false }
+      { label: 'All (Current)', data: curTotalLine, borderColor:'#1D1D1F', backgroundColor:'transparent', borderWidth:3, pointRadius:0, tension:0.25, fill:false }
     );
     try { if (charts.promo) { charts.promo.destroy(); charts.promo = null; } } catch(_) {}
     charts.promo = new Chart(document.getElementById('chPromo'), {
@@ -7440,9 +7440,9 @@ function renderPromoTable() {
   const colCmp=_cmpMode!=='off'?`<th class="text-right">${_prevLabel}</th>`:'';
   const head=`<thead><tr><th>PROMOTION</th><th class="text-right">ORDERS</th><th class="text-right">ORDER AMT</th>${colCmp}<th class="text-right">Δ%</th><th class="text-right">MKT BUDGET</th><th class="text-right">EXECUTED</th><th class="text-right">SKU Count</th><th class="text-right">Orders</th><th class="text-right">ROI</th></tr></thead>`;
   let body='<tbody>';
-  if(siS.length){body+=`<tr style="background:rgba(200,16,46,0.04)"><td colspan="9" style="padding:6px 10px;font-size:11px;font-weight:700;color:#C8102E;letter-spacing:0.05em">📦 SELL-IN · SKU 기반 캠페인</td></tr>`;body+=siS.map(buildRow).join('');body+=subRow('📦 SELL-IN Subtotal',siS,'rgba(200,16,46,0.06)');}
-  if(soS.length){body+=`<tr style="background:rgba(10,132,255,0.04)"><td colspan="9" style="padding:6px 10px;font-size:11px;font-weight:700;color:#0A84FF;letter-spacing:0.05em">🤝 SELL-OUT · 고객 기반 캠페인</td></tr>`;body+=soS.map(buildRow).join('');body+=subRow('🤝 SELL-OUT Subtotal',soS,'rgba(10,132,255,0.06)');}
-  body+=`<tr style="background:rgba(0,0,0,0.06);font-weight:800;border-top:2px solid var(--border)"><td style="font-size:13px"><b>🏆 CHOICE KIT 전체 합계</b></td><td class="text-right mono">${fmtNum(allS.reduce((s,p)=>s+(p.orders||0),0))}</td><td class="text-right mono t-green" style="font-size:14px;font-weight:900">${fmtMoney(gT)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted" style="font-size:13px">${gP>0?fmtMoney(gP):'–'}</td>`:''}<td class="text-right mono" style="font-size:12px">${gdTag}</td><td class="text-right mono t-yellow">${fmtMoney(gE)}</td><td class="text-right mono t-orange">${fmtMoney(gA)}</td><td class="text-right mono muted">${(()=>{const s=Object.values(_prevMktCost).reduce((t,v)=>t+v,0);return s>0?fmtMoney(s):'–';})()}</td><td class="text-right mono">${gA>0?fmtPct(((gT-gA)/gA)*100):'–'}</td></tr></tbody>`;
+  if(siS.length){body+=`<tr style="background:rgba(200,16,46,0.04)"><td colspan="9" style="padding:6px 10px;font-size:11px;font-weight:700;color:#C8102E;letter-spacing:0.05em">📦 SELL-IN · SKU-based</td></tr>`;body+=siS.map(buildRow).join('');body+=subRow('📦 SELL-IN Subtotal',siS,'rgba(200,16,46,0.06)');}
+  if(soS.length){body+=`<tr style="background:rgba(10,132,255,0.04)"><td colspan="9" style="padding:6px 10px;font-size:11px;font-weight:700;color:#0A84FF;letter-spacing:0.05em">🤝 SELL-OUT · Customer-based</td></tr>`;body+=soS.map(buildRow).join('');body+=subRow('🤝 SELL-OUT Subtotal',soS,'rgba(10,132,255,0.06)');}
+  body+=`<tr style="background:rgba(0,0,0,0.06);font-weight:800;border-top:2px solid var(--border)"><td style="font-size:13px"><b>🏆 CHOICE KIT Total</b></td><td class="text-right mono">${fmtNum(allS.reduce((s,p)=>s+(p.orders||0),0))}</td><td class="text-right mono t-green" style="font-size:14px;font-weight:900">${fmtMoney(gT)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted" style="font-size:13px">${gP>0?fmtMoney(gP):'–'}</td>`:''}<td class="text-right mono" style="font-size:12px">${gdTag}</td><td class="text-right mono t-yellow">${fmtMoney(gE)}</td><td class="text-right mono t-orange">${fmtMoney(gA)}</td><td class="text-right mono muted">${(()=>{const s=Object.values(_prevMktCost).reduce((t,v)=>t+v,0);return s>0?fmtMoney(s):'–';})()}</td><td class="text-right mono">${gA>0?fmtPct(((gT-gA)/gA)*100):'–'}</td></tr></tbody>`;
   document.getElementById('tblPromo').innerHTML=head+body;
   } catch(e){console.error('[renderPromoTable]',e);}
 }
@@ -11525,8 +11525,8 @@ window.publishSnapshot = publishSnapshot;
         bar.innerHTML =
           '<span style="flex:1">ℹ️ <b>file://</b> 환경 — 자동 CSV 로딩은 차단됩니다. ' +
           '우상단 <b>Bulk Upload</b> 버튼을 누르거나, 이 페이지에 CSV 파일을 <b>드래그&드롭</b>하세요.</span>' +
-          '<button id="fileProtoHintBulk" style="background:#fff;color:#1d4ed8;border:0;padding:6px 12px;border-radius:6px;font-weight:600;cursor:pointer">Bulk Upload 열기</button>' +
-          '<button id="fileProtoHintClose" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5);padding:6px 10px;border-radius:6px;cursor:pointer">닫기</button>';
+          '<button id="fileProtoHintBulk" style="background:#fff;color:#1d4ed8;border:0;padding:6px 12px;border-radius:6px;font-weight:600;cursor:pointer">Open Bulk Upload</button>' +
+          '<button id="fileProtoHintClose" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5);padding:6px 10px;border-radius:6px;cursor:pointer">Close</button>';
         document.body.appendChild(bar);
         document.body.style.paddingTop = (parseFloat(getComputedStyle(document.body).paddingTop)||0) + bar.offsetHeight + 'px';
         document.getElementById('fileProtoHintBulk').onclick = () => document.getElementById('fBulk').click();
