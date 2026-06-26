@@ -6151,8 +6151,8 @@ async function renderPromoChart(fOrders, fMkt) {
       after:  _afterByPromo[p] || 0,
       before: 0,
       matchBy: mb,
-      skuCount: skuSet ? skuSet.size : 0,
-      custCount: custSet ? custSet.size : 0,
+      skuCount: 0,   // BEFORE 스캔에서 채워짐 (활성화된 target SKU 수)
+      custCount: 0,  // BEFORE 스캔에서 채워짐
       winFrom: start || '', winTo: end || '',
       prevFrom: shiftDate(start, tableCmpMode), prevTo: shiftDate(end, tableCmpMode),
       cmpMode: tableCmpMode,
@@ -6200,8 +6200,22 @@ async function renderPromoChart(fOrders, fMkt) {
         } else {
           match = (skuSet && (skuSet.has(oSku) || (ctrCode && skuSet.has(ctrCode))));
         }
-        if (match) ba.before += amt;
+        if (match) {
+          ba.before += amt;
+          // 활성화된 SKU/customer 카운트 (중복제거용 Set은 별도 관리)
+          if (mb === 'sku') {
+            const _ctr = pm ? ctrCode : oSku;
+            if (_ctr) { ba._skuSet = ba._skuSet || new Set(); ba._skuSet.add(_ctr); }
+          } else {
+            if (oCust) { ba._custSet = ba._custSet || new Set(); ba._custSet.add(oCust); }
+          }
+        }
       }
+    });
+    // _skuSet/_custSet → skuCount/custCount 반영
+    Object.values(baAmt).forEach(ba => {
+      if (ba._skuSet) { ba.skuCount = ba._skuSet.size; delete ba._skuSet; }
+      if (ba._custSet) { ba.custCount = ba._custSet.size; delete ba._custSet; }
     });
   }
   // ── 메인스레드 양보 — BEFORE 스캔 완료 후 브라우저가 paint할 기회 제공 ──
