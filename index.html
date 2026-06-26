@@ -2140,37 +2140,6 @@ header .mono b.t-orange {
         <div id="promoInsight" class="label-mono" style="margin-bottom:8px;font-size:11px;color:#525257"></div>
         <div style="overflow:auto"><table id="tblPromo"></table></div>
 
-      <!-- Choice Kit Impact — Dormant Activation -->
-      <div class="panel widget" data-widget-id="choicekitImpact">
-        <div class="widget-head">
-          <div>
-            <h3 class="h-section">Choice Kit Impact</h3>
-            <p class="label-mono" style="margin-top:4px">대상 SKU 월별 오더 변화 추이</p>
-          </div>
-          <div class="chart-tools">
-            <select id="ckiPromoSel" style="min-width:200px;font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface)"></select>
-            <div class="seg" id="ckiCmpSeg">
-              <button data-v="mom" class="active">전월</button>
-              <button data-v="qoq">전분기</button>
-              <button data-v="yoy">전년</button>
-            </div>
-            <div class="widget-order-controls"></div>
-          </div>
-        </div>
-        <div id="ckiKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:16px"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-          <div>
-            <div class="label-mono" style="font-size:11px;font-weight:700;margin-bottom:6px;color:var(--text-2)">📦 월별 오더 전환 SKU 수</div>
-            <div class="chart-wrap" style="height:220px"><canvas id="chCkiSkuCount"></canvas></div>
-          </div>
-          <div>
-            <div class="label-mono" style="font-size:11px;font-weight:700;margin-bottom:6px;color:var(--text-2)">💰 월별 ORDER AMT</div>
-            <div class="chart-wrap" style="height:220px"><canvas id="chCkiAmt"></canvas></div>
-          </div>
-        </div>
-        <div class="label-mono" style="font-size:11px;font-weight:700;margin-bottom:8px;color:var(--text-2)">캠페인별 대상 SKU 오더 현황</div>
-        <div style="overflow:auto"><table id="tblCkiCmp" style="font-size:12px"></table></div>
-      </div>
             <div class="panel widget" data-widget-id="skuExplorer">
         <div class="widget-head">
           <div>
@@ -4296,7 +4265,6 @@ function renderAll() {
 
   // ── Phase 4: ChoiceKitImpact, SkuExplorer ──
   _deferRender(() => {
-    renderChoiceKitImpact(fOrders, fMkt);
     renderSkuExplorer(fOrders, fMkt);
   }, 600);
 }
@@ -6213,25 +6181,20 @@ async function renderPromoChart(fOrders, fMkt) {
       if (ba._custSet) { ba.custCount = ba._custSet.size; delete ba._custSet; }
     });
   }
-  // ── 스냅샷으로 baAmt.before 보완 (baseline 미로드 시 fallback) ──
-  // pre_orders_summary.json의 yoy_by_promo_month[promo][ym] → prevFrom~prevTo 달만 합산
-  const _snap = state.yoyByPromoMonth || {};
-  if (Object.keys(_snap).length > 0) {
+  // snapshot fallback for ba.before (when baseline not loaded)
+  const _snap2 = state.yoyByPromoMonth || {};
+  if (Object.keys(_snap2).length > 0) {
     Object.keys(baAmt).forEach(p => {
       const ba = baAmt[p];
-      if (ba.before > 0) return; // 이미 baseline에서 집계됨 → 스킵
-      const monthData = _snap[p] || {};
-      if (!monthData || !ba.prevFrom || !ba.prevTo) return;
-      let snapSum = 0;
-      Object.entries(monthData).forEach(([ym, amt]) => {
-        // ym='2025-04' → 해당 달이 prevFrom~prevTo 범위에 있으면 포함
-        const ymStart = ym + '-01';
-        const ymEnd = ym + '-31';
-        if (ymEnd >= ba.prevFrom && ymStart <= ba.prevTo) {
-          snapSum += Number(amt) * usdToDisplay();
-        }
+      if (ba.before > 0) return;
+      const md = _snap2[p] || {};
+      if (!ba.prevFrom || !ba.prevTo) return;
+      let sum = 0;
+      Object.entries(md).forEach(([ym, amt]) => {
+        if ((ym+'-31') >= ba.prevFrom && (ym+'-01') <= ba.prevTo)
+          sum += Number(amt) * usdToDisplay();
       });
-      if (snapSum > 0) ba.before = snapSum;
+      if (sum > 0) ba.before = sum;
     });
   }
   // ── 메인스레드 양보 — BEFORE 스캔 완료 후 브라우저가 paint할 기회 제공 ──
@@ -7418,7 +7381,7 @@ function renderPromoTable() {
   const gd=gP>0?((gT-gP)/gP*100):null,gdTag=gd==null?'–':gd>=0?`<span class="t-green">▲${gd.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(gd).toFixed(1)}%</span>`;
   const gE=allS.reduce((s,p)=>s+(p.expected||0),0),gA=allS.reduce((s,p)=>s+(p.actual||0),0);
   const colCmp=_cmpMode!=='off'?`<th class="text-right">${_prevLabel}</th>`:'';
-  const head=`<thead><tr><th>PROMOTION</th><th class="text-right">ORDERS</th><th class="text-right">현재 ORDER AMT</th>${colCmp}<th class="text-right">Δ%</th><th class="text-right">MKT BUDGET</th><th class="text-right">EXECUTED</th><th class="text-right">ROI</th></tr></thead>`;
+  const head=`<thead><tr><th>PROMOTION</th><th class="text-right">ORDERS</th><th class="text-right">현재 ORDER AMT</th>${colCmp}<th class="text-right">Δ%</th><th class="text-right">오더 SKU수</th><th class="text-right">오더수</th><th class="text-right">MKT BUDGET</th><th class="text-right">EXECUTED</th><th class="text-right">ROI</th></tr></thead>`;
   let body='<tbody>';
   if(siS.length){body+=`<tr style="background:rgba(200,16,46,0.04)"><td colspan="8" style="padding:6px 10px;font-size:11px;font-weight:700;color:#C8102E;letter-spacing:0.05em">📦 SELL-IN · SKU 기반 캠페인</td></tr>`;body+=siS.map(buildRow).join('');body+=subRow('📦 SELL-IN 소계',siS,'rgba(200,16,46,0.06)');}
   if(soS.length){body+=`<tr style="background:rgba(10,132,255,0.04)"><td colspan="8" style="padding:6px 10px;font-size:11px;font-weight:700;color:#0A84FF;letter-spacing:0.05em">🤝 SELL-OUT · 고객 기반 캠페인</td></tr>`;body+=soS.map(buildRow).join('');body+=subRow('🤝 SELL-OUT 소계',soS,'rgba(10,132,255,0.06)');}
@@ -8751,6 +8714,7 @@ function renderChoiceKitImpact(fOrders, fMkt) {
     const bY={};
     oA.forEach(o=>{
       const od=o.order_date||'';if(!od||(_start&&od<_start))return;
+      if((o.promotion_category||'').trim()!==pn)return;
       if(mb==='sku'){
         if(!sS||!sS.size)return;
         const ctrField=(o.ctr_code||o['CTR Code']||'').trim();
