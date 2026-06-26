@@ -3101,7 +3101,7 @@ const convMktExpectedUsd  = m => num(m.expected_cost)    * krwToUsd();
 const convMktBizrewardUsd = m => num(m.bizreward_amount) * krwToUsd();
 const convMktBudget   = m => {
   const csvBudget = num(m.budget);
-  if (csvBudget > 0) return csvBudget * rateToUsd(ymOf(m.date), m.currency) * usdToDisplay();
+  if (csvBudget > 0) return csvBudget * rateToUsd(ymOf(m.date||m.execution_date), m.currency) * usdToDisplay();
   // No dedicated budget column → budget = expected_cost + bizreward (both KRW)
   return (num(m.expected_cost) + num(m.bizreward_amount)) * krwToUsd() * usdToDisplay();
 };
