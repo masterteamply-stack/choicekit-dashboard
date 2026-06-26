@@ -1697,16 +1697,9 @@ header .mono b.t-orange {
       <option value="budgetstatus">Budget</option>
     </select>
     <span class="fx-loading" id="fxStatus" style="display:none">FX…</span>
-    <button class="header-collapse-btn" id="headerCollapseBtn" title="헤더 도구 모음 접기/펼치기" aria-label="Toggle header toolbar">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-    </button>
   </div>
 
-  <div class="header-right">
-    <div class="cur-toggle" id="curToggle">
-      <button data-cur="USD" class="active">USD</button>
-      <button data-cur="KRW">KRW</button>
-    </div>
+  <div class="header-right" style="display:none">
     <button class="btn ghost" id="themeToggle" title="Toggle dark mode">
       <span class="icon-moon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
       <span class="icon-sun"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></span>
@@ -1804,7 +1797,7 @@ header .mono b.t-orange {
 
 <main>
   <!-- Filter bar (collapsible) -->
-  <div id="filterBarWrap" class="filter-wrap collapsed">
+  <div id="filterBarWrap" class="filter-wrap collapsed" style="display:none">
     <button type="button" id="filterBarToggle" class="filter-toggle" aria-expanded="false">
       <span class="filter-toggle-arrow">▶</span>
       <span class="filter-toggle-label">FILTERS</span>
@@ -4303,7 +4296,7 @@ function renderAll() {
   _deferRender(() => {
     renderChoiceKitImpact(fOrders, fMkt);
     renderSkuExplorer(fOrders, fMkt);
-  }, 400);
+  }, 600);
 }
 
 /* ===== Plan vs Execution — Drill-down Explorer (Region → Country → Promotion) ===== */
@@ -7209,149 +7202,68 @@ function renderPromoTable() {
   }
   const _fd=d=>d?d.replace(/^20(\d\d)-(\d\d).*$/,"'$1.$2"):'';
   const dtag=(cur,prv)=>{const d=prv>0?((cur-prv)/prv)*100:null;return d==null?'<span class="muted">–</span>':d>=0?`<span class="t-green" style="font-size:10px">▲${d.toFixed(0)}%</span>`:`<span class="t-red" style="font-size:10px">▼${Math.abs(d).toFixed(0)}%</span>`;};
-  // monthly overview — pCA: 캠페인 시작일 이후 오더만, pPA: _baPrevSource 직접 월별 집계
-  // promoStart 빌드 (renderPromoChart와 동일 로직, marketing.csv STARTED kpi 기준)
-  const _ovPromoStart = {};
-  const _ovPromoStartAll = {};
-  (state.marketing||[]).forEach(m=>{
-    const p=(m.promotion_category||m.promotion_id||'').trim();
-    const d=(m.execution_date||m.date||'').trim();
-    const kpi=(m.kpi_metric||'').trim().toUpperCase();
-    if(!p||!d)return;
-    if(!_ovPromoStartAll[p]||d<_ovPromoStartAll[p])_ovPromoStartAll[p]=d;
-    if(kpi==='STARTED'){if(!_ovPromoStart[p]||d<_ovPromoStart[p])_ovPromoStart[p]=d;}
+  // monthly overview — pCA: 시작일 이후, pPA: baseline 역추적
+  const _cfgOv = state.campaignTargetSkus || {};
+  const _baAmtOv = window._lastBaAmt || {};
+  const _ovPS = window._lastPromoStart || {};
+  const _summaryPromos = new Set(summary.map(s => s.promotion||s.key||''));
+  const _ctrToPromoOv = {}, _custToPromoOv = {};
+  Object.keys(_cfgOv).forEach(p => {
+    const c2=_cfgOv[p]||{}, mb2=(c2.match_by||'sku').toLowerCase();
+    if(mb2==='sku'){(c2.target_skus||[]).forEach(s=>{_ctrToPromoOv[s.trim()]=p;});}
+    else{(c2.target_customers||[]).forEach(c=>{_custToPromoOv[c.trim()]=p;});}
   });
-  Object.keys(_ovPromoStartAll).forEach(p=>{if(!_ovPromoStart[p])_ovPromoStart[p]=_ovPromoStartAll[p];});
-  Object.keys(_ovPromoStart).forEach(p=>{if(_ovPromoStart[p]<'2026-01-02')_ovPromoStart[p]='2026-01-02';});
-
-  const _summaryPromos=new Set(summary.map(s=>s.promotion||s.key||''));
+  const _prevSrcOv=(state.preOrdersEnabled&&Array.isArray(state.preOrders)&&state.preOrders.length)
+    ?(state.orders||[]).concat(state.preOrders):(state.orders||[]);
   const curPeriods=Array.from(new Set(fOrders.map(o=>periodKey(o.order_date,period)).filter(Boolean))).sort();
   const ovEl=document.getElementById('tblPromoMonthly'),rnEl=document.getElementById('promoOverviewRange');
   if(ovEl&&_cmpMode!=='off'&&curPeriods.length){
     const pCA={},pPA={};
-
-    // pCA: 각 캠페인 시작일 이후 오더만 (= curTotal = baAmt.after와 동일)
+    const PAT_OV=/^PO-([^-]+)-/;
     fOrders.forEach(o=>{
       const p=(o.promotion_category||'').trim();
       if(!_summaryPromos.has(p))return;
-      const start=_ovPromoStart[p];
-      if(start&&o.order_date<start)return;
-      const pk=periodKey(o.order_date,period);
-      if(!pk)return;
+      if(_ovPS[p]&&o.order_date<_ovPS[p])return;
+      const pk=periodKey(o.order_date,period);if(!pk)return;
       pCA[pk]=(pCA[pk]||0)+convOrder(o);
     });
-
-    // pPA: preOrders(baseline) + orders에서 전년 동기 기간 오더를 월별 집계
-    // baseline 행은 promotion_category='PRE_ORDER' → sku/customer로 캠페인 역추적
-    const _baAmtOv=window._lastBaAmt||{};
-    const _cfgOv=state.campaignTargetSkus||{};
-    // 역추적용: CTR code → promo, customer → promo
-    const _ctrToPromo={}, _custToPromo2={};
-    Object.keys(_cfgOv).forEach(p=>{
-      const cfg2=_cfgOv[p]||{};
-      const mb2=(cfg2.match_by||'sku').toLowerCase();
-      if(mb2==='sku'){ (cfg2.target_skus||[]).forEach(s=>{ _ctrToPromo[s.trim()]=p; }); }
-      else { (cfg2.target_customers||[]).forEach(c=>{ _custToPromo2[c.trim()]=p; }); }
-    });
-    const _prevSrcOv=(state.preOrdersEnabled&&Array.isArray(state.preOrders)&&state.preOrders.length)
-      ?(state.orders||[]).concat(state.preOrders):(state.orders||[]);
     _prevSrcOv.forEach(o=>{
-      const d=o.order_date||'';
-      if(!d)return;
-      // 캠페인 결정: promotion_category 또는 sku/customer 역추적
+      const d=o.order_date||'';if(!d)return;
       let p=(o.promotion_category||'').trim();
       if(!_summaryPromos.has(p)||p==='PRE_ORDER'){
-        // 역추적
-        const sku2=(o.sku||'').trim();
-        const oid2=(o.order_id||'').trim();
-        const pm3=oid2.match(/^PO-([^-]+)-/);
-        const ctr2=pm3?pm3[1]:sku2;
-        const cust2=(o.customer||'').trim();
-        p=_ctrToPromo[ctr2]||_ctrToPromo[sku2]||_custToPromo2[cust2]||'';
+        const sk=(o.sku||'').trim(),m2=(o.order_id||'').match(PAT_OV),ct=m2?m2[1]:sk;
+        p=_ctrToPromoOv[ct]||_ctrToPromoOv[sk]||_custToPromoOv[(o.customer||'').trim()]||'';
       }
       if(!p||!_summaryPromos.has(p))return;
       const ba=_baAmtOv[p];
-      if(!ba||!ba.prevFrom||!ba.prevTo)return;
-      if(d<ba.prevFrom||d>ba.prevTo)return;
-      // customer/sku 필터 (이미 역추적됐으므로 간단히)
+      if(!ba||!ba.prevFrom||!ba.prevTo||d<ba.prevFrom||d>ba.prevTo)return;
       const mb2=((_cfgOv[p]||{}).match_by||'sku').toLowerCase();
       if(mb2==='sku'){
-        const sku3=(o.sku||'').trim();
-        const oid3=(o.order_id||'').trim();
-        const pm4=oid3.match(/^PO-([^-]+)-/);
-        const ctr3=pm4?pm4[1]:sku3;
-        const tCtrs2=new Set(((_cfgOv[p]||{}).target_skus||[]).map(s=>s.trim()));
-        if(tCtrs2.size>0&&!tCtrs2.has(ctr3)&&!tCtrs2.has(sku3))return;
+        const sk2=(o.sku||'').trim(),m3=(o.order_id||'').match(PAT_OV),ct2=m3?m3[1]:sk2;
+        const tS=new Set(((_cfgOv[p]||{}).target_skus||[]).map(s=>s.trim()));
+        if(tS.size>0&&!tS.has(ct2)&&!tS.has(sk2))return;
       }else{
-        const tCusts2=new Set(((_cfgOv[p]||{}).target_customers||[]).map(c=>c.trim()));
-        if(tCusts2.size>0&&!tCusts2.has((o.customer||'').trim()))return;
+        const tC=new Set(((_cfgOv[p]||{}).target_customers||[]).map(c=>c.trim()));
+        if(tC.size>0&&!tC.has((o.customer||'').trim()))return;
       }
-      const amt=o[PRE_ORDER_MARK]&&o.amount_usd!=null?Number(o.amount_usd)*usdToDisplay():convOrder(o);
-      // 전년 날짜 → +1년 shift
-      const dy=d.slice(0,4),dm=d.slice(5);
-      const pk=periodKey(`${parseInt(dy)+1}-${dm}`,period);
-      if(!pk)return;
-      pPA[pk]=(pPA[pk]||0)+amt;
+      const amt=(o[PRE_ORDER_MARK]&&o.amount_usd!=null)?Number(o.amount_usd)*usdToDisplay():convOrder(o);
+      const pk=periodKey(`${parseInt(d.slice(0,4))+1}-${d.slice(5)}`,period);
+      if(pk)pPA[pk]=(pPA[pk]||0)+amt;
     });
-
-    // gC = pCA 합산 (= curTotal), gP = baAmt.before 합산 (= priorTotal)
     const gC=Object.values(pCA).reduce((s,v)=>s+v,0);
     const gP=summary.reduce((s,p)=>s+(p.beforeAmt||0),0);
-    if(rnEl){const st=summary.map(r=>r.baStart||'').filter(Boolean).sort();const fr=st.length?_fd(st[0]):'';const to=_fd((_todayStr||(() => new Date().toISOString().slice(0,10)))());rnEl.textContent=fr?`${fr} ~ ${to}`:''}
-    const cs='padding:4px 10px;text-align:right;font-family:var(--font-mono);white-space:nowrap;border-bottom:1px solid var(--border)';
-    const hs='padding:4px 10px;text-align:right;font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--text-2);border-bottom:2px solid var(--border)';
-    const ls='padding:4px 8px;font-size:10px;font-weight:700;color:var(--text-2);border-bottom:1px solid var(--border)';
-    const _fp=pk=>pk?pk.replace(/^20(\d\d)-(\d\d)$/,"'$1.$2").replace(/^20(\d\d)-Q(\d)$/,"'$1.Q$2"):pk;
+    if(rnEl){const st=summary.map(r=>r.baStart||'').filter(Boolean).sort();const fr=st.length?_fd(st[0]):'';const to=_fd((_todayStr||(() => new Date().toISOString().slice(0,10)))());rnEl.textContent=fr?`${fr} ~ ${to}`:'';}
+    const ls='padding:6px 10px;font-size:11px;color:var(--text-2);font-weight:600;text-align:left;border-bottom:1px solid var(--border)';
+    const cs='padding:6px 10px;font-size:12px;text-align:right;border-bottom:1px solid var(--border)';
+    const hs='padding:6px 10px;font-size:10px;font-weight:700;text-align:right;border-bottom:2px solid var(--border);letter-spacing:0.04em;color:var(--text-2)';
+    const _fp=pk=>{const[y,m]=pk.split('-');return`'${y.slice(2)}.${m}`;};
+    const fmtM=v=>v>0?fmtMoney(v):'–';
+    const dtag3=(c,p)=>{if(!p)return '<span class="muted">–</span>';const d=(c-p)/p*100;return d>=0?`<span class="t-green">▲${d.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(d).toFixed(1)}%</span>`;};
+    const rh=(label,byPk,total,col='')=>{let row=`<tr><td style="${ls};${col?'color:'+col:''}">${label}</td>`;curPeriods.forEach(pk=>{row+=`<td style="${cs};font-size:11px">${fmtM(byPk[pk]||0)}</td>`;});row+=`<td style="${cs};font-weight:700">${total>0?fmtMoney(total):'–'}</td></tr>`;return row;};
+    const dRow=(()=>{let row=`<tr style="background:rgba(0,0,0,0.02)"><td style="${ls}">Δ%</td>`;curPeriods.forEach(pk=>{row+=`<td style="${cs};font-size:10px">${dtag3(pCA[pk]||0,pPA[pk]||0)}</td>`;});row+=`<td style="${cs};font-size:11px">${gP>0?dtag3(gC,gP):'<span class="muted">–</span>'}</td></tr>`;return row;})();
     let mh=`<thead><tr><th style="${ls}">항목</th>`;curPeriods.forEach(pk=>{mh+=`<th style="${hs}">${_fp(pk)}</th>`;});mh+=`<th style="${hs}">합계</th></tr></thead>`;
-    const rh=(label,byPk,total,col='')=>{let r=`<tr><td style="${ls};${col?'color:'+col:''}">${label}</td>`;curPeriods.forEach(pk=>{const v=byPk[pk]||0;r+=`<td style="${cs};font-size:11px;${col&&v?'color:'+col+';font-weight:700':''}">${v>0?fmtMoney(v):'<span class="muted">–</span>'}</td>`;});r+=`<td style="${cs};font-weight:800;${col?'color:'+col:''}">${total>0?fmtMoney(total):'–'}</td></tr>`;return r;};
-    const dRow=(()=>{let r=`<tr style="background:rgba(0,0,0,0.02)"><td style="${ls}">Δ%</td>`;curPeriods.forEach(pk=>{const cur=pCA[pk]||0,prv=pPA[pk]||0;r+=`<td style="${cs};font-size:10px">${prv>0?dtag(cur,prv):'<span class="muted">–</span>'}</td>`;});r+=`<td style="${cs};font-size:11px">${gP>0?dtag(gC,gP):'<span class="muted">–</span>'}</td></tr>`;return r;})();
-    ovEl.innerHTML=mh+`<tbody>${rh('현재 ORDER AMT',pCA,gC,'#007AFF')}${rh(_prevLabel,pPA,gP,'#86868B')}${(()=>{
-      // 활성화 SKU 수 행: 각 기간별 실제 오더된 target SKU 수
-      const _tSkuAll=new Set(Object.values(_cfgOv).flatMap(c=>(c.match_by||'sku')!=='customer'?(c.target_skus||[]).map(s=>s.trim()):[]).filter(Boolean));
-      const _skuByPk={};
-      fOrders.forEach(o=>{
-        const p2=(o.promotion_category||'').trim();
-        if(!_summaryPromos.has(p2))return;
-        const start2=_ovPromoStart[p2];
-        if(start2&&o.order_date<start2)return;
-        const pk2=periodKey(o.order_date,period);if(!pk2)return;
-        const sku2=(o.sku||o.ctr_code||o['CTR Code']||'').trim();
-        if(sku2&&_tSkuAll.has(sku2)){
-          if(!_skuByPk[pk2])_skuByPk[pk2]=new Set();
-          _skuByPk[pk2].add(sku2);
-        }
-      });
-      // 전년 SKU 수
-      const _prvSkuByPk={};
-      _prevSrcOv.forEach(o=>{
-        const d2=o.order_date||'';if(!d2)return;
-        let p2=(o.promotion_category||'').trim();
-        if(p2==='PRE_ORDER'||!_summaryPromos.has(p2)){
-          const s2=(o.sku||'').trim();
-          const m2=(o.order_id||'').match(/^PO-([^-]+)-/);
-          const c2=m2?m2[1]:s2;
-          p2=_ctrToPromo[c2]||_ctrToPromo[s2]||_custToPromo2[(o.customer||'').trim()]||'';
-        }
-        if(!p2||!_summaryPromos.has(p2))return;
-        const ba2=_baAmtOv[p2];
-        if(!ba2||!ba2.prevFrom||!ba2.prevTo||d2<ba2.prevFrom||d2>ba2.prevTo)return;
-        const sku2=(o.sku||'').trim();
-        if(sku2&&_tSkuAll.has(sku2)){
-          const shiftedPk=periodKey(`${parseInt(d2.slice(0,4))+1}-${d2.slice(5)}`,period);
-          if(shiftedPk){if(!_prvSkuByPk[shiftedPk])_prvSkuByPk[shiftedPk]=new Set();_prvSkuByPk[shiftedPk].add(sku2);}
-        }
-      });
-      const gCurSku=new Set(Object.values(_skuByPk).flatMap(s=>[...s])).size;
-      const gPrvSku=new Set(Object.values(_prvSkuByPk).flatMap(s=>[...s])).size;
-      let skuRow=`<tr style="background:rgba(0,0,0,0.01)"><td style="${ls};font-size:10px;color:#86868B">활성 SKU 수</td>`;
-      curPeriods.forEach(pk2=>{
-        const cur=(_skuByPk[pk2]||new Set()).size,prv=(_prvSkuByPk[pk2]||new Set()).size;
-        const tag=cur>0?(prv>0?`${cur}<span style="font-size:9px;margin-left:3px;color:${cur>=prv?'#34C759':'#FF3B30'}">${cur>=prv?'▲':'▼'}${Math.abs(cur-prv)}</span>`:`${cur}`):'–';
-        skuRow+=`<td style="${cs};font-size:10px">${tag}</td>`;
-      });
-      skuRow+=`<td style="${cs};font-size:10px;font-weight:700">${gCurSku>0?gCurSku+'<span style="font-size:9px;margin-left:3px;color:'+(gCurSku>=gPrvSku?'#34C759':'#FF3B30')+'">'+(gCurSku>=gPrvSku?'▲':'▼')+Math.abs(gCurSku-gPrvSku)+'</span>':'–'}</td></tr>`;
-      return skuRow;
-    })()}${dRow}</tbody>`;
+    ovEl.innerHTML=`<table style="font-size:11px;width:100%;border-collapse:collapse">${mh}<tbody>${rh('현재 ORDER AMT',pCA,gC,'#007AFF')}${rh(_prevLabel,pPA,gP,'#86868B')}${dRow}</tbody></table>`;
+    ovEl.style.display='';
   }else if(ovEl)ovEl.innerHTML='';
   // drill data
   const _ps=window._lastPromoStart||{},_pts=window._lastPromoTargetSkus||{},_ptc=window._lastPromoTargetCust||{},_pmb=window._lastPromoMatchBy||{};
