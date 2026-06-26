@@ -7241,37 +7241,55 @@ function renderPromoTable() {
       pCA[pk]=(pCA[pk]||0)+convOrder(o);
     });
 
-    // pPA: preOrders + orders에서 전년 동기 기간(prevFrom~prevTo) 오더를 월별 집계
-    // prevFrom = shift1y(start), prevTo = shift1y(today) — baAmt와 동일 기준
+    // pPA: preOrders(baseline) + orders에서 전년 동기 기간 오더를 월별 집계
+    // baseline 행은 promotion_category='PRE_ORDER' → sku/customer로 캠페인 역추적
     const _baAmtOv=window._lastBaAmt||{};
     const _cfgOv=state.campaignTargetSkus||{};
+    // 역추적용: CTR code → promo, customer → promo
+    const _ctrToPromo={}, _custToPromo2={};
+    Object.keys(_cfgOv).forEach(p=>{
+      const cfg2=_cfgOv[p]||{};
+      const mb2=(cfg2.match_by||'sku').toLowerCase();
+      if(mb2==='sku'){ (cfg2.target_skus||[]).forEach(s=>{ _ctrToPromo[s.trim()]=p; }); }
+      else { (cfg2.target_customers||[]).forEach(c=>{ _custToPromo2[c.trim()]=p; }); }
+    });
     const _prevSrcOv=(state.preOrdersEnabled&&Array.isArray(state.preOrders)&&state.preOrders.length)
       ?(state.orders||[]).concat(state.preOrders):(state.orders||[]);
     _prevSrcOv.forEach(o=>{
-      const p=(o.promotion_category||o._promo||'').trim();
-      if(!_summaryPromos.has(p))return;
+      const d=o.order_date||'';
+      if(!d)return;
+      // 캠페인 결정: promotion_category 또는 sku/customer 역추적
+      let p=(o.promotion_category||'').trim();
+      if(!_summaryPromos.has(p)||p==='PRE_ORDER'){
+        // 역추적
+        const sku2=(o.sku||'').trim();
+        const oid2=(o.order_id||'').trim();
+        const pm3=oid2.match(/^PO-([^-]+)-/);
+        const ctr2=pm3?pm3[1]:sku2;
+        const cust2=(o.customer||'').trim();
+        p=_ctrToPromo[ctr2]||_ctrToPromo[sku2]||_custToPromo2[cust2]||'';
+      }
+      if(!p||!_summaryPromos.has(p))return;
       const ba=_baAmtOv[p];
       if(!ba||!ba.prevFrom||!ba.prevTo)return;
-      const d=o.order_date||'';
-      if(!d||d<ba.prevFrom||d>ba.prevTo)return;
-      // customer/sku 필터
-      const mb=((_cfgOv[p]||{}).match_by||'sku').toLowerCase();
-      if(mb==='sku'){
-        const tCtrs=new Set(((_cfgOv[p]||{}).target_skus||[]).map(s=>s.trim()));
-        // CTR code from order_id
-        const oid=(o.order_id||'').trim();
-        const pm2=oid.match(/^PO-([^-]+)-/);
-        const ctr=pm2?pm2[1]:'';
-        if(tCtrs.size>0&&!tCtrs.has(ctr)&&!tCtrs.has((o.sku||'').trim()))return;
+      if(d<ba.prevFrom||d>ba.prevTo)return;
+      // customer/sku 필터 (이미 역추적됐으므로 간단히)
+      const mb2=((_cfgOv[p]||{}).match_by||'sku').toLowerCase();
+      if(mb2==='sku'){
+        const sku3=(o.sku||'').trim();
+        const oid3=(o.order_id||'').trim();
+        const pm4=oid3.match(/^PO-([^-]+)-/);
+        const ctr3=pm4?pm4[1]:sku3;
+        const tCtrs2=new Set(((_cfgOv[p]||{}).target_skus||[]).map(s=>s.trim()));
+        if(tCtrs2.size>0&&!tCtrs2.has(ctr3)&&!tCtrs2.has(sku3))return;
       }else{
-        const tCusts=new Set(((_cfgOv[p]||{}).target_customers||[]).map(c=>c.trim()));
-        if(tCusts.size>0&&!tCusts.has((o.customer||'').trim()))return;
+        const tCusts2=new Set(((_cfgOv[p]||{}).target_customers||[]).map(c=>c.trim()));
+        if(tCusts2.size>0&&!tCusts2.has((o.customer||'').trim()))return;
       }
       const amt=o[PRE_ORDER_MARK]&&o.amount_usd!=null?Number(o.amount_usd)*usdToDisplay():convOrder(o);
-      // 전년 날짜 → +1년 shift → 현재 기간 버킷으로
-      const dy=d.slice(0,4);const dm=d.slice(5);
-      const shiftedDate=`${parseInt(dy)+1}-${dm}`;
-      const pk=periodKey(shiftedDate,period);
+      // 전년 날짜 → +1년 shift
+      const dy=d.slice(0,4),dm=d.slice(5);
+      const pk=periodKey(`${parseInt(dy)+1}-${dm}`,period);
       if(!pk)return;
       pPA[pk]=(pPA[pk]||0)+amt;
     });
@@ -7287,7 +7305,53 @@ function renderPromoTable() {
     let mh=`<thead><tr><th style="${ls}">항목</th>`;curPeriods.forEach(pk=>{mh+=`<th style="${hs}">${_fp(pk)}</th>`;});mh+=`<th style="${hs}">합계</th></tr></thead>`;
     const rh=(label,byPk,total,col='')=>{let r=`<tr><td style="${ls};${col?'color:'+col:''}">${label}</td>`;curPeriods.forEach(pk=>{const v=byPk[pk]||0;r+=`<td style="${cs};font-size:11px;${col&&v?'color:'+col+';font-weight:700':''}">${v>0?fmtMoney(v):'<span class="muted">–</span>'}</td>`;});r+=`<td style="${cs};font-weight:800;${col?'color:'+col:''}">${total>0?fmtMoney(total):'–'}</td></tr>`;return r;};
     const dRow=(()=>{let r=`<tr style="background:rgba(0,0,0,0.02)"><td style="${ls}">Δ%</td>`;curPeriods.forEach(pk=>{const cur=pCA[pk]||0,prv=pPA[pk]||0;r+=`<td style="${cs};font-size:10px">${prv>0?dtag(cur,prv):'<span class="muted">–</span>'}</td>`;});r+=`<td style="${cs};font-size:11px">${gP>0?dtag(gC,gP):'<span class="muted">–</span>'}</td></tr>`;return r;})();
-    ovEl.innerHTML=mh+`<tbody>${rh('현재 ORDER AMT',pCA,gC,'#007AFF')}${rh(_prevLabel,pPA,gP,'#86868B')}${dRow}</tbody>`;
+    ovEl.innerHTML=mh+`<tbody>${rh('현재 ORDER AMT',pCA,gC,'#007AFF')}${rh(_prevLabel,pPA,gP,'#86868B')}${(()=>{
+      // 활성화 SKU 수 행: 각 기간별 실제 오더된 target SKU 수
+      const _tSkuAll=new Set(Object.values(_cfgOv).flatMap(c=>(c.match_by||'sku')!=='customer'?(c.target_skus||[]).map(s=>s.trim()):[]).filter(Boolean));
+      const _skuByPk={};
+      fOrders.forEach(o=>{
+        const p2=(o.promotion_category||'').trim();
+        if(!_summaryPromos.has(p2))return;
+        const start2=_ovPromoStart[p2];
+        if(start2&&o.order_date<start2)return;
+        const pk2=periodKey(o.order_date,period);if(!pk2)return;
+        const sku2=(o.sku||o.ctr_code||o['CTR Code']||'').trim();
+        if(sku2&&_tSkuAll.has(sku2)){
+          if(!_skuByPk[pk2])_skuByPk[pk2]=new Set();
+          _skuByPk[pk2].add(sku2);
+        }
+      });
+      // 전년 SKU 수
+      const _prvSkuByPk={};
+      _prevSrcOv.forEach(o=>{
+        const d2=o.order_date||'';if(!d2)return;
+        let p2=(o.promotion_category||'').trim();
+        if(p2==='PRE_ORDER'||!_summaryPromos.has(p2)){
+          const s2=(o.sku||'').trim();
+          const m2=(o.order_id||'').match(/^PO-([^-]+)-/);
+          const c2=m2?m2[1]:s2;
+          p2=_ctrToPromo[c2]||_ctrToPromo[s2]||_custToPromo2[(o.customer||'').trim()]||'';
+        }
+        if(!p2||!_summaryPromos.has(p2))return;
+        const ba2=_baAmtOv[p2];
+        if(!ba2||!ba2.prevFrom||!ba2.prevTo||d2<ba2.prevFrom||d2>ba2.prevTo)return;
+        const sku2=(o.sku||'').trim();
+        if(sku2&&_tSkuAll.has(sku2)){
+          const shiftedPk=periodKey(`${parseInt(d2.slice(0,4))+1}-${d2.slice(5)}`,period);
+          if(shiftedPk){if(!_prvSkuByPk[shiftedPk])_prvSkuByPk[shiftedPk]=new Set();_prvSkuByPk[shiftedPk].add(sku2);}
+        }
+      });
+      const gCurSku=new Set(Object.values(_skuByPk).flatMap(s=>[...s])).size;
+      const gPrvSku=new Set(Object.values(_prvSkuByPk).flatMap(s=>[...s])).size;
+      let skuRow=`<tr style="background:rgba(0,0,0,0.01)"><td style="${ls};font-size:10px;color:#86868B">활성 SKU 수</td>`;
+      curPeriods.forEach(pk2=>{
+        const cur=(_skuByPk[pk2]||new Set()).size,prv=(_prvSkuByPk[pk2]||new Set()).size;
+        const tag=cur>0?(prv>0?`${cur}<span style="font-size:9px;margin-left:3px;color:${cur>=prv?'#34C759':'#FF3B30'}">${cur>=prv?'▲':'▼'}${Math.abs(cur-prv)}</span>`:`${cur}`):'–';
+        skuRow+=`<td style="${cs};font-size:10px">${tag}</td>`;
+      });
+      skuRow+=`<td style="${cs};font-size:10px;font-weight:700">${gCurSku>0?gCurSku+'<span style="font-size:9px;margin-left:3px;color:'+(gCurSku>=gPrvSku?'#34C759':'#FF3B30')+'">'+(gCurSku>=gPrvSku?'▲':'▼')+Math.abs(gCurSku-gPrvSku)+'</span>':'–'}</td></tr>`;
+      return skuRow;
+    })()}${dRow}</tbody>`;
   }else if(ovEl)ovEl.innerHTML='';
   // drill data
   const _ps=window._lastPromoStart||{},_pts=window._lastPromoTargetSkus||{},_ptc=window._lastPromoTargetCust||{},_pmb=window._lastPromoMatchBy||{};
