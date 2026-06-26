@@ -10921,7 +10921,7 @@ async function loadCampaignTargetSkus() {
     }
     const json = await res.json();
     if (json && typeof json === 'object') {
-      state.campaignTargetSkus = json;
+      state.campaignTargetSkus = json; window._promoKeyMaps = null;
       const summary = Object.entries(json).map(([k,v]) => `${k}: ${(v.target_skus||[]).length} SKUs`).join(', ');
       console.log(`[targets] ✅ loaded campaign target SKUs — ${summary}`);
     }
