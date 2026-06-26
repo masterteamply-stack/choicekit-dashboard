@@ -2120,10 +2120,10 @@ header .mono b.t-orange {
               <option value="__all__">All promotions</option>
             </select>
             <select id="promoCmpSel" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-1)">
-              <option value="off">비교 없음</option>
-              <option value="yoy">전년 동기 (YoY)</option>
-              <option value="qoq">전분기 (QoQ)</option>
-              <option value="mom">전년 동월 (MoM)</option>
+              <option value="off">Off</option>
+              <option value="yoy">YoY</option>
+              <option value="qoq">QoQ</option>
+              <option value="mom">MoM</option>
             </select>
             <div class="widget-order-controls"></div>
           </div>
@@ -2131,7 +2131,7 @@ header .mono b.t-orange {
         <div id="promoCmpKpis" style="display:none;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:14px;min-height:0"></div>
         <div id="promoMonthlyOverview" style="margin-bottom:16px;padding:14px 16px;background:rgba(0,0,0,0.02);border-radius:10px;border:1px solid var(--border)">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <span class="label-mono" style="font-size:11px;font-weight:700">📊 월별 종합 추이 (Choice Kit 전체)</span>
+            <span class="label-mono" style="font-size:11px;font-weight:700">📊 Monthly Overview (All Campaigns)</span>
             <span id="promoOverviewRange" class="label-mono muted" style="font-size:10px"></span>
           </div>
           <div style="overflow-x:auto"><table id="tblPromoMonthly" style="font-size:11px;width:100%;border-collapse:collapse"></table></div>
@@ -2149,12 +2149,12 @@ header .mono b.t-orange {
           <div class="chart-tools">
             <span class="label-mono muted" style="font-size:11px">Promotion</span>
             <select id="selSkuAggPromo" style="min-width:220px;font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface)"></select>
-            <span class="label-mono muted" style="margin-left:8px;font-size:11px">비교</span>
+            <span class="label-mono muted" style="margin-left:8px;font-size:11px">Compare</span>
             <div class="seg" id="segSkuCmp">
-              <button data-v="off" class="active">없음</button>
-              <button data-v="yoy">전년</button>
-              <button data-v="qoq">전분기</button>
-              <button data-v="mom">전월</button>
+              <button data-v="off" class="active">Off</button>
+              <button data-v="yoy">YoY</button>
+              <button data-v="qoq">QoQ</button>
+              <button data-v="mom">MoM</button>
             </div>
             <div class="widget-order-controls"></div>
           </div>
@@ -4989,7 +4989,7 @@ function renderBudgetStatus(fMkt) {
   if (execLblEl) {
     execLblEl.innerHTML = selectedRegion === '__all__'
       ? 'EXECUTION 비중'
-      : `<span style="color:var(--blue)">${selectedRegion}</span> 집행 비중 · <button class="btn ghost" style="padding:2px 8px;font-size:10px;margin-left:6px" onclick="window.__clearBudgetExecFilter()">전체</button>`;
+      : `<span style="color:var(--blue)">${selectedRegion}</span> 집행 비중 · <button class="btn ghost" style="padding:2px 8px;font-size:10px;margin-left:6px" onclick="window.__clearBudgetExecFilter()">All</button>`;
   }
 
   // ── Region → Country → Customer 3단계 아코디언 테이블 ──
@@ -6699,7 +6699,7 @@ async function renderPromoChart(fOrders, fMkt) {
     // 전년 동기 합계 = 각 캠페인 prevFrom~prevTo (baAmt.before 기준, SKU/고객 필터 적용)
     // → cmpSeries(기간 버킷 합산)가 아닌 baAmt를 단일 소스로 사용하여
     //   캠페인 시작일·대상 SKU/고객 기준이 현재/전년 양쪽에 동일하게 적용됨.
-    const modeLabelKo = { yoy: '전년 동기', qoq: '전분기', mom: '전년 동월' }[cmpMode] || '이전';
+    const modeLabelKo = { yoy: 'YoY', qoq: 'QoQ', mom: 'MoM' }[cmpMode] || '이전';
 
     // single-promo: kpiBuckets은 차트용으로만 사용 (bar chart x-axis)
     const kpiBuckets = (promoFilter !== '__all__' && execBuckets && execBuckets.length)
@@ -6798,9 +6798,9 @@ async function renderPromoChart(fOrders, fMkt) {
         : '';
       cmpKpiEl.style.display = 'grid';
       cmpKpiEl.innerHTML =
-        card('현재 합계', _skuSub(curTotal), subWindow) +
+        card('Current Total', _skuSub(curTotal), subWindow) +
         card(`${modeLabelKo} 합계`, _prvSkuSub(priorTotal), subPrior) +
-        card('증감', `${tag} ${_dSkuTag}`, `현재 vs ${modeLabelKo}`);
+        card('Change', `${tag} ${_dSkuTag}`, `현재 vs ${modeLabelKo}`);
     }
     // ── For single-promotion compare view, switch the chart to a grouped BAR ──
     // Build a bar chart whose x-axis = the campaign's execution months and
@@ -6840,7 +6840,7 @@ async function renderPromoChart(fOrders, fMkt) {
             labels,
             datasets: [
               { label: `${modeLabelKo}`, data: prvBars, backgroundColor:'#A1A1A6', hoverBackgroundColor:'#888', borderWidth:0, borderRadius:3, maxBarThickness:36 },
-              { label: '현재',          data: curBars, backgroundColor:'#C8102E', hoverBackgroundColor:'#a00', borderWidth:0, borderRadius:3, maxBarThickness:36 },
+              { label: 'Current',          data: curBars, backgroundColor:'#C8102E', hoverBackgroundColor:'#a00', borderWidth:0, borderRadius:3, maxBarThickness:36 },
             ],
           },
           options: {
@@ -6904,7 +6904,7 @@ async function renderPromoChart(fOrders, fMkt) {
           labels: barLabels,
           datasets: [
             { label: `${modeLabelKo}`, data: priorBars, backgroundColor:'#A1A1A6', hoverBackgroundColor:'#888', borderWidth:0, borderRadius:3, maxBarThickness:40 },
-            { label: '현재',          data: curBars,   backgroundColor:'#C8102E', hoverBackgroundColor:'#a00', borderWidth:0, borderRadius:3, maxBarThickness:40 },
+            { label: 'Current',          data: curBars,   backgroundColor:'#C8102E', hoverBackgroundColor:'#a00', borderWidth:0, borderRadius:3, maxBarThickness:40 },
           ],
         },
         options: {
@@ -7213,7 +7213,7 @@ async function renderPromoChart(fOrders, fMkt) {
       if(_cd.some(v=>v>0)){
         const _fl=pk=>{if(!pk)return '';const pt=pk.match(/^20(\d\d)-(\d\d)$/);return pt?"'"+pt[1]+'.'+pt[2]:pk;};
         charts.promoSku=new Chart(_sc,{type:'bar',
-          data:{labels:_bk2.map(_fl),datasets:[{label:'오더 SKU수',data:_cd,backgroundColor:'#0A84FF',borderWidth:0,borderRadius:3,maxBarThickness:40}]},
+          data:{labels:_bk2.map(_fl),datasets:[{label:'Active SKUs',data:_cd,backgroundColor:'#0A84FF',borderWidth:0,borderRadius:3,maxBarThickness:40}]},
           options:{responsive:true,maintainAspectRatio:false,
             plugins:{legend:{position:'top',labels:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:11},boxWidth:14}},
               datalabels:{display:ctx=>ctx.parsed.y>0,anchor:'end',align:'end',offset:2,color:'#0A84FF',font:{family:'IBM Plex Mono',weight:700,size:10},formatter:v=>v>0?v+' SKUs':''} },
@@ -7249,7 +7249,7 @@ function renderPromoTable() {
       if (promo) _prevMktCost[promo] = (_prevMktCost[promo]||0) + (total / _krwRate);
     });
   }
-  const _prevLabel={yoy:'전년 동기',qoq:'전분기',mom:'전년 동월',off:'–'}[_cmpMode]||'전년 동기';
+  const _prevLabel={yoy:'YoY',qoq:'QoQ',mom:'MoM',off:'–'}[_cmpMode]||'YoY';
   const fOrders=state.orders.filter(matchOrder).filter(o=>isRegionVisible(o.region));
   const fMkt=state.marketing.filter(matchMkt).filter(m=>isRegionVisible(m.region));
   const _allSummary=window._lastPromoSummary||[],_baAmt=window._lastBaAmt||{},cmpSeries=window._lastPromoCmpSeries||{};
@@ -7324,8 +7324,8 @@ function renderPromoTable() {
     const dtag3=(c,p)=>{if(!p)return '<span class="muted">–</span>';const d=(c-p)/p*100;return d>=0?`<span class="t-green">▲${d.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(d).toFixed(1)}%</span>`;};
     const rh=(label,byPk,total,col='')=>{let row=`<tr><td style="${ls};${col?'color:'+col:''}">${label}</td>`;curPeriods.forEach(pk=>{row+=`<td style="${cs};font-size:11px">${fmtM(byPk[pk]||0)}</td>`;});row+=`<td style="${cs};font-weight:700">${total>0?fmtMoney(total):'–'}</td></tr>`;return row;};
     const dRow=(()=>{let row=`<tr style="background:rgba(0,0,0,0.02)"><td style="${ls}">Δ%</td>`;curPeriods.forEach(pk=>{row+=`<td style="${cs};font-size:10px">${dtag3(pCA[pk]||0,pPA[pk]||0)}</td>`;});row+=`<td style="${cs};font-size:11px">${gP>0?dtag3(gC,gP):'<span class="muted">–</span>'}</td></tr>`;return row;})();
-    let mh=`<thead><tr><th style="${ls}">항목</th>`;curPeriods.forEach(pk=>{mh+=`<th style="${hs}">${_fp(pk)}</th>`;});mh+=`<th style="${hs}">합계</th></tr></thead>`;
-    ovEl.innerHTML=`<table style="font-size:11px;width:100%;border-collapse:collapse">${mh}<tbody>${rh('현재 ORDER AMT',pCA,gC,'#007AFF')}${rh(_prevLabel,pPA,gP,'#86868B')}${dRow}</tbody></table>`;
+    let mh=`<thead><tr><th style="${ls}">Item</th>`;curPeriods.forEach(pk=>{mh+=`<th style="${hs}">${_fp(pk)}</th>`;});mh+=`<th style="${hs}">Total</th></tr></thead>`;
+    ovEl.innerHTML=`<table style="font-size:11px;width:100%;border-collapse:collapse">${mh}<tbody>${rh('Order AMT',pCA,gC,'#007AFF')}${rh(_prevLabel,pPA,gP,'#86868B')}${dRow}</tbody></table>`;
     ovEl.style.display='';
   }else if(ovEl)ovEl.innerHTML='';
   // drill data
@@ -7438,10 +7438,10 @@ function renderPromoTable() {
   const gd=gP>0?((gT-gP)/gP*100):null,gdTag=gd==null?'–':gd>=0?`<span class="t-green">▲${gd.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(gd).toFixed(1)}%</span>`;
   const gE=allS.reduce((s,p)=>s+(p.expected||0),0),gA=allS.reduce((s,p)=>s+(p.actual||0),0);
   const colCmp=_cmpMode!=='off'?`<th class="text-right">${_prevLabel}</th>`:'';
-  const head=`<thead><tr><th>PROMOTION</th><th class="text-right">ORDERS</th><th class="text-right">현재 ORDER AMT</th>${colCmp}<th class="text-right">Δ%</th><th class="text-right">MKT BUDGET</th><th class="text-right">EXECUTED</th><th class="text-right">오더 SKU수</th><th class="text-right">오더수</th><th class="text-right">ROI</th></tr></thead>`;
+  const head=`<thead><tr><th>PROMOTION</th><th class="text-right">ORDERS</th><th class="text-right">ORDER AMT</th>${colCmp}<th class="text-right">Δ%</th><th class="text-right">MKT BUDGET</th><th class="text-right">EXECUTED</th><th class="text-right">SKU Count</th><th class="text-right">Orders</th><th class="text-right">ROI</th></tr></thead>`;
   let body='<tbody>';
-  if(siS.length){body+=`<tr style="background:rgba(200,16,46,0.04)"><td colspan="9" style="padding:6px 10px;font-size:11px;font-weight:700;color:#C8102E;letter-spacing:0.05em">📦 SELL-IN · SKU 기반 캠페인</td></tr>`;body+=siS.map(buildRow).join('');body+=subRow('📦 SELL-IN 소계',siS,'rgba(200,16,46,0.06)');}
-  if(soS.length){body+=`<tr style="background:rgba(10,132,255,0.04)"><td colspan="9" style="padding:6px 10px;font-size:11px;font-weight:700;color:#0A84FF;letter-spacing:0.05em">🤝 SELL-OUT · 고객 기반 캠페인</td></tr>`;body+=soS.map(buildRow).join('');body+=subRow('🤝 SELL-OUT 소계',soS,'rgba(10,132,255,0.06)');}
+  if(siS.length){body+=`<tr style="background:rgba(200,16,46,0.04)"><td colspan="9" style="padding:6px 10px;font-size:11px;font-weight:700;color:#C8102E;letter-spacing:0.05em">📦 SELL-IN · SKU 기반 캠페인</td></tr>`;body+=siS.map(buildRow).join('');body+=subRow('📦 SELL-IN Subtotal',siS,'rgba(200,16,46,0.06)');}
+  if(soS.length){body+=`<tr style="background:rgba(10,132,255,0.04)"><td colspan="9" style="padding:6px 10px;font-size:11px;font-weight:700;color:#0A84FF;letter-spacing:0.05em">🤝 SELL-OUT · 고객 기반 캠페인</td></tr>`;body+=soS.map(buildRow).join('');body+=subRow('🤝 SELL-OUT Subtotal',soS,'rgba(10,132,255,0.06)');}
   body+=`<tr style="background:rgba(0,0,0,0.06);font-weight:800;border-top:2px solid var(--border)"><td style="font-size:13px"><b>🏆 CHOICE KIT 전체 합계</b></td><td class="text-right mono">${fmtNum(allS.reduce((s,p)=>s+(p.orders||0),0))}</td><td class="text-right mono t-green" style="font-size:14px;font-weight:900">${fmtMoney(gT)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted" style="font-size:13px">${gP>0?fmtMoney(gP):'–'}</td>`:''}<td class="text-right mono" style="font-size:12px">${gdTag}</td><td class="text-right mono t-yellow">${fmtMoney(gE)}</td><td class="text-right mono t-orange">${fmtMoney(gA)}</td><td class="text-right mono muted">${(()=>{const s=Object.values(_prevMktCost).reduce((t,v)=>t+v,0);return s>0?fmtMoney(s):'–';})()}</td><td class="text-right mono">${gA>0?fmtPct(((gT-gA)/gA)*100):'–'}</td></tr></tbody>`;
   document.getElementById('tblPromo').innerHTML=head+body;
   } catch(e){console.error('[renderPromoTable]',e);}
@@ -8746,7 +8746,7 @@ function renderChoiceKitImpact(fOrders, fMkt) {
   const cmpMode=state.ckiCompare||'mom';
   document.querySelectorAll('#ckiCmpSeg button').forEach(b=>{b.classList.toggle('active',b.dataset.v===cmpMode);if(!b._ckH){b._ckH=true;b.addEventListener('click',()=>{state.ckiCompare=b.dataset.v;try{localStorage.setItem('ck_cki_compare',state.ckiCompare);}catch(_){}const fO=state.orders.filter(matchOrder).filter(o=>isRegionVisible(o.region)),fM=state.marketing.filter(matchMkt).filter(m=>isRegionVisible(m.region));renderChoiceKitImpact(fO,fM);});}});
   const sP=state.ckiPromo||'__all__',isAll=sP==='__all__',aC=isAll?pns:[sP];
-  const oA=state.orders||[],cL={mom:'전년 동월',qoq:'전분기',yoy:'전년 동기'}[cmpMode]||'비교';
+  const oA=state.orders||[],cL={mom:'MoM',qoq:'QoQ',yoy:'YoY'}[cmpMode]||'비교';
   function sYM(ym,mode){let[y,m]=ym.split('-').map(Number);if(mode==='yoy')y-=1;else if(mode==='qoq'){m-=3;if(m<1){m+=12;y-=1;}}else y-=1;return`${y}-${String(m).padStart(2,'0')}`;}
   function prvPeriodYms(curYms,mode){
     if(mode==='qoq'){
@@ -8828,16 +8828,16 @@ function renderChoiceKitImpact(fOrders, fMkt) {
     const _thisMoAmt=_thisMo.amt, _thisMoSku=_thisMo.skuCount, _thisMoOrd=_thisMo.orders;
     const _fym=ym=>ym?ym.replace(/^20(\d\d)-(\d\d)$/,"'$1.$2"):ym;
     kE.innerHTML=
-      card('현재 ORDER AMT',
+      card('Order AMT',
         fmtMoney(gCA),
         `${gPA>0?cL+': '+fmtMoney(gPA):'–'} · 이달(${_fym(_thisYm)}): ${fmtMoney(_thisMoAmt)}`)+
       card(`vs ${cL}`,
         dT(dA),
         gPA>0?`${gCA>gPA?'+':'-'}${fmtMoney(Math.abs(gCA-gPA))}`:cL+' 데이터 없음')+
-      card('누적 오더 SKU 수',
+      card('Active SKUs',
         fmtNum(gCS),
         `${aC.length}개 캠페인 합산 · 이달: ${fmtNum(_thisMoSku)} SKUs`)+
-      card('누적 오더 수',
+      card('Total Orders',
         fmtNum(gCO),
         `현재 기간 · 이달(${_fym(_thisYm)}): ${fmtNum(_thisMoOrd)}건`);
     kE.style.display='grid';}
@@ -8851,7 +8851,7 @@ function renderChoiceKitImpact(fOrders, fMkt) {
   const tbl=document.getElementById('tblCkiCmp');if(!tbl)return;
   const mST={};(state.marketing||[]).forEach(m=>{const p=(m.promotion_category||'').trim(),st=(m.sell_type||'').trim().toUpperCase().replace(/_/g,'-');if(p&&(st==='SELL-IN'||st==='SELL-OUT')&&!mST[p])mST[p]=st;});Object.keys(cfg).forEach(p=>{if(!mST[p])mST[p]=(cfg[p].match_by||'sku').toLowerCase()==='customer'?'SELL-OUT':'SELL-IN';});
   const cc2=hPA?`<th class="text-right">${cL} AMT</th><th class="text-right">Δ%</th>`:'';
-  tbl.innerHTML=`<thead><tr><th>캠페인</th><th>타입</th><th class="text-right">현재 AMT</th>${cc2}<th class="text-right">오더 SKU 수</th><th class="text-right">오더 수</th></tr></thead><tbody>${aC.map(pn=>{const s=cS2[pn],dP=s.totalPrvAmt>0?((s.totalCurAmt-s.totalPrvAmt)/s.totalPrvAmt*100):null,dT2=dP==null?'–':dP>=0?`<span class="t-green">▲${dP.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(dP).toFixed(1)}%</span>`,stb=mST[pn]==='SELL-IN'?'<span style="background:#C8102E;color:#fff;font-size:8px;padding:1px 5px;border-radius:6px;font-weight:700">SELL-IN</span>':'<span style="background:#0A84FF;color:#fff;font-size:8px;padding:1px 5px;border-radius:6px;font-weight:700">SELL-OUT</span>';return`<tr><td style="font-weight:700">${pn}</td><td>${stb}</td><td class="text-right mono t-green" style="font-weight:700">${fmtMoney(s.totalCurAmt)}</td>${hPA?`<td class="text-right mono muted">${s.totalPrvAmt>0?fmtMoney(s.totalPrvAmt):'–'}</td><td class="text-right mono">${dT2}</td>`:''}<td class="text-right mono">${fmtNum(s.totalCurSku)}</td><td class="text-right mono">${fmtNum(s.totalCurOrd)}</td></tr>`;}).join('')}</tbody>`;
+  tbl.innerHTML=`<thead><tr><th>Campaign</th><th>Type</th><th class="text-right">Order AMT</th>${cc2}<th class="text-right">SKU Count</th><th class="text-right">Orders</th></tr></thead><tbody>${aC.map(pn=>{const s=cS2[pn],dP=s.totalPrvAmt>0?((s.totalCurAmt-s.totalPrvAmt)/s.totalPrvAmt*100):null,dT2=dP==null?'–':dP>=0?`<span class="t-green">▲${dP.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(dP).toFixed(1)}%</span>`,stb=mST[pn]==='SELL-IN'?'<span style="background:#C8102E;color:#fff;font-size:8px;padding:1px 5px;border-radius:6px;font-weight:700">SELL-IN</span>':'<span style="background:#0A84FF;color:#fff;font-size:8px;padding:1px 5px;border-radius:6px;font-weight:700">SELL-OUT</span>';return`<tr><td style="font-weight:700">${pn}</td><td>${stb}</td><td class="text-right mono t-green" style="font-weight:700">${fmtMoney(s.totalCurAmt)}</td>${hPA?`<td class="text-right mono muted">${s.totalPrvAmt>0?fmtMoney(s.totalPrvAmt):'–'}</td><td class="text-right mono">${dT2}</td>`:''}<td class="text-right mono">${fmtNum(s.totalCurSku)}</td><td class="text-right mono">${fmtNum(s.totalCurOrd)}</td></tr>`;}).join('')}</tbody>`;
 }
 
 function renderSkuExplorer(fOrders, fMkt) {
