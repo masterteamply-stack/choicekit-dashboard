@@ -7112,6 +7112,16 @@ async function renderPromoChart(fOrders, fMkt) {
   renderPromoTable();
   } catch(e) {
     console.error('[renderPromoChart]', e.message, e.stack);
+    // 에러를 차트 영역에 표시
+    try {
+      const canvas = document.getElementById('chPromo');
+      if (canvas && canvas.parentElement) {
+        canvas.parentElement.innerHTML = `<div style="padding:20px;color:#C8102E;font-family:monospace;font-size:12px;background:rgba(200,16,46,0.05);border-radius:8px;border:1px solid rgba(200,16,46,0.2)">
+          <b>[renderPromoChart 에러]</b><br>${e.message}<br><br>
+          <small style="color:#666">${(e.stack||'').split('\n').slice(0,4).join('<br>')}</small>
+        </div>`;
+      }
+    } catch(_) {}
     renderPromoTable();
   }
 }
