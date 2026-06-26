@@ -8411,7 +8411,8 @@ function renderSkuYearly(annualSeries, opts) {
 //        before/after summed together, not a single global anchor).
 function buildBaStats(orders, startDate) {
   const isPerPromo = startDate && typeof startDate === 'object' && startDate.byPromo;
-  const promoMap = isPerPromo ? startDate.byPromo : null;
+  const promoMap   = isPerPromo ? startDate.byPromo   : null;
+  const custMap    = isPerPromo ? (startDate.byCust || {}) : null;
   const today = _todayStr();
   const shift1y = (s) => {
     if (!s) return '';
@@ -8420,9 +8421,15 @@ function buildBaStats(orders, startDate) {
   };
   let beforeAmt=0, afterAmt=0, beforeQty=0, afterQty=0, beforeOrds=0, afterOrds=0;
   orders.forEach(o => {
-    const anchor = isPerPromo
-      ? promoMap[o.promotion_category || '–']
-      : startDate;
+    // 고객별 시작일 우선, 없으면 캠페인별 시작일
+    let anchor;
+    if (isPerPromo) {
+      const cust  = (o.customer || '').trim();
+      const promo = o.promotion_category || '–';
+      anchor = (custMap && custMap[cust]) || promoMap[promo];
+    } else {
+      anchor = startDate;
+    }
     if (!anchor) return;
     const afterFrom  = anchor;
     const afterTo    = today;
@@ -8434,10 +8441,8 @@ function buildBaStats(orders, startDate) {
     const amt = isBaseline ? Number(o.amount_usd || 0) * usdToDisplay() : convOrder(o);
     const q = Number(o.qty) || 0;
     if (!isBaseline && d >= afterFrom && d <= afterTo) {
-      // AFTER: orders.csv only — preOrders must never inflate current ORDER AMT
       afterAmt  += amt; afterQty  += q; afterOrds++;
     } else if (d >= beforeFrom && d <= beforeTo) {
-      // BEFORE: both orders.csv and preOrders contribute to prior-period baseline
       beforeAmt += amt; beforeQty += q; beforeOrds++;
     }
   });
@@ -8685,6 +8690,23 @@ function renderSkuAggregate(fOrders) {
     });
     // __hasStarted 플래그 제거
     Object.keys(byPromo).filter(k => k.endsWith('__hasStarted')).forEach(k => delete byPromo[k]);
+
+    // 고객별 시작일 빌드 (Trade promotion 등 고객별 시작일이 다른 경우)
+    const byCust = {};
+    state.marketing.forEach(m => {
+      if (!m.date) return;
+      const c   = (m.customer || '').trim();
+      const kpi = (m.kpi_metric || '').trim().toUpperCase();
+      if (!c || c === 'ALL') return;
+      if (kpi === 'STARTED') {
+        if (!byCust[c] || m.date < byCust[c]) byCust[c] = m.date;
+        byCust[c + '__hasStarted'] = true;
+      } else if (!byCust[c + '__hasStarted']) {
+        if (!byCust[c] || m.date < byCust[c]) byCust[c] = m.date;
+      }
+    });
+    Object.keys(byCust).filter(k => k.endsWith('__hasStarted')).forEach(k => delete byCust[k]);
+    baStartDate = { byPromo, byCust };
     baStartDate = { byPromo };
     // For chart marker / meta only: still expose the earliest overall date
     // (so the monthly-trend chart can highlight a vertical line), but the
