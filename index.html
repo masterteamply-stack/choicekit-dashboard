@@ -8735,11 +8735,15 @@ function renderChoiceKitImpact(fOrders, fMkt) {
   function mFP(pn){
     const pc=cfg[pn]||{},mb=(pc.match_by||'sku').toLowerCase();
     const sS=mb==='sku'?gSku(pn):null,cS=mb!=='sku'?gCust(pn):null;
-    // 캠페인 시작일
-    const _mktRows=(state.marketing||[]).filter(m=>(m.promotion_category||'').trim()===pn&&m.date);
-    const _started=_mktRows.filter(m=>(m.kpi_metric||'').trim().toUpperCase()==='STARTED');
-    const _pool=_started.length?_started:_mktRows;
-    let _start=_pool.map(m=>m.date||m.execution_date||'').filter(Boolean).sort()[0]||'';
+    // 캠페인 시작일 — renderPromoChart와 동일 기준(window._lastPromoStart) 사용
+    let _start=(window._lastPromoStart||{})[pn]||'';
+    if(!_start){
+      // fallback: marketing.csv STARTED kpi
+      const _mktRows=(state.marketing||[]).filter(m=>(m.promotion_category||'').trim()===pn&&m.date);
+      const _started=_mktRows.filter(m=>(m.kpi_metric||'').trim().toUpperCase()==='STARTED');
+      const _pool=_started.length?_started:_mktRows;
+      _start=_pool.map(m=>m.date||m.execution_date||'').filter(Boolean).sort()[0]||'';
+    }
     if(_start<'2026-01-02')_start='2026-01-02';
     const PAT=/^PO-([^-]+)-/;
     const bY={};
@@ -8747,10 +8751,9 @@ function renderChoiceKitImpact(fOrders, fMkt) {
       const od=o.order_date||'';if(!od||(_start&&od<_start))return;
       if(mb==='sku'){
         if(!sS||!sS.size)return;
-        const ctrField=(o.ctr_code||o['CTR Code']||'').trim();
-        const skuField=(o.sku||'').trim();
-        const oidCtr=((o.order_id||'').match(PAT)||[])[1]||'';
-        if(!sS.has(ctrField)&&!sS.has(skuField)&&!sS.has(oidCtr))return;
+        // orders.csv: 'CTR Code' 컬럼 = sku 필드와 동일
+        const ctrField=(o['CTR Code']||o.sku||'').trim();
+        if(!sS.has(ctrField))return;
       }else{if(!cS||!cS.size)return;if(!cS.has((o.customer||'').trim()))return;}
       const ym=od.slice(0,7);if(!ym)return;
       if(!bY[ym])bY[ym]={skuSet:new Set(),amt:0,orders:0};
@@ -8769,10 +8772,9 @@ function renderChoiceKitImpact(fOrders, fMkt) {
     src.forEach(o=>{
       if(mb==='sku'){
         if(!sS||!sS.size)return;
-        const ctrField=(o.ctr_code||o['CTR Code']||'').trim();
-        const skuField=(o.sku||'').trim();
-        const oidCtr=((o.order_id||'').match(PAT)||[])[1]||'';
-        if(!sS.has(ctrField)&&!sS.has(skuField)&&!sS.has(oidCtr))return;
+        // orders.csv: 'CTR Code' 컬럼 = sku 필드와 동일
+        const ctrField=(o['CTR Code']||o.sku||'').trim();
+        if(!sS.has(ctrField))return;
       }else{if(!cS||!cS.size)return;if(!cS.has((o.customer||'').trim()))return;}
       const ym=(o.order_date||'').slice(0,7);if(!ym)return;
       if(!bY[ym])bY[ym]={skuSet:new Set(),amt:0,orders:0};
