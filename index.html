@@ -9752,7 +9752,13 @@ async function processBulkFiles(files, { replace = false } = {}) {
       } else if (kind === 'marketing') {
         const rows = await parseMarketingCSV(txt);
         rows.forEach(r => { r[SNAPSHOT_USER_MARK] = true; });
-        if (replace && !replacedMkt) { state.marketing = rows; replacedMkt = true; }
+        if (replace && !replacedMkt) { state.marketing = rows;
+      // Cost_customer.csv — 전년 MKT cost 데이터 로드
+      try {
+        const _cr = await fetch(_resolveGhRepoBase() + '/Cost_customer.csv');
+        if (_cr.ok) { state.costCustomer = parseCSV(await _cr.text()); }
+        else state.costCustomer = [];
+      } catch(e) { state.costCustomer = []; } replacedMkt = true; }
         else state.marketing = state.marketing.concat(rows);
         summary.marketing += rows.length;
         markDataUpdated('marketing');
