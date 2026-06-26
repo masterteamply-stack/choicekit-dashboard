@@ -8885,41 +8885,43 @@ function _buildPreOrdersIndex() {
     state._preIdx = null; state._preOrdersIndexed = false; return;
   }
   if (state._preOrdersIndexed) return;
-  const skuIdx = {}, custIdx = {}, ctrIdx = {}, buyerIdx = {};
-  const bundleBuyerIdx = {};
+
+  // ── 기본 인덱스 빌드 ──
+  const skuIdx = {}, custIdx = {}, ctrIdx = {}, buyerIdx = {}, bundleBuyerIdx = {};
   const ctrToBundleBuyers = {};
   const _buyerMap = {};
+
   (state.orders || []).forEach(o => {
     const bn = (o.customer_no || '').toString().trim();
     const cn = (o.customer || '').trim();
     if (bn && cn && !_buyerMap[bn]) _buyerMap[bn] = cn;
   });
+
   const PAT_PO = /^PO-([^-]+)-(\d+)-\d+$/;
   state.preOrders.forEach(o => {
-    const sku  = (o.sku  || '').trim();
+    // SKU 인덱싱: "-999" suffix 제거 후 저장 (target_skus와 매칭용)
+    const rawSku = (o.sku || '').trim();
+    const normSku = rawSku.replace(/-999$/, '').replace(/-\d+$/, s => s.length <= 4 ? '' : s);
     const cust = (o.customer || '').trim();
     const oid  = (o.order_id || '').trim();
-    if (sku)  { (skuIdx[sku]   = skuIdx[sku]   || []).push(o); }
-    if (cust) { (custIdx[cust] = custIdx[cust] || []).push(o); }
+
+    if (rawSku)  { (skuIdx[rawSku]   = skuIdx[rawSku]   || []).push(o); }
+    if (normSku && normSku !== rawSku) { (skuIdx[normSku] = skuIdx[normSku] || []).push(o); }
+    if (cust)    { (custIdx[cust]    = custIdx[cust]    || []).push(o); }
+
     const m = oid.match(PAT_PO);
     if (m) {
       const ctr = m[1], buyer = m[2];
-      if (ctr)   { (ctrIdx[ctr]           = ctrIdx[ctr]           || []).push(o); }
-      if (buyer) { (bundleBuyerIdx[buyer]  = bundleBuyerIdx[buyer] || []).push(o); }
-      if (ctr && buyer) {
-        if (!ctrToBundleBuyers[ctr]) ctrToBundleBuyers[ctr] = new Set();
-        ctrToBundleBuyers[ctr].add(buyer);
-      }
-      if (buyer && _buyerMap[buyer]) {
-        const cn = _buyerMap[buyer];
-        (buyerIdx[cn] = buyerIdx[cn] || []).push(o);
-      }
+      (ctrIdx[ctr]     = ctrIdx[ctr]     || []).push(o);
+      (buyerIdx[buyer] = buyerIdx[buyer] || []).push(o);
+      if (!ctrToBundleBuyers[ctr]) ctrToBundleBuyers[ctr] = new Set();
+      ctrToBundleBuyers[ctr].add(buyer);
+      (bundleBuyerIdx[buyer] = bundleBuyerIdx[buyer] || []).push(o);
     }
   });
 
-  // ── promoIdx: 프로모션별 매칭 rows 미리 빌드 (SKU+buyer 2중필터 결과 캐시) ──
-  // renderPromoChart에서 매번 수백만 regex 실행하는 대신 O(1) 조회용
-  const promoIdx = {};  // promo → rows[]
+  // ── promoIdx 빌드: 캠페인별 매칭 rows 캐시 ──
+  const promoIdx = {};
   const _cfg = state.campaignTargetSkus || {};
   const _promoStart = {};
   (state.marketing || []).forEach(m => {
@@ -8930,39 +8932,49 @@ function _buildPreOrdersIndex() {
     if (kpi === 'STARTED') { if (!_promoStart[p] || d < _promoStart[p]) _promoStart[p] = d; }
     else { if (!_promoStart[p+'__all__'] || d < _promoStart[p+'__all__']) _promoStart[p+'__all__'] = d; }
   });
-  // 성과는 2026년 오더부터만 집계
   Object.keys(_promoStart).forEach(k => {
     if (_promoStart[k] < '2026-01-01') _promoStart[k] = '2026-01-01';
   });
+
   Object.keys(_cfg).forEach(promo => {
     const cfg = _cfg[promo];
     const mb = (cfg.match_by || 'sku').toLowerCase();
+    const rows = [];
+    const seen = new Set();
+
     if (mb === 'customer') {
-      // Customer 기반: 실제 참여 고객의 모든 오더
-      const actualCusts = new Set((cfg.target_customers || []).map(c => c.trim()));
+      // ── Customer 기반: custIdx에서 직접 조회 ──
+      // config 고객 + 실제 2026 참여 고객 모두 포함
+      const custs = new Set((cfg.target_customers || []).map(c => c.trim()));
+      // 2026 orders에서 실제 참여 고객 추가
       (state.orders || []).forEach(o => {
-        const p = (o.promotion_category || '').trim();
-        if (p !== promo) return;
-        const start = _promoStart[promo] || _promoStart[promo + '__all__'];
-        if (start && (o.order_date || '') < start) return;
+        if ((o.promotion_category || '').trim() !== promo) return;
         const c = (o.customer || '').trim();
-        if (c) actualCusts.add(c);
+        if (c) custs.add(c);
       });
-      const rows = [];
-      const seen = new Set();
-      actualCusts.forEach(c => {
-        (custIdx[c] || []).forEach(o => { if (!seen.has(o)) { seen.add(o); rows.push(o); } });
-        (buyerIdx[c] || []).forEach(o => { if (!seen.has(o)) { seen.add(o); rows.push(o); } });
+      // custIdx 키와 부분 매칭 (short name → full name)
+      const custIdxKeys = Object.keys(custIdx);
+      custs.forEach(shortName => {
+        // 정확한 매칭 먼저
+        if (custIdx[shortName]) {
+          custIdx[shortName].forEach(o => { if (!seen.has(o)) { seen.add(o); rows.push(o); } });
+          return;
+        }
+        // 부분 매칭: custIdx 키 중 shortName을 포함하거나 shortName이 포함하는 것
+        const up = shortName.toUpperCase();
+        custIdxKeys.forEach(k => {
+          if (k.toUpperCase().includes(up) || up.includes(k.toUpperCase().slice(0,8))) {
+            (custIdx[k] || []).forEach(o => { if (!seen.has(o)) { seen.add(o); rows.push(o); } });
+          }
+        });
       });
-      promoIdx[promo] = rows;
     } else {
-      // SKU 기반: 2026 참여 고객의 bundle buyer_codes 수집 → SKU + buyer 2중 필터
+      // ── SKU 기반: target_skus로 직접 매칭 ──
       const targetSkus = new Set((cfg.target_skus || []).map(s => s.trim()));
-      // 참여 고객 buyer_codes: 2026 orders에서 해당 캠페인 CTR code로 bundle buyer 역추출
+      // 2026 orders에서 참여 고객의 buyer codes 수집
       const buyers = new Set();
       (state.orders || []).forEach(o => {
-        const p = (o.promotion_category || '').trim();
-        if (p !== promo) return;
+        if ((o.promotion_category || '').trim() !== promo) return;
         const start = _promoStart[promo] || _promoStart[promo + '__all__'];
         if (start && (o.order_date || '') < start) return;
         const ctr = (o.ctr_code || o['CTR Code'] || o.sku || '').trim();
@@ -8972,31 +8984,37 @@ function _buildPreOrdersIndex() {
       });
       window._promoBundleBuyers = window._promoBundleBuyers || {};
       window._promoBundleBuyers[promo] = buyers;
-      // bundle buyer_code 인덱스로 O(1) 조회 → SKU 필터
-      const rows = [];
-      const seen = new Set();
+
+      // 방법 1: SKU 직접 매칭 (rawSku or normSku)
+      targetSkus.forEach(tSku => {
+        // 정확한 매칭
+        (skuIdx[tSku] || []).forEach(o => { if (!seen.has(o)) { seen.add(o); rows.push(o); } });
+        // "-999" suffix 붙인 것
+        (skuIdx[tSku + '-999'] || []).forEach(o => { if (!seen.has(o)) { seen.add(o); rows.push(o); } });
+      });
+
+      // 방법 2: buyer 기반 매칭 (위에서 못 잡은 것 보완)
       buyers.forEach(buyer => {
         (bundleBuyerIdx[buyer] || []).forEach(o => {
           if (seen.has(o)) return;
-          const s = (o.sku || '').trim();
-          const oid = (o.order_id || '').trim();
-          const pm = oid.match(PAT_PO);
-          const ctr = pm ? pm[1] : '';
-          if (targetSkus.has(s) || targetSkus.has(ctr)) {
-            seen.add(o);
-            rows.push(o);
+          const rawS = (o.sku || '').trim();
+          const normS = rawS.replace(/-999$/, '');
+          if (targetSkus.has(rawS) || targetSkus.has(normS)) {
+            seen.add(o); rows.push(o);
           }
         });
       });
-      promoIdx[promo] = rows;
     }
+    promoIdx[promo] = rows;
+    console.log(`[preIdx] ${promo}: ${rows.length} baseline rows`);
   });
 
   state._preIdx = { skuIdx, custIdx, ctrIdx, buyerIdx, bundleBuyerIdx, ctrToBundleBuyers, promoIdx, _buyerMap };
   state._preOrdersIndexed = true;
-  const total = Object.values(promoIdx).reduce((s,r) => s+r.length, 0);
-  console.log(`[preIdx] built — SKU:${Object.keys(skuIdx).length} CTR:${Object.keys(ctrIdx).length} BUYER:${Object.keys(bundleBuyerIdx).length} promoIdx:${total}rows`);
+  window._promoBundleBuyers = window._promoBundleBuyers || {};
+  console.log(`[preIdx] built: ${Object.entries(promoIdx).map(([p,r])=>p+':'+r.length).join(', ')}`);
 }
+
 
 document.getElementById('curToggle').addEventListener('click', e => {
   const b = e.target.closest('button[data-cur]'); if (!b) return;
