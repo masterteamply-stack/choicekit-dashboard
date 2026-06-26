@@ -1,72 +1,74 @@
-execution_date,region,country,promotion_theme,promotion_category,target_product,activity_type,title,customer,customer_code ,expected_cost,actual_cost,Bizreward,currency,kpi_metric,target,sell_type,owner,Order_Target($),
-2026-03-02,NA,ƒ≥≥™¥Ÿ,CHOICE_KIT,Strategic Partner Program,All items in the market,PROMOTION,Incentive Trip,Lordco Auto Parts,289029,"25,868,245",0,x,KRW,STARTED,B2B,SELL_IN,DH,"1,185,141",
-2026-04-03,NA,ƒ≥≥™¥Ÿ,CHOICE_KIT,Strategic Partner Program,All items in the market,CONTENT,SNS Content,Lordco Auto Parts,289029,"879,541","879,541",x,KRW,RELEASED,B2B,SELL_IN,DH,0,
-2026-04-17,NA,ƒ≥≥™¥Ÿ,CHOICE_KIT,Strategic Partner Program,All items in the market,CONTENT,SNS Content,Lordco Auto Parts,289029,"1,053,590","1,053,590",x,KRW,RELEASED,B2B,SELL_IN,DH,0,
-2026-04-03,NA,ƒ≥≥™¥Ÿ,CHOICE_KIT,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",Lordco Auto Parts,289029,0,0,x,KRW,RELEASED,B2B,SELL_IN,DH,0,
-2026-04-09,CIS,≈∞∏£±‚Ω∫Ω∫≈∫,CHOICE_KIT,Asian vehicle,Asian vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,"175,000",
-2026-04-09,CIS,ƒ´¿⁄»ÂΩ∫≈∫,CHOICE_KIT,Asian vehicle,Asian vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,"175,000",
-2026-04-09,CIS,≈ı∏£≈©∏ﬁ¥œΩ∫≈∫,CHOICE_KIT,Asian vehicle,Asian vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,"175,000",
-2026-04-09,CIS,≈∏¡ˆ≈∞Ω∫≈∫,CHOICE_KIT,Asian vehicle,Asian vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,"175,000",
-2026-05-04,CIS,≈∞∏£±‚Ω∫Ω∫≈∫,CHOICE_KIT,European vehicle,European vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,"75,000",
-2026-05-04,CIS,ƒ´¿⁄»ÂΩ∫≈∫,CHOICE_KIT,European vehicle,European vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,"75,000",
-2026-05-04,CIS,≈ı∏£≈©∏ﬁ¥œΩ∫≈∫,CHOICE_KIT,European vehicle,European vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,"75,000",
-2026-05-04,CIS,≈∏¡ˆ≈∞Ω∫≈∫,CHOICE_KIT,European vehicle,European vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,"75,000",
-2026-09-20,CIS,CIS,CHOICE_KIT,Asian vehicle,Asian vehicle,CONTENT,SNS Content,ALL,,"600,000",0,x,KRW,DISTRIBUTED,B2C,SELL_OUT,HY,0,
-2026-10-20,CIS,CIS,CHOICE_KIT,European vehicle,European vehicle,CONTENT,SNS Content,ALL,,"600,000",0,x,KRW,DISTRIBUTED,B2C,SELL_OUT,HY,0,
-2026-10-20,CIS,≈∞∏£±‚Ω∫Ω∫≈∫,CHOICE_KIT,Asian vehicle,Asian vehicle,Event,Event,ALL,,"6,000,000",0,x,KRW,RELEASED,B2C,SELL_OUT,HY,0,
-2026-10-20,CIS,ƒ´¿⁄»ÂΩ∫≈∫,CHOICE_KIT,Asian vehicle,Asian vehicle,Event,Event,ALL,,"6,000,000",0,x,KRW,RELEASED,B2C,SELL_OUT,HY,0,
-2026-10-20,CIS,≈ı∏£≈©∏ﬁ¥œΩ∫≈∫,CHOICE_KIT,Asian vehicle,Asian vehicle,Event,Event,ALL,,"6,000,000",0,x,KRW,RELEASED,B2C,SELL_OUT,HY,0,
-2026-10-20,CIS,≈∏¡ˆ≈∞Ω∫≈∫,CHOICE_KIT,Asian vehicle,Asian vehicle,Event,Event,ALL,,"6,000,000",0,x,KRW,RELEASED,B2C,SELL_OUT,HY,0,
-2026-02-11,LATAM,∏ﬂΩ√ƒ⁄,CHOICE_KIT,Mexico Worldcup Promotion,Best Selling,CONTENT,SNS Content,REFATRIX,289404,"399,923","399,923",x,KRW,STARTED,B2B,SELL_IN,DH,"200,000",≥‚∞£ √— ∏≈√‚ ∏Ò«• ¥ﬁº∫
-2026-03-13,LATAM,∏ﬂΩ√ƒ⁄,CHOICE_KIT,Mexico Awakening Campaign,Best Selling,CONTENT,SNS Content,REFATRIX,289404,"800,000","800,000",x,KRW,RELEASED,B2B,SELL_IN,DH,0,≥‚∞£ √— ∏≈√‚ ∏Ò«• ¥ﬁº∫
-2026-03-24,LATAM,∏ﬂΩ√ƒ⁄,CHOICE_KIT,Mexico Awakening Campaign,Best Selling,CONTENT,SNS Content,REFATRIX,289404,"799,924","799,924",x,KRW,RELEASED,B2B,SELL_IN,DH,0,≥‚∞£ √— ∏≈√‚ ∏Ò«• ¥ﬁº∫
-2025-12-04,MENA,UAE,CHOICE_KIT,Portfolio Expansion Program,Brake Pad,Incentive,Incentive,DYNATRADE,200284,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000,*øπªÛ∏Ò«• ¥ﬁº∫ Ω√ ¡ˆ±ﬁ«“ ∫ÒøÎ¿‘¥œ¥Ÿ.
-2025-12-04,MENA,UAE,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,EMERALD SPARE PARTS,200451,2065000,0,x,KRW,STARTED,B2B,SELL_IN,WS,60000,*øπªÛ∏Ò«• ¥ﬁº∫ Ω√ ¡ˆ±ﬁ«“ ∫ÒøÎ¿‘¥œ¥Ÿ.
-2025-12-04,MENA,Ω√∏Ææ∆,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,AMP-DUBAI,200370,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000,*øπªÛ∏Ò«• ¥ﬁº∫ Ω√ ¡ˆ±ﬁ«“ ∫ÒøÎ¿‘¥œ¥Ÿ.
-2025-12-04,MENA,Ω√∏Ææ∆,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,MOTOR WORLD,288140,2212500,0,x,KRW,STARTED,B2B,SELL_IN,WS,70000,*øπªÛ∏Ò«• ¥ﬁº∫ Ω√ ¡ˆ±ﬁ«“ ∫ÒøÎ¿‘¥œ¥Ÿ.
-2025-12-04,MENA,ø¿∏∏,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,Diamond Auto Spare Parts,202000,2212500,0,x,KRW,STARTED,B2B,SELL_IN,WS,70000,*øπªÛ∏Ò«• ¥ﬁº∫ Ω√ ¡ˆ±ﬁ«“ ∫ÒøÎ¿‘¥œ¥Ÿ.
-2025-12-04,MENA,¿Ã∂Û≈©,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,MESK AL-BARARI,200287,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000,*øπªÛ∏Ò«• ¥ﬁº∫ Ω√ ¡ˆ±ﬁ«“ ∫ÒøÎ¿‘¥œ¥Ÿ.
-2025-12-04,MENA,¿Ã∂Û≈©,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,MOOJID,288264,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000,*øπªÛ∏Ò«• ¥ﬁº∫ Ω√ ¡ˆ±ﬁ«“ ∫ÒøÎ¿‘¥œ¥Ÿ.
-2025-12-04,MENA,∑ππŸ≥Ì,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,"AL ZAIM UNITED CO.,LTD",200411,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000,*øπªÛ∏Ò«• ¥ﬁº∫ Ω√ ¡ˆ±ﬁ«“ ∫ÒøÎ¿‘¥œ¥Ÿ.
-2025-12-04,MENA,πŸ∑π¿Œ,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,AUTO TRUCK PARTS,200452,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000,*øπªÛ∏Ò«• ¥ﬁº∫ Ω√ ¡ˆ±ﬁ«“ ∫ÒøÎ¿‘¥œ¥Ÿ.
-2025-12-04,MENA,¿Ã¡˝∆Æ,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,ENGINEERING AUTOMOTIVE CO.,200266,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000,*øπªÛ∏Ò«• ¥ﬁº∫ Ω√ ¡ˆ±ﬁ«“ ∫ÒøÎ¿‘¥œ¥Ÿ.
-2025-12-04,MENA,æÀ¡¶∏Æ,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,EURL TASSRIAA,200389,2065000,0,x,KRW,STARTED,B2B,SELL_IN,WS,60000,*øπªÛ∏Ò«• ¥ﬁº∫ Ω√ ¡ˆ±ﬁ«“ ∫ÒøÎ¿‘¥œ¥Ÿ.
-2025-12-04,MENA,∆¢¥œ¡ˆ,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,TREEQ ALMAL FOR IMPORT CARS,200333,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000,*øπªÛ∏Ò«• ¥ﬁº∫ Ω√ ¡ˆ±ﬁ«“ ∫ÒøÎ¿‘¥œ¥Ÿ.
-2026-05-01,ASIA,∫£∆Æ≥≤,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,MAST MOTORING AUTOPARTS SOLUTIONS AND,200371,9385950,0,x,KRW,STARTED,B2B,SELL_OUT,KH,"800,000",øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-06-01,ASIA,∫£∆Æ≥≤,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",MAST MOTORING AUTOPARTS SOLUTIONS AND,200371,1200000,0,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-06-01,ASIA,« ∏Æ«…,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,CHUAN LAM AUTO SUPPLY,200241,9181620,0,x,KRW,STARTED,B2B,SELL_OUT,KH,"700,000",øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-06-01,ASIA,« ∏Æ«…,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",CHUAN LAM AUTO SUPPLY,200241,1200000,0,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-05-01,ASIA,∫£∆Æ≥≤,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,NAM BAC AUTO SERVICE JOINT STOCK COMPANY,288130,9385950,0,x,KRW,STARTED,B2B,SELL_OUT,KH,"600,000",øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-06-01,ASIA,∫£∆Æ≥≤,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",NAM BAC AUTO SERVICE JOINT STOCK COMPANY,288130,1200000,0,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-07-01,ASIA,≈¬±π,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,"Seri Wathana Enterprise Co., Ltd",289248,9288930,0,x,KRW,STARTED,B2B,SELL_OUT,KH,"550,000",øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-06-01,ASIA,≈¬±π,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","Seri Wathana Enterprise Co., Ltd",289248,1200000,0,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-05-01,ASIA,≈¬±π,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,GP Mobility Public Company Limited,288352,5946150,0,x,KRW,STARTED,B2B,SELL_OUT,KH,"400,000",øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-06-01,ASIA,≈¬±π,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",GP Mobility Public Company Limited,288352,1200000,0,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-06-01,ASIA,∫£∆Æ≥≤,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,"GTB LIMITED.,CO",200770,4692240,0,x,KRW,STARTED,B2B,SELL_OUT,KH,"350,000",øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-06-01,ASIA,∫£∆Æ≥≤,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","GTB LIMITED.,CO",200770,1200000,0,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-06-01,ASIA,≈¬±π,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,Auto Business Corporation Compan,200332,2788590,0,x,KRW,STARTED,B2B,SELL_OUT,KH,"400,000",øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-06-01,ASIA,≈¬±π,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",Auto Business Corporation Compan,200332,1200000,0,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-05-01,ASIA,¿Œµµ≥◊Ω√æ∆,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,ZENTRALINK OTOPARTS,200335,3554460,0,x,KRW,STARTED,B2B,SELL_OUT,KH,"200,000",øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-06-01,ASIA,¿Œµµ≥◊Ω√æ∆,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",ZENTRALINK OTOPARTS,200335,1200000,0,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-05-01,ASIA,∏ª∑π¿ÃΩ√æ∆,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,MARBORO AUTO PARTS (M) SDN. BHD.,200264,3053190,0,x,KRW,STARTED,B2B,SELL_OUT,KH,200000,øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-06-01,ASIA,∏ª∑π¿ÃΩ√æ∆,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",MARBORO AUTO PARTS (M) SDN. BHD.,200264,1200000,0,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-05-01,ASIA,¿Œµµ≥◊Ω√æ∆,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,PT. Denso Centra,288291,3554460,0,x,KRW,STARTED,B2B,SELL_OUT,KH,"200,000",øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-06-01,ASIA,¿Œµµ≥◊Ω√æ∆,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",PT. Denso Centra,288291,1200000,0,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-05-01,ASIA,« ∏Æ«…,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,"YOUNG AUTO SUPPLY CO., INC.",200242,4229190,0,x,KRW,STARTED,B2B,SELL_OUT,KH,"150,000",øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-06-01,ASIA,« ∏Æ«…,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","YOUNG AUTO SUPPLY CO., INC.",200242,1200000,0,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-05-01,ASIA,≈¬±π,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,CHIN SENG HUAT,200691,1858080,0,x,KRW,STARTED,B2B,SELL_OUT,KH,"70,000",øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-06-01,ASIA,≈¬±π,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",CHIN SENG HUAT,200691,1200000,0,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-06-01,Oceania,»£¡÷,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,Kailos International Pty Ltd,288503,2000000,0,4000000,KRW,STARTED,B2B,SELL_OUT,KH,"74,000",øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-04-24,Korea,«—±π,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,ºº¡æ∆ƒ√˜«√∑ØΩ∫ ¿Ø«—»∏ªÁ,114621,4000000,3500000,8440000,KRW,STARTED,B2B,SELL_OUT,KH,"270,000",øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-06-01,Korea,»£¡÷,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,Mount Shop Ltd,289246,0,0,1000000,KRW,STARTED,B2B,SELL_OUT,KH,"50,000",øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-06-01,ASIA,πÃæ·∏∂,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","Pan Theingi Trading Co., Ltd.",288430,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,"470,000",øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-06-01,ASIA,πÃæ·∏∂,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","Annawa General Trading Co., Ltd",289364,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,"900,000",øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-06-02,ASIA,πÃæ·∏∂,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",DIAMOND STEEL CO LTD,200254,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,"750,000",øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-06-03,ASIA,πÃæ·∏∂,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","MYAMMAR PRODIGY CO., LTD",288114,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,"300,000",øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-06-04,ASIA,πÃæ·∏∂,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",RED STAR TRADING CO. LTD.,200253,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,"600,000",øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-06-04,ASIA,πÃæ·∏∂,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",Yarzar Tun Lin Trading Company Limited,288378,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,"280,000",øπªÛ∏Ò«•¥¬ ø√«ÿ ∞Ì∞¥ªÁ∫∞ ∏Ò«• ø¿¥ı∏¶ ±‚¡ÿ¿∏∑Œ ªÍ¡§µ«æ˙Ω¿¥œ¥Ÿ.
-2026-06-01,ASIA,∫£∆Æ≥≤,CHOICE_KIT,Korean & Japanese vehicles,NEW SKU for Vietnam,Incentive,Incentive,MAST MOTORING AUTOPARTS SOLUTIONS AND,200371,0,0,0,KRW,STARTED,B2B,SELL_IN,KH,,
-2026-06-01,ASIA,∫£∆Æ≥≤,CHOICE_KIT,Korean & Japanese vehicles,NEW SKU for Vietnam,Incentive,Incentive,NAM BAC AUTO SERVICE JOINT STOCK COMPANY,288130,0,0,0,KRW,STARTED,B2B,SELL_IN,KH,,
-2026-06-01,ASIA,∫£∆Æ≥≤,CHOICE_KIT,Korean & Japanese vehicles,NEW SKU for Vietnam,Incentive,Incentive,TAN CO INVESTMENT AND DEVELOPMENT JOINT,289901,0,0,0,KRW,STARTED,B2B,SELL_IN,KH,,
-2026-06-01,ASIA,∫£∆Æ≥≤,CHOICE_KIT,Korean & Japanese vehicles,NEW SKU for Vietnam,Incentive,Incentive,"GTB LIMITED.,CO",200770,0,0,0,KRW,STARTED,B2B,SELL_IN,KH,,
-2026-06-01,ASIA,∫£∆Æ≥≤,CHOICE_KIT,Korean & Japanese vehicles,NEW SKU for Vietnam,Incentive,Incentive,"LIFEPRO AUTO .,JSC",288406,0,0,0,KRW,STARTED,B2B,SELL_IN,KH,,
+execution_date,region,country,promotion_theme,promotion_category,target_product,activity_type,title,customer,customer_code,expected_cost,actual_cost,Bizreward,currency,kpi_metric,target,sell_type,owner,Order_Target($)
+2026-04-09,CIS,ÌÇ§Î•¥Í∏∞Ïä§Ïä§ÌÉÑ,CHOICE_KIT,Asian vehicle,Asian vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,"175,000"
+2026-04-09,CIS,Ïπ¥ÏûêÌùêÏä§ÌÉÑ,CHOICE_KIT,Asian vehicle,Asian vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,"175,000"
+2026-04-09,CIS,Ìà¨Î•¥ÌÅ¨Î©îÎãàÏä§ÌÉÑ,CHOICE_KIT,Asian vehicle,Asian vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,"175,000"
+2026-04-09,CIS,ÌÉÄÏßÄÌÇ§Ïä§ÌÉÑ,CHOICE_KIT,Asian vehicle,Asian vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,"175,000"
+2026-09-20,CIS,CIS,CHOICE_KIT,Asian vehicle,Asian vehicle,CONTENT,SNS Content,ALL,,"600,000",0,x,KRW,DISTRIBUTED,B2C,SELL_OUT,HY,0
+2026-10-20,CIS,ÌÇ§Î•¥Í∏∞Ïä§Ïä§ÌÉÑ,CHOICE_KIT,Asian vehicle,Asian vehicle,Event,Event,ALL,,"6,000,000",0,x,KRW,RELEASED,B2C,SELL_OUT,HY,0
+2026-10-20,CIS,Ïπ¥ÏûêÌùêÏä§ÌÉÑ,CHOICE_KIT,Asian vehicle,Asian vehicle,Event,Event,ALL,,"6,000,000",0,x,KRW,RELEASED,B2C,SELL_OUT,HY,0
+2026-10-20,CIS,Ìà¨Î•¥ÌÅ¨Î©îÎãàÏä§ÌÉÑ,CHOICE_KIT,Asian vehicle,Asian vehicle,Event,Event,ALL,,"6,000,000",0,x,KRW,RELEASED,B2C,SELL_OUT,HY,0
+2026-10-20,CIS,ÌÉÄÏßÄÌÇ§Ïä§ÌÉÑ,CHOICE_KIT,Asian vehicle,Asian vehicle,Event,Event,ALL,,"6,000,000",0,x,KRW,RELEASED,B2C,SELL_OUT,HY,0
+2026-05-04,CIS,ÌÇ§Î•¥Í∏∞Ïä§Ïä§ÌÉÑ,CHOICE_KIT,European vehicle,European vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,"75,000"
+2026-05-04,CIS,Ïπ¥ÏûêÌùêÏä§ÌÉÑ,CHOICE_KIT,European vehicle,European vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,"75,000"
+2026-05-04,CIS,Ìà¨Î•¥ÌÅ¨Î©îÎãàÏä§ÌÉÑ,CHOICE_KIT,European vehicle,European vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,"75,000"
+2026-05-04,CIS,ÌÉÄÏßÄÌÇ§Ïä§ÌÉÑ,CHOICE_KIT,European vehicle,European vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,"75,000"
+2026-10-20,CIS,CIS,CHOICE_KIT,European vehicle,European vehicle,CONTENT,SNS Content,ALL,,"600,000",0,x,KRW,DISTRIBUTED,B2C,SELL_OUT,HY,0
+2026-06-01,ASIA,Î≤†Ìä∏ÎÇ®,CHOICE_KIT,Korean & Japanese vehicles,NEW SKU for Vietnam,Incentive,Incentive,MAST MOTORING AUTOPARTS SOLUTIONS AND,200371,0,0,0,KRW,STARTED,B2B,SELL_IN,KH,
+2026-06-01,ASIA,Î≤†Ìä∏ÎÇ®,CHOICE_KIT,Korean & Japanese vehicles,NEW SKU for Vietnam,Incentive,Incentive,NAM BAC AUTO SERVICE JOINT STOCK COMPANY,288130,0,0,0,KRW,STARTED,B2B,SELL_IN,KH,
+2026-06-01,ASIA,Î≤†Ìä∏ÎÇ®,CHOICE_KIT,Korean & Japanese vehicles,NEW SKU for Vietnam,Incentive,Incentive,TAN CO INVESTMENT AND DEVELOPMENT JOINT,289901,0,0,0,KRW,STARTED,B2B,SELL_IN,KH,
+2026-06-01,ASIA,Î≤†Ìä∏ÎÇ®,CHOICE_KIT,Korean & Japanese vehicles,NEW SKU for Vietnam,Incentive,Incentive,"GTB LIMITED.,CO",200770,0,0,0,KRW,STARTED,B2B,SELL_IN,KH,
+2026-06-01,ASIA,Î≤†Ìä∏ÎÇ®,CHOICE_KIT,Korean & Japanese vehicles,NEW SKU for Vietnam,Incentive,Incentive,"LIFEPRO AUTO .,JSC",288406,0,0,0,KRW,STARTED,B2B,SELL_IN,KH,
+2026-03-13,LATAM,Î©ïÏãúÏΩî,CHOICE_KIT,Mexico Awakening Campaign,Best Selling,CONTENT,SNS Content,REFATRIX,289404,"800,000","800,000",x,KRW,RELEASED,B2B,SELL_IN,DH,66667
+2026-03-24,LATAM,Î©ïÏãúÏΩî,CHOICE_KIT,Mexico Awakening Campaign,Best Selling,CONTENT,SNS Content,REFATRIX,289404,"799,924","799,924",x,KRW,RELEASED,B2B,SELL_IN,DH,66667
+2026-02-11,LATAM,Î©ïÏãúÏΩî,CHOICE_KIT,Mexico Worldcup Promotion,Best Selling,Event,Event,REFATRIX,289404,"399,923","399,923",x,KRW,STARTED,B2B,SELL_IN,DH,66667
+2025-12-04,MENA,UAE,CHOICE_KIT,Portfolio Expansion Program,Brake Pad,Incentive,Incentive,DYNATRADE,200284,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000
+2025-12-04,MENA,UAE,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,EMERALD SPARE PARTS,200451,2065000,0,x,KRW,STARTED,B2B,SELL_IN,WS,60000
+2025-12-04,MENA,ÏãúÎ¶¨ÏïÑ,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,AMP-DUBAI,200370,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000
+2025-12-04,MENA,ÏãúÎ¶¨ÏïÑ,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,MOTOR WORLD,288140,2212500,0,x,KRW,STARTED,B2B,SELL_IN,WS,70000
+2025-12-04,MENA,Ïò§Îßå,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,Diamond Auto Spare Parts,202000,2212500,0,x,KRW,STARTED,B2B,SELL_IN,WS,70000
+2025-12-04,MENA,Ïù¥ÎùºÌÅ¨,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,MESK AL-BARARI,200287,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000
+2025-12-04,MENA,Ïù¥ÎùºÌÅ¨,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,MOOJID,288264,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000
+2025-12-04,MENA,Î†àÎ∞îÎÖº,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,"AL ZAIM UNITED CO.,LTD",200411,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000
+2025-12-04,MENA,Î∞îÎ†àÏù∏,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,AUTO TRUCK PARTS,200452,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000
+2025-12-04,MENA,Ïù¥ÏßëÌä∏,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,ENGINEERING AUTOMOTIVE CO.,200266,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000
+2025-12-04,MENA,ÏïåÏ†úÎ¶¨,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,EURL TASSRIAA,200389,2065000,0,x,KRW,STARTED,B2B,SELL_IN,WS,60000
+2025-12-04,MENA,ÌäÄÎãàÏßÄ,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,TREEQ ALMAL FOR IMPORT CARS,200333,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000
+2026-08-01,LATAM,ÌååÎùºÍ≥ºÏù¥,CHOICE_KIT,Sell-Out Promotion,All items in the market,Event,Event,PLUS CAR,,,,,KRW,,B2C,SELL_OUT,DH,
+2026-08-01,LATAM,ÏóòÏÇ¥Î∞îÎèÑÎ•¥,CHOICE_KIT,Sell-Out Promotion,All items in the market,Event,Event,SUPER REPUESTOS,,,,,KRW,,B2B,SELL_OUT,DH,
+2026-03-02,NA,Ï∫êÎÇòÎã§,CHOICE_KIT,Strategic Partner Program,All items in the market,Event,Incentive Trip,Lordco Auto Parts,289029,"25,868,245",0,x,KRW,STARTED,B2B,SELL_IN,DH,"1,185,141"
+2026-04-03,NA,Ï∫êÎÇòÎã§,CHOICE_KIT,Strategic Partner Program,All items in the market,CONTENT,SNS Content,Lordco Auto Parts,289029,"879,541","879,541",x,KRW,RELEASED,B2B,SELL_IN,DH,0
+2026-04-03,NA,Ï∫êÎÇòÎã§,CHOICE_KIT,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",Lordco Auto Parts,289029,0,0,x,KRW,RELEASED,B2B,SELL_IN,DH,0
+2026-04-17,NA,Ï∫êÎÇòÎã§,CHOICE_KIT,Strategic Partner Program,All items in the market,CONTENT,SNS Content,Lordco Auto Parts,289029,"1,053,590","1,053,590",x,KRW,RELEASED,B2B,SELL_IN,DH,0
+2026-06-01,ASIA,ÎØ∏ÏñÄÎßà,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","Pan Theingi Trading Co., Ltd.",288430,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,"470,000"
+2026-06-01,ASIA,ÎØ∏ÏñÄÎßà,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","Annawa General Trading Co., Ltd",289364,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,"900,000"
+2026-06-02,ASIA,ÎØ∏ÏñÄÎßà,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",DIAMOND STEEL CO LTD,200254,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,"750,000"
+2026-06-03,ASIA,ÎØ∏ÏñÄÎßà,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","MYAMMAR PRODIGY CO., LTD",288114,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,"300,000"
+2026-06-04,ASIA,ÎØ∏ÏñÄÎßà,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",RED STAR TRADING CO. LTD.,200253,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,"600,000"
+2026-06-04,ASIA,ÎØ∏ÏñÄÎßà,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",Yarzar Tun Lin Trading Company Limited,288378,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,"280,000"
+2026-04-24,Korea,ÌïúÍµ≠,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,ÏÑ∏Ï¢ÖÌååÏ∏†ÌîåÎü¨Ïä§ Ïú†ÌïúÌöåÏÇ¨,114621,4000000,3500000,8440000,KRW,STARTED,B2B,SELL_OUT,KH,"270,000"
+2026-05-01,ASIA,Î≤†Ìä∏ÎÇ®,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,MAST MOTORING AUTOPARTS SOLUTIONS AND,200371,9385950,0,x,KRW,STARTED,B2B,SELL_OUT,KH,"800,000"
+2026-05-01,ASIA,Î≤†Ìä∏ÎÇ®,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,NAM BAC AUTO SERVICE JOINT STOCK COMPANY,288130,9385950,0,x,KRW,STARTED,B2B,SELL_OUT,KH,"600,000"
+2026-05-01,ASIA,ÌÉúÍµ≠,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,GP Mobility Public Company Limited,288352,5946150,0,x,KRW,STARTED,B2B,SELL_OUT,KH,"400,000"
+2026-05-01,ASIA,Ïù∏ÎèÑÎÑ§ÏãúÏïÑ,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,ZENTRALINK OTOPARTS,200335,3554460,0,x,KRW,STARTED,B2B,SELL_OUT,KH,"200,000"
+2026-05-01,ASIA,ÎßêÎ†àÏù¥ÏãúÏïÑ,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,MARBORO AUTO PARTS (M) SDN. BHD.,200264,3053190,0,x,KRW,STARTED,B2B,SELL_OUT,KH,200000
+2026-05-01,ASIA,Ïù∏ÎèÑÎÑ§ÏãúÏïÑ,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,PT. Denso Centra,288291,3554460,0,x,KRW,STARTED,B2B,SELL_OUT,KH,"200,000"
+2026-05-01,ASIA,ÌïÑÎ¶¨ÌïÄ,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,"YOUNG AUTO SUPPLY CO., INC.",200242,4229190,0,x,KRW,STARTED,B2B,SELL_OUT,KH,"150,000"
+2026-05-01,ASIA,ÌÉúÍµ≠,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,CHIN SENG HUAT,200691,1858080,0,x,KRW,STARTED,B2B,SELL_OUT,KH,"70,000"
+2026-06-01,ASIA,Î≤†Ìä∏ÎÇ®,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",MAST MOTORING AUTOPARTS SOLUTIONS AND,200371,1200000,0,x,KRW,RELEASED,B2B,SELL_OUT,KH,0
+2026-06-01,ASIA,ÌïÑÎ¶¨ÌïÄ,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,CHUAN LAM AUTO SUPPLY,200241,9181620,0,x,KRW,STARTED,B2B,SELL_OUT,KH,"700,000"
+2026-06-01,ASIA,ÌïÑÎ¶¨ÌïÄ,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",CHUAN LAM AUTO SUPPLY,200241,1200000,0,x,KRW,RELEASED,B2B,SELL_OUT,KH,0
+2026-06-01,ASIA,Î≤†Ìä∏ÎÇ®,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",NAM BAC AUTO SERVICE JOINT STOCK COMPANY,288130,1200000,0,x,KRW,RELEASED,B2B,SELL_OUT,KH,0
+2026-06-01,ASIA,ÌÉúÍµ≠,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","Seri Wathana Enterprise Co., Ltd",289248,1200000,0,x,KRW,RELEASED,B2B,SELL_OUT,KH,0
+2026-06-01,ASIA,ÌÉúÍµ≠,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",GP Mobility Public Company Limited,288352,1200000,0,x,KRW,RELEASED,B2B,SELL_OUT,KH,0
+2026-06-01,ASIA,Î≤†Ìä∏ÎÇ®,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,"GTB LIMITED.,CO",200770,4692240,0,x,KRW,STARTED,B2B,SELL_OUT,KH,"350,000"
+2026-06-01,ASIA,Î≤†Ìä∏ÎÇ®,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","GTB LIMITED.,CO",200770,1200000,0,x,KRW,RELEASED,B2B,SELL_OUT,KH,0
+2026-06-01,ASIA,ÌÉúÍµ≠,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,Auto Business Corporation Compan,200332,2788590,0,x,KRW,STARTED,B2B,SELL_OUT,KH,"400,000"
+2026-06-01,ASIA,ÌÉúÍµ≠,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",Auto Business Corporation Compan,200332,1200000,0,x,KRW,RELEASED,B2B,SELL_OUT,KH,0
+2026-06-01,ASIA,Ïù∏ÎèÑÎÑ§ÏãúÏïÑ,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",ZENTRALINK OTOPARTS,200335,1200000,0,x,KRW,RELEASED,B2B,SELL_OUT,KH,0
+2026-06-01,ASIA,ÎßêÎ†àÏù¥ÏãúÏïÑ,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",MARBORO AUTO PARTS (M) SDN. BHD.,200264,1200000,0,x,KRW,RELEASED,B2B,SELL_OUT,KH,0
+2026-06-01,ASIA,Ïù∏ÎèÑÎÑ§ÏãúÏïÑ,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",PT. Denso Centra,288291,1200000,0,x,KRW,RELEASED,B2B,SELL_OUT,KH,0
+2026-06-01,ASIA,ÌïÑÎ¶¨ÌïÄ,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","YOUNG AUTO SUPPLY CO., INC.",200242,1200000,0,x,KRW,RELEASED,B2B,SELL_OUT,KH,0
+2026-06-01,ASIA,ÌÉúÍµ≠,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",CHIN SENG HUAT,200691,1200000,0,x,KRW,RELEASED,B2B,SELL_OUT,KH,0
+2026-06-01,Oceania,Ìò∏Ï£º,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,Kailos International Pty Ltd,288503,2000000,0,4000000,KRW,STARTED,B2B,SELL_OUT,KH,"74,000"
+2026-06-01,Korea,Ìò∏Ï£º,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,Mount Shop Ltd,289246,0,0,1000000,KRW,STARTED,B2B,SELL_OUT,KH,"50,000"
+2026-07-01,ASIA,ÌÉúÍµ≠,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,"Seri Wathana Enterprise Co., Ltd",289248,9288930,0,x,KRW,STARTED,B2B,SELL_OUT,KH,"550,000"
