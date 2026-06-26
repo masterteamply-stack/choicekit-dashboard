@@ -7176,7 +7176,38 @@ async function renderPromoChart(fOrders, fMkt) {
         </div>`;
       }
     } catch(_) {}
-    renderPromoTable();
+      // SKU 수 차트 (chPromoSku)
+  try{
+    if(charts.promoSku){try{charts.promoSku.destroy();}catch(_){}charts.promoSku=null;}
+    const _sc=document.getElementById('chPromoSku');
+    if(_sc){
+      const _cfg2=state.campaignTargetSkus||{};
+      const _ps2=promoFilter==='__all__'?Object.keys(_cfg2):[promoFilter];
+      const _ts2=new Set(_ps2.flatMap(p=>(_cfg2[p]?.target_skus||[]).map(s=>s.trim())));
+      const _bk2=(promoFilter!=='__all__'&&execBuckets&&execBuckets.length)?execBuckets:(chartBuckets||periodBuckets||[]);
+      const _sm={};
+      (state.orders||[]).forEach(o=>{
+        const p=(o.promotion_category||'').trim();if(!_ps2.includes(p))return;
+        const ps=promoStart[p];if(ps&&o.order_date<ps)return;
+        const pk=periodKey(o.order_date,period);if(!pk)return;
+        const c=(o['CTR Code']||o.sku||'').trim();
+        if(_ts2.size>0&&_ts2.has(c)){_sm[pk]=_sm[pk]||new Set();_sm[pk].add(c);}
+      });
+      const _cd=_bk2.map(pk=>(_sm[pk]||new Set()).size);
+      if(_cd.some(v=>v>0)){
+        const _fl=pk=>{if(!pk)return '';const pt=pk.match(/^20(\d\d)-(\d\d)$/);return pt?"'"+pt[1]+'.'+pt[2]:pk;};
+        charts.promoSku=new Chart(_sc,{type:'bar',
+          data:{labels:_bk2.map(_fl),datasets:[{label:'오더 SKU수',data:_cd,backgroundColor:'#0A84FF',borderWidth:0,borderRadius:3,maxBarThickness:40}]},
+          options:{responsive:true,maintainAspectRatio:false,
+            plugins:{legend:{position:'top',labels:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:11},boxWidth:14}},
+              datalabels:{display:ctx=>ctx.parsed.y>0,anchor:'end',align:'end',offset:2,color:'#0A84FF',font:{family:'IBM Plex Mono',weight:700,size:10},formatter:v=>v>0?v+' SKUs':''} },
+            scales:{x:{grid:{display:false},ticks:{color:'#6e6e73',font:{family:'IBM Plex Mono',size:10}}},
+              y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#6e6e73',font:{family:'IBM Plex Mono',size:10}},beginAtZero:true}}
+          },plugins:[ChartDataLabels]});
+      }
+    }
+  }catch(e){console.error('[promoSku]',e);}
+  renderPromoTable();
   }
 }
 function renderPromoTable() {
