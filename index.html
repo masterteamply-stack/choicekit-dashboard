@@ -8624,10 +8624,66 @@ function renderChoiceKitImpact(fOrders, fMkt) {
   const sP=state.ckiPromo||'__all__',isAll=sP==='__all__',aC=isAll?pns:[sP];
   const oA=state.orders||[],cL={mom:'전년 동월',qoq:'전분기',yoy:'전년 동기'}[cmpMode]||'비교';
   function sYM(ym,mode){let[y,m]=ym.split('-').map(Number);if(mode==='yoy')y-=1;else if(mode==='qoq'){m-=3;if(m<1){m+=12;y-=1;}}else y-=1;return`${y}-${String(m).padStart(2,'0')}`;}
+  function prvPeriodYms(curYms,mode){
+    if(mode==='qoq'){
+      const last=curYms[curYms.length-1]||'';const[ly,lm]=last.split('-').map(Number);
+      const res=[];for(let i=3;i>=1;i--){let nm=lm-i,ny=ly;if(nm<1){nm+=12;ny--;}res.push(`${ny}-${String(nm).padStart(2,'0')}`);}
+      return res;
+    }
+    return curYms.map(ym=>sYM(ym,mode));
+  }
   function gSku(pn){const pc=cfg[pn]||{};if((pc.match_by||'sku')!=='sku')return null;const ex=(pc.target_skus||[]).map(s=>s.trim()).filter(Boolean);return ex.length?new Set(ex):new Set(oA.filter(o=>(o.promotion_category||'')===pn).map(o=>(o.sku||'').trim()).filter(Boolean));}
   function gCust(pn){return new Set((cfg[pn]?.target_customers||[]).map(c=>c.trim()).filter(Boolean));}
-  function mFP(pn){const pc=cfg[pn]||{},mb=(pc.match_by||'sku').toLowerCase(),sS=mb==='sku'?gSku(pn):null,cS=mb!=='sku'?gCust(pn):null;const bY={};oA.forEach(o=>{if(mb==='sku'){if(!sS||!sS.size)return;if(!sS.has((o.sku||o.ctr_code||'').trim()))return;}else{if(!cS||!cS.size)return;if(!cS.has((o.customer||'').trim()))return;}const ym=(o.order_date||'').slice(0,7);if(!ym)return;if(!bY[ym])bY[ym]={skuSet:new Set(),amt:0,orders:0};bY[ym].skuSet.add((o.sku||'').trim());bY[ym].amt+=convOrder(o);bY[ym].orders+=1;});return bY;}
-  function cFP(pn){const pc=cfg[pn]||{},mb=(pc.match_by||'sku').toLowerCase(),sS=mb==='sku'?gSku(pn):null,cS=mb!=='sku'?gCust(pn):null;const src=(state.preOrdersEnabled&&Array.isArray(state.preOrders))?state.preOrders:[];const bY={};src.forEach(o=>{if(mb==='sku'){if(!sS||!sS.size)return;if(!sS.has((o.sku||o.ctr_code||'').trim()))return;}else{if(!cS||!cS.size)return;if(!cS.has((o.customer||'').trim()))return;}const ym=(o.order_date||'').slice(0,7);if(!ym)return;if(!bY[ym])bY[ym]={skuSet:new Set(),amt:0,orders:0};bY[ym].skuSet.add((o.sku||'').trim());bY[ym].amt+=(o.amount_usd!=null?Number(o.amount_usd)*usdToDisplay():convOrder(o));bY[ym].orders+=1;});return bY;}
+  function mFP(pn){
+    const pc=cfg[pn]||{},mb=(pc.match_by||'sku').toLowerCase();
+    const sS=mb==='sku'?gSku(pn):null,cS=mb!=='sku'?gCust(pn):null;
+    // 캠페인 시작일
+    const _mktRows=(state.marketing||[]).filter(m=>(m.promotion_category||'').trim()===pn&&m.date);
+    const _started=_mktRows.filter(m=>(m.kpi_metric||'').trim().toUpperCase()==='STARTED');
+    const _pool=_started.length?_started:_mktRows;
+    let _start=_pool.map(m=>m.date||m.execution_date||'').filter(Boolean).sort()[0]||'';
+    if(_start<'2026-01-02')_start='2026-01-02';
+    const PAT=/^PO-([^-]+)-/;
+    const bY={};
+    oA.forEach(o=>{
+      const od=o.order_date||'';if(!od||(_start&&od<_start))return;
+      if(mb==='sku'){
+        if(!sS||!sS.size)return;
+        const ctrField=(o.ctr_code||o['CTR Code']||'').trim();
+        const skuField=(o.sku||'').trim();
+        const oidCtr=((o.order_id||'').match(PAT)||[])[1]||'';
+        if(!sS.has(ctrField)&&!sS.has(skuField)&&!sS.has(oidCtr))return;
+      }else{if(!cS||!cS.size)return;if(!cS.has((o.customer||'').trim()))return;}
+      const ym=od.slice(0,7);if(!ym)return;
+      if(!bY[ym])bY[ym]={skuSet:new Set(),amt:0,orders:0};
+      const ctrKey=(o.ctr_code||o['CTR Code']||o.sku||'').trim();
+      bY[ym].skuSet.add(ctrKey||'?');bY[ym].amt+=convOrder(o);bY[ym].orders+=1;
+    });return bY;
+  }
+  function cFP(pn){
+    const pc=cfg[pn]||{},mb=(pc.match_by||'sku').toLowerCase();
+    const sS=mb==='sku'?gSku(pn):null,cS=mb!=='sku'?gCust(pn):null;
+    // preOrders + orders.csv 모두 포함 (전년/전분기 기간)
+    const src=(state.preOrdersEnabled&&Array.isArray(state.preOrders)&&state.preOrders.length)
+      ?(state.orders||[]).concat(state.preOrders):(state.orders||[]);
+    const PAT=/^PO-([^-]+)-/;
+    const bY={};
+    src.forEach(o=>{
+      if(mb==='sku'){
+        if(!sS||!sS.size)return;
+        const ctrField=(o.ctr_code||o['CTR Code']||'').trim();
+        const skuField=(o.sku||'').trim();
+        const oidCtr=((o.order_id||'').match(PAT)||[])[1]||'';
+        if(!sS.has(ctrField)&&!sS.has(skuField)&&!sS.has(oidCtr))return;
+      }else{if(!cS||!cS.size)return;if(!cS.has((o.customer||'').trim()))return;}
+      const ym=(o.order_date||'').slice(0,7);if(!ym)return;
+      if(!bY[ym])bY[ym]={skuSet:new Set(),amt:0,orders:0};
+      const ctrKey=(o.ctr_code||o['CTR Code']||o.sku||'').trim();
+      bY[ym].skuSet.add(ctrKey||'?');
+      bY[ym].amt+=(o.amount_usd!=null&&o[PRE_ORDER_MARK])?Number(o.amount_usd)*usdToDisplay():convOrder(o);
+      bY[ym].orders+=1;
+    });return bY;
+  }
   const cYms=Array.from(new Set(oA.map(o=>(o.order_date||'').slice(0,7)).filter(Boolean))).sort();
   const cBY={};cYms.forEach(ym=>{cBY[ym]={skuCount:0,amt:0,orders:0};});
   const cS2={};
