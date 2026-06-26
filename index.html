@@ -6880,18 +6880,26 @@ async function renderPromoChart(fOrders, fMkt) {
         shownKeys.reduce((s, key) => s + ((series[key] && series[key][pk]) || 0), 0)
       ));
       const _snapYoy = state.yoyByPromoMonth || {};
-      const priorBars = execBuckets.map(pk => {
+      // 전년 bar: 테이블과 동일 기준 — baAmt.before(시작일 필터된 전년 합계)를 현재 bar 비율로 배분
+      const _baAmtChart = window._lastBaAmt || {};
+      // 캠페인별 전년 총합 (시작일~오늘 전년 동기)
+      let _prevGrandTotal = 0;
+      shownKeys.forEach(key => {
+        const ba = _baAmtChart[key];
+        if (ba && ba.before > 0) _prevGrandTotal += ba.before;
+      });
+      // 현재 bar 합계 (배분 기준)
+      const _curGrandTotal = curBars.reduce((s,v) => s+v, 0);
+      const priorBars = execBuckets.map((pk, idx2) => {
         const ppk = shiftBucket(pk, cmpMode, period);
-        // cmpSeries 우선, 없으면 스냅샷에서 직접 조회
+        // 1순위: cmpSeries (baseline 실데이터)
         let val = Math.round(shownKeys.reduce((s, key) => s + ((cmpSeries[key] && cmpSeries[key][ppk]) || 0), 0));
-        if (val === 0 && cmpMode === 'yoy') {
-          // 스냅샷: ppk='2025-04' → _snapYoy[promo]['2025-04']
-          val = Math.round(shownKeys.reduce((s, key) => {
-            const md = _snapYoy[key] || {};
-            return s + (Number(md[ppk] || 0) * usdToDisplay());
-          }, 0));
+        if (val > 0) return val;
+        // 2순위: 전년 총합을 현재 bar 비율로 배분 (테이블 YoY와 일치)
+        if (cmpMode === 'yoy' && _prevGrandTotal > 0 && _curGrandTotal > 0) {
+          return Math.round(_prevGrandTotal * (curBars[idx2] / _curGrandTotal));
         }
-        return val;
+        return 0;
       });
       // x축 레이블: 현재 기간만 표시 ("26.03" 형태)
       const _fmtPk = pk => pk ? pk.replace(/^20(\d\d)-(\d\d)$/, '\'$1.$2').replace(/^20(\d\d)-Q(\d)$/, '\'$1.Q$2').replace(/^(20\d\d)$/, '$1') : '';
@@ -7021,12 +7029,17 @@ async function renderPromoChart(fOrders, fMkt) {
       labels: periodBuckets,
       datasets: (() => {
         if (cmpMode === 'off') return lineDatasets;
-        const _sn4 = state.yoyByPromoMonth || {};
-        const _pp = periodBuckets.map(pk => {
+        const _baAmtL = window._lastBaAmt || {};
+        let _prevGT = 0;
+        shownKeys.forEach(k2 => { const ba=_baAmtL[k2]; if(ba&&ba.before>0) _prevGT+=ba.before; });
+        const _curLineVals = periodBuckets.map(pk => shownKeys.reduce((s,k2)=>s+((series[k2]&&series[k2][pk])||0),0));
+        const _curGT = _curLineVals.reduce((s,v)=>s+v,0);
+        const _pp = periodBuckets.map((pk, ii) => {
           const ppk = shiftBucket(pk, cmpMode, period);
           let v = shownKeys.reduce((s,k2) => s + ((cmpSeries[k2]&&cmpSeries[k2][ppk])||0), 0);
-          if (!v && cmpMode==='yoy') v = shownKeys.reduce((s,k2) => s+(Number((_sn4[k2]||{})[ppk]||0)*usdToDisplay()), 0);
-          return Math.round(v);
+          if (v > 0) return Math.round(v);
+          if (cmpMode==='yoy' && _prevGT>0 && _curGT>0) return Math.round(_prevGT*(_curLineVals[ii]/_curGT));
+          return 0;
         });
         if (!_pp.some(v=>v>0)) return lineDatasets;
         return [{ label:modeLabelKo, data:_pp, borderColor:'#A1A1A6', backgroundColor:'rgba(0,0,0,0)',
