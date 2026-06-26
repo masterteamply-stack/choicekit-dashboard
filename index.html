@@ -4255,7 +4255,7 @@ function renderAll() {
 
   // ── Phase 2a: PlanExec, CustomerTrend ──
   _deferRender(() => {
-    renderPlanExec(fOrdersPP, fMkt);
+    renderPlanExec(fOrders, fMkt);
     renderCustomerTrend(fOrdersPP, fMkt);
   }, 80);
 
