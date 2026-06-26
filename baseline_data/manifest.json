@@ -1,15 +1,14 @@
 {
-  "total_records": 21907,
-  "total_chunks": 44,
+  "total_records": 22135,
+  "total_chunks": 45,
   "chunk_size": 500,
-  "filter_basis": "SKU (Asian/European/Portfolio) + Customer+Country (Trade/Strategic/Mexico/K&J)",
-  "date_range": "2025-01-01 to 2026-12-31 (2024 excluded)",
+  "date_range": "2025-2026 (2024 excluded)",
   "by_year": {
-    "2025": 11311,
-    "2026": 10596
+    "2025": 11349,
+    "2026": 10786
   },
-  "sku_matched": 9936,
-  "customer_matched": 11971,
+  "sku_matched": 9366,
+  "customer_matched": 12769,
   "top_customers": {
     "TAN CO INVESTMENT AND DEVELOPMENT JOINT": 2720,
     "CHUAN LAM AUTO SUPPLY": 1615,
@@ -22,6 +21,5 @@
     "NAM BAC AUTO SPARE PART CORPORATION.": 467,
     "GTB LIMITED.,CO": 367
   },
-  "generated_at": "2026-06-26",
-  "description": "Baseline pre-orders: target SKU/customer+country only, 2025+ only"
+  "generated_at": "2026-06-26"
 }
