@@ -4311,10 +4311,16 @@ function buildPlanExecNodes(fOrders, fMkt) {
     };
     return tree[r][c][p][cust];
   };
+  // PP 기준: 캠페인 시작일(promoStart) 이후 + promotion_category 매칭만 집계
+  const _peStart = window._lastPromoStart || {};
   fOrders.forEach(o => {
     if (!isRegionVisible(o.region)) return;
+    const p = (o.promotion_category || '–').trim();
+    // 캠페인 시작일 이후만 (PP와 동일)
+    const _ps = _peStart[p];
+    if (_ps && o.order_date && o.order_date < _ps) return;
     const cust = (o.customer || '–').trim() || '–';
-    const x = ensure(o.region||'–', o.country||'–', o.promotion_category||'–', cust);
+    const x = ensure(o.region||'–', o.country||'–', p||'–', cust);
     const yr = String(o.order_date||'').slice(0,4);
     const amt = convOrder(o);
     if (yr === currYear) {
@@ -4372,7 +4378,7 @@ function buildPlanExecNodes(fOrders, fMkt) {
     // create tree entries. Avoids the phantom "–" country card.
     const mktCountryRaw = normalizeCountry(m.country || '') || '';
     const mktCountryIsRegion = !mktCountryRaw;  // normalizeCountry returns '' for region values
-    const yr = String(m.date||'').slice(0,4);
+    const yr = String(m.date||m.execution_date||'').slice(0,4);
     const actCost = convMktActual(m);
     const expCost = convMktExpected(m);
     const budCost = convMktBudget(m);
@@ -4390,7 +4396,7 @@ function buildPlanExecNodes(fOrders, fMkt) {
             x.costActualPrev += actCost/n; x.costExpectedPrev += expCost/n;
           }
           if (m.sell_type) x.sellTypes.add(m.sell_type);
-          const d = (m.date||'').trim();
+          const d = (m.date||m.execution_date||'').trim();
           if (d && (!x.earliestExec || d < x.earliestExec)) x.earliestExec = d;
         });
       }
