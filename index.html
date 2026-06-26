@@ -7226,7 +7226,6 @@ function renderPromoTable() {
     // gC = pCA 합산 (= curTotal), gP = baAmt.before 합산 (= priorTotal)
     const gC=Object.values(pCA).reduce((s,v)=>s+v,0);
     const gP=summary.reduce((s,p)=>s+(p.beforeAmt||0),0);
-    const gP=summary.reduce((s,p)=>s+(p.beforeAmt||0),0);
     if(rnEl){const st=summary.map(r=>r.baStart||'').filter(Boolean).sort();const fr=st.length?_fd(st[0]):'';const to=_fd((_todayStr||(() => new Date().toISOString().slice(0,10)))());rnEl.textContent=fr?`${fr} ~ ${to}`:''}
     const cs='padding:4px 10px;text-align:right;font-family:var(--font-mono);white-space:nowrap;border-bottom:1px solid var(--border)';
     const hs='padding:4px 10px;text-align:right;font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--text-2);border-bottom:2px solid var(--border)';
