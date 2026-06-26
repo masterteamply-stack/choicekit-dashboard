@@ -8633,7 +8633,25 @@ function renderChoiceKitImpact(fOrders, fMkt) {
   const cS2={};
   aC.forEach(pn=>{const cur=mFP(pn),prv=cFP(pn);let tCA=0,tPA=0,tCS=0,tPS=0,tCO=0;cYms.forEach(ym=>{const c=cur[ym]||{skuSet:new Set(),amt:0,orders:0},ppym=sYM(ym,cmpMode),p=prv[ppym]||{skuSet:new Set(),amt:0,orders:0};cBY[ym].skuCount+=c.skuSet.size;cBY[ym].amt+=c.amt;cBY[ym].orders+=c.orders;tCA+=c.amt;tCS+=c.skuSet.size;tCO+=c.orders;tPA+=p.amt;tPS+=p.skuSet.size;});cS2[pn]={cur,prv,totalCurAmt:tCA,totalPrvAmt:tPA,totalCurSku:tCS,totalPrvSku:tPS,totalCurOrd:tCO};});
   const kE=document.getElementById('ckiKpis');
-  if(kE){const gCA=aC.reduce((s,pn)=>s+cS2[pn].totalCurAmt,0),gPA=aC.reduce((s,pn)=>s+cS2[pn].totalPrvAmt,0),gCS=cYms.reduce((s,ym)=>s+cBY[ym].skuCount,0),gCO=cYms.reduce((s,ym)=>s+cBY[ym].orders,0),dA=gPA>0?((gCA-gPA)/gPA*100):null;const dT=v=>v==null?'<span class="muted" style="font-size:20px">–</span>':v>=0?`<span class="t-green" style="font-size:20px;font-weight:800">▲${v.toFixed(1)}%</span>`:`<span class="t-red" style="font-size:20px;font-weight:800">▼${Math.abs(v).toFixed(1)}%</span>`;const card=(l,v,s='')=>`<div style="background:rgba(0,0,0,0.02);border:1px solid var(--border);border-radius:10px;padding:12px 14px"><div class="label-mono" style="font-size:10px;color:var(--text-2);letter-spacing:.05em">${l}</div><div style="font-size:20px;font-weight:800;margin-top:4px">${v}</div>${s?`<div class="label-mono muted" style="font-size:11px;margin-top:3px">${s}</div>`:''}</div>`;kE.innerHTML=card('현재 ORDER AMT',fmtMoney(gCA),gPA>0?`${cL}: ${fmtMoney(gPA)}`:'baseline 로딩 전')+card(`vs ${cL}`,dT(dA),gPA>0?`${gCA>gPA?'+':'-'}${fmtMoney(Math.abs(gCA-gPA))}`:cL+' 데이터 없음')+card('누적 오더 SKU 수',fmtNum(gCS),`${aC.length}개 캠페인 합산`)+card('누적 오더 수',fmtNum(gCO),'현재 기간');kE.style.display='grid';}
+  if(kE){const gCA=aC.reduce((s,pn)=>s+cS2[pn].totalCurAmt,0),gPA=aC.reduce((s,pn)=>s+cS2[pn].totalPrvAmt,0),gCS=cYms.reduce((s,ym)=>s+cBY[ym].skuCount,0),gCO=cYms.reduce((s,ym)=>s+cBY[ym].orders,0),dA=gPA>0?((gCA-gPA)/gPA*100):null;const dT=v=>v==null?'<span class="muted" style="font-size:20px">–</span>':v>=0?`<span class="t-green" style="font-size:20px;font-weight:800">▲${v.toFixed(1)}%</span>`:`<span class="t-red" style="font-size:20px;font-weight:800">▼${Math.abs(v).toFixed(1)}%</span>`;const card=(l,v,s='')=>`<div style="background:rgba(0,0,0,0.02);border:1px solid var(--border);border-radius:10px;padding:12px 14px"><div class="label-mono" style="font-size:10px;color:var(--text-2);letter-spacing:.05em">${l}</div><div style="font-size:20px;font-weight:800;margin-top:4px">${v}</div>${s?`<div class="label-mono muted" style="font-size:11px;margin-top:3px">${s}</div>`:''}</div>`;// 이달(최근 월) 데이터
+    const _thisYm=cYms[cYms.length-1]||'';
+    const _thisMo=cBY[_thisYm]||{skuCount:0,amt:0,orders:0};
+    const _thisMoAmt=_thisMo.amt, _thisMoSku=_thisMo.skuCount, _thisMoOrd=_thisMo.orders;
+    const _fym=ym=>ym?ym.replace(/^20(\d\d)-(\d\d)$/,"'$1.$2"):ym;
+    kE.innerHTML=
+      card('현재 ORDER AMT',
+        fmtMoney(gCA),
+        `${gPA>0?cL+': '+fmtMoney(gPA):'–'} · 이달(${_fym(_thisYm)}): ${fmtMoney(_thisMoAmt)}`)+
+      card(`vs ${cL}`,
+        dT(dA),
+        gPA>0?`${gCA>gPA?'+':'-'}${fmtMoney(Math.abs(gCA-gPA))}`:cL+' 데이터 없음')+
+      card('누적 오더 SKU 수',
+        fmtNum(gCS),
+        `${aC.length}개 캠페인 합산 · 이달: ${fmtNum(_thisMoSku)} SKUs`)+
+      card('누적 오더 수',
+        fmtNum(gCO),
+        `현재 기간 · 이달(${_fym(_thisYm)}): ${fmtNum(_thisMoOrd)}건`);
+    kE.style.display='grid';}
   const fYm=ym=>ym?ym.replace(/^20(\d\d)-(\d\d)$/,"'$1.$2"):ym;
   const lbs=cYms.map(fYm),cSD=cYms.map(ym=>cBY[ym].skuCount),pSD=cYms.map(ym=>{const ppym=sYM(ym,cmpMode);return aC.reduce((s,pn)=>{const p=cS2[pn].prv[ppym];return s+(p?p.skuSet.size:0);},0);}),hP=pSD.some(v=>v>0);
   const cAD=cYms.map(ym=>Math.round(cBY[ym].amt)),pAD=cYms.map(ym=>{const ppym=sYM(ym,cmpMode);return Math.round(aC.reduce((s,pn)=>{const p=cS2[pn].prv[ppym];return s+(p?p.amt:0);},0));}),hPA=pAD.some(v=>v>0);
