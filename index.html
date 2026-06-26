@@ -11086,13 +11086,10 @@ window.resetToSharedData = resetToSharedData;
     const hDiff = window.outerHeight - window.innerHeight > threshold;
     if ((wDiff || hDiff) && !devtoolsOpen) {
       devtoolsOpen = true;
-      // 데이터 영역 blur 처리
-      const main = document.querySelector('main');
-      if (main) main.style.filter = 'blur(8px)';
     } else if (!wDiff && !hDiff && devtoolsOpen) {
       devtoolsOpen = false;
       const main = document.querySelector('main');
-      if (main) main.style.filter = '';
+      if (main) main.style.filter = ''; // 혹시 남아있으면 제거
     }
   }, 1000);
 
