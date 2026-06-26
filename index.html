@@ -7301,10 +7301,37 @@ function renderPromoTable() {
       _custSetFull[p]=new Set((cfg.target_customers||[]).map(c=>c.trim()));
     }
   });
-  [...(state.orders||[]),...((state.preOrdersEnabled&&Array.isArray(state.preOrders))?state.preOrders:[])].forEach(o=>{const pr=(o.promotion_category||o._promo||'').trim();if(!_sp.has(pr))return;const ba=_baAmt[pr];if(!ba||!ba.prevFrom||!ba.prevTo)return;const d=o.order_date||'';if(!d||d<ba.prevFrom||d>ba.prevTo)return;const mb=_pmb[pr]||'sku';
-    if(mb==='sku'){const ss=_pts[pr];if(ss&&ss.size>0&&!ss.has((o.sku||o.ctr_code||'').trim()))return;}
-    else{const cs=_custSetFull[pr]||_ptc[pr];if(cs&&cs.size>0&&!cs.has((o.customer||'').trim()))return;}
-    const country=o.country||o.region||'–',cust=o.customer||'–';const amt=(o[PRE_ORDER_MARK]&&o.amount_usd!=null)?Number(o.amount_usd)*usdToDisplay():convOrder(o);if(!ddP[pr])ddP[pr]={};if(!ddP[pr][country])ddP[pr][country]={};ddP[pr][country][cust]=(ddP[pr][country][cust]||0)+amt;});
+  // ddP: 역추적 맵 빌드 (baseline PRE_ORDER → 캠페인)
+  const _ddpCtrToPromo={}, _ddpCustToPromo={};
+  Object.keys(state.campaignTargetSkus||{}).forEach(p=>{
+    const c2=(state.campaignTargetSkus||{})[p]||{},mb2=(c2.match_by||'sku').toLowerCase();
+    if(mb2==='sku'){(c2.target_skus||[]).forEach(s=>{_ddpCtrToPromo[s.trim()]=p;});}
+    else{(c2.target_customers||[]).forEach(c=>{_ddpCustToPromo[c.trim()]=p;});}
+  });
+  const PAT_DDP=/^PO-([^-]+)-/;
+  [...(state.orders||[]),...((state.preOrdersEnabled&&Array.isArray(state.preOrders))?state.preOrders:[])].forEach(o=>{
+    const d=o.order_date||'';if(!d)return;
+    // 캠페인 결정: promotion_category 또는 역추적
+    let pr=(o.promotion_category||o._promo||'').trim();
+    if(!_sp.has(pr)||pr==='PRE_ORDER'){
+      const sk=(o.sku||'').trim(),m2=(o.order_id||'').match(PAT_DDP),ct=m2?m2[1]:sk;
+      pr=_ddpCtrToPromo[ct]||_ddpCtrToPromo[sk]||_ddpCustToPromo[(o.customer||'').trim()]||'';
+    }
+    if(!pr||!_sp.has(pr))return;
+    const ba=_baAmt[pr];if(!ba||!ba.prevFrom||!ba.prevTo)return;
+    if(d<ba.prevFrom||d>ba.prevTo)return;
+    const mb=_pmb[pr]||'sku';
+    if(mb==='sku'){
+      const sk2=(o.sku||'').trim(),m3=(o.order_id||'').match(PAT_DDP),ct2=m3?m3[1]:sk2;
+      const ss=_pts[pr];if(ss&&ss.size>0&&!ss.has(ct2)&&!ss.has(sk2))return;
+    }else{
+      const cs=_custSetFull[pr]||_ptc[pr];if(cs&&cs.size>0&&!cs.has((o.customer||'').trim()))return;
+    }
+    const country=o.country||o.region||'–',cust=o.customer||'–';
+    const amt=(o[PRE_ORDER_MARK]&&o.amount_usd!=null)?Number(o.amount_usd)*usdToDisplay():convOrder(o);
+    if(!ddP[pr])ddP[pr]={};if(!ddP[pr][country])ddP[pr][country]={};
+    ddP[pr][country][cust]=(ddP[pr][country][cust]||0)+amt;
+  });
   const ddM={};fMkt.forEach(m=>{const pr=(m.promotion_category||'').trim();if(!_sp.has(pr))return;const country=m.country||m.region||'–';if(!ddM[pr])ddM[pr]={};if(!ddM[pr][country])ddM[pr][country]={actual:0,expected:0};ddM[pr][country].actual+=convMktActual(m);ddM[pr][country].expected+=convMktExpected(m);});
   const rc={CIS:'#5856D6',MENA:'#FF9500',LATAM:'#34C759',ASIA:'#0A84FF',EUROPE:'#FF375F',NA:'#BF5AF2'};
   const rbadge=label=>{if(!label)return'';return label.split(',').map(r=>{const k=r.trim().toUpperCase(),c=rc[k]||'#86868B';return`<span style="display:inline-block;background:${c}18;color:${c};border:1px solid ${c}40;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;margin-left:4px;vertical-align:middle">${r.trim()}</span>`;}).join('');};
@@ -8682,12 +8709,12 @@ function renderChoiceKitImpact(fOrders, fMkt) {
     const bY={};
     oA.forEach(o=>{
       const od=o.order_date||'';if(!od||(_start&&od<_start))return;
-      // promotion_category 태그도 반드시 일치해야 함 (PP와 동일 기준)
-      if((o.promotion_category||'').trim()!==pn)return;
       if(mb==='sku'){
         if(!sS||!sS.size)return;
-        const ctrField=(o['CTR Code']||o.sku||'').trim();
-        if(!sS.has(ctrField))return;
+        const ctrField=(o.ctr_code||o['CTR Code']||'').trim();
+        const skuField=(o.sku||'').trim();
+        const oidCtr=((o.order_id||'').match(PAT)||[])[1]||'';
+        if(!sS.has(ctrField)&&!sS.has(skuField)&&!sS.has(oidCtr))return;
       }else{if(!cS||!cS.size)return;if(!cS.has((o.customer||'').trim()))return;}
       const ym=od.slice(0,7);if(!ym)return;
       if(!bY[ym])bY[ym]={skuSet:new Set(),amt:0,orders:0};
