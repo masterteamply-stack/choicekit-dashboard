@@ -6226,7 +6226,8 @@ async function renderPromoChart(fOrders, fMkt) {
     // Keep sum[] consistent with summary[] so other consumers (table cells)
     // also see the corrected value.
     if (sum[s.promotion]) sum[s.promotion].orderAmt = ba.after;
-    s.roi = s.actual > 0 ? ((s.orderAmt - s.actual) / s.actual) * 100 : null;
+    const _roiBase = s.actual > 0 ? s.actual : (s.expected > 0 ? s.expected : 0);
+    s.roi = _roiBase > 0 ? ((s.orderAmt - _roiBase) / _roiBase) * 100 : null;
   });
   // Now sort by the corrected orderAmt (was deferred from summary creation).
   summary.sort((a,b) => (b.orderAmt||0) - (a.orderAmt||0));
@@ -7179,7 +7180,18 @@ function renderPromoTable() {
   const dd={};
   fOrders.forEach(o=>{const pr=(o.promotion_category||'').trim();if(!_sp.has(pr))return;const st=_ps[pr];if(st&&o.order_date<st)return;const mb=_pmb[pr]||'sku';if(mb==='sku'){const ss=_pts[pr];if(ss&&ss.size>0&&!ss.has((o.sku||o.ctr_code||'').trim()))return;}else{const cs=_ptc[pr];if(cs&&cs.size>0&&!cs.has((o.customer||'').trim()))return;}const country=o.country||o.region||'–',cust=o.customer||'–';if(!dd[pr])dd[pr]={};if(!dd[pr][country])dd[pr][country]={};if(!dd[pr][country][cust])dd[pr][country][cust]={amt:0,orders:0};dd[pr][country][cust].amt+=convOrder(o);dd[pr][country][cust].orders+=1;});
   const ddP={};
-  [...(state.orders||[]),...((state.preOrdersEnabled&&Array.isArray(state.preOrders))?state.preOrders:[])].forEach(o=>{const pr=(o.promotion_category||o._promo||'').trim();if(!_sp.has(pr))return;const ba=_baAmt[pr];if(!ba||!ba.prevFrom||!ba.prevTo)return;const d=o.order_date||'';if(!d||d<ba.prevFrom||d>ba.prevTo)return;const mb=_pmb[pr]||'sku';if(mb==='sku'){const ss=_pts[pr];if(ss&&ss.size>0&&!ss.has((o.sku||o.ctr_code||'').trim()))return;}else{const cs=_ptc[pr];if(cs&&cs.size>0&&!cs.has((o.customer||'').trim()))return;}const country=o.country||o.region||'–',cust=o.customer||'–';const amt=(o[PRE_ORDER_MARK]&&o.amount_usd!=null)?Number(o.amount_usd)*usdToDisplay():convOrder(o);if(!ddP[pr])ddP[pr]={};if(!ddP[pr][country])ddP[pr][country]={};ddP[pr][country][cust]=(ddP[pr][country][cust]||0)+amt;});
+  // customer 기반 캠페인: target_customers(긴 이름) + orders.csv(짧은 이름) 양방향 매칭
+  const _custSetFull = {};
+  Object.keys(state.campaignTargetSkus||{}).forEach(p=>{
+    const cfg=(state.campaignTargetSkus||{})[p]||{};
+    if((cfg.match_by||'sku')==='customer'){
+      _custSetFull[p]=new Set((cfg.target_customers||[]).map(c=>c.trim()));
+    }
+  });
+  [...(state.orders||[]),...((state.preOrdersEnabled&&Array.isArray(state.preOrders))?state.preOrders:[])].forEach(o=>{const pr=(o.promotion_category||o._promo||'').trim();if(!_sp.has(pr))return;const ba=_baAmt[pr];if(!ba||!ba.prevFrom||!ba.prevTo)return;const d=o.order_date||'';if(!d||d<ba.prevFrom||d>ba.prevTo)return;const mb=_pmb[pr]||'sku';
+    if(mb==='sku'){const ss=_pts[pr];if(ss&&ss.size>0&&!ss.has((o.sku||o.ctr_code||'').trim()))return;}
+    else{const cs=_custSetFull[pr]||_ptc[pr];if(cs&&cs.size>0&&!cs.has((o.customer||'').trim()))return;}
+    const country=o.country||o.region||'–',cust=o.customer||'–';const amt=(o[PRE_ORDER_MARK]&&o.amount_usd!=null)?Number(o.amount_usd)*usdToDisplay():convOrder(o);if(!ddP[pr])ddP[pr]={};if(!ddP[pr][country])ddP[pr][country]={};ddP[pr][country][cust]=(ddP[pr][country][cust]||0)+amt;});
   const ddM={};fMkt.forEach(m=>{const pr=(m.promotion_category||'').trim();if(!_sp.has(pr))return;const country=m.country||m.region||'–';if(!ddM[pr])ddM[pr]={};if(!ddM[pr][country])ddM[pr][country]={actual:0,expected:0};ddM[pr][country].actual+=convMktActual(m);ddM[pr][country].expected+=convMktExpected(m);});
   const rc={CIS:'#5856D6',MENA:'#FF9500',LATAM:'#34C759',ASIA:'#0A84FF',EUROPE:'#FF375F',NA:'#BF5AF2'};
   const rbadge=label=>{if(!label)return'';return label.split(',').map(r=>{const k=r.trim().toUpperCase(),c=rc[k]||'#86868B';return`<span style="display:inline-block;background:${c}18;color:${c};border:1px solid ${c}40;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;margin-left:4px;vertical-align:middle">${r.trim()}</span>`;}).join('');};
@@ -7232,6 +7244,46 @@ function renderPromoTable() {
   document.getElementById('tblPromo').innerHTML=head+body;
   } catch(e){console.error('[renderPromoTable]',e);}
 }
+// ── Promotion Performance 드릴다운 토글 함수 ──
+function togglePromoDrill(row, promo) {
+  const tbl = row.closest('table');
+  if (!tbl) return;
+  const drillRows = tbl.querySelectorAll(`.promo-drill-country[data-promo="${CSS.escape(promo)}"]`);
+  const arrow = row.querySelector('.promo-drill-arrow');
+  const isOpen = row.dataset.open === '1';
+  if (isOpen) {
+    drillRows.forEach(r => { r.style.display = 'none'; });
+    // 고객 드릴다운도 닫기
+    tbl.querySelectorAll(`.promo-drill-cust[data-promo="${CSS.escape(promo)}"]`).forEach(r => { r.style.display = 'none'; delete r.dataset.open; });
+    row.dataset.open = '0';
+    if (arrow) arrow.textContent = '▶';
+  } else {
+    drillRows.forEach(r => { r.style.display = ''; });
+    row.dataset.open = '1';
+    if (arrow) arrow.textContent = '▼';
+  }
+}
+
+function toggleCustomerDrill(row, promo, country) {
+  const tbl = row.closest('table');
+  if (!tbl) return;
+  const custRows = tbl.querySelectorAll(`.promo-drill-cust[data-promo="${CSS.escape(promo)}"][data-country="${CSS.escape(country)}"]`);
+  const isOpen = row.dataset.open === '1';
+  const arrow = row.querySelector('span');
+  if (isOpen) {
+    custRows.forEach(r => { r.style.display = 'none'; });
+    row.dataset.open = '0';
+    if (arrow) arrow.textContent = '▶';
+  } else {
+    custRows.forEach(r => { r.style.display = ''; });
+    row.dataset.open = '1';
+    if (arrow) arrow.textContent = '▼';
+  }
+}
+window.togglePromoDrill = togglePromoDrill;
+window.toggleCustomerDrill = toggleCustomerDrill;
+
+
 
 
 /* Combined Sales Trend renderer — toggles between Promotion Category and Region/Country */
