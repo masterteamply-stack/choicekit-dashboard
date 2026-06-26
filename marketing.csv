@@ -21,18 +21,18 @@ execution_date,region,country,promotion_theme,promotion_category,target_product,
 2026-03-13,LATAM,멕시코,CHOICE_KIT,Mexico Awakening Campaign,Best Selling,CONTENT,SNS Content,REFATRIX,289404,"800,000","800,000",x,KRW,RELEASED,B2B,SELL_IN,DH,66667
 2026-03-24,LATAM,멕시코,CHOICE_KIT,Mexico Awakening Campaign,Best Selling,CONTENT,SNS Content,REFATRIX,289404,"799,924","799,924",x,KRW,RELEASED,B2B,SELL_IN,DH,66667
 2026-02-11,LATAM,멕시코,CHOICE_KIT,Mexico Worldcup Promotion,Best Selling,Event,Event,REFATRIX,289404,"399,923","399,923",x,KRW,STARTED,B2B,SELL_IN,DH,66667
-2025-12-04,MENA,UAE,CHOICE_KIT,Portfolio Expansion Program,Brake Pad,Incentive,Incentive,DYNATRADE,200284,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000
-2025-12-04,MENA,UAE,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,EMERALD SPARE PARTS,200451,2065000,0,x,KRW,STARTED,B2B,SELL_IN,WS,60000
-2025-12-04,MENA,시리아,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,AMP-DUBAI,200370,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000
-2025-12-04,MENA,시리아,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,MOTOR WORLD,288140,2212500,0,x,KRW,STARTED,B2B,SELL_IN,WS,70000
-2025-12-04,MENA,오만,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,Diamond Auto Spare Parts,202000,2212500,0,x,KRW,STARTED,B2B,SELL_IN,WS,70000
-2025-12-04,MENA,이라크,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,MESK AL-BARARI,200287,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000
-2025-12-04,MENA,이라크,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,MOOJID,288264,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000
-2025-12-04,MENA,레바논,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,"AL ZAIM UNITED CO.,LTD",200411,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000
-2025-12-04,MENA,바레인,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,AUTO TRUCK PARTS,200452,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000
-2025-12-04,MENA,이집트,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,ENGINEERING AUTOMOTIVE CO.,200266,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000
-2025-12-04,MENA,알제리,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,EURL TASSRIAA,200389,2065000,0,x,KRW,STARTED,B2B,SELL_IN,WS,60000
-2025-12-04,MENA,튀니지,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,TREEQ ALMAL FOR IMPORT CARS,200333,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000
+2026-01-09,MENA,UAE,CHOICE_KIT,Portfolio Expansion Program,Brake Pad,Incentive,Incentive,DYNATRADE,200284,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000
+2026-01-09,MENA,UAE,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,EMERALD SPARE PARTS,200451,2065000,0,x,KRW,STARTED,B2B,SELL_IN,WS,60000
+2026-01-09,MENA,시리아,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,AMP-DUBAI,200370,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000
+2026-01-09,MENA,시리아,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,MOTOR WORLD,288140,2212500,0,x,KRW,STARTED,B2B,SELL_IN,WS,70000
+2026-01-09,MENA,오만,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,Diamond Auto Spare Parts,202000,2212500,0,x,KRW,STARTED,B2B,SELL_IN,WS,70000
+2026-01-09,MENA,이라크,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,MESK AL-BARARI,200287,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000
+2026-01-09,MENA,이라크,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,MOOJID,288264,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000
+2026-01-09,MENA,레바논,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,"AL ZAIM UNITED CO.,LTD",200411,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000
+2026-01-09,MENA,바레인,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,AUTO TRUCK PARTS,200452,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000
+2026-01-09,MENA,이집트,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,ENGINEERING AUTOMOTIVE CO.,200266,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000
+2026-01-09,MENA,알제리,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,EURL TASSRIAA,200389,2065000,0,x,KRW,STARTED,B2B,SELL_IN,WS,60000
+2026-01-09,MENA,튀니지,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,TREEQ ALMAL FOR IMPORT CARS,200333,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000
 2026-08-01,LATAM,파라과이,CHOICE_KIT,Sell-Out Promotion,All items in the market,Event,Event,PLUS CAR,,,,,KRW,,B2C,SELL_OUT,DH,
 2026-08-01,LATAM,엘살바도르,CHOICE_KIT,Sell-Out Promotion,All items in the market,Event,Event,SUPER REPUESTOS,,,,,KRW,,B2B,SELL_OUT,DH,
 2026-03-02,NA,캐나다,CHOICE_KIT,Strategic Partner Program,All items in the market,Event,Incentive Trip,Lordco Auto Parts,289029,"25,868,245",0,x,KRW,STARTED,B2B,SELL_IN,DH,"1,185,141"
