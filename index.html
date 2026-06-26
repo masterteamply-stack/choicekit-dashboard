@@ -6182,22 +6182,9 @@ async function renderPromoChart(fOrders, fMkt) {
       if (ba._custSet) { ba.custCount = ba._custSet.size; delete ba._custSet; }
     });
   }
-  // snapshot fallback for ba.before (when baseline not loaded)
-  const _snap2 = state.yoyByPromoMonth || {};
-  if (Object.keys(_snap2).length > 0) {
-    Object.keys(baAmt).forEach(p => {
-      const ba = baAmt[p];
-      if (ba.before > 0) return;
-      const md = _snap2[p] || {};
-      if (!ba.prevFrom || !ba.prevTo) return;
-      let sum = 0;
-      Object.entries(md).forEach(([ym, amt]) => {
-        if ((ym+'-31') >= ba.prevFrom && (ym+'-01') <= ba.prevTo)
-          sum += Number(amt) * usdToDisplay();
-      });
-      if (sum > 0) ba.before = sum;
-    });
-  }
+  // ⚠️ 스냅샷(pre_orders_summary.json) yoy 값은 customer 기반 캠페인에서
+  //    부정확하게(전체 buyer 기준) 집계되어 과대계상됨. baseline 실데이터만 사용.
+  //    baseline에 전년 데이터가 없으면 ba.before=0으로 두어 '–' 표시.
   // ── 메인스레드 양보 — BEFORE 스캔 완료 후 브라우저가 paint할 기회 제공 ──
   await new Promise(r => setTimeout(r, 0));
 
@@ -7388,27 +7375,7 @@ function renderPromoTable() {
     if(!ddP[pr])ddP[pr]={};if(!ddP[pr][country])ddP[pr][country]={};
     ddP[pr][country][cust]=(ddP[pr][country][cust]||0)+amt;
   });
-  // ddP 보완: 스냅샷 합계를 현재 오더 비율로 배분 (baseline 기간 없을 때)
-  const _sn2=state.yoyByPromoMonth||{};
-  Object.keys(_sn2).forEach(pr=>{
-    if(!_sp.has(pr))return;
-    const ba=_baAmt[pr];if(!ba||!ba.prevFrom||!ba.prevTo)return;
-    let snapT=0;
-    Object.entries(_sn2[pr]||{}).forEach(([ym,v])=>{if((ym+'-28')>=ba.prevFrom&&(ym+'-01')<=ba.prevTo)snapT+=Number(v)*usdToDisplay();});
-    if(snapT<=0)return;
-    const existT=Object.values(ddP[pr]||{}).reduce((s,cv)=>s+Object.values(cv).reduce((a,b)=>a+b,0),0);
-    if(existT>0)return;
-    const ddC=dd[pr]||{};
-    const curT=Object.values(ddC).reduce((s,cv)=>s+Object.values(cv).reduce((a,v2)=>a+v2.amt,0),0);
-    if(curT<=0)return;
-    if(!ddP[pr])ddP[pr]={};
-    Object.entries(ddC).forEach(([country,custs])=>{
-      if(!ddP[pr][country])ddP[pr][country]={};
-      Object.entries(custs).forEach(([cust,cv])=>{
-        ddP[pr][country][cust]=(ddP[pr][country][cust]||0)+snapT*(cv.amt/curT);
-      });
-    });
-  });
+  // ddP: baseline 실데이터만 사용 (스냅샷 비율배분은 부정확하여 제거)
   const ddM={};fMkt.forEach(m=>{const pr=(m.promotion_category||'').trim();if(!_sp.has(pr))return;const country=m.country||m.region||'–';if(!ddM[pr])ddM[pr]={};if(!ddM[pr][country])ddM[pr][country]={actual:0,expected:0};ddM[pr][country].actual+=convMktActual(m);ddM[pr][country].expected+=convMktExpected(m);});
   const rc={CIS:'#5856D6',MENA:'#FF9500',LATAM:'#34C759',ASIA:'#0A84FF',EUROPE:'#FF375F',NA:'#BF5AF2'};
   const rbadge=label=>{if(!label)return'';return label.split(',').map(r=>{const k=r.trim().toUpperCase(),c=rc[k]||'#86868B';return`<span style="display:inline-block;background:${c}18;color:${c};border:1px solid ${c}40;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;margin-left:4px;vertical-align:middle">${r.trim()}</span>`;}).join('');};
