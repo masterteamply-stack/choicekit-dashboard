@@ -6161,6 +6161,17 @@ async function renderPromoChart(fOrders, fMkt) {
         let match = false;
         if (mb === 'customer') {
           match = (custSet && (custSet.has(oCust) || (buyerCust && custSet.has(buyerCust))));
+          // 정규화 부분매칭 (변형 이름: 'MAST MOTORING...SOLUTIONS AND' vs full name)
+          if (!match && custSet && oCust) {
+            const _norm = s => s.toLowerCase().replace(/[^a-z0-9가-힣]/g,'');
+            const on = _norm(oCust);
+            if (on.length >= 6) {
+              for (const tc of custSet) {
+                const tn = _norm(tc);
+                if (tn.length >= 6 && (tn.startsWith(on) || on.startsWith(tn) || tn.includes(on) || on.includes(tn))) { match = true; break; }
+              }
+            }
+          }
         } else {
           match = (skuSet && (skuSet.has(oSku) || (ctrCode && skuSet.has(ctrCode))));
         }
