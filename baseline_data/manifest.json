@@ -1,25 +1,14 @@
 {
-  "total_records": 22135,
-  "total_chunks": 45,
+  "total_records": 27876,
+  "total_chunks": 56,
   "chunk_size": 500,
+  "filter": "CTR code (order_id) for SKU campaigns + exact customer name for customer campaigns",
   "date_range": "2025-2026 (2024 excluded)",
   "by_year": {
-    "2025": 11349,
-    "2026": 10786
+    "2025": 18694,
+    "2026": 9182
   },
-  "sku_matched": 9366,
+  "sku_matched": 15107,
   "customer_matched": 12769,
-  "top_customers": {
-    "TAN CO INVESTMENT AND DEVELOPMENT JOINT": 2720,
-    "CHUAN LAM AUTO SUPPLY": 1615,
-    "GP Mobility Public Company Limited": 1311,
-    "MAST MOTORING AUTOPARTS SOLUTIONS AND": 1106,
-    "Seri Wathana Enterprise Co., Ltd": 1021,
-    "Annawa General Trading Co., Ltd": 805,
-    "REFATRIX": 564,
-    "SAI GON MAST MOTORING AUTOPARTS": 516,
-    "NAM BAC AUTO SPARE PART CORPORATION.": 467,
-    "GTB LIMITED.,CO": 367
-  },
   "generated_at": "2026-06-26"
 }
