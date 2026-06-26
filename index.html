@@ -8246,22 +8246,22 @@ function renderPromoOrderTrend(fOrders, fMkt) {
 // Earliest marketing-activity date that matches the SKU's promotion key (and ideally region).
 // Used as the "promotion start" boundary for Before/After.
 function findPromoStartDate(skuOrders, promoKey) {
-  const _gd = m => (m.date || m.execution_date || '').trim();
+  // STARTED kpi 우선, 없으면 execution_date 최솟값
   let candidates;
   if (!promoKey || promoKey === '__auto__' || promoKey === '__all__') {
-    candidates = state.marketing.filter(m => _gd(m));
+    candidates = state.marketing.filter(m => m.date);
   } else {
-    candidates = state.marketing.filter(m => promoKeyOfMkt(m) === promoKey && _gd(m));
+    candidates = state.marketing.filter(m => promoKeyOfMkt(m) === promoKey && m.date);
   }
   if (!candidates.length) {
     if (!skuOrders.length) return null;
     const dates = skuOrders.map(o => o.order_date).filter(Boolean).sort();
     return dates[Math.floor(dates.length / 2)] || dates[0];
   }
+  // STARTED kpi 있으면 우선 사용
   const started = candidates.filter(m => (m.kpi_metric || '').trim().toUpperCase() === 'STARTED');
   const pool = started.length ? started : candidates;
-  const d = pool.map(m => _gd(m)).filter(Boolean).sort()[0];
-  return (d && d < '2026-01-02') ? '2026-01-02' : d;
+  return pool.map(m => m.date).sort()[0];
 }
 
 function listSkus(orders) {
@@ -8995,33 +8995,33 @@ function renderSkuAggregate(fOrders) {
   let baStartDate;       // for buildBaStats — may be a string or a {byPromo} object
   let displayStartDate;  // single date string for charts/meta display only
   if (promo === '__all__') {
-    // execution_date 우선 사용 (marketing.csv에 date 컬럼 없음)
-    const _getD2 = m => (m.date || m.execution_date || '').trim();
     const byPromo = {};
+    // STARTED kpi 날짜 우선, 없으면 execution_date 최솟값
     state.marketing.forEach(m => {
-      const d = _getD2(m); if (!d) return;
+      if (!m.date) return;
       const k = m.promotion_category || '–';
       const kpi = (m.kpi_metric || '').trim().toUpperCase();
       if (kpi === 'STARTED') {
-        if (!byPromo[k] || d < byPromo[k]) byPromo[k] = d;
+        // STARTED가 있으면 이것만 사용 (더 이른 non-STARTED는 무시)
+        if (!byPromo[k] || m.date < byPromo[k]) byPromo[k] = m.date;
         byPromo[k + '__hasStarted'] = true;
       } else if (!byPromo[k + '__hasStarted']) {
-        if (!byPromo[k] || d < byPromo[k]) byPromo[k] = d;
+        // STARTED 없는 캠페인만 execution_date 최솟값 fallback
+        if (!byPromo[k] || m.date < byPromo[k]) byPromo[k] = m.date;
       }
     });
+    // __hasStarted 플래그 제거
     Object.keys(byPromo).filter(k => k.endsWith('__hasStarted')).forEach(k => delete byPromo[k]);
-    // 2026-01-02 이전 날짜 보정
-    Object.keys(byPromo).forEach(k => { if (byPromo[k] < '2026-01-02') byPromo[k] = '2026-01-02'; });
 
-    // 고객별 시작일
+    // 고객별 시작일 빌드 (Trade promotion 등 고객별 시작일이 다른 경우)
     const byCust = {};
     state.marketing.forEach(m => {
-      const d = _getD2(m); if (!d) return;
-      const c = (m.customer || '').trim();
+      if (!m.date) return;
+      const c   = (m.customer || '').trim();
       const kpi = (m.kpi_metric || '').trim().toUpperCase();
       if (!c || c === 'ALL') return;
       if (kpi === 'STARTED') {
-        if (!byCust[c] || d < byCust[c]) byCust[c] = d;
+        if (!byCust[c] || m.date < byCust[c]) byCust[c] = m.date;
         byCust[c + '__hasStarted'] = true;
       } else if (!byCust[c + '__hasStarted']) {
         if (!byCust[c] || m.date < byCust[c]) byCust[c] = m.date;
