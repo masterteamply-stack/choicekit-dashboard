@@ -6889,9 +6889,15 @@ async function renderPromoChart(fOrders, fMkt) {
         }
         return 0;
       });
-      // x축 레이블: 현재 기간만 표시 ("26.03" 형태)
+      // x축 레이블: 현재 + 전년 둘 다 표기 ("'26.05 vs '25.05")
       const _fmtPk = pk => pk ? pk.replace(/^20(\d\d)-(\d\d)$/, '\'$1.$2').replace(/^20(\d\d)-Q(\d)$/, '\'$1.Q$2').replace(/^(20\d\d)$/, '$1') : '';
-      const barLabels = execBuckets.map(pk => _fmtPk(pk));
+      const barLabels = execBuckets.map(pk => {
+        const cur = _fmtPk(pk);
+        if (cmpMode === 'off') return cur;
+        const ppk = shiftBucket(pk, cmpMode, period);
+        const prv = _fmtPk(ppk);
+        return [cur, 'vs ' + prv];  // 2줄 레이블
+      });
       // Render and EXIT — skip the default line chart.
       try { if (charts.promo) { charts.promo.destroy(); charts.promo = null; } } catch(_) {}
       charts.promo = new Chart(document.getElementById('chPromo'), {
@@ -6930,6 +6936,14 @@ async function renderPromoChart(fOrders, fMkt) {
               },
             tooltip: {
               callbacks: {
+                title: items => {
+                  const i = items[0].dataIndex;
+                  const pk = execBuckets[i];
+                  const curL = _fmtPk(pk);
+                  const prvL = _fmtPk(shiftBucket(pk, cmpMode, period));
+                  // YoY(datasetIndex 0)면 전년 시점, Current(1)면 현재 시점
+                  return items[0].datasetIndex === 0 ? prvL : curL;
+                },
                 label: c => `${c.dataset.label}: ${fmtMoney(c.parsed && c.parsed.y || 0)}`,
                 footer: items => {
                   const i = items[0].dataIndex;
