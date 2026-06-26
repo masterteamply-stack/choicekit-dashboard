@@ -6763,15 +6763,38 @@ async function renderPromoChart(fOrders, fMkt) {
         subPrior   = `${modeLabelKo} 동일기간${priorRange ? ' · ' + priorRange : ''}`;
       }
 
-      // SKU/고객 수 집계
-      const _curSkuSet = new Set(), _prvSkuSet = new Set();
+      // 활성화된 target SKU 수 집계 (중복 제거, target_skus 교집합)
+      // promoFilter별 target_skus 빌드
+      const _cfgAll = state.campaignTargetSkus || {};
+      const _targetSkusFull = new Set(
+        (promoFilter === '__all__'
+          ? Object.values(_cfgAll).flatMap(c => c.target_skus || [])
+          : (_cfgAll[promoFilter]?.target_skus || [])
+        ).map(s => s.trim())
+      );
+      // customer 기반 캠페인: target_customers 기반 (SKU 수 대신 고객 수)
+      const _targetCustsFull = new Set(
+        (promoFilter === '__all__'
+          ? Object.values(_cfgAll).flatMap(c => c.match_by === 'customer' ? (c.target_customers || []) : [])
+          : (_cfgAll[promoFilter]?.match_by === 'customer' ? (_cfgAll[promoFilter]?.target_customers || []) : [])
+        ).map(c => c.trim())
+      );
+      const _isSkuBased = promoFilter === '__all__' || (_cfgAll[promoFilter]?.match_by || 'sku') === 'sku';
+      // 현재: 오더에서 활성화된 target SKU (CTR code 기준)
+      const _curSkuSet = new Set();
+      const PAT_OID = /^PO-([^-]+)-/;
       fOrders.forEach(o=>{
         const p=(o.promotion_category||'').trim();
         const start=promoStart[p];
         if(start&&o.order_date<start)return;
-        if(o.sku)_curSkuSet.add(o.sku);
+        const ctr=(o.ctr_code||o['CTR Code']||'').trim();
+        const oidCtr=((o.order_id||'').match(PAT_OID)||[])[1]||'';
+        const key=ctr||oidCtr;
+        if(key && _targetSkusFull.has(key)) _curSkuSet.add(key);
+        else if(!_isSkuBased && (o.customer||'').trim()) _curSkuSet.add((o.customer||'').trim());
       });
       const _curSkuN = _curSkuSet.size;
+      // 전년: summary의 baSkuCount(활성화된 SKU 수)
       const _prvSkuN = summary.reduce((s,p)=>s+(p.baSkuCount||p.baCustCount||0),0);
       const _skuSub = cur => `${fmtMoney(cur)} · ${_curSkuN.toLocaleString()} SKUs`;
       const _prvSkuSub = cur => `${fmtMoney(cur)} · ${_prvSkuN.toLocaleString()} SKUs`;
