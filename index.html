@@ -8985,39 +8985,33 @@ function renderSkuAggregate(fOrders) {
   let baStartDate;       // for buildBaStats — may be a string or a {byPromo} object
   let displayStartDate;  // single date string for charts/meta display only
   if (promo === '__all__') {
+    // window._lastPromoStart와 동일 기준 (renderPromoChart와 통일)
+    const _sharedStart = window._lastPromoStart || {};
     const byPromo = {};
-    // STARTED kpi 날짜 우선, 없으면 execution_date 최솟값
-    state.marketing.forEach(m => {
-      if (!m.date) return;
-      const k = m.promotion_category || '–';
-      const kpi = (m.kpi_metric || '').trim().toUpperCase();
-      if (kpi === 'STARTED') {
-        // STARTED가 있으면 이것만 사용 (더 이른 non-STARTED는 무시)
-        if (!byPromo[k] || m.date < byPromo[k]) byPromo[k] = m.date;
-        byPromo[k + '__hasStarted'] = true;
-      } else if (!byPromo[k + '__hasStarted']) {
-        // STARTED 없는 캠페인만 execution_date 최솟값 fallback
-        if (!byPromo[k] || m.date < byPromo[k]) byPromo[k] = m.date;
+    const _allPromos = Object.keys(state.campaignTargetSkus || {});
+    _allPromos.forEach(k => {
+      let d = _sharedStart[k] || '';
+      if (!d) {
+        // fallback: marketing.csv STARTED kpi
+        const _rows = (state.marketing||[]).filter(m=>(m.promotion_category||'').trim()===k&&m.date);
+        const _st = _rows.filter(m=>(m.kpi_metric||'').trim().toUpperCase()==='STARTED');
+        const _pool = _st.length?_st:_rows;
+        d = _pool.map(m=>m.date||'').filter(Boolean).sort()[0]||'';
       }
+      if (d) byPromo[k] = d < '2026-01-02' ? '2026-01-02' : d;
     });
-    // __hasStarted 플래그 제거
-    Object.keys(byPromo).filter(k => k.endsWith('__hasStarted')).forEach(k => delete byPromo[k]);
 
-    // 고객별 시작일 빌드 (Trade promotion 등 고객별 시작일이 다른 경우)
+    // 고객별 시작일 (marketing.csv STARTED kpi 기준)
     const byCust = {};
     state.marketing.forEach(m => {
       if (!m.date) return;
-      const c   = (m.customer || '').trim();
+      const c = (m.customer || '').trim();
       const kpi = (m.kpi_metric || '').trim().toUpperCase();
       if (!c || c === 'ALL') return;
       if (kpi === 'STARTED') {
         if (!byCust[c] || m.date < byCust[c]) byCust[c] = m.date;
-        byCust[c + '__hasStarted'] = true;
-      } else if (!byCust[c + '__hasStarted']) {
-        if (!byCust[c] || m.date < byCust[c]) byCust[c] = m.date;
       }
     });
-    Object.keys(byCust).filter(k => k.endsWith('__hasStarted')).forEach(k => delete byCust[k]);
     baStartDate = { byPromo, byCust };
     baStartDate = { byPromo };
     // For chart marker / meta only: still expose the earliest overall date
