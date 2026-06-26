@@ -4355,20 +4355,19 @@
     "region": "ASIA",
     "match_by": "customer",
     "target_customers": [
-      "GP",
       "GP Mobility Public Company Limited",
-      "GTB",
       "GTB LIMITED.,CO",
-      "YOUNG AUTO",
       "YOUNG AUTO SUPPLY CO., INC.",
-      "SERI",
       "Seri Wathana Enterprise Co., Ltd",
-      "MAST",
       "MAST MOTORING AUTOPARTS SOLUTIONS AND",
       "SAI GON MAST MOTORING AUTOPARTS",
-      "NAM BAC",
+      "NAM BAC AUTO SERVICE JOINT STOCK COMPANY",
       "NAM BAC AUTO SPARE PART CORPORATION.",
-      "NAM BAC AUTO SERVICE JOINT STOCK COMPANY"
+      "CHUAN LAM AUTO SUPPLY",
+      "MARBORO AUTO PARTS (M) SDN. BHD.",
+      "PT. Denso Centra",
+      "ZENTRALINK OTOPARTS",
+      "Kailos International Pty Ltd"
     ]
   },
   "Strategic Partner Program": {
@@ -4378,10 +4377,13 @@
     ],
     "match_by": "customer",
     "target_customers": [
-      "Annawa",
       "Annawa General Trading Co., Ltd",
-      "Lordco Autoparts",
-      "PTG"
+      "DIAMOND STEEL CO LTD",
+      "Lordco Auto Parts",
+      "MYAMMAR PRODIGY CO., LTD",
+      "Pan Theingi Trading Co., Ltd.",
+      "RED STAR TRADING CO. LTD.",
+      "Yarzar Tun Lin Trading Company Limited"
     ]
   },
   "Mexico Awakening Campaign": {
@@ -4402,17 +4404,12 @@
     "region": "ASIA",
     "match_by": "customer",
     "target_customers": [
-      "GTB",
       "GTB LIMITED.,CO",
-      "LIFEPRO AUTO",
       "LIFEPRO AUTO .,JSC",
-      "MAST",
       "MAST MOTORING AUTOPARTS SOLUTIONS AND",
       "SAI GON MAST MOTORING AUTOPARTS",
-      "NAM BAC",
-      "NAM BAC AUTO SPARE PART CORPORATION.",
       "NAM BAC AUTO SERVICE JOINT STOCK COMPANY",
-      "TAN CO",
+      "NAM BAC AUTO SPARE PART CORPORATION.",
       "TAN CO INVESTMENT AND DEVELOPMENT JOINT"
     ]
   }
