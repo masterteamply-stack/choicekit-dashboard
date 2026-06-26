@@ -2136,16 +2136,7 @@ header .mono b.t-orange {
           </div>
           <div style="overflow-x:auto"><table id="tblPromoMonthly" style="font-size:11px;width:100%;border-collapse:collapse"></table></div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-          <div>
-            <div class="label-mono" style="font-size:10px;font-weight:700;margin-bottom:6px;color:var(--text-2)">🔥 월별 ORDER AMT</div>
-            <div class="chart-wrap" style="height:260px"><canvas id="chPromo"></canvas></div>
-          </div>
-          <div>
-            <div class="label-mono" style="font-size:10px;font-weight:700;margin-bottom:6px;color:var(--text-2)">📦 월별 오더 전환 SKU 수</div>
-            <div class="chart-wrap" style="height:260px"><canvas id="chPromoSku"></canvas></div>
-          </div>
-        </div></div>
+        <div class="chart-wrap" style="height:300px;min-height:300px;margin-bottom:16px"><canvas id="chPromo"></canvas></div>
         <div id="promoInsight" class="label-mono" style="margin-bottom:8px;font-size:11px;color:#525257"></div>
         <div style="overflow:auto"><table id="tblPromo"></table></div>
 
@@ -3102,7 +3093,7 @@ const convMktActual   = m => {
 // the user), even when the row's `currency` column says otherwise. Convert
 // them to USD using a robust KRW→USD rate, then to the display currency.
 // (krwToUsd already does manual-override → latest-cached → fallback.)
-const convMktExpected = m => num(m.expected_cost) * krwToUsd() * usdToDisplay();
+const convMktExpected = m => { const _cur=(m.currency||'KRW').toUpperCase(); return num(m.expected_cost)*(_cur==='USD'?usdToDisplay():krwToUsd()*usdToDisplay()); };
 const convMktBizreward = m => num(m.bizreward_amount) * krwToUsd() * usdToDisplay();
 // USD-pinned variants — always return USD regardless of the display-currency
 // toggle. Used for Plan Budget, which the user wants always shown in USD.
@@ -7025,7 +7016,21 @@ async function renderPromoChart(fOrders, fMkt) {
   try { if (charts.promo) { charts.promo.destroy(); charts.promo = null; } } catch(_) {}
   charts.promo = new Chart(document.getElementById('chPromo'), {
     type: 'line',
-    data: { labels: periodBuckets, datasets: lineDatasets },
+    data: {
+            labels: periodBuckets,
+            datasets: (() => {
+              // 전년 동기 line 추가 (스냅샷 기반)
+              const _snap3 = state.yoyByPromoMonth || {};
+              const _ppaLine = periodBuckets.map(pk => {
+                const ppk = shiftBucket(pk, cmpMode, period);
+                let v = shownKeys.reduce((s,key)=>s+((cmpSeries[key]&&cmpSeries[key][ppk])||0),0);
+                if (!v && cmpMode==='yoy') v = Math.round(shownKeys.reduce((s,key)=>s+(Number((_snap3[key]||{})[ppk]||0)*usdToDisplay()),0));
+                return v;
+              });
+              const _hasLine = _ppaLine.some(v=>v>0);
+              return _hasLine ? [{ label:modeLabelKo, data:_ppaLine, borderColor:'#A1A1A6', backgroundColor:'rgba(0,0,0,0)', borderWidth:2, borderDash:[5,4], pointRadius:2.5, tension:0.3, order:99 }, ...lineDatasets] : lineDatasets;
+            })()
+          },
     options: {
       responsive: true, maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
