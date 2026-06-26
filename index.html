@@ -8667,15 +8667,12 @@ function renderChoiceKitImpact(fOrders, fMkt) {
   function mFP(pn){
     const pc=cfg[pn]||{},mb=(pc.match_by||'sku').toLowerCase();
     const sS=mb==='sku'?gSku(pn):null,cS=mb!=='sku'?gCust(pn):null;
-    // 캠페인 시작일 — renderPromoChart와 동일 기준(window._lastPromoStart) 사용
-    let _start=(window._lastPromoStart||{})[pn]||'';
-    if(!_start){
-      // fallback: marketing.csv STARTED kpi
-      const _mktRows=(state.marketing||[]).filter(m=>(m.promotion_category||'').trim()===pn&&m.date);
-      const _started=_mktRows.filter(m=>(m.kpi_metric||'').trim().toUpperCase()==='STARTED');
-      const _pool=_started.length?_started:_mktRows;
-      _start=_pool.map(m=>m.date||m.execution_date||'').filter(Boolean).sort()[0]||'';
-    }
+    // 캠페인 시작일 — marketing.csv STARTED kpi 직접 계산 (renderPromoChart와 동일 로직)
+    const _mktAll=(state.marketing||[]).filter(m=>(m.promotion_category||'').trim()===pn&&m.date);
+    const _mktSt=_mktAll.filter(m=>(m.kpi_metric||'').trim().toUpperCase()==='STARTED');
+    const _pool2=_mktSt.length?_mktSt:_mktAll;
+    let _start=_pool2.map(m=>m.date||m.execution_date||'').filter(Boolean).sort()[0]||'';
+    if(!_start)_start=(window._lastPromoStart||{})[pn]||'';
     if(_start<'2026-01-02')_start='2026-01-02';
     const PAT=/^PO-([^-]+)-/;
     const bY={};
@@ -20428,15 +20425,12 @@ function renderChoiceKitImpact(fOrders, fMkt) {
   function mFP(pn){
     const pc=cfg[pn]||{},mb=(pc.match_by||'sku').toLowerCase();
     const sS=mb==='sku'?gSku(pn):null,cS=mb!=='sku'?gCust(pn):null;
-    // 캠페인 시작일 — renderPromoChart와 동일 기준(window._lastPromoStart) 사용
-    let _start=(window._lastPromoStart||{})[pn]||'';
-    if(!_start){
-      // fallback: marketing.csv STARTED kpi
-      const _mktRows=(state.marketing||[]).filter(m=>(m.promotion_category||'').trim()===pn&&m.date);
-      const _started=_mktRows.filter(m=>(m.kpi_metric||'').trim().toUpperCase()==='STARTED');
-      const _pool=_started.length?_started:_mktRows;
-      _start=_pool.map(m=>m.date||m.execution_date||'').filter(Boolean).sort()[0]||'';
-    }
+    // 캠페인 시작일 — marketing.csv STARTED kpi 직접 계산 (renderPromoChart와 동일 로직)
+    const _mktAll=(state.marketing||[]).filter(m=>(m.promotion_category||'').trim()===pn&&m.date);
+    const _mktSt=_mktAll.filter(m=>(m.kpi_metric||'').trim().toUpperCase()==='STARTED');
+    const _pool2=_mktSt.length?_mktSt:_mktAll;
+    let _start=_pool2.map(m=>m.date||m.execution_date||'').filter(Boolean).sort()[0]||'';
+    if(!_start)_start=(window._lastPromoStart||{})[pn]||'';
     if(_start<'2026-01-02')_start='2026-01-02';
     const PAT=/^PO-([^-]+)-/;
     const bY={};
