@@ -1697,16 +1697,18 @@ header .mono b.t-orange {
       <option value="budgetstatus">Budget</option>
     </select>
     <span class="fx-loading" id="fxStatus" style="display:none">FX…</span>
+    <div style="flex:1"></div>
+    <div class="cur-toggle" id="curToggle" style="margin-right:8px">
+      <button data-cur="USD" class="active">USD</button>
+      <button data-cur="KRW">KRW</button>
+    </div>
     <button class="header-collapse-btn" id="headerCollapseBtn" title="헤더 도구 모음 접기/펼치기" aria-label="Toggle header toolbar">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
     </button>
   </div>
 
-  <div class="header-right">
-    <div class="cur-toggle" id="curToggle">
-      <button data-cur="USD" class="active">USD</button>
-      <button data-cur="KRW">KRW</button>
-    </div>
+  <div class="header-right" style="display:none">
+    <div style="display:none">
     <button class="btn ghost" id="themeToggle" title="Toggle dark mode">
       <span class="icon-moon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
       <span class="icon-sun"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></span>
