@@ -2140,7 +2140,38 @@ header .mono b.t-orange {
         <div id="promoInsight" class="label-mono" style="margin-bottom:8px;font-size:11px;color:#525257"></div>
         <div style="overflow:auto"><table id="tblPromo"></table></div>
 
-                  <div class="panel widget" data-widget-id="skuExplorer">
+      <!-- Choice Kit Impact — Dormant Activation -->
+      <div class="panel widget" data-widget-id="choicekitImpact">
+        <div class="widget-head">
+          <div>
+            <h3 class="h-section">Choice Kit Impact</h3>
+            <p class="label-mono" style="margin-top:4px">대상 SKU 월별 오더 변화 추이</p>
+          </div>
+          <div class="chart-tools">
+            <select id="ckiPromoSel" style="min-width:200px;font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface)"></select>
+            <div class="seg" id="ckiCmpSeg">
+              <button data-v="mom" class="active">전월</button>
+              <button data-v="qoq">전분기</button>
+              <button data-v="yoy">전년</button>
+            </div>
+            <div class="widget-order-controls"></div>
+          </div>
+        </div>
+        <div id="ckiKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:16px"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <div>
+            <div class="label-mono" style="font-size:11px;font-weight:700;margin-bottom:6px;color:var(--text-2)">📦 월별 오더 전환 SKU 수</div>
+            <div class="chart-wrap" style="height:220px"><canvas id="chCkiSkuCount"></canvas></div>
+          </div>
+          <div>
+            <div class="label-mono" style="font-size:11px;font-weight:700;margin-bottom:6px;color:var(--text-2)">💰 월별 ORDER AMT</div>
+            <div class="chart-wrap" style="height:220px"><canvas id="chCkiAmt"></canvas></div>
+          </div>
+        </div>
+        <div class="label-mono" style="font-size:11px;font-weight:700;margin-bottom:8px;color:var(--text-2)">캠페인별 대상 SKU 오더 현황</div>
+        <div style="overflow:auto"><table id="tblCkiCmp" style="font-size:12px"></table></div>
+      </div>
+            <div class="panel widget" data-widget-id="skuExplorer">
         <div class="widget-head">
           <div>
             <h3 class="h-section">SKU Analysis</h3>
@@ -4265,6 +4296,7 @@ function renderAll() {
 
   // ── Phase 4: ChoiceKitImpact, SkuExplorer ──
   _deferRender(() => {
+    renderChoiceKitImpact(fOrders, fMkt);
     renderSkuExplorer(fOrders, fMkt);
   }, 600);
 }
@@ -6780,33 +6812,10 @@ async function renderPromoChart(fOrders, fMkt) {
         ? `<span class="${_dSkuN>=0?'t-green':'t-red'}">${_dSkuN>=0?'▲':'▼'}${Math.abs(_dSkuN)} SKUs</span>`
         : '';
       cmpKpiEl.style.display = 'grid';
-      // 누적 오더 SKU수/오더수 (renderChoiceKitImpact의 값을 PP에서 직접 계산)
-      const _ppCfg = state.campaignTargetSkus || {};
-      const _ppSummaryPromos = new Set(summary.map(s => s.promotion||s.key||''));
-      const _ppSkuSet = new Set();
-      let _ppOrderCount = 0;
-      (state.orders||[]).forEach(o => {
-        const p = (o.promotion_category||'').trim();
-        if (!_ppSummaryPromos.has(p)) return;
-        const ps = promoStart[p];
-        if (ps && o.order_date < ps) return;
-        const pc = _ppCfg[p] || {};
-        const mb2 = (pc.match_by||'sku').toLowerCase();
-        if (mb2 === 'sku') {
-          const tS = new Set((pc.target_skus||[]).map(s=>s.trim()));
-          const ctr = (o['CTR Code']||o.sku||'').trim();
-          if (tS.size > 0 && tS.has(ctr)) { _ppSkuSet.add(ctr); _ppOrderCount++; }
-        } else {
-          const tC = new Set((pc.target_customers||[]).map(c=>c.trim()));
-          if (tC.size > 0 && tC.has((o.customer||'').trim())) _ppOrderCount++;
-        }
-      });
       cmpKpiEl.innerHTML =
         card('현재 합계', _skuSub(curTotal), subWindow) +
         card(`${modeLabelKo} 합계`, _prvSkuSub(priorTotal), subPrior) +
-        card('증감', `${tag} ${_dSkuTag}`, `현재 vs ${modeLabelKo}`) +
-        card('누적 오더 SKU 수', `${_ppSkuSet.size.toLocaleString()}`, `${summary.length}개 캠페인 · 현재 기간`) +
-        card('누적 오더 수', `${_ppOrderCount.toLocaleString()}`, '현재 기간 누적');
+        card('증감', `${tag} ${_dSkuTag}`, `현재 vs ${modeLabelKo}`);
     }
     // ── For single-promotion compare view, switch the chart to a grouped BAR ──
     // Build a bar chart whose x-axis = the campaign's execution months and
@@ -7351,14 +7360,35 @@ function renderPromoTable() {
     const roi=p.roi==null?'–':fmtPct(p.roi),rCls=p.roi==null?'muted':p.roi<0?'t-red':'t-green';
     const from=ba.winFrom?_fd(ba.winFrom):'',to=ba.winTo?_fd(ba.winTo):'';
     const ptag=from?`<span class="muted" style="font-size:9px;margin-left:6px;vertical-align:middle">${from}${to&&to!==from?' ~ '+to:''}</span>`:'';
-    return`<tr class="promo-main-row" data-promo="${promo.replace(/"/g,'&quot;')}" style="cursor:pointer" onclick="togglePromoDrill(this,'${promo.replace(/'/g,"\'")}')"><td><span style="color:#86868B;font-size:11px;margin-right:4px" class="promo-drill-arrow">▶</span><b>${promo||'–'}</b>${sbadge(st)}${rbadge(p.regionLabel)}${ptag}${p.baStart?`<br><span class="muted" style="font-size:10px;padding-left:16px">from ${p.baStart}</span>`:''}</td><td class="text-right mono">${fmtNum(p.orders)}</td><td class="text-right mono t-green" style="font-weight:700">${fmtMoney(aA)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted">${pA>0?fmtMoney(pA):'–'}</td>`:''}<td class="text-right mono">${dTag2}</td><td class="text-right mono t-yellow">${fmtMoney(p.expected||0)}</td><td class="text-right mono t-orange">${fmtMoney(p.actual||0)}</td><td class="text-right mono ${rCls}" style="font-weight:700">${roi}</td></tr>${buildDrill(promo)}`;
+    return`<tr class="promo-main-row" data-promo="${promo.replace(/"/g,'&quot;')}" style="cursor:pointer" onclick="togglePromoDrill(this,'${promo.replace(/'/g,"\'")}')"><td><span style="color:#86868B;font-size:11px;margin-right:4px" class="promo-drill-arrow">▶</span><b>${promo||'–'}</b>${sbadge(st)}${rbadge(p.regionLabel)}${ptag}${p.baStart?`<br><span class="muted" style="font-size:10px;padding-left:16px">from ${p.baStart}</span>`:''}</td><td class="text-right mono">${fmtNum(p.orders)}</td><td class="text-right mono t-green" style="font-weight:700">${fmtMoney(aA)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted">${pA>0?fmtMoney(pA):'–'}</td>`:''}<td class="text-right mono">${dTag2}</td><td class="text-right mono t-yellow">${fmtMoney(p.expected||0)}</td><td class="text-right mono t-orange">${fmtMoney(p.actual||0)}</td><td class="text-right mono">${(()=>{
+        const _pc2=state.campaignTargetSkus&&state.campaignTargetSkus[promo]||{};
+        const _tS2=new Set((_pc2.target_skus||[]).map(s=>s.trim()));
+        const _mb3=(_pc2.match_by||'sku').toLowerCase();
+        const _ss3=new Set();
+        (state.orders||[]).forEach(o=>{
+          if((o.promotion_category||'').trim()!==promo)return;
+          const _ps3=(window._lastPromoStart||{})[promo];
+          if(_ps3&&o.order_date<_ps3)return;
+          if(_mb3==='sku'){const _c3=(o['CTR Code']||o.sku||'').trim();if(_tS2.size>0&&_tS2.has(_c3))_ss3.add(_c3);}
+        });
+        return _ss3.size>0?fmtNum(_ss3.size):'–';
+      })()}</td><td class="text-right mono">${(()=>{
+        let _cnt=0;
+        (state.orders||[]).forEach(o=>{
+          if((o.promotion_category||'').trim()!==promo)return;
+          const _ps3=(window._lastPromoStart||{})[promo];
+          if(_ps3&&o.order_date<_ps3)return;
+          _cnt++;
+        });
+        return _cnt>0?fmtNum(_cnt):'–';
+      })()}</td><td class="text-right mono ${rCls}" style="font-weight:700">${roi}</td></tr>${buildDrill(promo)}`;
   };
   const subRow=(label,rows,color)=>{
     const tot=rows.reduce((s,p)=>s+(p.afterAmt||p.orderAmt||0),0),prv=rows.reduce((s,p)=>s+(p.beforeAmt||0),0);
     const d=prv>0?((tot-prv)/prv*100):null;
     const dt=d==null?'–':d>=0?`<span class="t-green">▲${d.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(d).toFixed(1)}%</span>`;
     const exp=rows.reduce((s,p)=>s+(p.expected||0),0),act=rows.reduce((s,p)=>s+(p.actual||0),0);
-    return`<tr style="background:${color};font-weight:700;border-top:1px solid var(--border)"><td style="padding-left:8px;font-size:12px"><b>${label}</b><span class="muted" style="font-size:10px;margin-left:6px">${rows.length}개 캠페인</span></td><td class="text-right mono">${fmtNum(rows.reduce((s,p)=>s+(p.orders||0),0))}</td><td class="text-right mono t-green" style="font-weight:800">${fmtMoney(tot)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted">${prv>0?fmtMoney(prv):'–'}</td>`:''}<td class="text-right mono">${dt}</td><td class="text-right mono">–</td><td class="text-right mono">–</td><td class="text-right mono t-yellow">${fmtMoney(exp)}</td><td class="text-right mono t-orange">${fmtMoney(act)}</td><td class="text-right mono muted">${(()=>{const s=rows.reduce((t,p)=>t+(_prevMktCost[p.promotion||p.key||'']||0),0);return s>0?fmtMoney(s):'–';})()}</td><td class="text-right mono">${act>0?fmtPct(((tot-act)/act)*100):'–'}</td></tr>`;
+    return`<tr style="background:${color};font-weight:700;border-top:1px solid var(--border)"><td style="padding-left:8px;font-size:12px"><b>${label}</b><span class="muted" style="font-size:10px;margin-left:6px">${rows.length}개 캠페인</span></td><td class="text-right mono">${fmtNum(rows.reduce((s,p)=>s+(p.orders||0),0))}</td><td class="text-right mono t-green" style="font-weight:800">${fmtMoney(tot)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted">${prv>0?fmtMoney(prv):'–'}</td>`:''}<td class="text-right mono">${dt}</td><td class="text-right mono t-yellow">${fmtMoney(exp)}</td><td class="text-right mono t-orange">${fmtMoney(act)}</td><td class="text-right mono muted">${(()=>{const s=rows.reduce((t,p)=>t+(_prevMktCost[p.promotion||p.key||'']||0),0);return s>0?fmtMoney(s):'–';})()}</td><td class="text-right mono">${act>0?fmtPct(((tot-act)/act)*100):'–'}</td></tr>`;
   };
   const siS=summary.filter(p=>(_mktST[p.promotion||p.key||'']||'SELL-IN')==='SELL-IN');
   const soS=summary.filter(p=>(_mktST[p.promotion||p.key||'']||'SELL-IN')==='SELL-OUT');
@@ -7367,11 +7397,11 @@ function renderPromoTable() {
   const gd=gP>0?((gT-gP)/gP*100):null,gdTag=gd==null?'–':gd>=0?`<span class="t-green">▲${gd.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(gd).toFixed(1)}%</span>`;
   const gE=allS.reduce((s,p)=>s+(p.expected||0),0),gA=allS.reduce((s,p)=>s+(p.actual||0),0);
   const colCmp=_cmpMode!=='off'?`<th class="text-right">${_prevLabel}</th>`:'';
-  const head=`<thead><tr><th>PROMOTION</th><th class="text-right">ORDERS</th><th class="text-right">현재 ORDER AMT</th>${colCmp}<th class="text-right">Δ%</th><th class="text-right">오더 SKU수</th><th class="text-right">오더수</th><th class="text-right">MKT BUDGET</th><th class="text-right">EXECUTED</th><th class="text-right">ROI</th></tr></thead>`;
+  const head=`<thead><tr><th>PROMOTION</th><th class="text-right">ORDERS</th><th class="text-right">현재 ORDER AMT</th>${colCmp}<th class="text-right">Δ%</th><th class="text-right">MKT BUDGET</th><th class="text-right">EXECUTED</th><th class="text-right">ROI</th></tr></thead>`;
   let body='<tbody>';
   if(siS.length){body+=`<tr style="background:rgba(200,16,46,0.04)"><td colspan="8" style="padding:6px 10px;font-size:11px;font-weight:700;color:#C8102E;letter-spacing:0.05em">📦 SELL-IN · SKU 기반 캠페인</td></tr>`;body+=siS.map(buildRow).join('');body+=subRow('📦 SELL-IN 소계',siS,'rgba(200,16,46,0.06)');}
   if(soS.length){body+=`<tr style="background:rgba(10,132,255,0.04)"><td colspan="8" style="padding:6px 10px;font-size:11px;font-weight:700;color:#0A84FF;letter-spacing:0.05em">🤝 SELL-OUT · 고객 기반 캠페인</td></tr>`;body+=soS.map(buildRow).join('');body+=subRow('🤝 SELL-OUT 소계',soS,'rgba(10,132,255,0.06)');}
-  body+=`<tr style="background:rgba(0,0,0,0.06);font-weight:800;border-top:2px solid var(--border)"><td style="font-size:13px"><b>🏆 CHOICE KIT 전체 합계</b></td><td class="text-right mono">${fmtNum(allS.reduce((s,p)=>s+(p.orders||0),0))}</td><td class="text-right mono t-green" style="font-size:14px;font-weight:900">${fmtMoney(gT)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted" style="font-size:13px">${gP>0?fmtMoney(gP):'–'}</td>`:''}<td class="text-right mono" style="font-size:12px">${gdTag}</td><td class="text-right mono">–</td><td class="text-right mono">–</td><td class="text-right mono t-yellow">${fmtMoney(gE)}</td><td class="text-right mono t-orange">${fmtMoney(gA)}</td><td class="text-right mono muted">${(()=>{const s=Object.values(_prevMktCost).reduce((t,v)=>t+v,0);return s>0?fmtMoney(s):'–';})()}</td><td class="text-right mono">${gA>0?fmtPct(((gT-gA)/gA)*100):'–'}</td></tr></tbody>`;
+  body+=`<tr style="background:rgba(0,0,0,0.06);font-weight:800;border-top:2px solid var(--border)"><td style="font-size:13px"><b>🏆 CHOICE KIT 전체 합계</b></td><td class="text-right mono">${fmtNum(allS.reduce((s,p)=>s+(p.orders||0),0))}</td><td class="text-right mono t-green" style="font-size:14px;font-weight:900">${fmtMoney(gT)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted" style="font-size:13px">${gP>0?fmtMoney(gP):'–'}</td>`:''}<td class="text-right mono" style="font-size:12px">${gdTag}</td><td class="text-right mono t-yellow">${fmtMoney(gE)}</td><td class="text-right mono t-orange">${fmtMoney(gA)}</td><td class="text-right mono muted">${(()=>{const s=Object.values(_prevMktCost).reduce((t,v)=>t+v,0);return s>0?fmtMoney(s):'–';})()}</td><td class="text-right mono">${gA>0?fmtPct(((gT-gA)/gA)*100):'–'}</td></tr></tbody>`;
   document.getElementById('tblPromo').innerHTML=head+body;
   } catch(e){console.error('[renderPromoTable]',e);}
 }
@@ -8700,11 +8730,12 @@ function renderChoiceKitImpact(fOrders, fMkt) {
     const bY={};
     oA.forEach(o=>{
       const od=o.order_date||'';if(!od||(_start&&od<_start))return;
-      if((o.promotion_category||'').trim()!==pn)return;  // PP와 동일: promo_category 일치
       if(mb==='sku'){
         if(!sS||!sS.size)return;
-        const ctrField=(o['CTR Code']||o.sku||'').trim();
-        if(!sS.has(ctrField))return;
+        const ctrField=(o.ctr_code||o['CTR Code']||'').trim();
+        const skuField=(o.sku||'').trim();
+        const oidCtr=((o.order_id||'').match(PAT)||[])[1]||'';
+        if(!sS.has(ctrField)&&!sS.has(skuField)&&!sS.has(oidCtr))return;
       }else{if(!cS||!cS.size)return;if(!cS.has((o.customer||'').trim()))return;}
       const ym=od.slice(0,7);if(!ym)return;
       if(!bY[ym])bY[ym]={skuSet:new Set(),amt:0,orders:0};
