@@ -6763,11 +6763,27 @@ async function renderPromoChart(fOrders, fMkt) {
         subPrior   = `${modeLabelKo} 동일기간${priorRange ? ' · ' + priorRange : ''}`;
       }
 
+      // SKU/고객 수 집계
+      const _curSkuSet = new Set(), _prvSkuSet = new Set();
+      fOrders.forEach(o=>{
+        const p=(o.promotion_category||'').trim();
+        const start=_ovPromoStart[p];
+        if(start&&o.order_date<start)return;
+        if(o.sku)_curSkuSet.add(o.sku);
+      });
+      const _curSkuN = _curSkuSet.size;
+      const _prvSkuN = summary.reduce((s,p)=>s+(p.baSkuCount||p.baCustCount||0),0);
+      const _skuSub = cur => `${fmtMoney(cur)} · ${_curSkuN.toLocaleString()} SKUs`;
+      const _prvSkuSub = cur => `${fmtMoney(cur)} · ${_prvSkuN.toLocaleString()} SKUs`;
+      const _dSkuN = _curSkuN - _prvSkuN;
+      const _dSkuTag = _prvSkuN > 0
+        ? `<span class="${_dSkuN>=0?'t-green':'t-red'}">${_dSkuN>=0?'▲':'▼'}${Math.abs(_dSkuN)} SKUs</span>`
+        : '';
       cmpKpiEl.style.display = 'grid';
       cmpKpiEl.innerHTML =
-        card('현재 합계', fmtMoney(curTotal), subWindow) +
-        card(`${modeLabelKo} 합계`, fmtMoney(priorTotal), subPrior) +
-        card('증감', tag, `현재 vs ${modeLabelKo}`);
+        card('현재 합계', _skuSub(curTotal), subWindow) +
+        card(`${modeLabelKo} 합계`, _prvSkuSub(priorTotal), subPrior) +
+        card('증감', `${tag} ${_dSkuTag}`, `현재 vs ${modeLabelKo}`);
     }
     // ── For single-promotion compare view, switch the chart to a grouped BAR ──
     // Build a bar chart whose x-axis = the campaign's execution months and
@@ -7233,7 +7249,7 @@ function renderPromoTable() {
     const _fp=pk=>pk?pk.replace(/^20(\d\d)-(\d\d)$/,"'$1.$2").replace(/^20(\d\d)-Q(\d)$/,"'$1.Q$2"):pk;
     let mh=`<thead><tr><th style="${ls}">항목</th>`;curPeriods.forEach(pk=>{mh+=`<th style="${hs}">${_fp(pk)}</th>`;});mh+=`<th style="${hs}">합계</th></tr></thead>`;
     const rh=(label,byPk,total,col='')=>{let r=`<tr><td style="${ls};${col?'color:'+col:''}">${label}</td>`;curPeriods.forEach(pk=>{const v=byPk[pk]||0;r+=`<td style="${cs};font-size:11px;${col&&v?'color:'+col+';font-weight:700':''}">${v>0?fmtMoney(v):'<span class="muted">–</span>'}</td>`;});r+=`<td style="${cs};font-weight:800;${col?'color:'+col:''}">${total>0?fmtMoney(total):'–'}</td></tr>`;return r;};
-    const dRow=(()=>{let r=`<tr style="background:rgba(0,0,0,0.02)"><td style="${ls}">Δ%</td>`;curPeriods.forEach(pk=>{const cur=pCA[pk]||0,ppk=shiftBucket(pk,_cmpMode,period),prv=pPA[ppk]||0;r+=`<td style="${cs};font-size:10px">${prv>0?dtag(cur,prv):'<span class="muted">–</span>'}</td>`;});r+=`<td style="${cs};font-size:11px">${gP>0?dtag(gC,gP):'<span class="muted">–</span>'}</td></tr>`;return r;})();
+    const dRow=(()=>{let r=`<tr style="background:rgba(0,0,0,0.02)"><td style="${ls}">Δ%</td>`;curPeriods.forEach(pk=>{const cur=pCA[pk]||0,prv=pPA[pk]||0;r+=`<td style="${cs};font-size:10px">${prv>0?dtag(cur,prv):'<span class="muted">–</span>'}</td>`;});r+=`<td style="${cs};font-size:11px">${gP>0?dtag(gC,gP):'<span class="muted">–</span>'}</td></tr>`;return r;})();
     ovEl.innerHTML=mh+`<tbody>${rh('현재 ORDER AMT',pCA,gC,'#007AFF')}${rh(_prevLabel,pPA,gP,'#86868B')}${dRow}</tbody>`;
   }else if(ovEl)ovEl.innerHTML='';
   // drill data
