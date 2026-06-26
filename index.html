@@ -6546,21 +6546,9 @@ async function renderPromoChart(fOrders, fMkt) {
     // ── 스냅샷 우선 사용: pre_orders_summary.json (~41KB) ──
     // 26MB 번들/preIdx 없어도 즉시 전년 동기 비교 표시
     const snap = state.yoyByPromoMonth || {};
-    if (Object.keys(snap).length > 0) {
-      Object.entries(snap).forEach(([promo, monthData]) => {
-        cmpSeries[promo] = cmpSeries[promo] || {};
-        Object.entries(monthData).forEach(([ym, amt]) => {
-          // ym = "2025-04" → periodKey 변환
-          const pk = period === 'year'  ? ym.slice(0,4)
-                   : period === 'quarter' ? (() => {
-                       const mo = parseInt(ym.slice(5,7));
-                       return `${ym.slice(0,4)}-Q${Math.ceil(mo/3)}`;
-                     })()
-                   : ym;  // month: "2025-04" 그대로
-          cmpSeries[promo][pk] = (cmpSeries[promo][pk] || 0) + amt * usdToDisplay();
-        });
-      });
-    }
+    // 스냅샷 월합계는 시작일 필터가 없어 그래프에 직접 쓰면 과대계상됨.
+    // → priorBars에서 baAmt.before(시작일 필터된 전년 합계)를 현재 비율로 배분하므로
+    //   여기서는 cmpSeries를 채우지 않음 (baseline 실데이터만 cmpSeries에 들어감).
 
     // 번들 기반 집계 (preIdx 있을 때만 추가 보강)
     const baselineRows = (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length)
