@@ -6520,8 +6520,8 @@ async function renderPromoChart(fOrders, fMkt) {
   let execBuckets = null;        // array of period keys covered by the campaign
   if (promoFilter !== '__all__') {
     const dates = (state.marketing || [])
-      .filter(m => (m.promotion_category || '') === promoFilter && (m.date || ''))
-      .map(m => m.date);
+      .filter(m => (m.promotion_category || '') === promoFilter && (m.date || m.execution_date || ''))
+      .map(m => m.date || m.execution_date);
     if (dates.length) {
       dates.sort();
       const set = new Set();
