@@ -7017,31 +7017,7 @@ async function renderPromoChart(fOrders, fMkt) {
   try { if (charts.promo) { charts.promo.destroy(); charts.promo = null; } } catch(_) {}
   charts.promo = new Chart(document.getElementById('chPromo'), {
     type: 'line',
-    data: {
-      labels: periodBuckets,
-      datasets: (() => {
-        if (cmpMode === 'off') return lineDatasets;
-        const _snap4 = state.yoyByPromoMonth || {};
-        const _ppaLine = periodBuckets.map(pk => {
-          const ppk = shiftBucket(pk, cmpMode, period);
-          // cmpSeries 합산
-          let v = shownKeys.reduce((s,key) => s + ((cmpSeries[key] && cmpSeries[key][ppk]) || 0), 0);
-          // 스냅샷 fallback
-          if (!v && cmpMode === 'yoy') {
-            v = shownKeys.reduce((s,key) => s + (Number((_snap4[key]||{})[ppk] || 0) * usdToDisplay()), 0);
-          }
-          return Math.round(v);
-        });
-        if (!_ppaLine.some(v => v > 0)) return lineDatasets;
-        return [{
-          label: modeLabelKo,
-          data: _ppaLine,
-          borderColor: '#A1A1A6', backgroundColor: 'rgba(0,0,0,0)',
-          borderWidth: 2, borderDash: [5,4], pointRadius: 2.5,
-          tension: 0.3, order: 99
-        }, ...lineDatasets];
-      })()
-    },
+    data: { labels: periodBuckets, datasets: lineDatasets },
     options: {
       responsive: true, maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
@@ -7447,10 +7423,10 @@ function renderPromoTable() {
   const gd=gP>0?((gT-gP)/gP*100):null,gdTag=gd==null?'–':gd>=0?`<span class="t-green">▲${gd.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(gd).toFixed(1)}%</span>`;
   const gE=allS.reduce((s,p)=>s+(p.expected||0),0),gA=allS.reduce((s,p)=>s+(p.actual||0),0);
   const colCmp=_cmpMode!=='off'?`<th class="text-right">${_prevLabel}</th>`:'';
-  const head=`<thead><tr><th>PROMOTION</th><th class="text-right">ORDERS</th><th class="text-right">현재 ORDER AMT</th>${colCmp}<th class="text-right">Δ%</th><th class="text-right">MKT BUDGET</th><th class="text-right">EXECUTED</th><th class="text-right">오더 SKU수</th><th class="text-right">오더수</th><th class="text-right">ROI</th></tr></thead>`;
+  const head=`<thead><tr><th>PROMOTION</th><th class="text-right">ORDERS</th><th class="text-right">현재 ORDER AMT</th>${colCmp}<th class="text-right">Δ%</th><th class="text-right">오더 SKU수</th><th class="text-right">오더수</th><th class="text-right">MKT BUDGET</th><th class="text-right">EXECUTED</th><th class="text-right">ROI</th></tr></thead>`;
   let body='<tbody>';
-  if(siS.length){body+=`<tr style="background:rgba(200,16,46,0.04)"><td colspan="8" style="padding:6px 10px;font-size:11px;font-weight:700;color:#C8102E;letter-spacing:0.05em">📦 SELL-IN · SKU 기반 캠페인</td></tr>`;body+=siS.map(buildRow).join('');body+=subRow('📦 SELL-IN 소계',siS,'rgba(200,16,46,0.06)');}
-  if(soS.length){body+=`<tr style="background:rgba(10,132,255,0.04)"><td colspan="8" style="padding:6px 10px;font-size:11px;font-weight:700;color:#0A84FF;letter-spacing:0.05em">🤝 SELL-OUT · 고객 기반 캠페인</td></tr>`;body+=soS.map(buildRow).join('');body+=subRow('🤝 SELL-OUT 소계',soS,'rgba(10,132,255,0.06)');}
+  if(siS.length){body+=`<tr style="background:rgba(200,16,46,0.04)"><td colspan="9" style="padding:6px 10px;font-size:11px;font-weight:700;color:#C8102E;letter-spacing:0.05em">📦 SELL-IN · SKU 기반 캠페인</td></tr>`;body+=siS.map(buildRow).join('');body+=subRow('📦 SELL-IN 소계',siS,'rgba(200,16,46,0.06)');}
+  if(soS.length){body+=`<tr style="background:rgba(10,132,255,0.04)"><td colspan="9" style="padding:6px 10px;font-size:11px;font-weight:700;color:#0A84FF;letter-spacing:0.05em">🤝 SELL-OUT · 고객 기반 캠페인</td></tr>`;body+=soS.map(buildRow).join('');body+=subRow('🤝 SELL-OUT 소계',soS,'rgba(10,132,255,0.06)');}
   body+=`<tr style="background:rgba(0,0,0,0.06);font-weight:800;border-top:2px solid var(--border)"><td style="font-size:13px"><b>🏆 CHOICE KIT 전체 합계</b></td><td class="text-right mono">${fmtNum(allS.reduce((s,p)=>s+(p.orders||0),0))}</td><td class="text-right mono t-green" style="font-size:14px;font-weight:900">${fmtMoney(gT)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted" style="font-size:13px">${gP>0?fmtMoney(gP):'–'}</td>`:''}<td class="text-right mono" style="font-size:12px">${gdTag}</td><td class="text-right mono t-yellow">${fmtMoney(gE)}</td><td class="text-right mono t-orange">${fmtMoney(gA)}</td><td class="text-right mono muted">${(()=>{const s=Object.values(_prevMktCost).reduce((t,v)=>t+v,0);return s>0?fmtMoney(s):'–';})()}</td><td class="text-right mono">${gA>0?fmtPct(((gT-gA)/gA)*100):'–'}</td></tr></tbody>`;
   document.getElementById('tblPromo').innerHTML=head+body;
   } catch(e){console.error('[renderPromoTable]',e);}
