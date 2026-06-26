@@ -9820,7 +9820,16 @@ async function processBulkFiles(files, { replace = false } = {}) {
         const _cr = await fetch(_resolveGhRepoBase() + '/Cost_customer.csv');
         if (_cr.ok) { state.costCustomer = parseCSV(await _cr.text()); }
         else state.costCustomer = [];
-      } catch(e) { state.costCustomer = []; } replacedMkt = true; }
+      } catch(e) { state.costCustomer = []; }
+      // pre_orders_summary.json — 전년 동기 스냅샷 (41KB, 빠른 YoY 비교용)
+      try {
+        const _ps = await fetch(_resolveGhRepoBase() + '/pre_orders_summary.json');
+        if (_ps.ok) {
+          const _psData = await _ps.json();
+          state.yoyByPromoMonth = _psData.yoy_by_promo_month || {};
+          state.preOrdersSummaryPromoStart = _psData.promo_start || {};
+        } else { state.yoyByPromoMonth = {}; }
+      } catch(e) { state.yoyByPromoMonth = {}; } replacedMkt = true; }
         else state.marketing = state.marketing.concat(rows);
         summary.marketing += rows.length;
         markDataUpdated('marketing');
