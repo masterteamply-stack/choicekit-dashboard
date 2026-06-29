@@ -6197,6 +6197,14 @@ async function renderPromoChart(fOrders, fMkt) {
         } else {
           match = (skuSet && (skuSet.has(oSku) || (ctrCode && skuSet.has(ctrCode))));
         }
+        // region 게이트: 캠페인에 region 제한이 있으면 행의 region이 일치할 때만 (Asian/European=CIS만)
+        if (match) {
+          const _allowR = ba.region;
+          if (_allowR && _allowR.length) {
+            const _rowR = normalizeRegion(o.region || '');
+            if (_rowR && !_allowR.includes(_rowR)) match = false;
+          }
+        }
         if (match) {
           ba.before += amt;
           // 활성화된 SKU/customer 카운트 (중복제거용 Set은 별도 관리)
