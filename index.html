@@ -10726,11 +10726,14 @@ async function fetchPreOrdersOnce() {
     } catch(e) { console.warn(`[baseline] ${m.name} failed:`, e); return { ...m, manifest:null }; }
   }));
   const totalExpected = manifestResults.reduce((s,m) => s + (m.manifest?.total_records||0), 0);
+  // data_version을 캐시 키에 포함 — baseline 내용이 바뀌면(EUROPE 삭제 등) total_records가 같아도 캐시 무효화
+  const _dataVer = manifestResults.map(m => (m.manifest?.data_version)||'').join('|');
+  const _cacheVer = `${totalExpected}::${_dataVer}`;
 
   if (totalExpected > 0) {
     try {
       const cached = await idbGet('baselineCache_v1');
-      if (cached && cached.version === totalExpected && cached.rows?.length) {
+      if (cached && cached.version === _cacheVer && cached.rows?.length) {
         console.log(`[baseline] ⚡ cache: ${cached.rows.length.toLocaleString()} rows`);
         const rows = cached.rows.map(o => o[PRE_ORDER_MARK] ? o : { ...o, [PRE_ORDER_MARK]:true });
         state.preOrders = rows; state.preOrdersMeta = { source:'idb', count:rows.length };
@@ -10763,7 +10766,7 @@ async function fetchPreOrdersOnce() {
   if (!allRows.length) throw new Error('baseline 0건');
   console.log(`[baseline] ✅ ${allRows.length.toLocaleString()} rows`);
   state.preOrders = allRows; state.preOrdersMeta = { source:'baseline_data', count:allRows.length };
-  try { await idbSet('baselineCache_v1', { rows:allRows, version:totalExpected, savedAt:new Date().toISOString() }); } catch(_) {}
+  try { await idbSet('baselineCache_v1', { rows:allRows, version:_cacheVer, savedAt:new Date().toISOString() }); } catch(_) {}
   return allRows;
 }
 
