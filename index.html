@@ -8060,10 +8060,16 @@ function promoKeyOfOrder(o) {
     if (!window._promoKeyMaps) {
       const ctrMap = {}, custMap = {};
       const cfg = state.campaignTargetSkus || {};
+      // 현재 orders에 실제 존재하는 캠페인 (customer 충돌 시 우선)
+      const activePromos = new Set((state.orders||[]).map(o => o.promotion_category).filter(Boolean));
       Object.keys(cfg).forEach(p => {
         const c = cfg[p] || {}, mb = (c.match_by||'sku').toLowerCase();
         if (mb === 'sku') (c.target_skus||[]).forEach(s => { ctrMap[s.trim()] = p; });
-        else (c.target_customers||[]).forEach(cu => { custMap[cu.trim()] = p; });
+        else (c.target_customers||[]).forEach(cu => {
+          const k = cu.trim();
+          // 이미 매핑된 고객이 active 캠페인이면 덮어쓰지 않음; 새 캠페인이 active면 우선
+          if (!custMap[k] || (activePromos.has(p) && !activePromos.has(custMap[k]))) custMap[k] = p;
+        });
       });
       window._promoKeyMaps = { ctrMap, custMap };
     }
