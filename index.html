@@ -6096,7 +6096,11 @@ async function renderPromoChart(fOrders, fMkt) {
   // Region can be a string or an array (for multi-region campaigns like SPP=NA+ASIA).
   const _promoRegionForBA = {};
   Object.keys(state.campaignTargetSkus || {}).forEach(p => {
-    const r = (state.campaignTargetSkus[p] || {}).region;
+    const _c = state.campaignTargetSkus[p] || {};
+    // region 게이트는 SKU 기반 캠페인(Asian/European=CIS)에만 적용.
+    // customer 기반(Trade 등)은 고객이 명시적이므로 region 무관(호주=OCEANIA, 한국=KOREA 고객 포함).
+    if ((_c.match_by||'sku').toLowerCase()==='customer') return;
+    const r = _c.region;
     if (r) {
       const arr = Array.isArray(r) ? r : [r];
       _promoRegionForBA[p] = arr.map(x => normalizeRegion(x)).filter(Boolean);
@@ -7379,7 +7383,7 @@ function renderPromoTable() {
   const _ps=window._lastPromoStart||{},_pts=window._lastPromoTargetSkus||{},_ptc=window._lastPromoTargetCust||{},_pmb=window._lastPromoMatchBy||{};
   const _sp=new Set(summary.map(s=>s.promotion||s.key||''));
   // 캠페인별 허용 region (cfg.region) — SKU 캠페인의 지역 제한 (Asian/European=CIS만)
-  const _promoRegions={};Object.keys(state.campaignTargetSkus||{}).forEach(p=>{const rg=(state.campaignTargetSkus[p]||{}).region;if(rg){const arr=Array.isArray(rg)?rg:[rg];_promoRegions[p]=new Set(arr.map(x=>normalizeRegion(x)));}});
+  const _promoRegions={};Object.keys(state.campaignTargetSkus||{}).forEach(p=>{const _c=(state.campaignTargetSkus[p]||{});if((_c.match_by||'sku').toLowerCase()==='customer')return;const rg=_c.region;if(rg){const arr=Array.isArray(rg)?rg:[rg];_promoRegions[p]=new Set(arr.map(x=>normalizeRegion(x)));}});
   const _regionOK=(pr,o)=>{const allow=_promoRegions[pr];if(!allow||!allow.size)return true;const reg=normalizeRegion(o.region||'');return reg?allow.has(reg):true;};
   const dd={};
   fOrders.forEach(o=>{const pr=(o.promotion_category||'').trim();if(!_sp.has(pr))return;if(!_regionOK(pr,o))return;const st=_ps[pr];if(st&&o.order_date<st)return;const mb=_pmb[pr]||'sku';if(mb==='sku'){const ss=_pts[pr];if(ss&&ss.size>0&&!ss.has((o.sku||o.ctr_code||'').trim()))return;}else{const cs=_ptc[pr];if(cs&&cs.size>0&&!cs.has((o.customer||'').trim()))return;}const country=(normalizeCountry(o.country||'')||o.country||o.region||'–'),cust=o.customer||'–';if(!dd[pr])dd[pr]={};if(!dd[pr][country])dd[pr][country]={};if(!dd[pr][country][cust])dd[pr][country][cust]={amt:0,orders:0};dd[pr][country][cust].amt+=convOrder(o);dd[pr][country][cust].orders+=1;});
