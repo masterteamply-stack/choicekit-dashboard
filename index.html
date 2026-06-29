@@ -8096,24 +8096,40 @@ function promoKeyOfOrder(o) {
       const cfg = state.campaignTargetSkus || {};
       // 현재 orders에 실제 존재하는 캠페인 (customer 충돌 시 우선)
       const activePromos = new Set((state.orders||[]).map(o => o.promotion_category).filter(Boolean));
+      const regMap = {};  // 캠페인 → 허용 region Set (SKU 기반 캠페인만)
       Object.keys(cfg).forEach(p => {
         const c = cfg[p] || {}, mb = (c.match_by||'sku').toLowerCase();
-        if (mb === 'sku') (c.target_skus||[]).forEach(s => { ctrMap[s.trim()] = p; });
+        if (mb === 'sku') {
+          (c.target_skus||[]).forEach(s => { ctrMap[s.trim()] = p; });
+          // SKU 기반 캠페인의 region 제한 (Asian/European=CIS, Portfolio=MENA)
+          if (c.region) regMap[p] = new Set((Array.isArray(c.region)?c.region:[c.region]).map(x=>normalizeRegion(x)).filter(Boolean));
+        }
         else (c.target_customers||[]).forEach(cu => {
           const k = cu.trim();
           // 이미 매핑된 고객이 active 캠페인이면 덮어쓰지 않음; 새 캠페인이 active면 우선
           if (!custMap[k] || (activePromos.has(p) && !activePromos.has(custMap[k]))) custMap[k] = p;
         });
       });
-      window._promoKeyMaps = { ctrMap, custMap };
+      window._promoKeyMaps = { ctrMap, custMap, regMap };
     }
-    const { ctrMap, custMap } = window._promoKeyMaps;
+    const { ctrMap, custMap, regMap } = window._promoKeyMaps;
     const sk = (o.sku || '').trim();
     const m = (o.order_id || '').match(/^PO-([^-]+)-/);
     const ctr = m ? m[1] : sk;
     // customer 기반 캠페인 대상 고객이면 SKU보다 우선 매칭 (Trade promotion 등)
     const custKey = custMap[(o.customer||'').trim()];
-    return custKey || ctrMap[ctr] || ctrMap[sk] || pc || 'OTHER';
+    if (custKey) return custKey;
+    // SKU 매칭 — SKU 기반 캠페인은 region 제한 적용 (Asian/European=CIS, Portfolio=MENA)
+    const skuKey = ctrMap[ctr] || ctrMap[sk];
+    if (skuKey) {
+      const allowR = regMap[skuKey];
+      if (allowR && allowR.size) {
+        const rr = normalizeRegion(o.region || '');
+        if (rr && !allowR.has(rr)) return pc || 'OTHER';  // region 불일치 → 캠페인 미귀속
+      }
+      return skuKey;
+    }
+    return pc || 'OTHER';
   }
   return pc || 'OTHER';
 }
