@@ -7480,7 +7480,7 @@ function renderPromoTable() {
   if(soS.length){body+=`<tr style="background:rgba(10,132,255,0.04)"><td colspan="${_cmpMode!=='off'?10:9}" style="padding:6px 10px;font-size:11px;font-weight:700;color:#0A84FF;letter-spacing:0.05em">🤝 SELL-OUT · Customer-based</td></tr>`;body+=soS.map(buildRow).join('');body+=subRow('🤝 SELL-OUT Subtotal',soS,'rgba(10,132,255,0.06)');}
   body+=`<tr style="background:rgba(0,0,0,0.06);font-weight:800;border-top:2px solid var(--border)"><td style="font-size:13px"><b>🏆 CHOICE KIT Total</b></td><td class="text-right mono">${fmtNum(allS.reduce((s,p)=>s+(p.orders||0),0))}</td><td class="text-right mono t-green" style="font-size:14px;font-weight:900">${fmtMoney(gT)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted" style="font-size:13px">${gP>0?fmtMoney(gP):'–'}</td>`:''}<td class="text-right mono" style="font-size:12px">${gdTag}</td><td class="text-right mono t-yellow">${fmtMoney(gE)}</td><td class="text-right mono t-orange">${fmtMoney(gA)}</td><td class="text-right mono muted">–</td><td class="text-right mono muted">–</td><td class="text-right mono">${gA>0?fmtPct(((gT-gA)/gA)*100):'–'}</td></tr></tbody>`;
   document.getElementById('tblPromo').innerHTML=head+body;
-  } catch(e){console.error('[renderPromoTable]',e);}
+  } catch(e){console.error('[renderPromoTable]',e);try{var _el=document.getElementById('tblPromo');if(_el)_el.innerHTML='<tbody><tr><td style="color:red;padding:10px;font-size:11px">[DEBUG] '+(e&&e.message?e.message:e)+' @ '+(e&&e.stack?e.stack.split(String.fromCharCode(10))[1]:'')+'</td></tr></tbody>';}catch(_){}}
 }
 // ── Promotion Performance 드릴다운 토글 함수 ──
 function togglePromoDrill(row, promo) {
