@@ -3930,6 +3930,7 @@ function fillCompareKpis(widget, kpiSelector, orders, opts) {
     }
   }
 
+  if(widget==='sku'){try{console.log('[SKU-CMP-DEBUG]',JSON.stringify({mode,current,previous,baselineActive,prevSrcLen:prevSource.length,preOrdersLen:(state.preOrders||[]).length,prevCount:prev.count,prevAmount:prev.amount,currAmount:curr.amount,hasExtra:!!extra}));}catch(_){}}
   const dAmt = cmpDelta(curr.amount,     prev.amount);
   const dQty = cmpDelta(curr.qty,        prev.qty);
   const dOrd = cmpDelta(curr.orderCount, prev.orderCount);
