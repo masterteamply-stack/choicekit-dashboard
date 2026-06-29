@@ -9181,8 +9181,15 @@ function renderSkuAggregate(fOrders) {
   //   - skuOrdsCsv  : orders.csv only  → used for after / charts / totals
   //   - skuOrdsAll  : csv + preOrders  → passed to buildBaStats so "before"
   //                   window can draw on the full baseline history
+  // SKU 기반 캠페인의 region 제한 (Asian/European=CIS, Portfolio=MENA) — 박스(cmpScope)와 동일
+  const _baCfg = (state.campaignTargetSkus||{})[promo] || {};
+  const _baIsSku = (promo && promo!=='__all__') && ((_baCfg.match_by||'sku').toLowerCase()!=='customer');
+  const _baAllowR = (_baIsSku && _baCfg.region)
+    ? new Set((Array.isArray(_baCfg.region)?_baCfg.region:[_baCfg.region]).map(x=>normalizeRegion(x)).filter(Boolean))
+    : null;
+  const _baRegionOK = (o) => { if(!_baAllowR||!_baAllowR.size) return true; const _r=normalizeRegion(o.region||''); return _r ? _baAllowR.has(_r) : true; };
   const perSku = skus.map(sku => {
-    const skuOrdsAll_raw = allOrd.filter(o => o.sku === sku);      // + preOrders (for before)
+    const skuOrdsAll_raw = allOrd.filter(o => o.sku === sku && _baRegionOK(o));      // + preOrders (for before), region 제한
     // anchor 계산을 먼저 (total.amt 필터에도 사용)
     let anchor = baStartDate;
     {
@@ -9198,6 +9205,7 @@ function renderSkuAggregate(fOrders) {
     // skuOrdsCsv: anchor(캠페인 시작일) 이후 오더만 — PP와 동일 기준
     const skuOrdsCsv = ordersCsv.filter(o => {
       if (o.sku !== sku) return false;
+      if (!_baRegionOK(o)) return false;
       if (anchor && o.order_date && o.order_date < anchor) return false;
       return true;
     });
