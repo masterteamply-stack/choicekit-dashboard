@@ -10667,7 +10667,7 @@ function slimPreOrderRow(o) {
     order_id:   o.order_id   || '',
     order_date: o.order_date || '',
     region:     o.region     || '',
-    country:    o.country    || '',
+    country:    normalizeCountry(o.country || '') || (o.country || ''),
     sku:        o.sku || o.ctr_code || '',
     product:    o.product    || '',
     qty:        o.qty        || 0,
