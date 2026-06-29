@@ -1,4 +1,4 @@
-CTR Code,order date,region,country,promotion_category,promotion_theme,product,sku,part_no,position,make_model,qty,unit_price,amount,currency,target,sell_type,customer,Customer_No
+﻿CTR Code,order date,region,country,promotion_category,promotion_theme,product,sku,part_no,position,make_model,qty,unit_price,amount,currency,target,sell_type,customer,Customer_No
 GK0383,2026-01-13,MENA,이라크,Portfolio Expansion Program,CHOICE_KIT,BRAKE PAD ASSY,GK0383,06450S5DA00,FRONT,HONDA_Accord 1990-1991,10,12.72,161.8,USD,B2B,SELL-IN,MESK AL-BARARI,200287
 GY0272G,2026-01-13,MENA,이라크,Portfolio Expansion Program,CHOICE_KIT,SHOCK ABSORBER,GY0272G,13332639,REAR,CHEVROLET_Cruze 2008-2011,16,14.99,224.7,USD,B2B,SELL-IN,MESK AL-BARARI,200287
 GY1056G,2026-01-13,MENA,이라크,Portfolio Expansion Program,CHOICE_KIT,SHOCK ABSORBER,GY1056G,553112S400,REAR,HYUNDAI_iX35 2009-,6,17.81,317.2,USD,B2B,SELL-IN,MESK AL-BARARI,200287
