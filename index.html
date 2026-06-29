@@ -2174,6 +2174,15 @@ header .mono b.t-orange {
           </div>
         </div>
         <div id="skuAggBreakdown" style="overflow:auto;max-height:280px"><table id="tblSkuAggBreakdown" style="font-size:12px"></table></div>
+        <!-- 고객별 SKU 전환 심층 분석 (작년 vs 올해 SKU 다양성 / 캠페인 SKU 전환) -->
+        <div id="skuCustConvWrap" style="margin-top:18px;display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <span class="label-mono" style="font-size:11px">고객별 SKU 전환 분석 · 작년 vs 올해 (해당 region 고객)</span>
+            <span class="label-mono muted" id="skuCustConvSummary" style="font-size:10px"></span>
+          </div>
+          <div style="overflow:auto;max-height:340px"><table id="tblSkuCustConv" style="font-size:12px"></table></div>
+          <p class="label-mono muted" style="font-size:10px;margin-top:6px">신규전환 = 작년엔 없던 SKU를 올해 주문 · 유지 = 작년·올해 모두 주문 · 이탈 = 작년엔 주문했으나 올해 미주문</p>
+        </div>
       </div>
 
             <!-- Sales Trend (merged: Promotion Category + Region/Country Monthly) -->
