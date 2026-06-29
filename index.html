@@ -8071,7 +8071,9 @@ function promoKeyOfOrder(o) {
     const sk = (o.sku || '').trim();
     const m = (o.order_id || '').match(/^PO-([^-]+)-/);
     const ctr = m ? m[1] : sk;
-    return ctrMap[ctr] || ctrMap[sk] || custMap[(o.customer||'').trim()] || pc || 'OTHER';
+    // customer 기반 캠페인 대상 고객이면 SKU보다 우선 매칭 (Trade promotion 등)
+    const custKey = custMap[(o.customer||'').trim()];
+    return custKey || ctrMap[ctr] || ctrMap[sk] || pc || 'OTHER';
   }
   return pc || 'OTHER';
 }
