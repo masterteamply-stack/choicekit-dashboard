@@ -4384,7 +4384,9 @@
       "MYAMMAR PRODIGY CO., LTD",
       "Pan Theingi Trading Co., Ltd.",
       "RED STAR TRADING CO. LTD.",
-      "Yarzar Tun Lin Trading Company Limited"
+      "Yarzar Tun Lin Trading Company Limited",
+      "PLUSCAR S.A",
+      "SUPER REPUESTOS"
     ]
   },
   "Mexico Awakening Campaign": {
@@ -4412,6 +4414,14 @@
       "NAM BAC AUTO SERVICE JOINT STOCK COMPANY",
       "NAM BAC AUTO SPARE PART CORPORATION.",
       "TAN CO INVESTMENT AND DEVELOPMENT JOINT"
+    ]
+  },
+  "Sell-Out Promotion": {
+    "region": "LATAM",
+    "match_by": "customer",
+    "target_customers": [
+      "PLUSCAR S.A",
+      "SUPER REPUESTOS"
     ]
   }
 }
