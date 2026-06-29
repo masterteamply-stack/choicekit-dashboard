@@ -9407,6 +9407,87 @@ function renderSkuAggregate(fOrders) {
     ? ordersCsv
     : ordersCsv.filter(o => promoKeyOfOrder(o) === promo);
   renderSkuCompareKpis(cmpOrders, cmpScope, startDate);
+  renderSkuCustomerConversion(promo, _cmpCfg, _cmpAllowR, allOrd, startDate);
+}
+
+// 고객별 SKU 전환 심층 분석: 해당 region 고객의 작년 vs 올해 주문 SKU 비교
+// (SKU 다양성 증감 + 캠페인 SKU 전환 여부). SKU 기반 캠페인 전용.
+function renderSkuCustomerConversion(promo, cfg, allowR, allOrd, startDate) {
+  const wrap = document.getElementById('skuCustConvWrap');
+  const tbl  = document.getElementById('tblSkuCustConv');
+  const sumEl= document.getElementById('skuCustConvSummary');
+  if (!wrap || !tbl) return;
+  const isSku = (promo && promo !== '__all__') && ((cfg.match_by||'sku').toLowerCase() !== 'customer');
+  if (!isSku) { wrap.style.display='none'; return; }
+
+  const tgtSkus = new Set((cfg.target_skus||[]).map(s=>String(s).trim().toUpperCase()));
+  const regionOK = (o) => { if(!allowR||!allowR.size) return true; const r=normalizeRegion(o.region||''); return r ? allowR.has(r) : true; };
+  const skuMatch = (o) => { const sk=(o.sku||'').toUpperCase(); const m=(o.order_id||'').match(/^PO-([^-]+)-/); const ctr=m?m[1].toUpperCase():sk; return tgtSkus.has(sk)||tgtSkus.has(ctr); };
+
+  // 시작일 기준 올해/작년 기간
+  const startStr = (typeof startDate === 'string') ? startDate : (startDate && startDate.byPromo ? startDate.byPromo[promo] : null);
+  const start = startStr || '2026-01-01';
+  const yEnd  = (window._todayStr || new Date().toISOString().slice(0,10));
+  const shift1y = (s) => s ? (String(parseInt(s.slice(0,4))-1) + s.slice(4)) : '';
+  const pStart = shift1y(start), pEnd = shift1y(yEnd);
+
+  // 고객별 작년/올해 주문 SKU 집합
+  const cur = {}, prev = {}, curAmt = {}, prevAmt = {};
+  allOrd.forEach(o => {
+    if (!skuMatch(o) || !regionOK(o)) return;
+    const c = (o.customer||'(unspecified)').trim();
+    const d = o.order_date || '';
+    const sk = (o.sku||'').toUpperCase();
+    const amt = (o[PRE_ORDER_MARK] && o.amount_usd!=null) ? Number(o.amount_usd)*usdToDisplay() : convOrder(o);
+    if (d >= start && d <= yEnd) { (cur[c]=cur[c]||new Set()).add(sk); curAmt[c]=(curAmt[c]||0)+amt; }
+    else if (d >= pStart && d <= pEnd) { (prev[c]=prev[c]||new Set()).add(sk); prevAmt[c]=(prevAmt[c]||0)+amt; }
+  });
+
+  const custs = Array.from(new Set([...Object.keys(cur), ...Object.keys(prev)]));
+  if (!custs.length) { wrap.style.display='none'; return; }
+
+  const rows = custs.map(c => {
+    const cs = cur[c]||new Set(), ps = prev[c]||new Set();
+    const newSku = [...cs].filter(s=>!ps.has(s));
+    const kept   = [...cs].filter(s=> ps.has(s));
+    const lost   = [...ps].filter(s=>!cs.has(s));
+    return { cust:c, prevN:ps.size, curN:cs.size, newN:newSku.length, keptN:kept.size, lostN:lost.size,
+             curAmt:curAmt[c]||0, prevAmt:prevAmt[c]||0, diff: cs.size - ps.size };
+  }).sort((a,b)=> (b.curN+b.prevN) - (a.curN+a.prevN));
+
+  // 요약: 전체 캠페인 SKU 전환율 + 고객 SKU 다양성 증감
+  const orderedTgt = new Set();
+  Object.values(cur).forEach(set => set.forEach(s => { if (tgtSkus.has(s)) orderedTgt.add(s); }));
+  const convRate = tgtSkus.size>0 ? (orderedTgt.size/tgtSkus.size*100) : 0;
+  const grew = rows.filter(r=>r.diff>0).length, shrank = rows.filter(r=>r.diff<0).length;
+  if (sumEl) sumEl.textContent = `캠페인 SKU 전환율 ${orderedTgt.size}/${tgtSkus.size} (${convRate.toFixed(1)}%) · SKU 확대 고객 ${grew}곳 / 축소 ${shrank}곳`;
+
+  const dt = (n) => n>0 ? `<span class="t-green">▲${n}</span>` : (n<0 ? `<span class="t-red">▼${Math.abs(n)}</span>` : '<span class="muted">–</span>');
+  tbl.innerHTML = `
+    <thead><tr>
+      <th>Customer</th>
+      <th class="text-right">작년 SKU</th>
+      <th class="text-right">올해 SKU</th>
+      <th class="text-right">증감</th>
+      <th class="text-right">신규전환</th>
+      <th class="text-right">유지</th>
+      <th class="text-right">이탈</th>
+      <th class="text-right">올해 금액</th>
+      <th class="text-right">작년 금액</th>
+    </tr></thead>
+    <tbody>${rows.map(r => `
+      <tr>
+        <td><b>${r.cust}</b></td>
+        <td class="text-right mono muted">${r.prevN||'–'}</td>
+        <td class="text-right mono" style="font-weight:700">${r.curN||'–'}</td>
+        <td class="text-right mono">${dt(r.diff)}</td>
+        <td class="text-right mono t-green">${r.newN||'–'}</td>
+        <td class="text-right mono">${r.keptN||'–'}</td>
+        <td class="text-right mono t-red">${r.lostN||'–'}</td>
+        <td class="text-right mono">${r.curAmt>0?fmtMoney(r.curAmt):'–'}</td>
+        <td class="text-right mono muted">${r.prevAmt>0?fmtMoney(r.prevAmt):'–'}</td>
+      </tr>`).join('')}</tbody>`;
+  wrap.style.display='block';
 }
 
 /* =================== ACTIONS =================== */
