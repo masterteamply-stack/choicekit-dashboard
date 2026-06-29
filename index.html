@@ -7357,6 +7357,9 @@ function renderPromoTable() {
         const sk2=(o.sku||'').trim(),m3=(o.order_id||'').match(PAT_OV),ct2=m3?m3[1]:sk2;
         const tS=new Set(((_cfgOv[p]||{}).target_skus||[]).map(s=>s.trim()));
         if(tS.size>0&&!tS.has(ct2)&&!tS.has(sk2))return;
+        // region 게이트: SKU 기반 캠페인은 해당 region만 (Asian/European=CIS, Portfolio=MENA)
+        const _rgOv=(_cfgOv[p]||{}).region;
+        if(_rgOv){const _allow=new Set((Array.isArray(_rgOv)?_rgOv:[_rgOv]).map(x=>normalizeRegion(x)).filter(Boolean));const _rr=normalizeRegion(o.region||'');if(_allow.size&&_rr&&!_allow.has(_rr))return;}
       }else{
         const tC=new Set(((_cfgOv[p]||{}).target_customers||[]).map(c=>c.trim()));
         if(tC.size>0&&!tC.has((o.customer||'').trim()))return;
