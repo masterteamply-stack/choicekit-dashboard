@@ -6350,16 +6350,18 @@ async function renderPromoChart(fOrders, fMkt) {
     if (!p) return false;
     const cfg = (state.campaignTargetSkus || {})[p];
     if (!cfg) return false;
-    // Region constraint removed (2026-05-29) — baseline of the same SKU /
-    // customer in ANY region now counts. For Asian vehicle (CIS), this surfaces
-    // $2.18M of legitimate pre-campaign baseline scattered across the bundle's
-    // EUROPE / N_AMERICA / ASIA_PACIFIC regions (CIS-adjacent markets like
-    // SERBIA, POLAND, BULGARIA, ROMANIA, MOLDOVA).
     if ((cfg.match_by || 'sku') === 'customer') {
       const c = (o.customer || '').trim();
       return c && (cfg.target_customers || []).includes(c);
     }
-    return (cfg.target_skus || []).includes((o.sku || '').trim());
+    // SKU 기반 캠페인: SKU 매칭 + region 게이트 (Asian/European=CIS, Portfolio=MENA)
+    if (!(cfg.target_skus || []).includes((o.sku || '').trim())) return false;
+    if (cfg.region) {
+      const allow = (Array.isArray(cfg.region)?cfg.region:[cfg.region]).map(x=>normalizeRegion(x)).filter(Boolean);
+      const rr = normalizeRegion(o.region || '');
+      if (allow.length && rr && !allow.includes(rr)) return false;
+    }
+    return true;
   }
 
   // 1) Aggregate the CURRENT orders (scoped to selected promotion if any).
