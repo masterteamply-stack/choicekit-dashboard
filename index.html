@@ -6631,10 +6631,19 @@ async function renderPromoChart(fOrders, fMkt) {
       const pm   = oid.match(_PAT_PO);
       const ctr  = pm ? pm[1] : '';
 
-      // SKU 기반 캠페인: target_skus = CTR codes
+      // SKU 기반 캠페인: target_skus = CTR codes (+ region 게이트: Asian/European=CIS, Portfolio=MENA)
+      const _cfgR = state.campaignTargetSkus || {};
       for (const p of _skuBasedCmp) {
         const tSkus = _tSkuCache[p];
-        if (ctr && tSkus.has(ctr)) return p;
+        if (ctr && tSkus.has(ctr)) {
+          const _rg = _cfgR[p] && _cfgR[p].region;
+          if (_rg) {
+            const _allow = (Array.isArray(_rg)?_rg:[_rg]).map(x=>normalizeRegion(x)).filter(Boolean);
+            const _rr = normalizeRegion(o.region||'');
+            if (_allow.length && _rr && !_allow.includes(_rr)) continue;  // region 불일치 → 다음 캠페인
+          }
+          return p;
+        }
       }
       // Customer 기반 캠페인: target_customers에 있는 full name과 매칭
       const cfg2 = state.campaignTargetSkus || {};
