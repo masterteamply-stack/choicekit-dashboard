@@ -7416,12 +7416,11 @@ function renderPromoTable() {
   const buildDrill=promo=>{
     const d=dd[promo]||{},dP=ddP[promo]||{},dM=ddM[promo]||{},dMC=ddMC[promo]||{};
     const pS=summary.find(s=>(s.promotion||s.key)===promo),pA=pS?(pS.afterAmt||pS.orderAmt||0):0;
-    const allC=new Set([...Object.keys(d),...Object.keys(dM)]);
-    const countries=[...allC].map(c=>{const cu=d[c]||{};return[c,cu,Object.values(cu).reduce((s,v)=>s+v.amt,0)];}).sort((a,b)=>b[2]-a[2]);
+    const allC=new Set([...Object.keys(d),...Object.keys(dP),...Object.keys(dM),...Object.keys(dMC)]);
+    const countries=[...allC].map(c=>{const cu=d[c]||{};const curAmt=Object.values(cu).reduce((s,v)=>s+v.amt,0);const prevAmt=Object.values(dP[c]||{}).reduce((s,v)=>s+v,0);return[c,cu,curAmt,prevAmt];}).sort((a,b)=>(b[2]+b[3])-(a[2]+a[3]));
     let rows='';
-    for(const[country,custs,cA] of countries){
+    for(const[country,custs,cA,cP] of countries){
       const cO=Object.values(custs).reduce((s,v)=>s+v.orders,0);
-      const cP=Object.values(dP[country]||{}).reduce((s,v)=>s+v,0);
       const cM=dM[country]||{},pct=pA>0?(cA/pA*100).toFixed(1):'0';
       const roiTag=cM.actual>0?`<span class="${((cA-cM.actual)/cM.actual)>=0?'t-green':'t-red'}">${fmtPct(((cA-cM.actual)/cM.actual)*100)}</span>`:'–';
       rows+=`<tr class="promo-drill-country" data-promo="${promo.replace(/"/g,'&quot;')}" style="display:none;background:rgba(0,0,0,0.022);cursor:pointer" onclick="toggleCustomerDrill(this,'${promo.replace(/'/g,"\'")}','${country.replace(/'/g,"\'")}')"><td style="padding-left:28px;font-size:12px"><span style="color:#86868B;margin-right:4px">▶</span><b>${country}</b><span class="muted" style="font-size:10px;margin-left:6px">${cO} orders · ${pct}%</span></td><td class="text-right mono" style="font-size:11px">${cO>0?fmtNum(cO):'–'}</td><td class="text-right mono t-green" style="font-size:12px;font-weight:700">${cA>0?fmtMoney(cA):'–'}</td>${_cmpMode!=='off'?`<td class="text-right mono muted" style="font-size:11px">${cP>0?fmtMoney(cP):'–'}</td>`:''}<td class="text-right mono" style="font-size:10px">${cP>0?dtag(cA,cP):'–'}</td><td class="text-right mono t-yellow" style="font-size:11px">${cM.expected>0?fmtMoney(cM.expected):'–'}</td><td class="text-right mono t-orange" style="font-size:11px">${cM.actual>0?fmtMoney(cM.actual):'–'}</td><td class="text-right mono muted" style="font-size:11px">–</td><td class="text-right mono muted" style="font-size:11px">–</td><td class="text-right mono" style="font-size:11px">${roiTag}</td></tr>`;
