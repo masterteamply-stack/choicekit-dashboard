@@ -7367,7 +7367,7 @@ function renderPromoTable() {
   const _ps=window._lastPromoStart||{},_pts=window._lastPromoTargetSkus||{},_ptc=window._lastPromoTargetCust||{},_pmb=window._lastPromoMatchBy||{};
   const _sp=new Set(summary.map(s=>s.promotion||s.key||''));
   const dd={};
-  fOrders.forEach(o=>{const pr=(o.promotion_category||'').trim();if(!_sp.has(pr))return;const st=_ps[pr];if(st&&o.order_date<st)return;const mb=_pmb[pr]||'sku';if(mb==='sku'){const ss=_pts[pr];if(ss&&ss.size>0&&!ss.has((o.sku||o.ctr_code||'').trim()))return;}else{const cs=_ptc[pr];if(cs&&cs.size>0&&!cs.has((o.customer||'').trim()))return;}const country=o.country||o.region||'–',cust=o.customer||'–';if(!dd[pr])dd[pr]={};if(!dd[pr][country])dd[pr][country]={};if(!dd[pr][country][cust])dd[pr][country][cust]={amt:0,orders:0};dd[pr][country][cust].amt+=convOrder(o);dd[pr][country][cust].orders+=1;});
+  fOrders.forEach(o=>{const pr=(o.promotion_category||'').trim();if(!_sp.has(pr))return;const st=_ps[pr];if(st&&o.order_date<st)return;const mb=_pmb[pr]||'sku';if(mb==='sku'){const ss=_pts[pr];if(ss&&ss.size>0&&!ss.has((o.sku||o.ctr_code||'').trim()))return;}else{const cs=_ptc[pr];if(cs&&cs.size>0&&!cs.has((o.customer||'').trim()))return;}const country=(normalizeCountry(o.country||'')||o.country||o.region||'–'),cust=o.customer||'–';if(!dd[pr])dd[pr]={};if(!dd[pr][country])dd[pr][country]={};if(!dd[pr][country][cust])dd[pr][country][cust]={amt:0,orders:0};dd[pr][country][cust].amt+=convOrder(o);dd[pr][country][cust].orders+=1;});
   const ddP={};
   // customer 기반 캠페인: target_customers(긴 이름) + orders.csv(짧은 이름) 양방향 매칭
   const _custSetFull = {};
@@ -7403,7 +7403,7 @@ function renderPromoTable() {
     }else{
       const cs=_custSetFull[pr]||_ptc[pr];if(cs&&cs.size>0&&!cs.has((o.customer||'').trim()))return;
     }
-    const country=o.country||o.region||'–',cust=o.customer||'–';
+    const country=(normalizeCountry(o.country||'')||o.country||o.region||'–'),cust=o.customer||'–';
     const amt=(o[PRE_ORDER_MARK]&&o.amount_usd!=null)?Number(o.amount_usd)*usdToDisplay():convOrder(o);
     if(!ddP[pr])ddP[pr]={};if(!ddP[pr][country])ddP[pr][country]={};
     ddP[pr][country][cust]=(ddP[pr][country][cust]||0)+amt;
