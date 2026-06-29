@@ -7370,7 +7370,7 @@ function renderPromoTable() {
   const _promoRegions={};Object.keys(state.campaignTargetSkus||{}).forEach(p=>{const rg=(state.campaignTargetSkus[p]||{}).region;if(rg){const arr=Array.isArray(rg)?rg:[rg];_promoRegions[p]=new Set(arr.map(x=>normalizeRegion(x)));}});
   const _regionOK=(pr,o)=>{const allow=_promoRegions[pr];if(!allow||!allow.size)return true;const reg=normalizeRegion(o.region||'');return reg?allow.has(reg):true;};
   const dd={};
-  fOrders.forEach(o=>{const pr=(o.promotion_category||'').trim();if(!_sp.has(pr))return;const st=_ps[pr];if(st&&o.order_date<st)return;const mb=_pmb[pr]||'sku';if(mb==='sku'){const ss=_pts[pr];if(ss&&ss.size>0&&!ss.has((o.sku||o.ctr_code||'').trim()))return;}else{const cs=_ptc[pr];if(cs&&cs.size>0&&!cs.has((o.customer||'').trim()))return;}const country=(normalizeCountry(o.country||'')||o.country||o.region||'–'),cust=o.customer||'–';if(!dd[pr])dd[pr]={};if(!dd[pr][country])dd[pr][country]={};if(!dd[pr][country][cust])dd[pr][country][cust]={amt:0,orders:0};dd[pr][country][cust].amt+=convOrder(o);dd[pr][country][cust].orders+=1;});
+  fOrders.forEach(o=>{const pr=(o.promotion_category||'').trim();if(!_sp.has(pr))return;if(!_regionOK(pr,o))return;const st=_ps[pr];if(st&&o.order_date<st)return;const mb=_pmb[pr]||'sku';if(mb==='sku'){const ss=_pts[pr];if(ss&&ss.size>0&&!ss.has((o.sku||o.ctr_code||'').trim()))return;}else{const cs=_ptc[pr];if(cs&&cs.size>0&&!cs.has((o.customer||'').trim()))return;}const country=(normalizeCountry(o.country||'')||o.country||o.region||'–'),cust=o.customer||'–';if(!dd[pr])dd[pr]={};if(!dd[pr][country])dd[pr][country]={};if(!dd[pr][country][cust])dd[pr][country][cust]={amt:0,orders:0};dd[pr][country][cust].amt+=convOrder(o);dd[pr][country][cust].orders+=1;});
   const ddP={};
   // customer 기반 캠페인: target_customers(긴 이름) + orders.csv(짧은 이름) 양방향 매칭
   const _custSetFull = {};
@@ -7397,6 +7397,7 @@ function renderPromoTable() {
       pr=_ddpCtrToPromo[ct]||_ddpCtrToPromo[sk]||_ddpCustToPromo[(o.customer||'').trim()]||'';
     }
     if(!pr||!_sp.has(pr))return;
+    if(!_regionOK(pr,o))return;
     const ba=_baAmt[pr];if(!ba||!ba.prevFrom||!ba.prevTo)return;
     if(d<ba.prevFrom||d>ba.prevTo)return;
     const mb=_pmb[pr]||'sku';
