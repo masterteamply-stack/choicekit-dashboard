@@ -7405,7 +7405,13 @@ function renderPromoTable() {
       pr=_ddpCtrToPromo[ct]||_ddpCtrToPromo[sk]||_ddpCustToPromo[(o.customer||'').trim()]||'';
     }
     if(!pr||!_sp.has(pr))return;
-    if(!_regionOK(pr,o))return;
+    // region 불일치 시: SKU 캠페인(Asian/European 등)에서 제외된 행을 customer 기반 캠페인으로 재분류 시도
+    if(!_regionOK(pr,o)){
+      const _cust=(o.customer||'').trim();
+      const _alt=_ddpCustToPromo[_cust];
+      if(_alt&&_sp.has(_alt)&&_regionOK(_alt,o)){pr=_alt;}
+      else return;
+    }
     const ba=_baAmt[pr];if(!ba||!ba.prevFrom||!ba.prevTo)return;
     if(d<ba.prevFrom||d>ba.prevTo)return;
     const mb=_pmb[pr]||'sku';
