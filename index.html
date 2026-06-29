@@ -6202,13 +6202,15 @@ async function renderPromoChart(fOrders, fMkt) {
           match = (skuSet && (skuSet.has(oSku) || (ctrCode && skuSet.has(ctrCode))));
         }
         // region 게이트: 캠페인에 region 제한이 있으면 행의 region이 일치할 때만 (Asian/European=CIS만)
+        if (match && p==='European vehicle'){ if(!window._euDbg)window._euDbg={matchSku:0,regBlock:0,pass:0,sampleReg:{}}; window._euDbg.matchSku++; const _rr=normalizeRegion(o.region||''); window._euDbg.sampleReg[_rr]=(window._euDbg.sampleReg[_rr]||0)+1; }
         if (match) {
           const _allowR = ba.region;
           if (_allowR && _allowR.length) {
             const _rowR = normalizeRegion(o.region || '');
-            if (_rowR && !_allowR.includes(_rowR)) match = false;
+            if (_rowR && !_allowR.includes(_rowR)) { match = false; if(p==='European vehicle')window._euDbg.regBlock++; }
           }
         }
+        if (match && p==='European vehicle') window._euDbg.pass++;
         if (match) {
           ba.before += amt;
           // 활성화된 SKU/customer 카운트 (중복제거용 Set은 별도 관리)
@@ -6735,7 +6737,7 @@ async function renderPromoChart(fOrders, fMkt) {
       ? summary.reduce((s, r) => s + (r.beforeAmt || 0), 0)
       : (baAmt[promoFilter] ? baAmt[promoFilter].before : 0);
 
-    try{const _ba=baAmt[promoFilter]||{};console.log('[PP-TOTAL-DEBUG]',JSON.stringify({promoFilter,curTotal,priorTotal,baKeys:Object.keys(baAmt),baBefore:_ba.before,baAfter:_ba.after,baPrevFrom:_ba.prevFrom,baPrevTo:_ba.prevTo,baRegion:_ba.region,baSkipBefore:_ba._skipBefore}));}catch(e){console.log('[PP-TOTAL-ERR]',e.message);}
+    try{const _ba=baAmt[promoFilter]||{};console.log('[PP-TOTAL-DEBUG]',JSON.stringify({promoFilter,curTotal,priorTotal,baBefore:_ba.before,baPrevFrom:_ba.prevFrom,baPrevTo:_ba.prevTo,baRegion:_ba.region,euDbg:window._euDbg}));}catch(e){console.log('[PP-TOTAL-ERR]',e.message);}
     const dPct = priorTotal > 0 ? ((curTotal - priorTotal) / priorTotal) * 100 : null;
     const tag = dPct == null ? '<span class="t-muted">–</span>'
       : dPct >= 0 ? `<span class="t-green">▲ ${dPct.toFixed(1)}%</span>` : `<span class="t-red">▼ ${Math.abs(dPct).toFixed(1)}%</span>`;
