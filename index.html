@@ -9334,11 +9334,22 @@ function renderSkuAggregate(fOrders) {
   const _cmpCfg = (state.campaignTargetSkus||{})[promo] || {};
   const _cmpIsSku = (promo && promo!=='__all__') && ((_cmpCfg.match_by||'sku').toLowerCase()!=='customer');
   const _cmpSkuSet = _cmpIsSku ? new Set(skus.map(s=>(s||'').toUpperCase())) : null;
+  // SKU 기반 캠페인은 해당 region(Asian/European=CIS, Portfolio=MENA)으로 제한 — 그 region 고객의 전년만 비교
+  const _cmpAllowR = _cmpIsSku && _cmpCfg.region
+    ? new Set((Array.isArray(_cmpCfg.region)?_cmpCfg.region:[_cmpCfg.region]).map(x=>normalizeRegion(x)).filter(Boolean))
+    : null;
   const cmpScope = (promo && promo !== '__all__')
     ? ((o) => {
         if(!o) return false;
-        // SKU 기반 캠페인: 현재 캠페인 SKU 집합과 sku 직접 매칭 (차트와 동일 기준)
-        if(_cmpSkuSet){ return _cmpSkuSet.has((o.sku||'').toUpperCase()); }
+        // SKU 기반 캠페인: 캠페인 SKU 집합 매칭 + region 제한 (CIS/MENA만)
+        if(_cmpSkuSet){
+          if(!_cmpSkuSet.has((o.sku||'').toUpperCase())) return false;
+          if(_cmpAllowR && _cmpAllowR.size){
+            const _r = normalizeRegion(o.region||'');
+            if(_r && !_cmpAllowR.has(_r)) return false;
+          }
+          return true;
+        }
         // customer 기반 캠페인: 기존 promoKeyOfOrder 역추적
         return promoKeyOfOrder(o) === promo;
       })
