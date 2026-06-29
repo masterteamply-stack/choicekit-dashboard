@@ -6735,6 +6735,7 @@ async function renderPromoChart(fOrders, fMkt) {
       ? summary.reduce((s, r) => s + (r.beforeAmt || 0), 0)
       : (baAmt[promoFilter] ? baAmt[promoFilter].before : 0);
 
+    try{const _ba=baAmt[promoFilter]||{};console.log('[PP-TOTAL-DEBUG]',JSON.stringify({promoFilter,curTotal,priorTotal,baKeys:Object.keys(baAmt),baBefore:_ba.before,baAfter:_ba.after,baPrevFrom:_ba.prevFrom,baPrevTo:_ba.prevTo,baRegion:_ba.region,baSkipBefore:_ba._skipBefore}));}catch(e){console.log('[PP-TOTAL-ERR]',e.message);}
     const dPct = priorTotal > 0 ? ((curTotal - priorTotal) / priorTotal) * 100 : null;
     const tag = dPct == null ? '<span class="t-muted">–</span>'
       : dPct >= 0 ? `<span class="t-green">▲ ${dPct.toFixed(1)}%</span>` : `<span class="t-red">▼ ${Math.abs(dPct).toFixed(1)}%</span>`;
