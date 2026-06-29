@@ -7394,10 +7394,15 @@ function renderPromoTable() {
   });
   // ddP: 역추적 맵 빌드 (baseline PRE_ORDER → 캠페인)
   const _ddpCtrToPromo={}, _ddpCustToPromo={};
+  // 활성 캠페인(현재 orders에 실제 존재) — 같은 고객이 여러 캠페인에 있을 때 활성 캠페인 우선
+  const _ddpActive=new Set((state.orders||[]).map(o=>o.promotion_category).filter(Boolean));
   Object.keys(state.campaignTargetSkus||{}).forEach(p=>{
     const c2=(state.campaignTargetSkus||{})[p]||{},mb2=(c2.match_by||'sku').toLowerCase();
     if(mb2==='sku'){(c2.target_skus||[]).forEach(s=>{_ddpCtrToPromo[s.trim()]=p;});}
-    else{(c2.target_customers||[]).forEach(c=>{_ddpCustToPromo[c.trim()]=p;});}
+    else{(c2.target_customers||[]).forEach(c=>{const k=c.trim();
+      // 이미 매핑된 고객이 비활성이고 새 캠페인이 활성이면 덮어씀 (Trade vs Korean&Japanese 충돌 해결)
+      if(!_ddpCustToPromo[k]||(_ddpActive.has(p)&&!_ddpActive.has(_ddpCustToPromo[k])))_ddpCustToPromo[k]=p;
+    });}
   });
   const PAT_DDP=/^PO-([^-]+)-/;
   [...(state.orders||[]),...((state.preOrdersEnabled&&Array.isArray(state.preOrders))?state.preOrders:[])].forEach(o=>{
@@ -7406,7 +7411,10 @@ function renderPromoTable() {
     let pr=(o.promotion_category||o._promo||'').trim();
     if(!_sp.has(pr)||pr==='PRE_ORDER'){
       const sk=(o.sku||'').trim(),m2=(o.order_id||'').match(PAT_DDP),ct=m2?m2[1]:sk;
-      pr=_ddpCtrToPromo[ct]||_ddpCtrToPromo[sk]||_ddpCustToPromo[(o.customer||'').trim()]||'';
+      const _custPr=_ddpCustToPromo[(o.customer||'').trim()];
+      // customer 기반 캠페인이 활성이면 SKU보다 우선 (Trade 고객의 Asian SKU 행 → Trade로 귀속)
+      if(_custPr&&_ddpActive.has(_custPr)){pr=_custPr;}
+      else{pr=_ddpCtrToPromo[ct]||_ddpCtrToPromo[sk]||_custPr||'';}
     }
     if(!pr||!_sp.has(pr))return;
     // region 불일치 시: SKU 캠페인(Asian/European 등)에서 제외된 행을 customer 기반 캠페인으로 재분류 시도
