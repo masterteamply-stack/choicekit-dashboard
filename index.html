@@ -3930,11 +3930,6 @@ function fillCompareKpis(widget, kpiSelector, orders, opts) {
     }
   }
 
-  if(widget==='sku'){try{
-    let _inRange=0,_extraPass=0,_baseInRange=0,_sampleKeys=[],_sampleExtra=[];
-    for(let _i=0;_i<prevSource.length;_i++){const _o=prevSource[_i];if(!_o||!_o.order_date)continue;if(_o.order_date<previous.from||_o.order_date>previous.to)continue;_inRange++;if(_o[PRE_ORDER_MARK])_baseInRange++;const _ep=extra?extra(_o):true;if(_ep)_extraPass++;else if(_o[PRE_ORDER_MARK]&&_sampleExtra.length<3){_sampleExtra.push({oid:_o.order_id,sku:_o.sku,cust:_o.customer,pc:_o.promotion_category,pk:(typeof promoKeyOfOrder==='function'?promoKeyOfOrder(_o):'?')});}}
-    console.log('[SKU-CMP-DEBUG2]',JSON.stringify({inRange:_inRange,baseInRange:_baseInRange,extraPass:_extraPass,prevCount:prev.count,sampleFailExtra:_sampleExtra}));
-  }catch(e){console.log('[SKU-CMP-DEBUG2-ERR]',e.message);}}
   const dAmt = cmpDelta(curr.amount,     prev.amount);
   const dQty = cmpDelta(curr.qty,        prev.qty);
   const dOrd = cmpDelta(curr.orderCount, prev.orderCount);
