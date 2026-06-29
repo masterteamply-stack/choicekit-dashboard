@@ -9287,7 +9287,11 @@ function renderSkuAggregate(fOrders) {
   // is never inflated by preOrders. preOrders are added internally for previous
   // period only (fillCompareKpis already calls state.preOrders for prevSource).
   const cmpScope = (promo && promo !== '__all__')
-    ? ((o) => {if(!o)return false;if(o[PRE_ORDER_MARK])return(o._promo||o.promotion_category||'')===promo;return promoKeyOfOrder(o)===promo;})
+    ? ((o) => {
+        if(!o) return false;
+        // baseline 행도 promoKeyOfOrder로 CTR code/customer 역추적하여 캠페인 매칭
+        return promoKeyOfOrder(o) === promo;
+      })
     : null;
   // ordersCsv = orders.csv only (no baseline). Filter same way useOrders was filtered
   // but without the baseline rows so current ORDER AMOUNT = orders.csv only.
