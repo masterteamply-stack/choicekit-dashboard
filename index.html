@@ -2026,53 +2026,6 @@ header .mono b.t-orange {
       <!-- Monthly Trend was merged into Promotion Category — Sales Trend (widget id: category) -->
 
 
-      <!-- Promotion Performance (split widget) -->
-      <div class="panel widget" data-widget-id="customertrend">
-          <div class="widget-head">
-            <div>
-              <h3 class="h-section">Top Customer Order Trend · by Campaign</h3>
-              <p class="label-mono" style="margin-top:4px">Campaign별 Top 고객 · 트렌드</p>
-            </div>
-            <div class="chart-tools">
-              <span class="label-mono" style="font-size:11px">CAMPAIGN</span>
-              <select id="selCustTrendCamp" style="min-width:180px;height:34px;padding:4px 10px;font-size:13px"></select>
-              <span class="label-mono" style="font-size:11px">TOP N</span>
-              <select id="selCustTrendN" style="min-width:80px;height:34px;padding:4px 10px;font-size:13px">
-                <option value="3">3</option>
-                <option value="5" selected>5</option>
-                <option value="8">8</option>
-                <option value="10">10</option>
-                <option value="20">20</option>
-              </select>
-              <div class="widget-order-controls"></div>
-            </div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:14px;align-items:start">
-            <div style="overflow:auto;max-height:460px"><table id="tblCustTrend"></table></div>
-            <div>
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap">
-                <span class="label-mono" style="font-size:11px" id="custTrendSelLabel">Select a customer →</span>
-                <div class="seg" id="segCustTrendGrain">
-                  <button data-v="month" class="active">Month</button>
-                  <button data-v="quarter">Quarter</button>
-                  <button data-v="year">Year</button>
-                </div>
-              </div>
-              <div class="chart-wrap" style="height:340px"><canvas id="chCustTrend"></canvas></div>
-            </div>
-            <div>
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap">
-                <span class="label-mono" style="font-size:11px" id="custProdLabel">TOP 10 PRODUCTS</span>
-                <div class="seg" id="segCustProdMode">
-                  <button data-v="amount" class="active">Amount</button>
-                  <button data-v="qty">Qty</button>
-                </div>
-              </div>
-              <div style="overflow:auto;max-height:340px"><table id="tblCustProducts" style="font-size:12px"></table></div>
-            </div>
-          </div>
-        </div>
-
       <!-- Top Insights — Models / Products / CTR Codes by Region & Country -->
       <div class="panel widget" data-widget-id="region">
         <div class="widget-head">
@@ -2139,6 +2092,54 @@ header .mono b.t-orange {
         <div class="chart-wrap" style="height:300px;min-height:300px;margin-bottom:16px"><canvas id="chPromo"></canvas></div>
         <div id="promoInsight" class="label-mono" style="margin-bottom:8px;font-size:11px;color:#525257"></div>
         <div style="overflow:auto"><table id="tblPromo"></table></div>
+
+
+      <!-- Promotion Performance (split widget) -->
+      <div class="panel widget" data-widget-id="customertrend">
+          <div class="widget-head">
+            <div>
+              <h3 class="h-section">Top Customer Order Trend · by Campaign</h3>
+              <p class="label-mono" style="margin-top:4px">Campaign별 Top 고객 · 트렌드</p>
+            </div>
+            <div class="chart-tools">
+              <span class="label-mono" style="font-size:11px">CAMPAIGN</span>
+              <select id="selCustTrendCamp" style="min-width:180px;height:34px;padding:4px 10px;font-size:13px"></select>
+              <span class="label-mono" style="font-size:11px">TOP N</span>
+              <select id="selCustTrendN" style="min-width:80px;height:34px;padding:4px 10px;font-size:13px">
+                <option value="3">3</option>
+                <option value="5" selected>5</option>
+                <option value="8">8</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+              </select>
+              <div class="widget-order-controls"></div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:14px;align-items:start">
+            <div style="overflow:auto;max-height:460px"><table id="tblCustTrend"></table></div>
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap">
+                <span class="label-mono" style="font-size:11px" id="custTrendSelLabel">Select a customer →</span>
+                <div class="seg" id="segCustTrendGrain">
+                  <button data-v="month" class="active">Month</button>
+                  <button data-v="quarter">Quarter</button>
+                  <button data-v="year">Year</button>
+                </div>
+              </div>
+              <div class="chart-wrap" style="height:340px"><canvas id="chCustTrend"></canvas></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap">
+                <span class="label-mono" style="font-size:11px" id="custProdLabel">TOP 10 PRODUCTS</span>
+                <div class="seg" id="segCustProdMode">
+                  <button data-v="amount" class="active">Amount</button>
+                  <button data-v="qty">Qty</button>
+                </div>
+              </div>
+              <div style="overflow:auto;max-height:340px"><table id="tblCustProducts" style="font-size:12px"></table></div>
+            </div>
+          </div>
+        </div>
 
             <div class="panel widget" data-widget-id="skuExplorer">
         <div class="widget-head">
@@ -5278,7 +5279,7 @@ function renderCustomerTrend(fOrders, fMkt) {
       tr.addEventListener('click', () => {
         state.custTrendCustomer = tr.dataset.cust;
         persist();
-        renderCustomerTrend(fOrdersPP, fMkt);
+        renderCustomerTrend(fOrders, fMkt);
       });
     });
   }
