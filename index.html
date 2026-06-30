@@ -6027,6 +6027,11 @@ async function renderPromoChart(fOrders, fMkt) {
           const _rg = normalizeRegion(o.region||'');
           if (_allow.size>0 && _rg && !_allow.has(_rg)) return;
         }
+        if (_cfgK.target_countries && _cfgK.target_countries.length) {
+          const _ac = _cfgK.target_countries.map(x=>normalizeCountry(x)||String(x).trim().toUpperCase());
+          const _rc = normalizeCountry(o.country||'')||String(o.country||'').trim().toUpperCase();
+          if (_rc && !_ac.includes(_rc)) return;
+        }
       } else {
         const _tc = new Set((_cfgK.target_customers||[]).map(c=>c.trim()));
         if (_tc.size>0 && !_tc.has((o.customer||'').trim())) return;
@@ -6181,6 +6186,11 @@ async function renderPromoChart(fOrders, fMkt) {
           const _alw = new Set((Array.isArray(_cfgA.region)?_cfgA.region:[_cfgA.region]).map(x=>normalizeRegion(x)).filter(Boolean));
           const _rgA = normalizeRegion(o.region||'');
           if (_alw.size>0 && _rgA && !_alw.has(_rgA)) return;
+        }
+        if (_cfgA.target_countries && _cfgA.target_countries.length) {
+          const _acA = _cfgA.target_countries.map(x=>normalizeCountry(x)||String(x).trim().toUpperCase());
+          const _rcA = normalizeCountry(o.country||'')||String(o.country||'').trim().toUpperCase();
+          if (_rcA && !_acA.includes(_rcA)) return;
         }
       } else {
         const _tcA = new Set((_cfgA.target_customers||[]).map(c=>c.trim()));
