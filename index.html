@@ -5977,6 +5977,9 @@ async function renderPromoChart(fOrders, fMkt) {
   Object.keys(promoStart).forEach(p => {
     if (promoStart[p] < '2026-01-02') promoStart[p] = '2026-01-02';
   });
+  // 명시적 캠페인 시작일 (marketing.csv에 STARTED kpi 없는 신규 캠페인용)
+  const _explicitStart = { 'CTR MarketFit Campaign': '2026-03-01' };
+  Object.keys(_explicitStart).forEach(p => { if (!promoStart[p]) promoStart[p] = _explicitStart[p]; });
 
   // Build campaign target maps so ORDER AMT can attribute orders via
   // (tag) OR (target SKU) OR (target customer) — broader than tag-only.
