@@ -6167,6 +6167,25 @@ async function renderPromoChart(fOrders, fMkt) {
     if (!p) return;
     const start = promoStart[p];
     if (start && o.order_date < start) return;  // 캠페인 시작 전 주문 제외
+    // BEFORE(전년)와 동일 기준: target SKU/customer 매칭 + region 게이트.
+    // orders.csv 태그가 있어도 target에 없거나 region 불일치면 제외 (메인행 ORDER AMT = 국가행 합 일치).
+    const _cfgA = (state.campaignTargetSkus||{})[p];
+    if (_cfgA) {
+      const _mbA = (_cfgA.match_by||'sku').toLowerCase();
+      if (_mbA === 'sku') {
+        const _tsA = new Set((_cfgA.target_skus||[]).map(s=>s.trim().toUpperCase()));
+        const _skA = (o.sku||o['CTR Code']||o.ctr_code||'').trim().toUpperCase();
+        if (_tsA.size>0 && !_tsA.has(_skA)) return;
+        if (_cfgA.region) {
+          const _alw = new Set((Array.isArray(_cfgA.region)?_cfgA.region:[_cfgA.region]).map(x=>normalizeRegion(x)).filter(Boolean));
+          const _rgA = normalizeRegion(o.region||'');
+          if (_alw.size>0 && _rgA && !_alw.has(_rgA)) return;
+        }
+      } else {
+        const _tcA = new Set((_cfgA.target_customers||[]).map(c=>c.trim()));
+        if (_tcA.size>0 && !_tcA.has((o.customer||'').trim())) return;
+      }
+    }
     _afterByPromo[p] = (_afterByPromo[p] || 0) + convOrder(o);
   });
 
