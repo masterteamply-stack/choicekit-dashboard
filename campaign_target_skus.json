@@ -4425,5 +4425,25 @@
       "PLUSCAR S.A",
       "SUPER REPUESTOS"
     ]
+  },
+  "CTR MarketFit Campaign": {
+    "match_by": "sku",
+    "region": "LATAM",
+    "target_skus": [
+      "CB0161",
+      "CB0336",
+      "CE0287L",
+      "CE0287R",
+      "CE0536L",
+      "CE0536R",
+      "CL0240",
+      "CL0477",
+      "CQ0096L",
+      "CQ0096R",
+      "CQ0280R",
+      "CR0490",
+      "GV0130"
+    ],
+    "target_customers": []
   }
 }
