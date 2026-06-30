@@ -1,11 +1,11 @@
 {
-  "total_records": 32427,
-  "total_chunks": 65,
+  "total_records": 47340,
+  "total_chunks": 95,
   "chunk_size": 500,
   "date_range": "2025-2026 (2024 excluded)",
   "by_year": {
     "2025": 23245,
-    "2026": 9182
+    "2026": 24095
   },
-  "data_version": "2026-06-29-v4-nz-oceania"
+  "data_version": "2026-06-30-v5-cis-2026"
 }
