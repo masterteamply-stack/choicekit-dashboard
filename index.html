@@ -6270,6 +6270,14 @@ async function renderPromoChart(fOrders, fMkt) {
             const _rowR = normalizeRegion(o.region || '');
             if (_rowR && !_allowR.includes(_rowR)) match = false;
           }
+          if (match) {
+            const _allowC = (state.campaignTargetSkus[p]||{}).target_countries;
+            if (_allowC && _allowC.length) {
+              const _rowC = normalizeCountry(o.country||'') || String(o.country||'').trim().toUpperCase();
+              const _allowCN = _allowC.map(x => normalizeCountry(x) || String(x).trim().toUpperCase());
+              if (_rowC && !_allowCN.includes(_rowC)) match = false;
+            }
+          }
         }
         if (match) {
           ba.before += amt;
