@@ -4148,7 +4148,13 @@
       "PL0586",
       "PL0597"
     ],
-    "match_by": "sku"
+    "match_by": "sku",
+    "target_countries": [
+      "KAZAKHSTAN",
+      "KYRGYZSTAN",
+      "TURKMENISTAN",
+      "TAJIKISTAN"
+    ]
   },
   "European vehicle": {
     "region": "CIS",
@@ -4349,7 +4355,13 @@
       "PL0527",
       "PL0645"
     ],
-    "match_by": "sku"
+    "match_by": "sku",
+    "target_countries": [
+      "KAZAKHSTAN",
+      "KYRGYZSTAN",
+      "TURKMENISTAN",
+      "TAJIKISTAN"
+    ]
   },
   "Trade promotion": {
     "region": "ASIA",
