@@ -7495,27 +7495,34 @@ function renderPromoTable() {
         const set=new Set((state.campaignTargetSkus[p].target_customers||[]).map(c=>normalizeCustomer({customer:c.trim()})));
         _allCustNorm[p]=set; ddCustAll[p]={};
       });
-      // 올해 전체 거래 (orders.csv, 2026-01-01 이후 — 캠페인 무관 전체)
+      // 전체 거래(캠페인 무관)는 baseline(STANDARD 등 전체 거래 포함)을 기준으로 집계.
+      // baseline에는 2025·2026 전체 거래가 모두 들어있음. orders.csv(캠페인 주문)는 baseline에 없는 건만 추가.
+      const _base=(state.preOrdersEnabled&&Array.isArray(state.preOrders))?state.preOrders:[];
+      const _baseKey2026=new Set(); // 올해 baseline 거래 키 (orders 중복 방지)
+      _base.forEach(o=>{
+        const d=o.order_date||'';
+        const cn=normalizeCustomer(o);
+        const amt=(o.amount_usd!=null)?Number(o.amount_usd)*usdToDisplay():convOrder(o);
+        let _isTarget=false;
+        _custCampaigns.forEach(p=>{
+          if(!_allCustNorm[p].has(cn))return;
+          if(!ddCustAll[p][cn])ddCustAll[p][cn]={cur:0,prev:0};
+          if(d>='2025-01-01'&&d<='2025-12-31'){ ddCustAll[p][cn].prev+=amt; _isTarget=true; }
+          else if(d>='2026-01-01'&&d<='2026-12-31'){ ddCustAll[p][cn].cur+=amt; _isTarget=true; }
+        });
+        if(_isTarget&&d>='2026-01-01'){ _baseKey2026.add(cn+'|'+d+'|'+(o.sku||'')+'|'+(o.qty||'')); }
+      });
+      // orders.csv 2026 캠페인 주문 — baseline 2026에 없는 건만 전체거래 올해에 추가
       (state.orders||[]).forEach(o=>{
         const d=o.order_date||''; if(d<'2026-01-01')return;
         const cn=normalizeCustomer(o);
         const amt=convOrder(o);
         _custCampaigns.forEach(p=>{
           if(!_allCustNorm[p].has(cn))return;
+          const k=cn+'|'+d+'|'+(o.sku||'')+'|'+(o.qty||'');
+          if(_baseKey2026.has(k))return; // baseline에 이미 있는 거래
           if(!ddCustAll[p][cn])ddCustAll[p][cn]={cur:0,prev:0};
           ddCustAll[p][cn].cur+=amt;
-        });
-      });
-      // 작년 전체 거래 (baseline, 전년 동기)
-      const _base=(state.preOrdersEnabled&&Array.isArray(state.preOrders))?state.preOrders:[];
-      _base.forEach(o=>{
-        const d=o.order_date||''; if(d<'2025-01-01'||d>'2025-12-31')return;
-        const cn=normalizeCustomer(o);
-        const amt=(o.amount_usd!=null)?Number(o.amount_usd)*usdToDisplay():convOrder(o);
-        _custCampaigns.forEach(p=>{
-          if(!_allCustNorm[p].has(cn))return;
-          if(!ddCustAll[p][cn])ddCustAll[p][cn]={cur:0,prev:0};
-          ddCustAll[p][cn].prev+=amt;
         });
       });
     }
