@@ -6011,6 +6011,26 @@ async function renderPromoChart(fOrders, fMkt) {
   const ensureSum = k => sum[k] = sum[k] || {orders:0, orderAmt:0, actual:0, expected:0, activities:0, byPeriod:{}};
   fOrdersST.forEach(o => {
     const k = o.promotion_category||o.promotion_id||'–';
+    // 국가행(드릴다운)과 동일 기준: region 게이트 + target SKU/customer 매칭된 주문만 카운트.
+    // orders.csv에 캠페인 태그가 있어도 target SKU 목록에 없거나 region 불일치면 제외 (메인행=국가행 합 일치).
+    const _cfgK = (state.campaignTargetSkus||{})[k];
+    if (_cfgK) {
+      const _mbK = (_cfgK.match_by||'sku').toLowerCase();
+      if (_mbK === 'sku') {
+        const _ts = new Set((_cfgK.target_skus||[]).map(s=>s.trim().toUpperCase()));
+        const _sk = (o.sku||o['CTR Code']||o.ctr_code||'').trim().toUpperCase();
+        if (_ts.size>0 && !_ts.has(_sk)) return;
+        // region 게이트 (SKU 기반 캠페인)
+        if (_cfgK.region) {
+          const _allow = new Set((Array.isArray(_cfgK.region)?_cfgK.region:[_cfgK.region]).map(x=>normalizeRegion(x)).filter(Boolean));
+          const _rg = normalizeRegion(o.region||'');
+          if (_allow.size>0 && _rg && !_allow.has(_rg)) return;
+        }
+      } else {
+        const _tc = new Set((_cfgK.target_customers||[]).map(c=>c.trim()));
+        if (_tc.size>0 && !_tc.has((o.customer||'').trim())) return;
+      }
+    }
     ensureSum(k).orders++;
   });
   fMkt.forEach(m => {
