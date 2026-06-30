@@ -7482,6 +7482,45 @@ function renderPromoTable() {
   });
   // ddP: baseline 실데이터만 사용 (스냅샷 비율배분은 부정확하여 제거)
   const ddM={};const ddMC={};fMkt.forEach(m=>{const pr=(m.promotion_category||'').trim();if(!_sp.has(pr))return;const country=(normalizeCountry(m.country||'')||m.country||m.region||'–');const cust=(m.target_customer||'').trim()||'–';const _a=convMktActual(m),_e=convMktExpected(m);if(!ddM[pr])ddM[pr]={};if(!ddM[pr][country])ddM[pr][country]={actual:0,expected:0};ddM[pr][country].actual+=_a;ddM[pr][country].expected+=_e;if(!ddMC[pr])ddMC[pr]={};if(!ddMC[pr][country])ddMC[pr][country]={};if(!ddMC[pr][country][cust])ddMC[pr][country][cust]={actual:0,expected:0};ddMC[pr][country][cust].actual+=_a;ddMC[pr][country][cust].expected+=_e;});
+    // 고객 전체 거래 집계 (캠페인 무관 — 모든 SKU). customer 기반 캠페인 고객행에 전체 YoY 표시용.
+    // 올해: state.orders 전체 / 작년: state.preOrders(baseline) 전체. 고객명(normalizeCustomer) 기준.
+    const ddCustAll={}; // promo → cust(norm) → {cur, prev}
+    const _custCampaigns = Object.keys(state.campaignTargetSkus||{}).filter(p=>((state.campaignTargetSkus[p].match_by||'sku').toLowerCase()==='customer'));
+    if(_custCampaigns.length){
+      const _shift1y=s=>s?(String(parseInt(s.slice(0,4))-1)+s.slice(4)):'';
+      const _todayS=(window._todayStr||new Date().toISOString().slice(0,10));
+      // 캠페인별 전년 기간 = [shift(start), shift(today)]
+      const _allCustNorm={}; // promo → Set(norm cust names)
+      _custCampaigns.forEach(p=>{
+        const set=new Set((state.campaignTargetSkus[p].target_customers||[]).map(c=>normalizeCustomer({customer:c.trim()})));
+        _allCustNorm[p]=set; ddCustAll[p]={};
+      });
+      // 올해 전체 거래 (orders.csv, 캠페인 시작일 이후)
+      (state.orders||[]).forEach(o=>{
+        const cn=normalizeCustomer(o);
+        const amt=convOrder(o);
+        _custCampaigns.forEach(p=>{
+          if(!_allCustNorm[p].has(cn))return;
+          const st=_ps[p]; if(st&&o.order_date<st)return;
+          if(!ddCustAll[p][cn])ddCustAll[p][cn]={cur:0,prev:0};
+          ddCustAll[p][cn].cur+=amt;
+        });
+      });
+      // 작년 전체 거래 (baseline, 전년 동기)
+      const _base=(state.preOrdersEnabled&&Array.isArray(state.preOrders))?state.preOrders:[];
+      _base.forEach(o=>{
+        const cn=normalizeCustomer(o);
+        const amt=(o.amount_usd!=null)?Number(o.amount_usd)*usdToDisplay():convOrder(o);
+        const d=o.order_date||'';
+        _custCampaigns.forEach(p=>{
+          if(!_allCustNorm[p].has(cn))return;
+          const st=_ps[p]; const pStart=_shift1y(st||'2026-01-01'), pEnd=_shift1y(_todayS);
+          if(d<pStart||d>pEnd)return;
+          if(!ddCustAll[p][cn])ddCustAll[p][cn]={cur:0,prev:0};
+          ddCustAll[p][cn].prev+=amt;
+        });
+      });
+    }
   const rc={CIS:'#5856D6',MENA:'#FF9500',LATAM:'#34C759',ASIA:'#0A84FF',EUROPE:'#FF375F',NA:'#BF5AF2'};
   const rbadge=label=>{if(!label)return'';return label.split(',').map(r=>{const k=r.trim().toUpperCase(),c=rc[k]||'#86868B';return`<span style="display:inline-block;background:${c}18;color:${c};border:1px solid ${c}40;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;margin-left:4px;vertical-align:middle">${r.trim()}</span>`;}).join('');};
   const sbadge=st=>st==='SELL-IN'?'<span style="background:#C8102E;color:#fff;font-size:8px;padding:1px 5px;border-radius:8px;font-weight:700;vertical-align:middle;margin-left:4px">SELL-IN</span>':'<span style="background:#0A84FF;color:#fff;font-size:8px;padding:1px 5px;border-radius:8px;font-weight:700;vertical-align:middle;margin-left:4px">SELL-OUT</span>';
