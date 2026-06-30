@@ -7543,14 +7543,22 @@ function renderPromoTable() {
     // 고객 전체 거래 집계 (캠페인 무관 — 모든 SKU). customer 기반 캠페인 고객행에 전체 YoY 표시용.
     // 올해: state.orders 전체 / 작년: state.preOrders(baseline) 전체. 고객명(normalizeCustomer) 기준.
     const ddCustAll={}; // promo → cust(norm) → {cur, prev}
-    const _custCampaigns = Object.keys(state.campaignTargetSkus||{}).filter(p=>((state.campaignTargetSkus[p].match_by||'sku').toLowerCase()==='customer'));
+    // 전체거래(작년→올해)는 customer 기반뿐 아니라 SKU 기반 캠페인 고객행에도 표시.
+    // customer 캠페인: target_customers 대상. SKU 캠페인: 실제 주문 발생 고객(dd[promo]) 대상.
+    const _custCampaigns = Object.keys(state.campaignTargetSkus||{});
     if(_custCampaigns.length){
-      const _shift1y=s=>s?(String(parseInt(s.slice(0,4))-1)+s.slice(4)):'';
-      const _todayS=(window._todayStr||new Date().toISOString().slice(0,10));
-      // 캠페인별 전년 기간 = [shift(start), shift(today)]
       const _allCustNorm={}; // promo → Set(norm cust names)
       _custCampaigns.forEach(p=>{
-        const set=new Set((state.campaignTargetSkus[p].target_customers||[]).map(c=>normalizeCustomer({customer:c.trim()})));
+        const _mbp=(state.campaignTargetSkus[p].match_by||'sku').toLowerCase();
+        let set;
+        if(_mbp==='customer'){
+          set=new Set((state.campaignTargetSkus[p].target_customers||[]).map(c=>normalizeCustomer({customer:c.trim()})));
+        }else{
+          // SKU 캠페인: 실제 주문이 발생한 고객들 (dd[promo]의 모든 country×cust)
+          set=new Set();
+          const _ddp=dd[p]||{};
+          Object.keys(_ddp).forEach(ctry=>{Object.keys(_ddp[ctry]||{}).forEach(cn=>{if(cn&&cn!=='–')set.add(cn);});});
+        }
         _allCustNorm[p]=set; ddCustAll[p]={};
       });
       // 전체 거래(캠페인 무관)는 baseline(STANDARD 등 전체 거래 포함)을 기준으로 집계.
