@@ -2094,6 +2094,38 @@ header .mono b.t-orange {
         <div style="overflow:auto"><table id="tblPromo"></table></div>
 
 
+
+            <!-- Sales Trend (merged: Promotion Category + Region/Country Monthly) -->
+      <div class="panel widget" data-widget-id="planexec">
+        <div class="widget-head">
+          <div>
+            <h3 class="h-section">Campaign Plan vs Execution — Drill-down Explorer</h3>
+            <p class="label-mono" style="margin-top:4px">🟢 정상 &nbsp;🟡 주의 &nbsp;🔴 초과/손실</p>
+          </div>
+          <div class="chart-tools">
+            <span class="label-mono" style="font-size:11px">SORT</span>
+            <div class="seg" id="segPlanExecSort">
+              <button data-v="budget" class="active">Budget</button>
+              <button data-v="executed">Executed</button>
+              <button data-v="orderAmt">Order Amt</button>
+              <button data-v="roi">ROI</button>
+              <button data-v="burn" title="Budget Used % = Actual Cost ÷ Planned Budget">Budget Used %</button>
+            </div>
+            <div class="widget-order-controls"></div>
+          </div>
+        </div>
+        <!-- Breadcrumb -->
+        <div id="planExecCrumb" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0 12px;font-family:'IBM Plex Mono',monospace;font-size:12px"></div>
+        <div style="display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:14px">
+          <div id="planExecCards" style="display:flex;flex-direction:column;gap:8px"></div>
+          <div>
+            <div class="chart-wrap" style="height:300px;margin-bottom:10px"><canvas id="chPlanExec"></canvas></div>
+            <div style="overflow:visible"><table id="tblPlanExecDetail" style="font-size:12px"></table></div>
+          </div>
+        </div>
+        <!-- Needs Attention (그래프 아래) -->
+        <div id="planExecAttention" style="margin-top:12px"></div>
+      </div>
       <!-- Promotion Performance (split widget) -->
       <div class="panel widget" data-widget-id="customertrend">
           <div class="widget-head">
@@ -2185,37 +2217,6 @@ header .mono b.t-orange {
         </div>
       </div>
 
-            <!-- Sales Trend (merged: Promotion Category + Region/Country Monthly) -->
-      <div class="panel widget" data-widget-id="planexec">
-        <div class="widget-head">
-          <div>
-            <h3 class="h-section">Campaign Plan vs Execution — Drill-down Explorer</h3>
-            <p class="label-mono" style="margin-top:4px">🟢 정상 &nbsp;🟡 주의 &nbsp;🔴 초과/손실</p>
-          </div>
-          <div class="chart-tools">
-            <span class="label-mono" style="font-size:11px">SORT</span>
-            <div class="seg" id="segPlanExecSort">
-              <button data-v="budget" class="active">Budget</button>
-              <button data-v="executed">Executed</button>
-              <button data-v="orderAmt">Order Amt</button>
-              <button data-v="roi">ROI</button>
-              <button data-v="burn" title="Budget Used % = Actual Cost ÷ Planned Budget">Budget Used %</button>
-            </div>
-            <div class="widget-order-controls"></div>
-          </div>
-        </div>
-        <!-- Breadcrumb -->
-        <div id="planExecCrumb" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0 12px;font-family:'IBM Plex Mono',monospace;font-size:12px"></div>
-        <div style="display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:14px">
-          <div id="planExecCards" style="display:flex;flex-direction:column;gap:8px"></div>
-          <div>
-            <div class="chart-wrap" style="height:300px;margin-bottom:10px"><canvas id="chPlanExec"></canvas></div>
-            <div style="overflow:visible"><table id="tblPlanExecDetail" style="font-size:12px"></table></div>
-          </div>
-        </div>
-        <!-- Needs Attention (그래프 아래) -->
-        <div id="planExecAttention" style="margin-top:12px"></div>
-      </div>
 
       <!-- Promotion Category × Top CTR Sales (이동 가능) -->
       <div class="panel widget" data-widget-id="activities">
