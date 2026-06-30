@@ -1,11 +1,11 @@
 {
-  "total_records": 47340,
-  "total_chunks": 95,
+  "total_records": 47893,
+  "total_chunks": 96,
   "chunk_size": 500,
   "date_range": "2025-2026 (2024 excluded)",
   "by_year": {
     "2025": 23245,
-    "2026": 24095
+    "2026": 24648
   },
-  "data_version": "2026-06-30-v5-cis-2026"
+  "data_version": "2026-06-30-v6-na-lordco"
 }
