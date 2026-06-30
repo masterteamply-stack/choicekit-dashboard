@@ -6680,7 +6680,13 @@ async function renderPromoChart(fOrders, fMkt) {
         scopedBaseline = rows;
       }
     } else {
-      scopedBaseline = [];  // preIdx 미준비 → 빈 배열, 인덱스 완료 후 rebuildAll로 재시도
+      // preIdx 미준비 → state.preOrders(baseline) 직접 사용 (fallback). 인덱스 없이도 전년 표시.
+      const _baseAll = (state.preOrdersEnabled && Array.isArray(state.preOrders)) ? state.preOrders : [];
+      if (promoFilter !== '__all__') {
+        scopedBaseline = _baseAll.filter(o => _resolvePreOrderPromo(o) === promoFilter);
+      } else {
+        scopedBaseline = _baseAll.filter(o => { const k = _resolvePreOrderPromo(o); return k && _cfgCmp[k]; });
+      }
     }
     // promoFilter === '__all__' 일 때: fOrdersST 전체(날짜 필터 무관) + baseline을 포함
     // promotion_category 태그가 있는 orders.csv rows를 연도 관계없이 모두 포함
