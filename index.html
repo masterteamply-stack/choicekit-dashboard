@@ -6246,6 +6246,11 @@ async function renderPromoChart(fOrders, fMkt) {
     const _preIdx = state._preIdx;
     const _buyerMapBA = (_preIdx && _preIdx._buyerMap) || {};
     const _PAT_PO_BA = /^PO-([^-]+)-(\d+)-\d+$/;
+    // Deduplicated BEFORE totals for the Promotion Performance TOTAL/grand rows.
+    // Per-campaign ba.before keeps EVERY match (so each campaign still DISPLAYS its
+    // own prior-year), but a customer/order that qualifies for multiple campaigns is
+    // counted ONCE here so the customer-basis YoY-improvement aggregate isn't inflated.
+    let _grandBeforeDedup = 0; const _dedupBeforeBySell = { SELL_IN: 0, SELL_OUT: 0 };
     _baPrevSource.forEach(o => {
       const oSku  = (o.sku  || '').trim();
       const oCust = (o.customer || '').trim();
@@ -6260,6 +6265,7 @@ async function renderPromoChart(fOrders, fMkt) {
       const ctrCode  = pm ? pm[1] : '';
       const buyerCode = pm ? pm[2] : '';
       const buyerCust = buyerCode ? (_buyerMapBA[buyerCode] || '') : '';
+      let _rowCounted = false;   // for deduped grand/subtotal BEFORE (count each row once)
       // 각 캠페인에 매칭되는지 확인
       for (const p of Object.keys(baAmt)) {
         const ba = baAmt[p];
@@ -6304,6 +6310,11 @@ async function renderPromoChart(fOrders, fMkt) {
         }
         if (match) {
           ba.before += amt;
+          if (!_rowCounted) {
+            _grandBeforeDedup += amt;
+            _dedupBeforeBySell[(mb === 'customer') ? 'SELL_OUT' : 'SELL_IN'] += amt;
+            _rowCounted = true;
+          }
           // 활성화된 SKU/customer 카운트 (중복제거용 Set은 별도 관리)
           if (mb === 'sku') {
             const _ctr = pm ? ctrCode : oSku;
@@ -6319,6 +6330,7 @@ async function renderPromoChart(fOrders, fMkt) {
       if (ba._skuSet) { ba.skuCount = ba._skuSet.size; delete ba._skuSet; }
       if (ba._custSet) { ba.custCount = ba._custSet.size; delete ba._custSet; }
     });
+    window._baBeforeDedup = { grand: _grandBeforeDedup, SELL_IN: _dedupBeforeBySell.SELL_IN, SELL_OUT: _dedupBeforeBySell.SELL_OUT };
   }
   // ⚠️ 스냅샷(pre_orders_summary.json) yoy 값은 customer 기반 캠페인에서
   //    부정확하게(전체 buyer 기준) 집계되어 과대계상됨. baseline 실데이터만 사용.
@@ -6842,7 +6854,7 @@ async function renderPromoChart(fOrders, fMkt) {
 
     // 전년 동기: baAmt.before 합산 (각 캠페인 개시일~today의 전년 동기간)
     const priorTotal = promoFilter === '__all__'
-      ? summary.reduce((s, r) => s + (r.beforeAmt || 0), 0)
+      ? ((window._baBeforeDedup && typeof window._baBeforeDedup.grand === 'number') ? window._baBeforeDedup.grand : summary.reduce((s, r) => s + (r.beforeAmt || 0), 0))
       : (baAmt[promoFilter] ? baAmt[promoFilter].before : 0);
 
     const dPct = priorTotal > 0 ? ((curTotal - priorTotal) / priorTotal) * 100 : null;
@@ -7474,7 +7486,7 @@ function renderPromoTable() {
       if(pk)pPA[pk]=(pPA[pk]||0)+amt;
     });
     const gC=Object.values(pCA).reduce((s,v)=>s+v,0);
-    const gP=summary.reduce((s,p)=>s+(p.beforeAmt||0),0);
+    const gP=Object.values(pPA).reduce((s,v)=>s+v,0);  // pPA는 오더당 단일 캠페인 귀속 → 이미 중복 제거된 전년 합계
     if(rnEl){const st=summary.map(r=>r.baStart||'').filter(Boolean).sort();const fr=st.length?_fd(st[0]):'';const to=_fd((_todayStr||(() => new Date().toISOString().slice(0,10)))());rnEl.textContent=fr?`${fr} ~ ${to}`:'';}
     const ls='padding:6px 10px;font-size:11px;color:var(--text-2);font-weight:600;text-align:left;border-bottom:1px solid var(--border)';
     const cs='padding:6px 10px;font-size:12px;text-align:right;border-bottom:1px solid var(--border)';
@@ -7644,8 +7656,10 @@ function renderPromoTable() {
       : (from?`<span class="muted" style="font-size:9px;margin-left:6px;vertical-align:middle">${from}${to&&to!==from?' ~ '+to:''}</span>`:'');
     return`<tr class="promo-main-row" data-promo="${promo.replace(/"/g,'&quot;')}" style="cursor:pointer" onclick="togglePromoDrill(this,'${promo.replace(/'/g,"\'")}')"><td><span style="color:#86868B;font-size:11px;margin-right:4px" class="promo-drill-arrow">▶</span><b>${promo||'–'}</b>${sbadge(st)}${rbadge(p.regionLabel)}${(()=>{const _RGN=new Set(['CIS','MENA','LATAM','ASIA','NA','EUROPE','OCEANIA','KOREA','ASIA_PACIFIC','MIDDLE_EAST','N_AMERICA']);const _cn=ddM[promo]?Object.keys(ddM[promo]).filter(c=>c&&c!=='–'&&!_RGN.has(c.toUpperCase().replace(/ /g,'_'))).length:0;return _cn>0?`<span style="display:inline-block;background:#86868B14;color:#636366;border:1px solid #86868B33;font-size:9px;font-weight:600;padding:1px 6px;border-radius:6px;margin-left:4px;vertical-align:middle" title="캠페인 참여(마케팅 집행) 국가 수">🌐 ${_cn}개국</span>`:'';})()}${ptag}${p.baStart?`<br><span class="muted" style="font-size:10px;padding-left:16px">from ${p.baStart}</span>`:''}</td><td class="text-right mono">${fmtNum(p.orders)}</td><td class="text-right mono t-green" style="font-weight:700">${fmtMoney(aA)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted">${pA>0?fmtMoney(pA):'–'}</td>`:''}<td class="text-right mono">${dTag2}</td><td class="text-right mono muted" style="border-left:1px solid var(--border)">–</td><td class="text-right mono muted">–</td><td class="text-right mono t-yellow" style="border-left:1px solid var(--border)">${fmtMoney(p.expected||0)}</td><td class="text-right mono t-orange">${fmtMoney(p.actual||0)}</td><td class="text-right mono ${rCls}" style="font-weight:700">${roi}</td></tr>${buildDrill(promo)}`;
   };
-  const subRow=(label,rows,color)=>{
-    const tot=rows.reduce((s,p)=>s+(p.afterAmt||p.orderAmt||0),0),prv=rows.reduce((s,p)=>s+(p.beforeAmt||0),0);
+  const subRow=(label,rows,color,dedupPrv)=>{
+    const tot=rows.reduce((s,p)=>s+(p.afterAmt||p.orderAmt||0),0);
+    // TOTAL의 전년(prv)은 고객 중복 제거된 값(각 오더 1회) 사용 — 캠페인별 행은 개별 beforeAmt 그대로 표기.
+    const prv=(typeof dedupPrv==='number')?dedupPrv:rows.reduce((s,p)=>s+(p.beforeAmt||0),0);
     const d=prv>0?((tot-prv)/prv*100):null;
     const dt=d==null?'–':d>=0?`<span class="t-green">▲${d.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(d).toFixed(1)}%</span>`;
     const exp=rows.reduce((s,p)=>s+(p.expected||0),0),act=rows.reduce((s,p)=>s+(p.actual||0),0);
@@ -7654,15 +7668,15 @@ function renderPromoTable() {
   const siS=summary.filter(p=>(_mktST[p.promotion||p.key||'']||'SELL-IN')==='SELL-IN');
   const soS=summary.filter(p=>(_mktST[p.promotion||p.key||'']||'SELL-IN')==='SELL-OUT');
   const allS=[...siS,...soS];
-  const gT=allS.reduce((s,p)=>s+(p.afterAmt||p.orderAmt||0),0),gP=allS.reduce((s,p)=>s+(p.beforeAmt||0),0);
+  const gT=allS.reduce((s,p)=>s+(p.afterAmt||p.orderAmt||0),0),gP=(window._baBeforeDedup&&typeof window._baBeforeDedup.grand==='number')?window._baBeforeDedup.grand:allS.reduce((s,p)=>s+(p.beforeAmt||0),0);
   const gd=gP>0?((gT-gP)/gP*100):null,gdTag=gd==null?'–':gd>=0?`<span class="t-green">▲${gd.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(gd).toFixed(1)}%</span>`;
   const gE=allS.reduce((s,p)=>s+(p.expected||0),0),gA=allS.reduce((s,p)=>s+(p.actual||0),0);
   const colCmp=_cmpMode!=='off'?`<th class="text-right">CK 전년</th>`:'';
   const head=`<thead><tr><th>PROMOTION</th><th class="text-right">CK ORDERS</th><th class="text-right">CK ORDER AMT</th>${colCmp}<th class="text-right">CK Δ%</th><th class="text-right" style="border-left:1px solid var(--border)">전체거래 ('25→'26)</th><th class="text-right">전체 YoY</th><th class="text-right" style="border-left:1px solid var(--border)">MKT BUDGET</th><th class="text-right">EXECUTED</th><th class="text-right">ROI</th></tr></thead>`;
   let body='<tbody>';
   const _grpKinds=(arr)=>{const cfgm=state.campaignTargetSkus||{};let hasSku=false,hasCust=false;arr.forEach(p=>{const nm=p.promotion||p.key||'';const mb=((cfgm[nm]||{}).match_by||'sku').toLowerCase();if(mb==='customer')hasCust=true;else hasSku=true;});const parts=[];if(hasSku)parts.push('SKU-based');if(hasCust)parts.push('Customer-based');return parts.join(' · ');};
-  if(siS.length){body+=`<tr style="background:rgba(200,16,46,0.04)"><td colspan="${_cmpMode!=='off'?10:9}" style="padding:6px 10px;font-size:11px;font-weight:700;color:#C8102E;letter-spacing:0.05em">📦 SELL-IN · ${_grpKinds(siS)}</td></tr>`;body+=siS.map(buildRow).join('');body+=subRow('📦 SELL-IN Subtotal',siS,'rgba(200,16,46,0.06)');}
-  if(soS.length){body+=`<tr style="background:rgba(10,132,255,0.04)"><td colspan="${_cmpMode!=='off'?10:9}" style="padding:6px 10px;font-size:11px;font-weight:700;color:#0A84FF;letter-spacing:0.05em">🤝 SELL-OUT · ${_grpKinds(soS)}</td></tr>`;body+=soS.map(buildRow).join('');body+=subRow('🤝 SELL-OUT Subtotal',soS,'rgba(10,132,255,0.06)');}
+  if(siS.length){body+=`<tr style="background:rgba(200,16,46,0.04)"><td colspan="${_cmpMode!=='off'?10:9}" style="padding:6px 10px;font-size:11px;font-weight:700;color:#C8102E;letter-spacing:0.05em">📦 SELL-IN · ${_grpKinds(siS)}</td></tr>`;body+=siS.map(buildRow).join('');body+=subRow('📦 SELL-IN Subtotal',siS,'rgba(200,16,46,0.06)',(window._baBeforeDedup?window._baBeforeDedup.SELL_IN:undefined));}
+  if(soS.length){body+=`<tr style="background:rgba(10,132,255,0.04)"><td colspan="${_cmpMode!=='off'?10:9}" style="padding:6px 10px;font-size:11px;font-weight:700;color:#0A84FF;letter-spacing:0.05em">🤝 SELL-OUT · ${_grpKinds(soS)}</td></tr>`;body+=soS.map(buildRow).join('');body+=subRow('🤝 SELL-OUT Subtotal',soS,'rgba(10,132,255,0.06)',(window._baBeforeDedup?window._baBeforeDedup.SELL_OUT:undefined));}
   body+=`<tr style="background:rgba(0,0,0,0.06);font-weight:800;border-top:2px solid var(--border)"><td style="font-size:13px"><b>🏆 CHOICE KIT Total</b></td><td class="text-right mono">${fmtNum(allS.reduce((s,p)=>s+(p.orders||0),0))}</td><td class="text-right mono t-green" style="font-size:14px;font-weight:900">${fmtMoney(gT)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted" style="font-size:13px">${gP>0?fmtMoney(gP):'–'}</td>`:''}<td class="text-right mono" style="font-size:12px">${gdTag}</td><td class="text-right mono muted" style="border-left:1px solid var(--border)">–</td><td class="text-right mono muted">–</td><td class="text-right mono t-yellow" style="border-left:1px solid var(--border)">${fmtMoney(gE)}</td><td class="text-right mono t-orange">${fmtMoney(gA)}</td><td class="text-right mono">${gA>0?fmtPct(((gT-gA)/gA)*100):'–'}</td></tr></tbody>`;
   document.getElementById('tblPromo').innerHTML=head+body;
   } catch(e){console.error('[renderPromoTable]',e);}
