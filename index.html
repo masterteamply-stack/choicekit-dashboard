@@ -3744,24 +3744,28 @@ function getCompareRanges(widget) {
 //      but NO `amount_usd` — need an FX conversion to USD at the order's month.
 // Without this fallback, main-CSV rows contributed 0 to every compare KPI,
 // making YoY/QoQ/MoM/WoW all read the same ($0/0pcs).
-function aggregateOrdersInRange(orders, from, to, extraFilter) {
+function aggregateOrdersInRange(orders, from, to, extraFilter, extraRows) {
   let amount = 0, qty = 0, ids = new Set(), count = 0;
-  for (let i=0; i<orders.length; i++) {
-    const o = orders[i];
-    if (!o || !o.order_date) continue;
-    if (o.order_date < from || o.order_date > to) continue;
-    if (extraFilter && !extraFilter(o)) continue;
-    let amtUsd = Number(o.amount_usd || 0);
-    if (!amtUsd) {
-      // Fall back: convert order amount to USD using the FX table.
-      const rate = (typeof rateToUsd === 'function') ? rateToUsd(ymOf(o.order_date), o.currency) : 1;
-      amtUsd = Number(o.amount || 0) * (rate || 1);
+  const _scan = (arr) => {
+    for (let i=0; i<arr.length; i++) {
+      const o = arr[i];
+      if (!o || !o.order_date) continue;
+      if (o.order_date < from || o.order_date > to) continue;
+      if (extraFilter && !extraFilter(o)) continue;
+      let amtUsd = Number(o.amount_usd || 0);
+      if (!amtUsd) {
+        // Fall back: convert order amount to USD using the FX table.
+        const rate = (typeof rateToUsd === 'function') ? rateToUsd(ymOf(o.order_date), o.currency) : 1;
+        amtUsd = Number(o.amount || 0) * (rate || 1);
+      }
+      amount += amtUsd;
+      qty    += Number(o.qty || 0);
+      if (o.order_id) ids.add(o.order_id);
+      count++;
     }
-    amount += amtUsd;
-    qty    += Number(o.qty || 0);
-    if (o.order_id) ids.add(o.order_id);
-    count++;
-  }
+  };
+  _scan(orders);
+  if (extraRows && extraRows.length) _scan(extraRows); // baseline appended without a 76K array copy
   return { amount, qty, orderCount: ids.size, count };
 }
 
@@ -3925,8 +3929,7 @@ function fillCompareKpis(widget, kpiSelector, orders, opts) {
 
   // Previous period: main orders + pre-order baseline (when loaded)
   const baselineActive = !!state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length > 0;
-  const prevSource = baselineActive ? orders.concat(state.preOrders) : orders;
-  const prev = aggregateOrdersInRange(prevSource, previous.from, previous.to, extra);
+  const prev = aggregateOrdersInRange(orders, previous.from, previous.to, extra, baselineActive ? state.preOrders : null);
 
   // Measure how much of the previous period came from pre-order baseline (for the badge)
   let baselineRows = 0, baselineAmt = 0;
@@ -11084,7 +11087,7 @@ async function maybeAutoLoadPreOrders() {
     await fetchPreOrdersOnce();
     state.preOrdersEnabled = true;
     try { localStorage.setItem('ck_pre_orders_on', '1'); } catch(_) {}
-    await _buildPreOrdersIndex(); // sliced build; index ready before first render → no 76K fallback scan
+    setTimeout(() => _buildPreOrdersIndex(), 0); // sliced index builds in background; never blocks chart render
     rebuildAll();
     try { showToast(`✅ Baseline loaded — ${fmtNum((state.preOrders||[]).length)} rows`); } catch(_) {}
   } catch(err) {
@@ -11119,8 +11122,8 @@ async function togglePreOrders() {
     const rows = await fetchPreOrdersOnce();
     state.preOrdersEnabled = true;
     try { localStorage.setItem('ck_pre_orders_on', '1'); } catch(e){}
-    // Build lookup index (time-sliced, yields to UI) before render so baseline sections use fast lookups
-    await _buildPreOrdersIndex();
+    // Build lookup index (time-sliced) in background so it never blocks chart render
+    setTimeout(() => _buildPreOrdersIndex(), 0);
     rebuildAll();
     try { showToast(`✅ Pre-order baseline loaded — ${fmtNum(rows.length)} rows`); } catch(_){}
   } catch (err) {
