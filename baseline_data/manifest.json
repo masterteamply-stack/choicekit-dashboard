@@ -1,11 +1,12 @@
 {
-  "total_records": 76062,
-  "total_chunks": 77,
+  "total_records": 13514,
+  "total_chunks": 14,
   "chunk_size": 1000,
   "date_range": "2025-2026 (2024 excluded)",
   "by_year": {
-    "2025": 30177,
-    "2026": 45885
+    "2025": 11191,
+    "2026": 2323
   },
-  "data_version": "2026-07-01-v10-oceania-fullorders"
+  "aggregation": "non-target-SKU lines collapsed to monthly ym×region×country×customer×Customer_No×promotion_category; target SKUs (SKU-campaigns) kept per-SKU. amount_usd & qty summed; _oc=order-line count.",
+  "data_version": "2026-07-01-v11-aggregated"
 }

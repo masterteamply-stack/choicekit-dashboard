@@ -3745,7 +3745,7 @@ function getCompareRanges(widget) {
 // Without this fallback, main-CSV rows contributed 0 to every compare KPI,
 // making YoY/QoQ/MoM/WoW all read the same ($0/0pcs).
 function aggregateOrdersInRange(orders, from, to, extraFilter, extraRows, extraByMonth) {
-  let amount = 0, qty = 0, ids = new Set(), count = 0;
+  let amount = 0, qty = 0, ids = new Set(), count = 0, ocExtra = 0;
   const _scan = (arr) => {
     for (let i=0; i<arr.length; i++) {
       const o = arr[i];
@@ -3760,7 +3760,9 @@ function aggregateOrdersInRange(orders, from, to, extraFilter, extraRows, extraB
       }
       amount += amtUsd;
       qty    += Number(o.qty || 0);
-      if (o.order_id) ids.add(o.order_id);
+      // Aggregated baseline rows carry _oc (order-line count); full-detail rows use distinct order_id.
+      if (o._oc) ocExtra += o._oc;
+      else if (o.order_id) ids.add(o.order_id);
       count++;
     }
   };
@@ -3772,7 +3774,7 @@ function aggregateOrdersInRange(orders, from, to, extraFilter, extraRows, extraB
   } else if (extraRows && extraRows.length) {
     _scan(extraRows); // fallback: baseline not yet bucketed
   }
-  return { amount, qty, orderCount: ids.size, count };
+  return { amount, qty, orderCount: ids.size + ocExtra, count };
 }
 
 // Compute delta with %, sign, label
@@ -10985,6 +10987,7 @@ function slimPreOrderRow(o) {
     target:     o.target     || '',
     promotion_category: o.promotion_category || '',
     Customer_No: o.Customer_No || o.customer_no || '',
+    _oc: o._oc || 0,   // order-line count for aggregated baseline rows (0 for full-detail rows)
     [PRE_ORDER_MARK]: true,
   };
 }
