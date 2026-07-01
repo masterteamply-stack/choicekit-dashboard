@@ -3744,7 +3744,7 @@ function getCompareRanges(widget) {
 //      but NO `amount_usd` — need an FX conversion to USD at the order's month.
 // Without this fallback, main-CSV rows contributed 0 to every compare KPI,
 // making YoY/QoQ/MoM/WoW all read the same ($0/0pcs).
-function aggregateOrdersInRange(orders, from, to, extraFilter, extraRows) {
+function aggregateOrdersInRange(orders, from, to, extraFilter, extraRows, extraByMonth) {
   let amount = 0, qty = 0, ids = new Set(), count = 0;
   const _scan = (arr) => {
     for (let i=0; i<arr.length; i++) {
@@ -3765,7 +3765,13 @@ function aggregateOrdersInRange(orders, from, to, extraFilter, extraRows) {
     }
   };
   _scan(orders);
-  if (extraRows && extraRows.length) _scan(extraRows); // baseline appended without a 76K array copy
+  if (extraByMonth) {
+    // baseline pre-bucketed by YYYY-MM → scan only months overlapping [from,to]; exact per-row date check inside _scan is retained, so the result is identical to a full scan
+    const fromM = (from||'').slice(0,7), toM = (to||'').slice(0,7);
+    for (const mk in extraByMonth) { if (mk >= fromM && mk <= toM) _scan(extraByMonth[mk]); }
+  } else if (extraRows && extraRows.length) {
+    _scan(extraRows); // fallback: baseline not yet bucketed
+  }
   return { amount, qty, orderCount: ids.size, count };
 }
 
@@ -3929,7 +3935,9 @@ function fillCompareKpis(widget, kpiSelector, orders, opts) {
 
   // Previous period: main orders + pre-order baseline (when loaded)
   const baselineActive = !!state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length > 0;
-  const prev = aggregateOrdersInRange(orders, previous.from, previous.to, extra, baselineActive ? state.preOrders : null);
+  const _preByMonth = (baselineActive && state._preIdx && state._preIdx.byMonth) ? state._preIdx.byMonth : null;
+  const prev = aggregateOrdersInRange(orders, previous.from, previous.to, extra,
+    (baselineActive && !_preByMonth) ? state.preOrders : null, _preByMonth);
 
   // Measure how much of the previous period came from pre-order baseline (for the badge)
   let baselineRows = 0, baselineAmt = 0;
@@ -11056,7 +11064,7 @@ async function _buildPreOrdersIndex() {
   if (state._preOrdersIndexed || state._preOrdersIndexing) return;
   state._preOrdersIndexing = true;
   const rows = state.preOrders;
-  const promoIdx = {}, custIdx = {};
+  const promoIdx = {}, custIdx = {}, byMonth = {}; // byMonth: 'YYYY-MM' → rows, for fast date-range scans
   const BATCH = 5000; // time-slice: process in batches and yield to the UI between them
   for (let i = 0; i < rows.length; i += BATCH) {
     const end = Math.min(i + BATCH, rows.length);
@@ -11066,10 +11074,12 @@ async function _buildPreOrdersIndex() {
       const c = (o.customer || '').trim();
       if (p) (promoIdx[p] = promoIdx[p] || []).push(o);
       if (c) (custIdx[c]  = custIdx[c]  || []).push(o);
+      const mk = (o.order_date || '').slice(0,7);
+      if (mk) (byMonth[mk] = byMonth[mk] || []).push(o);
     }
     if (end < rows.length) await new Promise(r => setTimeout(r, 0)); // yield → keep UI responsive
   }
-  state._preIdx = { promoIdx, custIdx, _buyerMap:{} };
+  state._preIdx = { promoIdx, custIdx, byMonth, _buyerMap:{} };
   state._preOrdersIndexed = true;
   state._preOrdersIndexing = false;
   window._promoBundleBuyers = {};
