@@ -1,7 +1,7 @@
 {
   "total_records": 75934,
-  "total_chunks": 152,
-  "chunk_size": 500,
+  "total_chunks": 10,
+  "chunk_size": 8000,
   "date_range": "2025-2026 (2024 excluded)",
   "by_year": {
     "2025": 30337,
