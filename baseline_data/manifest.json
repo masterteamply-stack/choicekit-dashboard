@@ -1,11 +1,11 @@
 {
-  "total_records": 47887,
-  "total_chunks": 96,
+  "total_records": 75934,
+  "total_chunks": 152,
   "chunk_size": 500,
   "date_range": "2025-2026 (2024 excluded)",
   "by_year": {
-    "2025": 23245,
-    "2026": 24642
+    "2025": 30337,
+    "2026": 45597
   },
-  "data_version": "2026-06-30-v8-moonstar-unified"
+  "data_version": "2026-07-01-v9-latam-fullorders"
 }
