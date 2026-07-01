@@ -11046,22 +11046,31 @@ function updatePreOrderBadge() {
   badge.style.color = enabled ? '#0a7d2e' : '#86868B';
 }
 
-function _buildPreOrdersIndex() {
+async function _buildPreOrdersIndex() {
   if (!state.preOrdersEnabled || !Array.isArray(state.preOrders) || !state.preOrders.length) {
     state._preIdx = null; state._preOrdersIndexed = false; return;
   }
-  if (state._preOrdersIndexed) return;
+  if (state._preOrdersIndexed || state._preOrdersIndexing) return;
+  state._preOrdersIndexing = true;
+  const rows = state.preOrders;
   const promoIdx = {}, custIdx = {};
-  state.preOrders.forEach(o => {
-    const p = (o._promo || o.promotion_category || '').trim();
-    const c = (o.customer || '').trim();
-    if (p) (promoIdx[p] = promoIdx[p] || []).push(o);
-    if (c) (custIdx[c]  = custIdx[c]  || []).push(o);
-  });
+  const BATCH = 5000; // time-slice: process in batches and yield to the UI between them
+  for (let i = 0; i < rows.length; i += BATCH) {
+    const end = Math.min(i + BATCH, rows.length);
+    for (let j = i; j < end; j++) {
+      const o = rows[j];
+      const p = (o._promo || o.promotion_category || '').trim();
+      const c = (o.customer || '').trim();
+      if (p) (promoIdx[p] = promoIdx[p] || []).push(o);
+      if (c) (custIdx[c]  = custIdx[c]  || []).push(o);
+    }
+    if (end < rows.length) await new Promise(r => setTimeout(r, 0)); // yield → keep UI responsive
+  }
   state._preIdx = { promoIdx, custIdx, _buyerMap:{} };
   state._preOrdersIndexed = true;
+  state._preOrdersIndexing = false;
   window._promoBundleBuyers = {};
-  console.log(`[baseline] index: ${Object.keys(promoIdx).length} campaigns, ${state.preOrders.length} rows`);
+  console.log(`[baseline] index (sliced): ${Object.keys(promoIdx).length} campaigns, ${rows.length} rows`);
 }
 
 // Auto-load baseline_data (~8K rows) on page load
@@ -11075,7 +11084,7 @@ async function maybeAutoLoadPreOrders() {
     await fetchPreOrdersOnce();
     state.preOrdersEnabled = true;
     try { localStorage.setItem('ck_pre_orders_on', '1'); } catch(_) {}
-    setTimeout(() => _buildPreOrdersIndex(), 0);
+    await _buildPreOrdersIndex(); // sliced build; index ready before first render → no 76K fallback scan
     rebuildAll();
     try { showToast(`✅ Baseline loaded — ${fmtNum((state.preOrders||[]).length)} rows`); } catch(_) {}
   } catch(err) {
@@ -11110,8 +11119,8 @@ async function togglePreOrders() {
     const rows = await fetchPreOrdersOnce();
     state.preOrdersEnabled = true;
     try { localStorage.setItem('ck_pre_orders_on', '1'); } catch(e){}
-    // Build lookup index asynchronously so the main thread isn't blocked
-    setTimeout(() => _buildPreOrdersIndex(), 0);
+    // Build lookup index (time-sliced, yields to UI) before render so baseline sections use fast lookups
+    await _buildPreOrdersIndex();
     rebuildAll();
     try { showToast(`✅ Pre-order baseline loaded — ${fmtNum(rows.length)} rows`); } catch(_){}
   } catch (err) {
