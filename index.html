@@ -11029,6 +11029,7 @@ async function fetchPreOrdersOnce() {
     batch.forEach(r => { if (r.status==='fulfilled' && Array.isArray(r.value)) r.value.forEach(o => allRows.push(slimPreOrderRow(o))); });
     done += batch.length;
     lbl(`Loading ${fmtNum(allRows.length)} rows… (${done}/${urls.length})`);
+    await new Promise(r => setTimeout(r, 0)); // yield to UI between batches (keep clicks/paints responsive)
   }
   if (!allRows.length) throw new Error('baseline 0건');
   console.log(`[baseline] ✅ ${allRows.length.toLocaleString()} rows`);
@@ -11074,7 +11075,7 @@ async function maybeAutoLoadPreOrders() {
     await fetchPreOrdersOnce();
     state.preOrdersEnabled = true;
     try { localStorage.setItem('ck_pre_orders_on', '1'); } catch(_) {}
-    _buildPreOrdersIndex();
+    setTimeout(() => _buildPreOrdersIndex(), 0);
     rebuildAll();
     try { showToast(`✅ Baseline loaded — ${fmtNum((state.preOrders||[]).length)} rows`); } catch(_) {}
   } catch(err) {
