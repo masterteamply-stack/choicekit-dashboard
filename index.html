@@ -2821,6 +2821,34 @@ const normalizeCountry = v => {
   return upper;
 };
 
+// Per-(campaign, normalized-country) start override. A campaign can begin on a
+// LATER date in a specific country than its earliest (campaign-level) start;
+// orders in that country before its own start must NOT be aggregated for the
+// campaign. Values are that country's own campaign start (>= campaign start).
+const _COUNTRY_START_OVERRIDE = {
+  'Strategic Partner Program': { 'MYANMAR': '2026-07-24' },
+  'Korean & Japanese vehicles': { 'VIETNAM': '2026-08-01' },
+};
+function _ovCountryStart(o, p) {
+  const ov = _COUNTRY_START_OVERRIDE[p];
+  if (!ov) return '';
+  const c = normalizeCountry((o && o.country) || '') || String((o && o.country) || '').trim().toUpperCase();
+  return ov[c] || '';
+}
+// CURRENT-order guard: true if this order is in an override country and dated
+// before that country's own campaign start (so it must be excluded).
+function _beforeCountryStart(o, p) {
+  const s = _ovCountryStart(o, p);
+  return !!(s && (o.order_date || '') < s);
+}
+// PRIOR-year guard: true if this order's override country hasn't started yet
+// (start still in the future) — exclude it from the campaign entirely for now.
+function _countryNotYetActive(o, p) {
+  const s = _ovCountryStart(o, p);
+  const today = (typeof _todayStr === 'function') ? _todayStr() : new Date().toISOString().slice(0, 10);
+  return !!(s && s > today);
+}
+
 const normalizeActivity = v => {
   const s = str(v).toUpperCase().replace(/\s+/g,'_'); if (!s) return '';
   if (s==='CONTENT'||s.includes('ONLINE')) return 'ONLINE_CONTENT';
@@ -4121,6 +4149,7 @@ function renderAll() {
       if (!p || p === '(none)' || !validPromos.has(p)) return false;
       const st = ps[p];
       if (st && o.order_date && o.order_date < st) return false;
+      if (_beforeCountryStart(o, p)) return false;   // 국가별 시작일 이전 제외
       return true;
     });
   })();
@@ -6025,6 +6054,7 @@ async function renderPromoChart(fOrders, fMkt) {
   const ensureSum = k => sum[k] = sum[k] || {orders:0, orderAmt:0, actual:0, expected:0, activities:0, byPeriod:{}};
   fOrdersST.forEach(o => {
     const k = o.promotion_category||o.promotion_id||'–';
+    if (_beforeCountryStart(o, k)) return;   // 국가별 시작일 이전 오더 제외 (미얀마 SP / 베트남 K&J)
     // 국가행(드릴다운)과 동일 기준: region 게이트 + target SKU/customer 매칭된 주문만 카운트.
     // orders.csv에 캠페인 태그가 있어도 target SKU 목록에 없거나 region 불일치면 제외 (메인행=국가행 합 일치).
     const _cfgK = (state.campaignTargetSkus||{})[k];
@@ -6186,6 +6216,7 @@ async function renderPromoChart(fOrders, fMkt) {
     if (!p) return;
     const start = promoStart[p];
     if (start && o.order_date < start) return;  // 캠페인 시작 전 주문 제외
+    if (_beforeCountryStart(o, p)) return;      // 국가별 시작일 이전 제외 (미얀마 SP / 베트남 K&J)
     // BEFORE(전년)와 동일 기준: target SKU/customer 매칭 + region 게이트.
     // orders.csv 태그가 있어도 target에 없거나 region 불일치면 제외 (메인행 ORDER AMT = 국가행 합 일치).
     const _cfgA = (state.campaignTargetSkus||{})[p];
@@ -6308,6 +6339,7 @@ async function renderPromoChart(fOrders, fMkt) {
             }
           }
         }
+        if (match && _countryNotYetActive(o, p)) match = false;  // 아직 시작 안 된 국가(미얀마 SP/베트남 K&J)는 전년도 제외
         if (match) {
           ba.before += amt;
           if (!_rowCounted) {
@@ -6470,6 +6502,7 @@ async function renderPromoChart(fOrders, fMkt) {
     const p = o.promotion_category || '(none)';
     const start = promoStart[p];
     if (start && (o.order_date || '') < start) return;  // 시작일 전 제외
+    if (_beforeCountryStart(o, p)) return;              // 국가별 시작일 이전 제외
     const pk = periodKey(o.order_date, period);
     const amt = convOrder(o);
     if (dim === 'promotion') add(p, pk, amt);
@@ -6512,6 +6545,7 @@ async function renderPromoChart(fOrders, fMkt) {
       if (!custBasedPromos.has(p)) return;
       const start = promoStart[p];
       if (start && (o.order_date||'') < start) return;
+      if (_beforeCountryStart(o, p)) return;   // 국가별 시작일 이전 제외
       const c = (o.customer||'').trim();
       if (c) promoActualCusts[p].add(c);
     });
@@ -6713,6 +6747,7 @@ async function renderPromoChart(fOrders, fMkt) {
       if (!_custBasedCmp.has(p)) return;
       const start=promoStart[p];
       if (start&&(o.order_date||'')<start) return;
+      if (_beforeCountryStart(o, p)) return;   // 국가별 시작일 이전 제외
       const c=(o.customer||'').trim();
       if (c) _cmpActualCusts[p].add(c);
     });
@@ -6923,6 +6958,7 @@ async function renderPromoChart(fOrders, fMkt) {
         const p=(o.promotion_category||'').trim();
         const start=promoStart[p];
         if(start&&o.order_date<start)return;
+        if(_beforeCountryStart(o,p))return;   // 국가별 시작일 이전 제외
         const ctr=(o.ctr_code||o['CTR Code']||'').trim();
         const oidCtr=((o.order_id||'').match(PAT_OID)||[])[1]||'';
         const key=ctr||oidCtr;
@@ -7374,6 +7410,7 @@ async function renderPromoChart(fOrders, fMkt) {
       (state.orders||[]).forEach(o=>{
         const p=(o.promotion_category||'').trim();if(!_ps2.includes(p))return;
         const ps=promoStart[p];if(ps&&o.order_date<ps)return;
+        if(_beforeCountryStart(o,p))return;   // 국가별 시작일 이전 제외
         const pk=periodKey(o.order_date,period);if(!pk)return;
         const c=(o['CTR Code']||o.sku||'').trim();
         if(_ts2.size>0&&_ts2.has(c)){_sm[pk]=_sm[pk]||new Set();_sm[pk].add(c);}
@@ -7507,7 +7544,7 @@ function renderPromoTable() {
   const _promoRegions={};const _promoCountries={};Object.keys(state.campaignTargetSkus||{}).forEach(p=>{const _c=(state.campaignTargetSkus[p]||{});if((_c.match_by||'sku').toLowerCase()==='customer')return;const rg=_c.region;if(rg){const arr=Array.isArray(rg)?rg:[rg];_promoRegions[p]=new Set(arr.map(x=>normalizeRegion(x)));}const tcs=_c.target_countries;if(tcs&&tcs.length){_promoCountries[p]=new Set(tcs.map(x=>(normalizeCountry(x)||String(x).trim().toUpperCase())));}});
   const _regionOK=(pr,o)=>{const allow=_promoRegions[pr];if(allow&&allow.size){const reg=normalizeRegion(o.region||'');if(reg&&!allow.has(reg))return false;}const allowC=_promoCountries[pr];if(allowC&&allowC.size){const ctry=normalizeCountry(o.country||'')||String(o.country||'').trim().toUpperCase();if(ctry&&!allowC.has(ctry))return false;}return true;};
   const dd={};
-  fOrders.forEach(o=>{const pr=(o.promotion_category||'').trim();if(!_sp.has(pr))return;if(!_regionOK(pr,o))return;const st=_ps[pr];if(st&&o.order_date<st)return;const mb=_pmb[pr]||'sku';if(mb==='sku'){const ss=_pts[pr];if(ss&&ss.size>0&&!ss.has((o.sku||o.ctr_code||'').trim()))return;}else{const cs=_ptc[pr];if(cs&&cs.size>0&&!cs.has((o.customer||'').trim()))return;}const country=(normalizeCountry(o.country||'')||o.country||o.region||'–'),cust=o.customer||'–';if(!dd[pr])dd[pr]={};if(!dd[pr][country])dd[pr][country]={};if(!dd[pr][country][cust])dd[pr][country][cust]={amt:0,orders:0};dd[pr][country][cust].amt+=convOrder(o);dd[pr][country][cust].orders+=1;});
+  fOrders.forEach(o=>{const pr=(o.promotion_category||'').trim();if(!_sp.has(pr))return;if(!_regionOK(pr,o))return;const st=_ps[pr];if(st&&o.order_date<st)return;if(_beforeCountryStart(o,pr))return;const mb=_pmb[pr]||'sku';if(mb==='sku'){const ss=_pts[pr];if(ss&&ss.size>0&&!ss.has((o.sku||o.ctr_code||'').trim()))return;}else{const cs=_ptc[pr];if(cs&&cs.size>0&&!cs.has((o.customer||'').trim()))return;}const country=(normalizeCountry(o.country||'')||o.country||o.region||'–'),cust=o.customer||'–';if(!dd[pr])dd[pr]={};if(!dd[pr][country])dd[pr][country]={};if(!dd[pr][country][cust])dd[pr][country][cust]={amt:0,orders:0};dd[pr][country][cust].amt+=convOrder(o);dd[pr][country][cust].orders+=1;});
   const ddP={};
   // customer 기반 캠페인: target_customers(긴 이름) + orders.csv(짧은 이름) 양방향 매칭
   const _custSetFull = {};
@@ -7558,6 +7595,7 @@ function renderPromoTable() {
     }else{
       const cs=_custSetFull[pr]||_ptc[pr];if(cs&&cs.size>0&&!cs.has((o.customer||'').trim()))return;
     }
+    if(_countryNotYetActive(o,pr))return;   // 아직 시작 안 된 국가(미얀마 SP/베트남 K&J) 전년 제외
     const country=(normalizeCountry(o.country||'')||o.country||o.region||'–'),cust=o.customer||'–';
     const amt=(o[PRE_ORDER_MARK]&&o.amount_usd!=null)?Number(o.amount_usd)*usdToDisplay():convOrder(o);
     if(!ddP[pr])ddP[pr]={};if(!ddP[pr][country])ddP[pr][country]={};
