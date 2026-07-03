@@ -10904,7 +10904,6 @@ function applyWidgetOrder() {
         <button data-dir="up" ${idx<=0?'disabled':''} title="Move up">▲</button>
         <button data-dir="down" ${idx>=last?'disabled':''} title="Move down">▼</button>
         <button data-dir="bottom" ${idx>=last?'disabled':''} title="Move to bottom">⤓</button>
-        <button data-dir="hide" class="close-btn" title="Hide (re-enable from Settings)">✕</button>
       `;
     });
   });
@@ -12131,6 +12130,15 @@ function injectCopyLinkButtons() {
       }
     } catch(e) { console.warn('[init] direct fetch failed:', e); }
   }
+  // Widget-hide (X) feature removed: unhide any previously-hidden widgets once,
+  // so charts hidden via the old ✕ button (e.g. the marketing plan chart) reappear.
+  try {
+    if (localStorage.getItem('ck_widget_hide_cleared_v1') !== '1') {
+      state.hiddenWidgets = [];
+      localStorage.setItem('ck_hidden_widgets', '[]');
+      localStorage.setItem('ck_widget_hide_cleared_v1', '1');
+    }
+  } catch (e) { state.hiddenWidgets = []; }
   try { applyDeepLinkParams(); } catch (e) { console.warn('[init] deep-link params failed:', e); }
   rebuildAll();
   // Render cached data-update timestamps on first paint (markDataUpdated handles subsequent updates)
