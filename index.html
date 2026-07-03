@@ -10884,7 +10884,8 @@ function applyWidgetOrder() {
   // 숨김 처리
   present.forEach(id => {
     const el = area.querySelector(`.widget[data-widget-id="${id}"]`);
-    if (el) el.style.display = state.hiddenWidgets.includes(id) ? 'none' : '';
+    const forced = state._forceVisibleWidgets && state._forceVisibleWidgets.has(id);
+    if (el) el.style.display = (state.hiddenWidgets.includes(id) && !forced) ? 'none' : '';
   });
   // 재배치
   state.widgetOrder.forEach(id => {
@@ -11895,6 +11896,14 @@ function _dlCampaignForAnchor(anchor) {
 }
 
 function applyDeepLinkParams() {
+  // A deep link may target a widget that is hidden by default (e.g. promoOrderTrend).
+  // Mark it force-visible for this session so the link isn't dead. (Not persisted —
+  // a normal load without the anchor keeps it hidden.)
+  const _hashId = (location.hash || '').replace(/^#/, '').trim();
+  if (_hashId && _DL_WIDGETS.includes(_hashId)) {
+    state._forceVisibleWidgets = state._forceVisibleWidgets || new Set();
+    state._forceVisibleWidgets.add(_hashId);
+  }
   let sp; try { sp = new URLSearchParams(location.search); } catch (e) { return; }
   if (![...sp.keys()].length) return;
   const f = state.filters;
@@ -12151,6 +12160,17 @@ function injectCopyLinkButtons() {
         localStorage.setItem('ck_widget_order', JSON.stringify(wo));
       }
       localStorage.setItem('ck_ct_above_promoctr_v1', '1');
+    }
+  } catch (e) {}
+  // One-time: hide the "Promotion Order Trends" (promoOrderTrend) and
+  // "Sales Trend — Promotion Category & Region" (category) graphs — the last two.
+  try {
+    if (localStorage.getItem('ck_hide_ordertrend_salestrend_v1') !== '1') {
+      ['promoOrderTrend','category'].forEach(id => {
+        if (!state.hiddenWidgets.includes(id)) state.hiddenWidgets.push(id);
+      });
+      localStorage.setItem('ck_hidden_widgets', JSON.stringify(state.hiddenWidgets));
+      localStorage.setItem('ck_hide_ordertrend_salestrend_v1', '1');
     }
   } catch (e) {}
   try { applyDeepLinkParams(); } catch (e) { console.warn('[init] deep-link params failed:', e); }
