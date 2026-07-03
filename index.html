@@ -2476,8 +2476,8 @@ function colorForCampaign(name) {
 // re-enabled in Settings.
 const DEFAULT_WIDGET_ORDER = [
   'promo','choicekitImpact','skuExplorer',
-  'planexec','promoctr','topinsights',
-  'customertrend','budgetstatus','region','activities'
+  'planexec','customertrend','promoctr','topinsights',
+  'budgetstatus','region','activities'
 ];
 const DEFAULT_HIDDEN_WIDGETS = ['category','promoOrderTrend'];
 const WIDGET_ORDER_VERSION = 'v27.0'; // bump → existing users get the new default once
@@ -12139,6 +12139,20 @@ function injectCopyLinkButtons() {
       localStorage.setItem('ck_widget_hide_cleared_v1', '1');
     }
   } catch (e) { state.hiddenWidgets = []; }
+  // One-time: move Top Customer Order Trend above Promotion Category × CTR Sales
+  // in an already-saved widget order (no version bump, so hidden widgets are untouched).
+  try {
+    if (localStorage.getItem('ck_ct_above_promoctr_v1') !== '1') {
+      const wo = state.widgetOrder;
+      const ci = wo.indexOf('customertrend'), pi = wo.indexOf('promoctr');
+      if (ci > -1 && pi > -1 && ci > pi) {
+        wo.splice(ci, 1);
+        wo.splice(wo.indexOf('promoctr'), 0, 'customertrend');
+        localStorage.setItem('ck_widget_order', JSON.stringify(wo));
+      }
+      localStorage.setItem('ck_ct_above_promoctr_v1', '1');
+    }
+  } catch (e) {}
   try { applyDeepLinkParams(); } catch (e) { console.warn('[init] deep-link params failed:', e); }
   rebuildAll();
   // Render cached data-update timestamps on first paint (markDataUpdated handles subsequent updates)
