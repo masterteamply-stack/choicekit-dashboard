@@ -4341,6 +4341,10 @@ function renderAll() {
   _deferRender(() => {
     renderSkuExplorer(fOrders, fMkt);
   }, 600);
+
+  // ── Deep-link: reflect current filters in the URL + ensure Copy-link buttons ──
+  try { updateDeepLinkURL(); } catch (e) {}
+  try { injectCopyLinkButtons(); } catch (e) {}
 }
 
 /* ===== Plan vs Execution — Drill-down Explorer (Region → Country → Promotion) ===== */
@@ -10493,8 +10497,8 @@ document.getElementById('fBulk').addEventListener('change', async e => {
       el.classList.add('jump-flash');
     }
     if (updateHash && location.hash.slice(1) !== id) {
-      // Use replaceState so the back button isn't polluted.
-      try { history.replaceState(null, '', `#${id}`); } catch(_) {}
+      // Use replaceState so the back button isn't polluted. Keep any deep-link query params.
+      try { history.replaceState(null, '', location.pathname + location.search + `#${id}`); } catch(_) {}
     }
     return true;
   }
@@ -11876,6 +11880,96 @@ function startSnapshotPolling(initialSnap) {
 
 window.publishSnapshot = publishSnapshot;
 
+/* ═══════════ Deep-link (URL query-param) support ═══════════
+   On load, reads region / campaign / sellType / period / metric / country /
+   customer from the URL, applies them to the dashboard filters and the relevant
+   per-widget controls. The existing hash handler (window._jumpToWidget) then
+   scrolls to the #anchor widget. Filter state is reflected back into the URL,
+   and each linkable widget gets a "Copy link" button. */
+const _DL_WIDGETS = ['region','promoOrderTrend','customertrend','skuExplorer','planexec','activities','budgetstatus'];
+
+function _dlCampaignForAnchor(anchor) {
+  if (anchor === 'promoOrderTrend') return state.potPromo;
+  if (anchor === 'customertrend')  return state.custTrendCampaign;
+  if (anchor === 'skuExplorer')    return state.skuAggPromo;
+  return state.promoFilter;          // region / planexec / activities / budgetstatus
+}
+
+function applyDeepLinkParams() {
+  let sp; try { sp = new URLSearchParams(location.search); } catch (e) { return; }
+  if (![...sp.keys()].length) return;
+  const f = state.filters;
+  const setOne = (key, v) => { if (v) f[key] = [v]; };   // global multi-select filters
+  setOne('regions',   sp.get('region'));
+  setOne('countries', sp.get('country'));
+  setOne('customers', sp.get('customer'));
+  setOne('sellTypes', sp.get('sellType'));
+  const camp = sp.get('campaign');   // promotion_category (per-widget promo selects)
+  if (camp) {
+    state.promoFilter       = camp;
+    state.potPromo          = camp;
+    state.custTrendCampaign = camp;
+    state.skuAggPromo       = camp;
+  }
+  const period = sp.get('period');   // promoOrderTrend period
+  if (period) state.potPeriod = period;
+  const metric = sp.get('metric');   // amount | qty
+  if (metric) { state.potMetric = metric; state.custTrendProductMode = metric; }
+}
+
+function buildDeepLinkURL(anchor) {
+  const f = state.filters || {};
+  const sp = new URLSearchParams();
+  const one = (a) => (Array.isArray(a) && a.length === 1) ? a[0] : '';
+  if (one(f.regions))   sp.set('region',   one(f.regions));
+  if (one(f.countries)) sp.set('country',  one(f.countries));
+  if (one(f.customers)) sp.set('customer', one(f.customers));
+  if (one(f.sellTypes)) sp.set('sellType', one(f.sellTypes));
+  const camp = _dlCampaignForAnchor(anchor);
+  if (camp && camp !== '__all__') sp.set('campaign', camp);
+  if (anchor === 'promoOrderTrend') {
+    if (state.potPeriod) sp.set('period', state.potPeriod);
+    if (state.potMetric) sp.set('metric', state.potMetric);
+  } else if (anchor === 'customertrend') {
+    if (state.custTrendProductMode) sp.set('metric', state.custTrendProductMode);
+  } else if (anchor === 'skuExplorer') {
+    sp.set('metric', 'amount');
+  }
+  const qs = sp.toString().replace(/\+/g, '%20');
+  return location.origin + location.pathname + (qs ? '?' + qs : '') + (anchor ? '#' + anchor : '');
+}
+
+// Reflect current filter/state into the URL (preserving the active #anchor).
+function updateDeepLinkURL() {
+  const anchor = (location.hash || '').replace(/^#/, '').trim();
+  try { history.replaceState(null, '', buildDeepLinkURL(anchor)); } catch (e) {}
+}
+
+// Add a "Copy link" button to each linkable widget (idempotent).
+function injectCopyLinkButtons() {
+  _DL_WIDGETS.forEach(id => {
+    const w = document.querySelector('.widget[data-widget-id="' + id + '"]');
+    if (!w) return;
+    if ([...w.children].some(c => c.classList && c.classList.contains('dl-copy-btn'))) return;
+    if (getComputedStyle(w).position === 'static') w.style.position = 'relative';
+    const btn = document.createElement('button');
+    btn.className = 'dl-copy-btn'; btn.type = 'button';
+    btn.textContent = '🔗 Copy link';
+    btn.title = '현재 필터가 반영된 이 화면의 공유 링크를 복사합니다';
+    btn.style.cssText = 'position:absolute;top:8px;right:10px;font-size:10px;line-height:1;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);cursor:pointer;z-index:30;opacity:.65';
+    btn.addEventListener('mouseenter', () => { btn.style.opacity = '1'; });
+    btn.addEventListener('mouseleave', () => { btn.style.opacity = '.65'; });
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const url = buildDeepLinkURL(id);
+      const ok = () => { const o = btn.textContent; btn.textContent = '✓ Copied'; setTimeout(() => { btn.textContent = o; }, 1400); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(ok, () => window.prompt('Copy link:', url));
+      else window.prompt('Copy link:', url);
+    });
+    w.appendChild(btn);
+  });
+}
+
 (async function init() {
   // Normalize cached data: country/category/activity → English (one-time migration that re-runs harmlessly)
   const PROMO_CAT_MAP = {
@@ -12025,6 +12119,7 @@ window.publishSnapshot = publishSnapshot;
       }
     } catch(e) { console.warn('[init] direct fetch failed:', e); }
   }
+  try { applyDeepLinkParams(); } catch (e) { console.warn('[init] deep-link params failed:', e); }
   rebuildAll();
   // Render cached data-update timestamps on first paint (markDataUpdated handles subsequent updates)
   try { renderDataTimestamps(); } catch (e) { console.warn('renderDataTimestamps init failed:', e); }
