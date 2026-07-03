@@ -11899,6 +11899,15 @@ function applyDeepLinkParams() {
   let sp; try { sp = new URLSearchParams(location.search); } catch (e) { return; }
   if (![...sp.keys()].length) return;
   const f = state.filters;
+  // A deep link is a COMPLETE view spec: reset the dimensions it manages so the
+  // link reproduces the same view regardless of previously-saved (localStorage)
+  // state. Unspecified params therefore fall back to "all" — e.g. a region-only
+  // link shows ALL campaigns aggregated, not a stale per-campaign selection.
+  f.regions = []; f.countries = []; f.customers = []; f.sellTypes = [];
+  state.promoFilter = '__all__';
+  state.potPromo = '__all__';
+  state.custTrendCampaign = '__all__';
+  state.skuAggPromo = '__all__';
   const setOne = (key, v) => { if (v) f[key] = [v]; };   // global multi-select filters
   setOne('regions',   sp.get('region'));
   setOne('countries', sp.get('country'));
@@ -11911,6 +11920,9 @@ function applyDeepLinkParams() {
     state.custTrendCampaign = camp;
     state.skuAggPromo       = camp;
   }
+  state.potPeriod = 'month';
+  state.potMetric = 'amount';
+  state.custTrendProductMode = 'amount';
   const period = sp.get('period');   // promoOrderTrend period
   if (period) state.potPeriod = period;
   const metric = sp.get('metric');   // amount | qty
