@@ -1857,7 +1857,7 @@ header .mono b.t-orange {
           <div class="sub" id="kpiAchvSub">vs Order Target</div>
         </div>
         <div class="hero-card roi" id="kpiRoiCard">
-          <div class="label-mono">ROI (Executed)</div>
+          <div class="label-mono">Marketing ROI (Executed)</div>
           <div class="kpi-num" id="kpiRoi">–</div>
           <div class="sub">(Order − Cost) / Cost</div>
         </div>
@@ -2111,7 +2111,7 @@ header .mono b.t-orange {
               <button data-v="budget" class="active">Budget</button>
               <button data-v="executed">Executed</button>
               <button data-v="orderAmt">Order Amt</button>
-              <button data-v="roi">ROI</button>
+              <button data-v="roi">Marketing ROI</button>
               <button data-v="burn" title="Budget Used % = Actual Cost ÷ Planned Budget">Budget Used %</button>
             </div>
             <div class="widget-order-controls"></div>
@@ -4085,7 +4085,7 @@ function chartOpts(currencyAware) {
           const lbl = ctx.dataset.label || ctx.label || '';
           const v = ctx.parsed.y ?? ctx.parsed.x ?? ctx.parsed;
           if (lbl.toLowerCase()==='orders' || lbl.toLowerCase()==='qty') return `${lbl}: ${fmtNum(v)}`;
-          if (lbl.toLowerCase()==='roi') return `ROI: ${v.toFixed(1)}%`;
+          if (lbl.toLowerCase()==='roi') return `Marketing ROI: ${v.toFixed(1)}%`;
           return `${lbl}: ${fmtMoney(v)}`;
         }} : undefined,
       },
@@ -4641,10 +4641,10 @@ function renderPlanExec(fOrders, fMkt) {
   const attentionEl = document.getElementById('planExecAttention');
   if (attentionEl) {
     if (allLeaves.length === 0) {
-      attentionEl.innerHTML = `<div class="label-mono" style="background:rgba(95,224,138,.08);border:1px solid rgba(95,224,138,.3);border-radius:8px;padding:8px 12px;font-size:11px;color:#0A0A0A">🟢 NEEDS ATTENTION — None. All campaigns within budget and ROI ≥ 0.</div>`;
+      attentionEl.innerHTML = `<div class="label-mono" style="background:rgba(95,224,138,.08);border:1px solid rgba(95,224,138,.3);border-radius:8px;padding:8px 12px;font-size:11px;color:#0A0A0A">🟢 NEEDS ATTENTION — None. All campaigns within budget and Marketing ROI ≥ 0.</div>`;
     } else {
       const chips = allLeaves.slice(0,6).map(x => {
-        const tag = (x.burn!=null && x.burn>100) ? `🔴 budget used ${x.burn.toFixed(0)}%` : `🔴 ROI ${fmtPct(x.roi)}`;
+        const tag = (x.burn!=null && x.burn>100) ? `🔴 budget used ${x.burn.toFixed(0)}%` : `🔴 Marketing ROI ${fmtPct(x.roi)}`;
         return `<span class="badge-tag" data-planexec-jump="${x.r}|||${x.c}" style="cursor:pointer;background:rgba(255,107,107,.12);border-color:#C8102E;color:#C8102E;margin:2px 3px">${tag} · ${x.r}/${x.c}/${x.p}${x.cust&&x.cust!=='–'?' · '+x.cust:''}</span>`;
       }).join('');
       attentionEl.innerHTML = `<div style="background:rgba(255,107,107,.06);border:1px solid rgba(255,107,107,.25);border-radius:8px;padding:8px 12px"><span class="label-mono" style="font-size:11px;color:#C8102E;margin-right:8px">⚠ NEEDS ATTENTION (${allLeaves.length})</span>${chips}${allLeaves.length>6?`<span class="muted" style="margin-left:6px">+${allLeaves.length-6} more</span>`:''}</div>`;
@@ -4681,7 +4681,7 @@ function renderPlanExec(fOrders, fMkt) {
             <div><div class="muted" style="font-size:9px">BUDGET</div><span class="t-orange">${fmtMoney(x.mktBudget)}</span></div>
             <div><div class="muted" style="font-size:9px">EXECUTED</div><span class="t-yellow">${fmtMoney(x.costActual)}</span></div>
             <div><div class="muted" style="font-size:9px">ORDER AMT</div><span class="t-green">${fmtMoney(x.orderAmt)}</span></div>
-            <div><div class="muted" style="font-size:9px">ROI / ACHV</div><span class="${roiCls}" style="font-weight:700">${roiTxt}</span> <span class="muted">·</span> <span class="t-blue">${achvTxt}</span></div>
+            <div><div class="muted" style="font-size:9px">Marketing ROI / ACHV</div><span class="${roiCls}" style="font-weight:700">${roiTxt}</span> <span class="muted">·</span> <span class="t-blue">${achvTxt}</span></div>
           </div>
           <div style="margin-top:6px;height:6px;background:rgba(0,0,0,0.06);border-radius:3px;overflow:hidden">
             <div style="height:100%;width:${(progress/150)*100}%;background:${barColor}"></div>
@@ -4708,7 +4708,7 @@ function renderPlanExecChart(items, level) {
         { type:'bar', label:'MKT Budget',    data:items.map(x=>x.mktBudget||0),   backgroundColor:'#52525799', borderRadius:3, yAxisID:'y' },
         { type:'bar', label:'Executed Cost', data:items.map(x=>x.costActual||0), backgroundColor:'#DC4A1Bd0', borderRadius:3, yAxisID:'y' },
         { type:'bar', label:'Order Amount',  data:items.map(x=>x.orderAmt||0),   backgroundColor:'#0A0A0Ab0', borderRadius:3, yAxisID:'y' },
-        { type:'line', label:'ROI %',        data:items.map(x=>x.roi==null?null:x.roi), borderColor:'#A1A1A6', backgroundColor:'#A1A1A633', borderWidth:3, tension:.25, pointRadius:4, yAxisID:'y2' },
+        { type:'line', label:'Marketing ROI %',        data:items.map(x=>x.roi==null?null:x.roi), borderColor:'#A1A1A6', backgroundColor:'#A1A1A633', borderWidth:3, tension:.25, pointRadius:4, yAxisID:'y2' },
       ],
     },
     options: { ...chartOpts(true),
@@ -4744,11 +4744,11 @@ function renderPlanExecDetail(items, level) {
     const roiCls  = x.roi==null  ? 'muted' : (x.roi  < 0   ? 't-red' : 't-orange');
     const roiPrevCls = x.roiPrev==null ? 'muted' : (x.roiPrev < 0 ? 't-red' : 't-blue');
     const roiTooltip = x.roi == null
-      ? `ROI 계산 불가 — actual_cost = 0`
-      : `ROI(${_curYr}) = (${fmtMoney(x.orderAmt)} − ${fmtMoney(x.costActual)}) ÷ ${fmtMoney(x.costActual)} × 100 = ${fmtPct(x.roi)}`;
+      ? `Marketing ROI 계산 불가 — actual_cost = 0`
+      : `Marketing ROI(${_curYr}) = (${fmtMoney(x.orderAmt)} − ${fmtMoney(x.costActual)}) ÷ ${fmtMoney(x.costActual)} × 100 = ${fmtPct(x.roi)}`;
     const roiPrevTooltip = x.roiPrev == null
-      ? `ROI(${_prevYr}) 계산 불가 — 전년 actual_cost 또는 매출 데이터 없음`
-      : `ROI(${_prevYr}) = (${fmtMoney(x.orderAmtPrev)} − ${fmtMoney(x.costActualPrev)}) ÷ ${fmtMoney(x.costActualPrev)} × 100 = ${fmtPct(x.roiPrev)}`;
+      ? `Marketing ROI(${_prevYr}) 계산 불가 — 전년 actual_cost 또는 매출 데이터 없음`
+      : `Marketing ROI(${_prevYr}) = (${fmtMoney(x.orderAmtPrev)} − ${fmtMoney(x.costActualPrev)}) ÷ ${fmtMoney(x.costActualPrev)} × 100 = ${fmtPct(x.roiPrev)}`;
     const burnTooltip = x.burn == null
       ? `BUDGET USED 계산 불가 — MKT BUDGET = 0`
       : `BUDGET USED = ${fmtMoney(x.costActual)} ÷ ${fmtMoney(x.mktBudget)} × 100 = ${x.burn.toFixed(1)}%`;
@@ -4781,8 +4781,8 @@ function renderPlanExecDetail(items, level) {
       <th class="text-right">ORDER TARGET</th>
       <th class="text-right">ORDER AMT<br><span class="muted" style="font-size:9px;font-weight:500">${_curYr}</span></th>
       <th class="text-right">ACHV %</th>
-      <th class="text-right" title="(Order Amount − Executed Cost) ÷ Executed Cost × 100">ROI<br><span class="muted" style="font-size:9px;font-weight:500">${_curYr}</span></th>
-      <th class="text-right" title="Previous year ROI for comparison">PREV ROI<br><span class="muted" style="font-size:9px;font-weight:500">${_prevYr}</span></th>
+      <th class="text-right" title="(Order Amount − Executed Cost) ÷ Executed Cost × 100">Marketing ROI<br><span class="muted" style="font-size:9px;font-weight:500">${_curYr}</span></th>
+      <th class="text-right" title="Previous year Marketing ROI for comparison">PREV Marketing ROI<br><span class="muted" style="font-size:9px;font-weight:500">${_prevYr}</span></th>
       <th>EXEC. START</th>
     </tr></thead>
     <tbody>${rows}</tbody>`;
@@ -7723,7 +7723,7 @@ function renderPromoTable() {
   const gd=gP>0?((gT-gP)/gP*100):null,gdTag=gd==null?'–':gd>=0?`<span class="t-green">▲${gd.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(gd).toFixed(1)}%</span>`;
   const gE=allS.reduce((s,p)=>s+(p.expected||0),0),gA=allS.reduce((s,p)=>s+(p.actual||0),0);
   const colCmp=_cmpMode!=='off'?`<th class="text-right">CK 전년</th>`:'';
-  const head=`<thead><tr><th>PROMOTION</th><th class="text-right">CK ORDERS</th><th class="text-right">CK ORDER AMT</th>${colCmp}<th class="text-right">CK Δ%</th><th class="text-right" style="border-left:1px solid var(--border)">전체거래 ('25→'26)</th><th class="text-right">전체 YoY</th><th class="text-right" style="border-left:1px solid var(--border)">MKT BUDGET</th><th class="text-right">EXECUTED</th><th class="text-right">ROI</th></tr></thead>`;
+  const head=`<thead><tr><th>PROMOTION</th><th class="text-right">CK ORDERS</th><th class="text-right">CK ORDER AMT</th>${colCmp}<th class="text-right">CK Δ%</th><th class="text-right" style="border-left:1px solid var(--border)">전체거래 ('25→'26)</th><th class="text-right">전체 YoY</th><th class="text-right" style="border-left:1px solid var(--border)">MKT BUDGET</th><th class="text-right">EXECUTED</th><th class="text-right">Marketing ROI</th></tr></thead>`;
   let body='<tbody>';
   const _grpKinds=(arr)=>{const cfgm=state.campaignTargetSkus||{};let hasSku=false,hasCust=false;arr.forEach(p=>{const nm=p.promotion||p.key||'';const mb=((cfgm[nm]||{}).match_by||'sku').toLowerCase();if(mb==='customer')hasCust=true;else hasSku=true;});const parts=[];if(hasSku)parts.push('SKU-based');if(hasCust)parts.push('Customer-based');return parts.join(' · ');};
   if(siS.length){body+=`<tr style="background:rgba(200,16,46,0.04)"><td colspan="${_cmpMode!=='off'?10:9}" style="padding:6px 10px;font-size:11px;font-weight:700;color:#C8102E;letter-spacing:0.05em">📦 SELL-IN · ${_grpKinds(siS)}</td></tr>`;body+=siS.map(buildRow).join('');body+=subRow('📦 SELL-IN Subtotal',siS,'rgba(200,16,46,0.06)',(window._baBeforeDedup?window._baBeforeDedup.SELL_IN:undefined));}
