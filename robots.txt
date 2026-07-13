@@ -1,17 +1,78 @@
+# Internal dashboard — NOT for public/search indexing.
+# Blanket block first; named agents repeated for crawlers that only honor their own block.
+
 User-agent: *
 Disallow: /
 Crawl-delay: 9999
 
+# ── Global search engines ──
 User-agent: Googlebot
+Disallow: /
+
+User-agent: Googlebot-Image
 Disallow: /
 
 User-agent: Bingbot
 Disallow: /
 
+User-agent: Slurp
+Disallow: /
+
+User-agent: DuckDuckBot
+Disallow: /
+
+User-agent: Baiduspider
+Disallow: /
+
+User-agent: YandexBot
+Disallow: /
+
+# ── Korean portals ──
+User-agent: Yeti
+Disallow: /
+
+User-agent: NaverBot
+Disallow: /
+
+User-agent: Daum
+Disallow: /
+
+User-agent: Daumoa
+Disallow: /
+
+User-agent: ZumBot
+Disallow: /
+
+# ── Archivers / SEO & competitor-intel crawlers ──
+User-agent: ia_archiver
+Disallow: /
+
+User-agent: archive.org_bot
+Disallow: /
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: PetalBot
+Disallow: /
+
+# ── AI / LLM crawlers ──
 User-agent: GPTBot
 Disallow: /
 
 User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: OAI-SearchBot
 Disallow: /
 
 User-agent: CCBot
@@ -23,5 +84,26 @@ Disallow: /
 User-agent: Claude-Web
 Disallow: /
 
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: Applebot
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
 User-agent: cohere-ai
+Disallow: /
+
+User-agent: Meta-ExternalAgent
 Disallow: /
