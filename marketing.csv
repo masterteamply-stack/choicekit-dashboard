@@ -1,80 +1,87 @@
-m.date,region,country,promotion_theme,promotion_category,target_product,activity_type,title,customer,customer_code,expected_cost,actual_cost,Bizreward,currency,kpi_metric,target,sell_type,owner,Order_Target($),,,,
-2026-03-02,NA,캐나다,CHOICE_KIT,Strategic Partner Program,All items in the market,Event,Incentive Trip,Lordco Auto Parts,289029,28620000,0,x,KRW,STARTED,B2B,SELL_IN,DH,1185141,해당 고객사 년간 총 매출 목표 달성이 목표,,,
-2026-04-03,NA,캐나다,CHOICE_KIT,Strategic Partner Program,All items in the market,CONTENT,SNS Content,Lordco Auto Parts,289029,879541,879541,x,KRW,RELEASED,B2B,SELL_IN,DH,0,,,,
-2026-04-17,NA,캐나다,CHOICE_KIT,Strategic Partner Program,All items in the market,CONTENT,SNS Content,Lordco Auto Parts,289029,1053590,1053590,x,KRW,RELEASED,B2B,SELL_IN,DH,0,,,,
-2026-04-03,NA,캐나다,CHOICE_KIT,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",Lordco Auto Parts,289029,0,0,x,KRW,RELEASED,B2B,SELL_IN,DH,0,,,,
-2026-06-14,NA,캐나다,SURVEY,Strategic Partner Program,All items in the market,SURVEY,SURVEY,Lordco Auto Parts,289029,450000,0,x,KRW,RELEASED,B2B,SELL_IN,DH,0,,,,
-2026-03-02,CIS,키르기스스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,175000,해당 SKU에 대한 지역 오더 목표 ,,,
-2026-03-02,CIS,카자흐스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,175000,해당 SKU에 대한 지역 오더 목표 ,,,
-2026-03-02,CIS,투르크메니스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,175000,해당 SKU에 대한 지역 오더 목표 ,,,
-2026-03-02,CIS,타지키스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,175000,해당 SKU에 대한 지역 오더 목표 ,,,
-2026-03-02,CIS,키르기스스탄,CHOICE_KIT,European vehicle,European vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,75000,해당 SKU에 대한 지역 오더 목표 ,,,
-2026-03-02,CIS,카자흐스탄,CHOICE_KIT,European vehicle,European vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,75000,해당 SKU에 대한 지역 오더 목표 ,,,
-2026-03-02,CIS,투르크메니스탄,CHOICE_KIT,European vehicle,European vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,75000,해당 SKU에 대한 지역 오더 목표 ,,,
-2026-03-02,CIS,타지키스탄,CHOICE_KIT,European vehicle,European vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,75000,해당 SKU에 대한 지역 오더 목표 ,,,
-2026-09-20,CIS,CIS,CHOICE_KIT,Asian vehicle,Asian vehicle,CONTENT,SNS Content,ALL,,600000,0,x,KRW,DISTRIBUTED,B2C,SELL_OUT,HY,0,,,,
-2026-10-20,CIS,CIS,CHOICE_KIT,European vehicle,European vehicle,CONTENT,SNS Content,ALL,,600000,0,x,KRW,DISTRIBUTED,B2C,SELL_OUT,HY,0,,,,
-2026-10-20,CIS,키르기스스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,Event,Event,ALL,,6000000,0,x,KRW,RELEASED,B2C,SELL_OUT,HY,0,,,,
-2026-10-20,CIS,카자흐스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,Event,Event,ALL,,6000000,0,x,KRW,RELEASED,B2C,SELL_OUT,HY,0,,,,
-2026-10-20,CIS,투르크메니스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,Event,Event,ALL,,6000000,0,x,KRW,RELEASED,B2C,SELL_OUT,HY,0,,,,
-2026-10-20,CIS,타지키스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,Event,Event,ALL,,6000000,0,x,KRW,RELEASED,B2C,SELL_OUT,HY,0,,,,
-2026-02-11,LATAM,멕시코,CHOICE_KIT,Mexico Worldcup Promotion,Best Selling,Event,Event,REFATRIX,289404,399923,399923,x,KRW,STARTED,B2B,SELL_IN,DH,200000,해당 고객사 년간 총 매출 목표 달성이 목표,,,
-2026-03-13,LATAM,멕시코,CHOICE_KIT,Mexico Awakening Campaign,Best Selling,CONTENT,SNS Content,REFATRIX,289404,800000,800000,x,KRW,RELEASED,B2B,SELL_IN,DH,0,해당 고객사 년간 총 매출 목표 달성이 목표,,,
-2026-03-24,LATAM,멕시코,CHOICE_KIT,Mexico Awakening Campaign,Best Selling,CONTENT,SNS Content,REFATRIX,289404,799924,799924,x,KRW,RELEASED,B2B,SELL_IN,DH,0,해당 고객사 년간 총 매출 목표 달성이 목표,,,
-2026-01-09,MENA,UAE,CHOICE_KIT,Portfolio Expansion Program,Brake Pad,Incentive,Incentive,DYNATRADE,200284,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000,*예상목표 달성 시 지급할 비용입니다.,,,
-2026-01-09,MENA,UAE,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,EMERALD SPARE PARTS,200451,2065000,0,x,KRW,STARTED,B2B,SELL_IN,WS,60000,*예상목표 달성 시 지급할 비용입니다.,,,
-2026-01-09,MENA,시리아,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,AMP-DUBAI,200370,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000,*예상목표 달성 시 지급할 비용입니다.,,,
-2026-01-09,MENA,시리아,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,MOTOR WORLD,288140,2212500,0,x,KRW,STARTED,B2B,SELL_IN,WS,70000,*예상목표 달성 시 지급할 비용입니다.,,,
-2026-01-09,MENA,오만,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,Diamond Auto Spare Parts,202000,2212500,0,x,KRW,STARTED,B2B,SELL_IN,WS,70000,*예상목표 달성 시 지급할 비용입니다.,,,
-2026-01-09,MENA,이라크,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,MESK AL-BARARI,200287,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000,*예상목표 달성 시 지급할 비용입니다.,,,
-2026-01-09,MENA,이라크,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,MOOJID,288264,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000,*예상목표 달성 시 지급할 비용입니다.,,,
-2026-01-09,MENA,레바논,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,"AL ZAIM UNITED CO.,LTD",200411,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000,*예상목표 달성 시 지급할 비용입니다.,,,
-2026-01-09,MENA,바레인,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,AUTO TRUCK PARTS,200452,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000,*예상목표 달성 시 지급할 비용입니다.,,,
-2026-01-09,MENA,이집트,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,ENGINEERING AUTOMOTIVE CO.,200266,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000,*예상목표 달성 시 지급할 비용입니다.,,,
-2026-01-09,MENA,알제리,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,EURL TASSRIAA,200389,2065000,0,x,KRW,STARTED,B2B,SELL_IN,WS,60000,*예상목표 달성 시 지급할 비용입니다.,,,
-2026-01-09,MENA,튀니지,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,TREEQ ALMAL FOR IMPORT CARS,200333,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000,*예상목표 달성 시 지급할 비용입니다.,,,
-2026-06-01,ASIA,베트남,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,MAST MOTORING AUTOPARTS SOLUTIONS AND,200371,9385950,9385950,x,KRW,STARTED,B2B,SELL_OUT,KH,400000,11월 말까지 6개월치 반영,,,800000
-2026-06-01,ASIA,베트남,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",MAST MOTORING AUTOPARTS SOLUTIONS AND,200371,1200000,1200000,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영,,,
-2026-06-01,ASIA,필리핀,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,CHUAN LAM AUTO SUPPLY,200241,9181620,9181620,x,KRW,STARTED,B2B,SELL_OUT,KH,350000,11월 말까지 6개월치 반영,,,700000
-2026-06-01,ASIA,필리핀,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",CHUAN LAM AUTO SUPPLY,200241,1200000,1200000,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영,,,
-2026-06-01,ASIA,베트남,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,NAM BAC AUTO SPARE PART CORPORATION.,200464,9385950,9385950,x,KRW,STARTED,B2B,SELL_OUT,KH,350000,11월 말까지 6개월치 반영,,,700000
-2026-06-01,ASIA,베트남,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",NAM BAC AUTO SPARE PART CORPORATION.,200464,1200000,1200000,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영,,,0
-2026-06-01,ASIA,태국,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,"Seri Wathana Enterprise Co., Ltd",289248,9288930,9288930,x,KRW,STARTED,B2B,SELL_OUT,KH,300000,11월 말까지 6개월치 반영,,,600000
-2026-06-01,ASIA,태국,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","Seri Wathana Enterprise Co., Ltd",289248,1200000,1200000,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영,,,0
-2026-06-01,ASIA,태국,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,GP Mobility Public Company Limited,288352,5946150,5946150,x,KRW,STARTED,B2B,SELL_OUT,KH,275000,11월 말까지 6개월치 반영,,,550000
-2026-06-01,ASIA,태국,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",GP Mobility Public Company Limited,288352,1200000,1200000,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영,,,0
-2026-06-01,ASIA,베트남,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,"GTB LIMITED.,CO",200770,4692240,4692240,x,KRW,STARTED,B2B,SELL_OUT,KH,200000,11월 말까지 6개월치 반영,,,400000
-2026-06-01,ASIA,베트남,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","GTB LIMITED.,CO",200770,1200000,1200000,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영,,,0
-2026-06-01,ASIA,태국,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,Auto Business Corporation Ltd.,200332,2788590,2788590,x,KRW,STARTED,B2B,SELL_OUT,KH,175000,11월 말까지 6개월치 반영,,,350000
-2026-06-01,ASIA,태국,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",Auto Business Corporation Ltd.,200332,1200000,1200000,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영,,,0
-2026-06-01,ASIA,인도네시아,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,ZENTRALINK OTOPARTS,200335,3554460,3554460,x,KRW,STARTED,B2B,SELL_OUT,KH,200000,11월 말까지 6개월치 반영,,,400000
-2026-06-01,ASIA,인도네시아,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",ZENTRALINK OTOPARTS,200335,1200000,1200000,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영,,,0
-2026-06-01,ASIA,말레이시아,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,MARBORO AUTO PARTS (M) SDN. BHD.,200264,3053190,3053190,x,KRW,STARTED,B2B,SELL_OUT,KH,100000,11월 말까지 6개월치 반영,,,200000
-2026-06-01,ASIA,말레이시아,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",MARBORO AUTO PARTS (M) SDN. BHD.,200264,1200000,1200000,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영,,,0
-2026-06-01,ASIA,인도네시아,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,PT. Denso Centra,288291,3554460,3554460,x,KRW,STARTED,B2B,SELL_OUT,KH,100000,11월 말까지 6개월치 반영,,,200000
-2026-06-01,ASIA,인도네시아,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",PT. Denso Centra,288291,1200000,1200000,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영,,,0
-2026-06-01,ASIA,필리핀,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,"YOUNG AUTO SUPPLY CO., INC.",200242,4229190,4229190,x,KRW,STARTED,B2B,SELL_OUT,KH,100000,11월 말까지 6개월치 반영,,,200000
-2026-06-01,ASIA,필리핀,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","YOUNG AUTO SUPPLY CO., INC.",200242,1200000,1200000,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영,,,0
-2026-06-01,ASIA,태국,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,CHIN SENG HUAT,200691,1858080,1858080,x,KRW,STARTED,B2B,SELL_OUT,KH,75000,11월 말까지 6개월치 반영,,,150000
-2026-06-01,ASIA,태국,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",CHIN SENG HUAT,200691,1200000,1200000,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영,,,0
-2026-06-01,Oceania,호주,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,Kailos International Pty Ltd,288503,2000000,0,4000000,KRW,STARTED,B2B,SELL_OUT,WS,74000,해당 고객사 년간 총 매출 목표 달성이 목표,,,
-2026-04-24,Korea,한국,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,세종파츠플러스 유한회사,114621,4000000,3500000,8440000,KRW,STARTED,B2B,SELL_OUT,WS,270000,해당 고객사 년간 총 매출 목표 달성이 목표,,,
-2026-06-01,Korea,호주,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,Mount Shop Ltd,289246,0,0,1000000,KRW,STARTED,B2B,SELL_OUT,WS,50000,해당 고객사 년간 총 매출 목표 달성이 목표,,,
-2026-07-24,ASIA,미얀마,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","Pan Theingi Trading Co., Ltd.",288430,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,235000,11월 말까지 6개월치 반영,,,470000
-2026-07-24,ASIA,미얀마,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","Annawa General Trading Co., Ltd",289364,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,450000,11월 말까지 6개월치 반영,,,900000
-2026-07-24,ASIA,미얀마,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",DIAMOND STEEL CO LTD,200254,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,375000,11월 말까지 6개월치 반영,,,750000
-2026-07-24,ASIA,미얀마,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","MYAMMAR PRODIGY CO., LTD",288114,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,300000,11월 말까지 6개월치 반영,,,600000
-2026-07-24,ASIA,미얀마,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","LUCKY MOON STAR CO., LTD.",200253,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,140000,11월 말까지 6개월치 반영,,,280000
-2026-07-24,ASIA,미얀마,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",Yarzar Tun Lin Trading Company Limited,288378,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영,,,
-2026-08-01,ASIA,베트남,CHOICE_KIT,Korean & Japanese vehicles,NEW SKU for Vietnam,Incentive,Incentive,MAST MOTORING AUTOPARTS SOLUTIONS AND,200371,0,0,0,KRW,STARTED,B2B,SELL_IN,KH,,프로젝트 시작한 월부터 종료시점까지의 목표 매출을 영업팀과 산정 후 수치 업데이트 할 예정.,,,
-2026-08-01,ASIA,베트남,CHOICE_KIT,Korean & Japanese vehicles,NEW SKU for Vietnam,Incentive,Incentive,NAM BAC AUTO SPARE PART CORPORATION.,200464,0,0,0,KRW,STARTED,B2B,SELL_IN,KH,,프로젝트 시작한 월부터 종료시점까지의 목표 매출을 영업팀과 산정 후 수치 업데이트 할 예정.,,,
-2026-08-01,ASIA,베트남,CHOICE_KIT,Korean & Japanese vehicles,NEW SKU for Vietnam,Incentive,Incentive,TAN CO INVESTMENT AND DEVELOPMENT JOINT,289901,0,0,0,KRW,STARTED,B2B,SELL_IN,KH,,프로젝트 시작한 월부터 종료시점까지의 목표 매출을 영업팀과 산정 후 수치 업데이트 할 예정.,,,
-2026-08-01,ASIA,베트남,CHOICE_KIT,Korean & Japanese vehicles,NEW SKU for Vietnam,Incentive,Incentive,"GTB LIMITED.,CO",200770,0,0,0,KRW,STARTED,B2B,SELL_IN,KH,,프로젝트 시작한 월부터 종료시점까지의 목표 매출을 영업팀과 산정 후 수치 업데이트 할 예정.,,,
-2026-08-01,ASIA,베트남,CHOICE_KIT,Korean & Japanese vehicles,NEW SKU for Vietnam,Incentive,Incentive,"LIFEPRO AUTO .,JSC",288406,0,0,0,KRW,STARTED,B2B,SELL_IN,KH,,프로젝트 시작한 월부터 종료시점까지의 목표 매출을 영업팀과 산정 후 수치 업데이트 할 예정.,,,
-2026-02-11,LATAM,LATAM,CHOICE_KIT,CTR MarketFit Campaign,All items in the market,CONTENT,SNS Content,ALL,,44444,44444,x,KRW,STARTED,B2B,SELL_IN,DH,400000,2025년 총매출의 5%,,,
-2026-03-13,LATAM,멕시코,CHOICE_KIT,Mexico Awakening Campaign,Best Selling,Event,Event,REFATRIX,289404,399923,399923,x,KRW,STARTED,B2B,SELL_IN,DH,200000,년간 총 매출 목표 달성이 목표 ,,,
-2026-03-24,LATAM,LATAM,CHOICE_KIT,CTR MarketFit Campaign,All items in the market,CONTENT,SNS Content,ALL,,44440,44440,x,KRW,STARTED,B2B,SELL_IN,DH,400000,"2025년 총매출의 5%, 총 80만불 ",,,
-2026-08-01,LATAM,파라과이,CHOICE_KIT,Sell-Out Promotion,All items in the market,Event,Event,PLUSCAR S.A,140300,8299581,0,1920400,KRW,IN PROGRESS,B2C,SELL_OUT,DH,200000,,,,
-2026-08-01,LATAM,엘살바도르,CHOICE_KIT,Sell-Out Promotion,All items in the market,Event,Event,SUPER REPUESTOS,104100,3382047,0,1920400,KRW,IN PROGRESS,B2C,SELL_OUT,DH,100000,,,,
-2026-08-01,LATAM,파라과이,SURVEY,Strategic Partner Program,All items in the market,SURVEY,SURVEY,PLUSCAR S.A,140300,0,0,0,KRW,IN PROGRESS,B2C,SELL_OUT,DH,0,,,,
-2026-08-01,LATAM,엘살바도르,SURVEY,Strategic Partner Program,All items in the market,SURVEY,SURVEY,SUPER REPUESTOS,104100,1542186,0,0,KRW,IN PROGRESS,B2C,SELL_OUT,DH,0,,,,
+m.date,end.date,region,country,promotion_theme,promotion_category,target_product,activity_type,title,customer,customer_code,expected_cost,actual_cost,Bizreward,currency,kpi_metric,target,sell_type,owner,Order_Target($),
+2026-03-02,2026-11-31,NA,캐나다,CHOICE_KIT,Strategic Partner Program,All items in the market,Event,Incentive Trip,Lordco Auto Parts,289029,28620000,0,x,KRW,STARTED,B2B,SELL_IN,DH,1185141,해당 고객사 년간 총 매출 목표 달성이 목표
+2026-04-03,2026-04-03,NA,캐나다,CHOICE_KIT,Strategic Partner Program,All items in the market,CONTENT,SNS Content,Lordco Auto Parts,289029,879541,879541,x,KRW,RELEASED,B2B,SELL_IN,DH,0,
+2026-04-17,2026-04-17,NA,캐나다,CHOICE_KIT,Strategic Partner Program,All items in the market,CONTENT,SNS Content,Lordco Auto Parts,289029,1053590,1053590,x,KRW,RELEASED,B2B,SELL_IN,DH,0,
+2026-04-03,2026-04-03,NA,캐나다,CHOICE_KIT,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",Lordco Auto Parts,289029,0,0,x,KRW,RELEASED,B2B,SELL_IN,DH,0,
+2026-06-14,2026-07-31,NA,캐나다,SURVEY,Strategic Partner Program,All items in the market,SURVEY,SURVEY,Lordco Auto Parts,289029,450000,0,x,KRW,RELEASED,B2B,SELL_IN,DH,0,
+2026-03-02,2026-11-31,CIS,키르기스스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,175000,해당 SKU에 대한 지역 오더 목표 
+2026-03-02,2026-11-31,CIS,카자흐스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,175000,해당 SKU에 대한 지역 오더 목표 
+2026-03-02,2026-11-31,CIS,투르크메니스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,175000,해당 SKU에 대한 지역 오더 목표 
+2026-03-02,2026-11-31,CIS,타지키스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,175000,해당 SKU에 대한 지역 오더 목표 
+2026-03-02,2026-11-31,CIS,키르기스스탄,CHOICE_KIT,European vehicle,European vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,75000,해당 SKU에 대한 지역 오더 목표 
+2026-03-02,2026-11-31,CIS,카자흐스탄,CHOICE_KIT,European vehicle,European vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,75000,해당 SKU에 대한 지역 오더 목표 
+2026-03-02,2026-11-31,CIS,투르크메니스탄,CHOICE_KIT,European vehicle,European vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,75000,해당 SKU에 대한 지역 오더 목표 
+2026-03-02,2026-11-31,CIS,타지키스탄,CHOICE_KIT,European vehicle,European vehicle,CONTENT,Catalog ,ALL,,0,0,x,USD,STARTED,B2B,SELL_IN,HY,75000,해당 SKU에 대한 지역 오더 목표 
+2026-09-01,2026-11-31,CIS,CIS,CHOICE_KIT,Asian vehicle,Asian vehicle,CONTENT,SNS Content,ALL,,"2,500,000",0,x,KRW,DISTRIBUTED,B2C,SELL_OUT,HY,0,
+2026-10-01,2026-11-31,CIS,CIS,CHOICE_KIT,European vehicle,European vehicle,CONTENT,SNS Content,ALL,,"2,500,000",0,x,KRW,DISTRIBUTED,B2C,SELL_OUT,HY,0,
+2026-11-01,2026-11-31,CIS,키르기스스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,Event,Event,COMPLEX-AUTO,,"11,500,000",0,x,KRW,IN PROGRESS,B2C,SELL_OUT,HY,0,
+2026-11-01,2026-11-31,CIS,카자흐스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,Event,Event,PHAETON KZ LLP,,"14,500,000",0,x,KRW,IN PROGRESS,B2C,SELL_OUT,HY,0,
+2026-10-01,2026-11-31,CIS,카자흐스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,Incentive,Mechanic Kit,PHAETON KZ LLP,,"2,000,000",0,x,KRW,IN PROGRESS,B2C,SELL_OUT,HY,0,
+2026-10-01,2026-11-31,CIS,카자흐스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,Incentive,Mechanic Kit,BAUTEN,,"2,000,000",0,x,KRW,IN PROGRESS,B2C,SELL_OUT,HY,0,
+2026-10-01,2026-11-31,CIS,카자흐스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,Incentive,Mechanic Kit,TISS AUTO PARTS LLP,,"2,000,000",0,x,KRW,IN PROGRESS,B2C,SELL_OUT,HY,0,
+2026-10-01,2026-11-31,CIS,카자흐스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,Incentive,Mechanic Kit,AUTOTRADE KZ,,"2,000,000",0,x,KRW,IN PROGRESS,B2C,SELL_OUT,HY,0,
+2026-10-01,2026-11-31,CIS,카자흐스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,Incentive,Mechanic Kit,ROSSKO KZ,,"2,000,000",0,x,KRW,IN PROGRESS,B2C,SELL_OUT,HY,0,
+2026-10-01,2026-11-31,CIS,키르기스스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,Incentive,Mechanic Kit,COMPLEX-AUTO,,"2,000,000",0,x,KRW,IN PROGRESS,B2C,SELL_OUT,HY,0,
+2026-10-01,2026-11-31,CIS,키르기스스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,Incentive,Mechanic Kit,ALLIANCE-MOTORS LLC,,"2,000,000",0,x,KRW,IN PROGRESS,B2C,SELL_OUT,HY,0,
+2026-10-01,2026-11-31,CIS,투르크메니스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,Incentive,Mechanic Kit,BTT,,"2,000,000",0,x,KRW,IN PROGRESS,B2C,SELL_OUT,HY,0,
+2026-10-01,2026-11-31,CIS,투르크메니스탄,CHOICE_KIT,Asian vehicle,Asian vehicle,Incentive,Mechanic Kit,ES “RAHAT YOL”,,"2,000,000",0,x,KRW,IN PROGRESS,B2C,SELL_OUT,HY,0,
+2026-02-11,2026-07-31,LATAM,멕시코,CHOICE_KIT,Mexico Worldcup Promotion,Best Selling,Event,Event,REFATRIX,289404,399923,399923,x,KRW,STARTED,B2B,SELL_IN,DH,200000,해당 고객사 년간 총 매출 목표 달성이 목표
+2026-03-13,2026-11-31,LATAM,멕시코,CHOICE_KIT,Mexico Awakening Campaign,Best Selling,CONTENT,SNS Content,REFATRIX,289404,800000,800000,x,KRW,RELEASED,B2B,SELL_IN,DH,0,해당 고객사 년간 총 매출 목표 달성이 목표
+2026-03-24,2026-11-31,LATAM,멕시코,CHOICE_KIT,Mexico Awakening Campaign,Best Selling,CONTENT,SNS Content,REFATRIX,289404,799924,799924,x,KRW,RELEASED,B2B,SELL_IN,DH,0,해당 고객사 년간 총 매출 목표 달성이 목표
+2026-01-09,2026-11-27,MENA,UAE,CHOICE_KIT,Portfolio Expansion Program,Brake Pad,Incentive,Incentive,DYNATRADE,200284,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000,*예상목표 달성 시 지급할 비용입니다.
+2026-01-09,2026-11-27,MENA,UAE,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,EMERALD SPARE PARTS,200451,2065000,0,x,KRW,STARTED,B2B,SELL_IN,WS,60000,*예상목표 달성 시 지급할 비용입니다.
+2026-01-09,2026-11-27,MENA,시리아,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,AMP-DUBAI,200370,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000,*예상목표 달성 시 지급할 비용입니다.
+2026-01-09,2026-11-27,MENA,시리아,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,MOTOR WORLD,288140,2212500,0,x,KRW,STARTED,B2B,SELL_IN,WS,70000,*예상목표 달성 시 지급할 비용입니다.
+2026-01-09,2026-11-27,MENA,오만,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,Diamond Auto Spare Parts,202000,2212500,0,x,KRW,STARTED,B2B,SELL_IN,WS,70000,*예상목표 달성 시 지급할 비용입니다.
+2026-01-09,2026-11-27,MENA,이라크,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,MESK AL-BARARI,200287,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000,*예상목표 달성 시 지급할 비용입니다.
+2026-01-09,2026-11-27,MENA,이라크,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,MOOJID,288264,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000,*예상목표 달성 시 지급할 비용입니다.
+2026-01-09,2026-11-27,MENA,레바논,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,"AL ZAIM UNITED CO.,LTD",200411,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000,*예상목표 달성 시 지급할 비용입니다.
+2026-01-09,2026-11-27,MENA,바레인,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,AUTO TRUCK PARTS,200452,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000,*예상목표 달성 시 지급할 비용입니다.
+2026-01-09,2026-11-27,MENA,이집트,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,ENGINEERING AUTOMOTIVE CO.,200266,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000,*예상목표 달성 시 지급할 비용입니다.
+2026-01-09,2026-11-27,MENA,알제리,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,EURL TASSRIAA,200389,2065000,0,x,KRW,STARTED,B2B,SELL_IN,WS,60000,*예상목표 달성 시 지급할 비용입니다.
+2026-01-09,2026-11-27,MENA,튀니지,CHOICE_KIT,Portfolio Expansion Program,Shock Absorber,Incentive,Incentive,TREEQ ALMAL FOR IMPORT CARS,200333,1475000,0,x,KRW,STARTED,B2B,SELL_IN,WS,20000,*예상목표 달성 시 지급할 비용입니다.
+2026-06-01,2026-11-30,ASIA,베트남,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,MAST MOTORING AUTOPARTS SOLUTIONS AND,200371,9385950,,x,KRW,STARTED,B2B,SELL_OUT,KH,400000,11월 말까지 6개월치 반영
+2026-06-01,2026-11-30,ASIA,베트남,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",MAST MOTORING AUTOPARTS SOLUTIONS AND,200371,1200000,,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영
+2026-06-01,2026-11-30,ASIA,필리핀,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,CHUAN LAM AUTO SUPPLY,200241,9181620,,x,KRW,STARTED,B2B,SELL_OUT,KH,350000,11월 말까지 6개월치 반영
+2026-06-01,2026-11-30,ASIA,필리핀,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",CHUAN LAM AUTO SUPPLY,200241,1200000,,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영
+2026-06-01,2026-11-30,ASIA,베트남,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,NAM BAC AUTO SPARE PART CORPORATION.,200464,9385950,,x,KRW,STARTED,B2B,SELL_OUT,KH,350000,11월 말까지 6개월치 반영
+2026-06-01,2026-11-30,ASIA,베트남,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",NAM BAC AUTO SPARE PART CORPORATION.,200464,1200000,,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영
+2026-06-01,2026-11-30,ASIA,태국,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,"Seri Wathana Enterprise Co., Ltd",289248,9288930,,x,KRW,STARTED,B2B,SELL_OUT,KH,300000,11월 말까지 6개월치 반영
+2026-06-01,2026-11-30,ASIA,태국,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","Seri Wathana Enterprise Co., Ltd",289248,1200000,,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영
+2026-06-01,2026-11-30,ASIA,태국,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,GP Mobility Public Company Limited,288352,5946150,,x,KRW,STARTED,B2B,SELL_OUT,KH,275000,11월 말까지 6개월치 반영
+2026-06-01,2026-11-30,ASIA,태국,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",GP Mobility Public Company Limited,288352,1200000,,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영
+2026-06-01,2026-11-30,ASIA,베트남,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,"GTB LIMITED.,CO",200770,4692240,,x,KRW,STARTED,B2B,SELL_OUT,KH,200000,11월 말까지 6개월치 반영
+2026-06-01,2026-11-30,ASIA,베트남,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","GTB LIMITED.,CO",200770,1200000,,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영
+2026-06-01,2026-11-30,ASIA,태국,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,Auto Business Corporation Ltd.,200332,2788590,,x,KRW,STARTED,B2B,SELL_OUT,KH,175000,11월 말까지 6개월치 반영
+2026-06-01,2026-11-30,ASIA,태국,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",Auto Business Corporation Ltd.,200332,1200000,,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영
+2026-06-01,2026-11-30,ASIA,인도네시아,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,ZENTRALINK OTOPARTS,200335,3554460,,x,KRW,STARTED,B2B,SELL_OUT,KH,200000,11월 말까지 6개월치 반영
+2026-06-01,2026-11-30,ASIA,인도네시아,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",ZENTRALINK OTOPARTS,200335,1200000,,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영
+2026-06-01,2026-11-30,ASIA,말레이시아,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,MARBORO AUTO PARTS (M) SDN. BHD.,200264,3053190,,x,KRW,STARTED,B2B,SELL_OUT,KH,100000,11월 말까지 6개월치 반영
+2026-06-01,2026-11-30,ASIA,말레이시아,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",MARBORO AUTO PARTS (M) SDN. BHD.,200264,1200000,,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영
+2026-06-01,2026-11-30,ASIA,인도네시아,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,PT. Denso Centra,288291,3554460,,x,KRW,STARTED,B2B,SELL_OUT,KH,100000,11월 말까지 6개월치 반영
+2026-06-01,2026-11-30,ASIA,인도네시아,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",PT. Denso Centra,288291,1200000,,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영
+2026-06-01,2026-11-30,ASIA,필리핀,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,"YOUNG AUTO SUPPLY CO., INC.",200242,4229190,,x,KRW,STARTED,B2B,SELL_OUT,KH,100000,11월 말까지 6개월치 반영
+2026-06-01,2026-11-30,ASIA,필리핀,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","YOUNG AUTO SUPPLY CO., INC.",200242,1200000,,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영
+2026-06-01,2026-11-30,ASIA,태국,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,CHIN SENG HUAT,200691,1858080,,x,KRW,STARTED,B2B,SELL_OUT,KH,75000,11월 말까지 6개월치 반영
+2026-06-01,2026-11-30,ASIA,태국,CHOICE_KIT,Trade promotion,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",CHIN SENG HUAT,200691,1200000,,x,KRW,RELEASED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영
+2026-06-01,2026-12-31,Oceania,호주,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,Kailos International Pty Ltd,288503,2000000,0,4000000,KRW,STARTED,B2B,SELL_OUT,WS,74000,해당 고객사 년간 총 매출 목표 달성이 목표
+2026-04-24,2026-12-31,Korea,한국,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,세종파츠플러스 유한회사,114621,4000000,3500000,8440000,KRW,STARTED,B2B,SELL_OUT,WS,270000,해당 고객사 년간 총 매출 목표 달성이 목표
+2026-06-01,2026-12-31,Korea,호주,CHOICE_KIT,Trade promotion,All items in the market,Incentive,Incentive,Mount Shop Ltd,289246,0,0,1000000,KRW,STARTED,B2B,SELL_OUT,WS,50000,해당 고객사 년간 총 매출 목표 달성이 목표
+2026-08-01,2026-11-30,ASIA,미얀마,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","Pan Theingi Trading Co., Ltd.",288430,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,235000,11월 말까지 6개월치 반영
+2026-08-01,2026-11-30,ASIA,미얀마,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","Annawa General Trading Co., Ltd",289364,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,450000,11월 말까지 6개월치 반영
+2026-08-01,2026-11-30,ASIA,미얀마,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",DIAMOND STEEL CO LTD,200254,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,375000,11월 말까지 6개월치 반영
+2026-08-01,2026-11-30,ASIA,미얀마,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","MYAMMAR PRODIGY CO., LTD",288114,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,300000,11월 말까지 6개월치 반영
+2026-08-01,2026-11-30,ASIA,미얀마,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer","LUCKY MOON STAR CO., LTD.",200253,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,140000,11월 말까지 6개월치 반영
+2026-08-01,2026-11-30,ASIA,미얀마,Marketing Pack,Strategic Partner Program,All items in the market,CONTENT,"POS materials: Leaflet(sales kit), Poster, Flyer",Yarzar Tun Lin Trading Company Limited,288378,0,0,0,KRW,STARTED,B2B,SELL_OUT,KH,0,11월 말까지 6개월치 반영
+2026-08-28,,ASIA,베트남,CHOICE_KIT,Korean & Japanese vehicles,NEW SKU for Vietnam,Incentive,Incentive,MAST MOTORING AUTOPARTS SOLUTIONS AND,200371,0,0,0,KRW,STARTED,B2B,SELL_IN,KH,,프로젝트 시작한 월부터 종료시점까지의 목표 매출을 영업팀과 산정 후 수치 업데이트 할 예정.
+2026-08-28,,ASIA,베트남,CHOICE_KIT,Korean & Japanese vehicles,NEW SKU for Vietnam,Incentive,Incentive,NAM BAC AUTO SPARE PART CORPORATION.,200464,0,0,0,KRW,STARTED,B2B,SELL_IN,KH,,베트남에 신규 영업 담당자님이 8월에 입사하신 후 인센티브 관련 논의를 진행할 예정
+2026-08-28,,ASIA,베트남,CHOICE_KIT,Korean & Japanese vehicles,NEW SKU for Vietnam,Incentive,Incentive,TAN CO INVESTMENT AND DEVELOPMENT JOINT,289901,0,0,0,KRW,STARTED,B2B,SELL_IN,KH,,베트남에 신규 영업 담당자님이 8월에 입사하신 후 인센티브 관련 논의를 진행할 예정
+2026-08-28,,ASIA,베트남,CHOICE_KIT,Korean & Japanese vehicles,NEW SKU for Vietnam,Incentive,Incentive,"GTB LIMITED.,CO",200770,0,0,0,KRW,STARTED,B2B,SELL_IN,KH,,베트남에 신규 영업 담당자님이 8월에 입사하신 후 인센티브 관련 논의를 진행할 예정
+2026-08-28,,ASIA,베트남,CHOICE_KIT,Korean & Japanese vehicles,NEW SKU for Vietnam,Incentive,Incentive,"LIFEPRO AUTO .,JSC",288406,0,0,0,KRW,STARTED,B2B,SELL_IN,KH,,베트남에 신규 영업 담당자님이 8월에 입사하신 후 인센티브 관련 논의를 진행할 예정
+2026-02-11,2026-12-31,LATAM,LATAM,CHOICE_KIT,CTR MarketFit Campaign,All items in the market,CONTENT,SNS Content,ALL,,44444,44444,x,KRW,STARTED,B2B,SELL_IN,DH,400000,2025년 총매출의 5%
+2026-03-13,2026-03-13,LATAM,멕시코,CHOICE_KIT,Mexico Awakening Campaign,Best Selling,Event,Event,REFATRIX,289404,399923,399923,x,KRW,STARTED,B2B,SELL_IN,DH,200000,년간 총 매출 목표 달성이 목표 
+2026-03-24,2026-12-31,LATAM,LATAM,CHOICE_KIT,CTR MarketFit Campaign,All items in the market,CONTENT,SNS Content,ALL,,44440,44440,x,KRW,STARTED,B2B,SELL_IN,DH,400000,"2025년 총매출의 5%, 총 80만불 "
+2026-08-01,2026-10-31,LATAM,파라과이,CHOICE_KIT,Sell-Out Promotion,All items in the market,Event,Event,PLUSCAR S.A,140300,8299581,0,1920400,KRW,IN PROGRESS,B2C,SELL_OUT,DH,200000,
+2026-08-01,2026-10-31,LATAM,엘살바도르,CHOICE_KIT,Sell-Out Promotion,All items in the market,Event,Event,SUPER REPUESTOS,104100,3382047,0,1920400,KRW,IN PROGRESS,B2C,SELL_OUT,DH,100000,
+2026-08-01,2026-10-31,LATAM,파라과이,SURVEY,Strategic Partner Program,All items in the market,SURVEY,SURVEY,PLUSCAR S.A,140300,0,0,0,KRW,IN PROGRESS,B2C,SELL_OUT,DH,0,
+2026-08-01,2026-10-31,LATAM,엘살바도르,SURVEY,Strategic Partner Program,All items in the market,SURVEY,SURVEY,SUPER REPUESTOS,104100,1542186,0,0,KRW,IN PROGRESS,B2C,SELL_OUT,DH,0,
