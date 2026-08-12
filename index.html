@@ -5297,7 +5297,7 @@ function renderQuarterly(fOrders) {
   const metric = state.quarterMetric || 'amount';
   const QORDER = ['Q1','Q2','Q3'];
   const qOf = d => { const m = parseInt((d||'').slice(5,7),10); return m ? 'Q'+Math.ceil(m/3) : ''; };
-  const agg = {}; QORDER.forEach(q => agg[q] = { amt:0, qty:0, cust:new Set(), sku:new Set() });
+  const agg = {}; QORDER.forEach(q => agg[q] = { amt:0, qty:0, cust:new Set(), sku:new Set(), camps:new Set() });
   let q3min = '9999-99-99', q3max = '0000-00-00';
   (fOrders||[]).forEach(o => {
     const d = o.order_date || ''; if (!d.startsWith('2026')) return;
@@ -5305,6 +5305,7 @@ function renderQuarterly(fOrders) {
     agg[q].amt += convOrder(o); agg[q].qty += num(o.qty);
     const cu = str(o.customer); if (cu) agg[q].cust.add(cu);
     const sk = str(o.sku); if (sk) agg[q].sku.add(sk);
+    const pc = str(o.promotion_category); if (pc && pc !== '(unspecified)') agg[q].camps.add(pc);
     if (q === 'Q3') { if (d < q3min) q3min = d; if (d > q3max) q3max = d; }
   });
   const val = (q, mtr) => (mtr==='amount' ? agg[q].amt : agg[q].qty);
@@ -5312,20 +5313,31 @@ function renderQuarterly(fOrders) {
     const a = agg[q], nc = a.cust.size;
     const prev = i>0 ? val(QORDER[i-1], metric) : null;
     const cur = val(q, metric);
+    const prevCamps = i>0 ? agg[QORDER[i-1]].camps : new Set();
+    const camps = Array.from(a.camps).sort();
     return { q, label: q==='Q3'?'Q3 to date':q, amt:a.amt, qty:a.qty, cust:nc, sku:a.sku.size,
-             avg: nc ? a.amt/nc : 0, qoq: (prev && prev>0) ? (cur/prev-1)*100 : null };
+             avg: nc ? a.amt/nc : 0, qoq: (prev && prev>0) ? (cur/prev-1)*100 : null,
+             camps, newCamps: camps.filter(c => !prevCamps.has(c)) };
   });
   const hasQ3 = q3min <= q3max;
   const spanTxt = hasQ3 ? `${q3min} ~ ${q3max}` : '부분 분기';
 
   const note = document.getElementById('quarterlyNote');
-  if (note) note.innerHTML = `⚠️ <b>Q3 to date</b>는 ${hasQ3?`<b>${q3min}~${q3max}</b> 기준의 `:''}<b>부분 분기</b> 실적입니다. 단순 QoQ 비교보다는 <b>초기 오더 속도(order velocity) 확인 지표</b>로 해석해야 합니다.`;
+  if (note) note.innerHTML = `⚠️ <b>Q3 to date</b>는 ${hasQ3?`<b>${q3min}~${q3max}</b> 기준의 `:''}<b>부분 분기</b> 실적입니다. 단순 QoQ 비교보다는 <b>초기 오더 속도(order velocity) 확인 지표</b>로 해석해야 합니다. &nbsp;·&nbsp; 분기마다 <b>활성 캠페인이 다르므로</b>(아래 <b>Active Campaigns</b> 행 참고), QoQ 증감에는 신규 캠페인 진입 효과가 섞여 있습니다.`;
 
   // ── comparison table (metrics as rows, quarters as columns) ──
   const tbl = document.getElementById('tblQuarterly');
   if (tbl) {
     const qoqCell = r => r.qoq==null ? '<span class="muted">–</span>'
       : `<span class="${r.qoq>=0?'t-green':'t-red'}">${r.qoq>=0?'+':''}${r.qoq.toFixed(1)}%</span>`;
+    const campsCell = r => {
+      if (!r.camps.length) return '<span class="muted">–</span>';
+      const chips = r.camps.map(c => {
+        const isNew = r.newCamps.includes(c);
+        return `<span style="display:inline-block;font-size:10px;line-height:1.4;padding:1px 6px;margin:1px;border-radius:4px;border:1px solid var(--border);${isNew?'background:rgba(52,199,89,.14);border-color:rgba(52,199,89,.5);font-weight:600':'background:var(--surface-2,rgba(127,127,127,.06))'}">${c}${isNew?' <span style="color:#34c759">＋</span>':''}</span>`;
+      }).join(' ');
+      return `<div style="font-weight:600;margin-bottom:3px">${r.camps.length} active</div><div style="text-align:left;white-space:normal">${chips}</div>`;
+    };
     const metricRows = [
       ['Order Amount', r => `<span class="t-green">${fmtMoney(r.amt)}</span>`],
       ['Order Qty', r => fmtNum(r.qty)],
@@ -5333,15 +5345,20 @@ function renderQuarterly(fOrders) {
       ['SKU Items', r => fmtNum(r.sku)],
       ['Avg. Order Amount / Customer', r => fmtMoney(r.avg)],
       [`QoQ Change (${metric==='amount'?'Amount':'Qty'})`, qoqCell],
+      ['Active Campaigns <span class="muted" style="font-weight:400">(＋ = 해당 분기 신규 진입)</span>', campsCell],
     ];
     tbl.innerHTML = `<thead><tr>
         <th style="text-align:left">Metric</th>
         ${rows.map(r => `<th class="text-right">${r.label}${r.q==='Q3'?' <span class="muted" style="font-weight:400">*부분</span>':''}</th>`).join('')}
       </tr></thead><tbody>
-      ${metricRows.map(([label,fn]) => `<tr>
-        <td style="text-align:left"><b>${label}</b></td>
-        ${rows.map(r => `<td class="text-right mono">${fn(r)}</td>`).join('')}
-      </tr>`).join('')}
+      ${metricRows.map(([label,fn]) => {
+        const isCamps = /Active Campaigns/.test(label);
+        const cls = isCamps ? 'style="vertical-align:top;text-align:right;font-size:12px"' : 'class="text-right mono"';
+        return `<tr${isCamps?' style="border-top:2px solid var(--border)"':''}>
+        <td style="text-align:left;vertical-align:top"><b>${label}</b></td>
+        ${rows.map(r => `<td ${cls}>${fn(r)}</td>`).join('')}
+      </tr>`;
+      }).join('')}
       </tbody>`;
   }
 
