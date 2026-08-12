@@ -2185,6 +2185,29 @@ header .mono b.t-orange {
           </div>
         </div>
 
+      <div class="panel widget" data-widget-id="quarterly">
+        <div class="widget-head">
+          <div>
+            <h3 class="h-section">Quarterly Performance Comparison</h3>
+            <p class="label-mono" style="margin-top:4px">분기별 성과 비교 · 오더 전환의 지속성 검증</p>
+          </div>
+          <div class="chart-tools">
+            <div class="seg" id="segQuarterMetric">
+              <button data-v="amount" class="active">Amount</button>
+              <button data-v="qty">Qty</button>
+            </div>
+            <div class="widget-order-controls"></div>
+          </div>
+        </div>
+        <div id="quarterlyNote" class="label-mono" style="font-size:11px;background:var(--surface-2,rgba(127,127,127,.06));border:1px solid var(--border);border-radius:8px;padding:8px 11px;margin-bottom:14px;line-height:1.5"></div>
+        <div style="display:grid;grid-template-columns:1.15fr 1fr;gap:16px;align-items:start;margin-bottom:16px">
+          <div class="chart-wrap" style="height:300px"><canvas id="chQuarterAmt"></canvas></div>
+          <div class="chart-wrap" style="height:300px"><canvas id="chQuarterExpand"></canvas></div>
+        </div>
+        <div style="overflow:auto"><table id="tblQuarterly"></table></div>
+        <div id="quarterlyInsight" class="label-mono" style="font-size:12px;margin-top:14px;padding:11px 13px;border-left:3px solid var(--accent,#4a7dff);background:var(--surface-2,rgba(74,125,255,.05));border-radius:0 8px 8px 0;line-height:1.55"></div>
+      </div>
+
             <div class="panel widget" data-widget-id="skuExplorer">
         <div class="widget-head">
           <div>
@@ -2488,7 +2511,7 @@ function colorForCampaign(name) {
 // re-enabled in Settings.
 const DEFAULT_WIDGET_ORDER = [
   'promo','choicekitImpact','skuExplorer',
-  'planexec','customertrend','promoctr','topinsights',
+  'planexec','customertrend','quarterly','promoctr','topinsights',
   'budgetstatus','region','activities'
 ];
 const DEFAULT_HIDDEN_WIDGETS = ['category','promoOrderTrend'];
@@ -4326,6 +4349,7 @@ function renderAll() {
   _deferRender(() => {
     renderPlanExec(fOrders, fMkt);
     renderCustomerTrend(fOrdersPP, fMkt);
+    try { renderQuarterly(fOrdersPP); } catch (e) { console.warn('renderQuarterly failed:', e); }
   }, 80);
 
   // ── Phase 2b: SalesTrend, PromoCtr ──
@@ -5267,6 +5291,121 @@ window.__clearBudgetExecFilter = function() {
 /* ===== Top Customer Order Trend · by Campaign =====
    캠페인 선택 → Top N 고객 ranking 테이블(qty/amount/mkt cost) →
    고객 클릭 → 우측에 month/quarter/year 토글 trend 그래프 */
+function renderQuarterly(fOrders) {
+  const panel = document.querySelector('.widget[data-widget-id="quarterly"]');
+  if (!panel) return;
+  const metric = state.quarterMetric || 'amount';
+  const QORDER = ['Q1','Q2','Q3'];
+  const qOf = d => { const m = parseInt((d||'').slice(5,7),10); return m ? 'Q'+Math.ceil(m/3) : ''; };
+  const agg = {}; QORDER.forEach(q => agg[q] = { amt:0, qty:0, cust:new Set(), sku:new Set() });
+  let q3min = '9999-99-99', q3max = '0000-00-00';
+  (fOrders||[]).forEach(o => {
+    const d = o.order_date || ''; if (!d.startsWith('2026')) return;
+    const q = qOf(d); if (!agg[q]) return;
+    agg[q].amt += convOrder(o); agg[q].qty += num(o.qty);
+    const cu = str(o.customer); if (cu) agg[q].cust.add(cu);
+    const sk = str(o.sku); if (sk) agg[q].sku.add(sk);
+    if (q === 'Q3') { if (d < q3min) q3min = d; if (d > q3max) q3max = d; }
+  });
+  const val = (q, mtr) => (mtr==='amount' ? agg[q].amt : agg[q].qty);
+  const rows = QORDER.map((q,i) => {
+    const a = agg[q], nc = a.cust.size;
+    const prev = i>0 ? val(QORDER[i-1], metric) : null;
+    const cur = val(q, metric);
+    return { q, label: q==='Q3'?'Q3 to date':q, amt:a.amt, qty:a.qty, cust:nc, sku:a.sku.size,
+             avg: nc ? a.amt/nc : 0, qoq: (prev && prev>0) ? (cur/prev-1)*100 : null };
+  });
+  const hasQ3 = q3min <= q3max;
+  const spanTxt = hasQ3 ? `${q3min} ~ ${q3max}` : '부분 분기';
+
+  const note = document.getElementById('quarterlyNote');
+  if (note) note.innerHTML = `⚠️ <b>Q3 to date</b>는 ${hasQ3?`<b>${q3min}~${q3max}</b> 기준의 `:''}<b>부분 분기</b> 실적입니다. 단순 QoQ 비교보다는 <b>초기 오더 속도(order velocity) 확인 지표</b>로 해석해야 합니다.`;
+
+  // ── comparison table (metrics as rows, quarters as columns) ──
+  const tbl = document.getElementById('tblQuarterly');
+  if (tbl) {
+    const qoqCell = r => r.qoq==null ? '<span class="muted">–</span>'
+      : `<span class="${r.qoq>=0?'t-green':'t-red'}">${r.qoq>=0?'+':''}${r.qoq.toFixed(1)}%</span>`;
+    const metricRows = [
+      ['Order Amount', r => `<span class="t-green">${fmtMoney(r.amt)}</span>`],
+      ['Order Qty', r => fmtNum(r.qty)],
+      ['Ordering Customers', r => fmtNum(r.cust)],
+      ['SKU Items', r => fmtNum(r.sku)],
+      ['Avg. Order Amount / Customer', r => fmtMoney(r.avg)],
+      [`QoQ Change (${metric==='amount'?'Amount':'Qty'})`, qoqCell],
+    ];
+    tbl.innerHTML = `<thead><tr>
+        <th style="text-align:left">Metric</th>
+        ${rows.map(r => `<th class="text-right">${r.label}${r.q==='Q3'?' <span class="muted" style="font-weight:400">*부분</span>':''}</th>`).join('')}
+      </tr></thead><tbody>
+      ${metricRows.map(([label,fn]) => `<tr>
+        <td style="text-align:left"><b>${label}</b></td>
+        ${rows.map(r => `<td class="text-right mono">${fn(r)}</td>`).join('')}
+      </tr>`).join('')}
+      </tbody>`;
+  }
+
+  // ── insight ──
+  const ins = document.getElementById('quarterlyInsight');
+  if (ins) {
+    const avgs = rows.map(r => r.avg);
+    const rising = avgs[0] < avgs[1] && (avgs[2]===0 || avgs[1] <= avgs[2] || avgs[2] >= avgs[0]);
+    ins.innerHTML = `💡 고객당 평균 오더액이 <b>${rows.map(r=>fmtMoneyShort(r.avg)).join(' → ')}</b>로 ${rising?'상승':'변화'}하고, 주문 고객 수(${rows.map(r=>r.cust).join('→')})와 SKU 수(${rows.map(r=>r.sku).join('→')})가 함께 움직입니다. 분기별 성과 비교를 통해 Choice Kit의 오더 전환이 <b>단기 이벤트성</b>인지, <b>고객·SKU 확장으로 이어지는 지속 성과</b>인지 검증합니다. <span class="muted">(Q3 to date는 ${spanTxt}의 부분 분기 — 초기 오더 속도 지표)</span>`;
+  }
+
+  // ── charts ──
+  const money = state.currency==='KRW'?'₩':'$';
+  const labels = rows.map(r => r.label);
+  if (charts.quarterAmt) charts.quarterAmt.destroy();
+  const c1 = document.getElementById('chQuarterAmt');
+  if (c1) {
+    const data = rows.map(r => metric==='amount' ? r.amt : r.qty);
+    charts.quarterAmt = new Chart(c1, {
+      type: 'bar',
+      data: { labels, datasets: [{
+        label: metric==='amount' ? `Order Amount (${money})` : 'Order Qty',
+        data, backgroundColor: rows.map((r,i)=> r.q==='Q3' ? 'rgba(74,125,255,.45)' : 'rgba(74,125,255,.85)'),
+        borderColor: 'rgba(74,125,255,1)', borderWidth: rows.map(r=> r.q==='Q3'?1.5:0),
+        borderRadius: 6, borderSkipped: false,
+      }]},
+      options: { responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, title:{display:true, text: metric==='amount'?'Quarterly Order Amount':'Quarterly Order Qty', font:{size:12}},
+          tooltip:{ callbacks:{ label: ctx => metric==='amount' ? ' '+fmtMoney(ctx.parsed.y) : ' '+fmtNum(ctx.parsed.y)+' qty' } } },
+        scales:{ y:{ beginAtZero:true, ticks:{ callback: v => metric==='amount' ? fmtMoneyShort(v) : fmtNum(v) } } } }
+    });
+  }
+  if (charts.quarterExpand) charts.quarterExpand.destroy();
+  const c2 = document.getElementById('chQuarterExpand');
+  if (c2) {
+    charts.quarterExpand = new Chart(c2, {
+      type: 'line',
+      data: { labels, datasets: [
+        { label:'Ordering Customers', data: rows.map(r=>r.cust), borderColor:'#34c759', backgroundColor:'rgba(52,199,89,.12)', yAxisID:'yC', tension:.3, fill:true, pointRadius:4 },
+        { label:'SKU Items', data: rows.map(r=>r.sku), borderColor:'#ff9f0a', backgroundColor:'rgba(255,159,10,.10)', yAxisID:'yS', tension:.3, fill:false, pointRadius:4, borderDash:[5,3] },
+      ]},
+      options: { responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:true, position:'bottom'}, title:{display:true, text:'Customer / SKU Expansion', font:{size:12}} },
+        scales:{
+          yC:{ position:'left', beginAtZero:true, title:{display:true,text:'Customers'}, ticks:{ precision:0 } },
+          yS:{ position:'right', beginAtZero:true, title:{display:true,text:'SKU Items'}, grid:{drawOnChartArea:false}, ticks:{ precision:0 } }
+        } }
+    });
+  }
+
+  // ── metric toggle wiring (once) ──
+  const seg = document.getElementById('segQuarterMetric');
+  if (seg && !seg.dataset.wired) {
+    seg.dataset.wired = '1';
+    seg.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+      state.quarterMetric = b.dataset.v;
+      seg.querySelectorAll('button').forEach(x => x.classList.toggle('active', x===b));
+      try { persist(); } catch(e){}
+      renderQuarterly(fOrders);
+    }));
+  }
+  if (seg) seg.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.v===metric));
+}
+
 function renderCustomerTrend(fOrders, fMkt) {
   // 캠페인 select 채우기
   const sel = document.getElementById('selCustTrendCamp');
@@ -10882,6 +11021,7 @@ const WIDGET_LABELS = {
   'region':'Region — Order, Marketing & Activity Breakdown',
   'budgetstatus':'Marketing Budget — Allocation & Status by Region',
   'customertrend':'Top Customer Order Trend · by Campaign',
+  'quarterly':'Quarterly Performance Comparison — Q1 / Q2 / Q3 to date',
   'activities':'Marketing Activities',
   'promoctr':'Promotion Category × Top CTR Sales',
   'topinsights':'Top Insights — Vehicle Models · Products · CTR Codes',
@@ -11898,7 +12038,7 @@ window.publishSnapshot = publishSnapshot;
    per-widget controls. The existing hash handler (window._jumpToWidget) then
    scrolls to the #anchor widget. Filter state is reflected back into the URL,
    and each linkable widget gets a "Copy link" button. */
-const _DL_WIDGETS = ['region','promoOrderTrend','customertrend','skuExplorer','planexec','activities','budgetstatus'];
+const _DL_WIDGETS = ['region','promoOrderTrend','customertrend','quarterly','skuExplorer','planexec','activities','budgetstatus'];
 
 function _dlCampaignForAnchor(anchor) {
   if (anchor === 'promoOrderTrend') return state.potPromo;
@@ -12183,6 +12323,19 @@ function injectCopyLinkButtons() {
       });
       localStorage.setItem('ck_hidden_widgets', JSON.stringify(state.hiddenWidgets));
       localStorage.setItem('ck_hide_ordertrend_salestrend_v1', '1');
+    }
+  } catch (e) {}
+  // One-time: insert the new Quarterly Performance widget right after Top Customer
+  // Order Trend for users who already have a saved widget order.
+  try {
+    if (localStorage.getItem('ck_quarterly_added_v1') !== '1') {
+      const wo = state.widgetOrder;
+      if (wo.indexOf('quarterly') === -1) {
+        const ct = wo.indexOf('customertrend');
+        if (ct > -1) wo.splice(ct + 1, 0, 'quarterly'); else wo.push('quarterly');
+        localStorage.setItem('ck_widget_order', JSON.stringify(wo));
+      }
+      localStorage.setItem('ck_quarterly_added_v1', '1');
     }
   } catch (e) {}
   try { applyDeepLinkParams(); } catch (e) { console.warn('[init] deep-link params failed:', e); }
