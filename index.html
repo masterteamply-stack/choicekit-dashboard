@@ -12652,19 +12652,27 @@ function injectCopyLinkButtons() {
       localStorage.setItem('ck_quarterly_added_v1', '1');
     }
   } catch (e) {}
-  // One-time: insert the Region × Campaign Executive Summary right above
-  // Promotion Performance for users who already have a saved widget order.
+  // One-time: place the Region × Campaign Executive Summary directly above
+  // Promotion Performance. This must REPOSITION (not only insert-if-absent),
+  // because applyWidgetOrder() runs earlier in init and appends any new widget
+  // to the end of a saved order — which left this widget stuck at the bottom.
+  // A fresh flag (v2) re-runs the fix once for users already in that state.
   try {
-    if (localStorage.getItem('ck_exec_summary_added_v1') !== '1') {
+    if (localStorage.getItem('ck_exec_summary_pos_v2') !== '1') {
       const wo = state.widgetOrder;
-      if (wo.indexOf('regionExecSummary') === -1) {
-        const pi = wo.indexOf('promo');
-        if (pi > -1) wo.splice(pi, 0, 'regionExecSummary'); else wo.unshift('regionExecSummary');
-        localStorage.setItem('ck_widget_order', JSON.stringify(wo));
-      }
+      const ei = wo.indexOf('regionExecSummary');
+      if (ei > -1) wo.splice(ei, 1);                       // remove from wherever it is now
+      const pi = wo.indexOf('promo');
+      if (pi > -1) wo.splice(pi, 0, 'regionExecSummary'); else wo.unshift('regionExecSummary');
+      state.widgetOrder = wo;
+      localStorage.setItem('ck_widget_order', JSON.stringify(wo));
+      localStorage.setItem('ck_exec_summary_pos_v2', '1');
       localStorage.setItem('ck_exec_summary_added_v1', '1');
     }
   } catch (e) {}
+  // Re-apply the widget order to the DOM so the migration above takes effect
+  // (applyWidgetOrder ran earlier in init, before these one-time migrations).
+  try { applyWidgetOrder(); } catch (e) {}
   try { applyDeepLinkParams(); } catch (e) { console.warn('[init] deep-link params failed:', e); }
   rebuildAll();
   // Render cached data-update timestamps on first paint (markDataUpdated handles subsequent updates)
