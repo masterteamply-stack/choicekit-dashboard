@@ -6175,11 +6175,17 @@ function renderRegionExecSummary(fOrders, fMkt) {
     const norm = st === 'SELL-IN' ? 'IN' : st === 'SELL-OUT' ? 'OUT' : null; if (!norm) return;
     sellCnt[p] = sellCnt[p] || { IN:0, OUT:0 }; sellCnt[p][norm]++;
   });
+  // Sell 타입 판정: SKU 기반 프로모션과 전략 고객 프로모션(Strategic Partner)은
+  // 정의상 SELL-IN (marketing.csv에 SELL_OUT 활동 행이 섞여 있어도 무시).
+  // 그 외 고객 기반 캠페인만 marketing.csv sell_type 우세값(없으면 SELL-OUT) 사용.
+  const _SELLIN_CAMPS = new Set(['Strategic Partner Program']);
   const sellTypeOf = p => {
+    const mb = ((cfg[p] && (cfg[p].match_by || 'sku')) || 'sku').toLowerCase();
+    if (mb === 'sku') return 'SELL-IN';
+    if (_SELLIN_CAMPS.has(p)) return 'SELL-IN';
     const c = sellCnt[p];
     if (c) { if (c.IN && c.OUT) return c.IN >= c.OUT ? 'SELL-IN' : 'SELL-OUT'; return c.IN ? 'SELL-IN' : 'SELL-OUT'; }
-    const mb = ((cfg[p] && (cfg[p].match_by || 'sku')) || 'sku').toLowerCase();
-    return mb === 'customer' ? 'SELL-OUT' : 'SELL-IN';
+    return 'SELL-OUT';
   };
 
   // ── 캠페인 매칭 (Promotion Performance sum 로직과 동일) ──
