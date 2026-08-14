@@ -6276,11 +6276,32 @@ function renderRegionExecSummary(fOrders, fMkt) {
       if (t > 0) ensure(r, p).target += t;
     });
 
-    // Prior-year same period (baseline / pre_orders) — window shifted −1yr, incl. country/customer
+    // Prior-year same period (baseline / pre_orders) — window shifted −1yr, incl. country/customer.
+    // Attribution: resolve each baseline order to a campaign by target-customer / target-SKU
+    // membership, IGNORING the row's own promotion_category tag. Most baseline rows are
+    // tagged PRE_ORDER (which promoKeyOfOrder reverse-maps), but ~187 carry other tags
+    // (e.g. STANDARD, like Kailos International's 2025 Oceania order) that promoKeyOfOrder
+    // would pass through unmapped — dropping them from prev-year. Resolving membership
+    // directly here keeps prev-year symmetric with the current-year campMatch.
     if (baselineOn) {
+      promoKeyOfOrder({ promotion_category: 'PRE_ORDER' });   // ensure window._promoKeyMaps is built
+      const _pm = window._promoKeyMaps || { custMap:{}, ctrMap:{}, regMap:{} };
+      const resolveBaselineCamp = o => {
+        const custKey = _pm.custMap[(o.customer || '').trim()];
+        if (custKey) return custKey;
+        const mm = (o.order_id || '').match(/^PO-([^-]+)-/);
+        const ctr = mm ? mm[1] : (o.sku || '').trim();
+        const skuKey = _pm.ctrMap[ctr] || _pm.ctrMap[(o.sku || '').trim()];
+        if (skuKey) {
+          const allow = _pm.regMap[skuKey];
+          if (allow && allow.size) { const rr = normalizeRegion(o.region || ''); if (rr && !allow.has(rr)) return ''; }
+          return skuKey;
+        }
+        return '';
+      };
       (state.preOrders || []).forEach(o => {
-        const p = promoKeyOfOrder(o);
-        if (_skipCamp(p)) return;
+        const p = resolveBaselineCamp(o);
+        if (_skipCamp(p) || !p) return;
         const r = normalizeRegion(o.region || ''); if (!r) return;
         const st = promoStart[p]; if (!st) return;
         const d = o.order_date || '';
