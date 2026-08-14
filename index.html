@@ -6232,7 +6232,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
     };
     const bucket = (node, country, cust, amt, field) => {
       country = country || '(Unknown)'; cust = cust || '(Unknown)';
-      const cc = node.countries[country] || (node.countries[country] = { order:0, prev:0, customers:{} });
+      const cc = node.countries[country] || (node.countries[country] = { order:0, prev:0, cost:0, target:0, customers:{} });
       cc[field] += amt;
       const uu = cc.customers[cust] || (cc.customers[cust] = { order:0, prev:0 });
       uu[field] += amt;
@@ -6253,12 +6253,17 @@ function renderRegionExecSummary(fOrders, fMkt) {
       bucket(node, o.country, o.customer, amt, 'order');
     });
 
-    // Marketing executed cost (region × campaign)
+    // Marketing executed cost (region × campaign), also bucketed by country
     (fMkt || []).forEach(m => {
       const p = (m.promotion_category || '').trim();
       if (_skipCamp(p)) return;
       const r = m.region || ''; if (!r) return;
-      ensure(r, p).cost += convMktActual(m);
+      const node = ensure(r, p);
+      const cost = convMktActual(m);
+      node.cost += cost;
+      const ctry = (m.country || '').trim() || '(Unknown)';
+      const cc = node.countries[ctry] || (node.countries[ctry] = { order:0, prev:0, cost:0, target:0, customers:{} });
+      cc.cost += cost;
     });
 
     // Order target (marketing.csv Order_Target($) → region|campaign)
@@ -6287,6 +6292,23 @@ function renderRegionExecSummary(fOrders, fMkt) {
         }
       });
     }
+    // Country-level Order Target — same dedup as deriveOrderTargets but grouped by
+    // (region, campaign, country); Σ over countries equals the campaign target.
+    const _seenT = new Set(), _tgtByRPC = {};
+    (fMkt || []).forEach(m => {
+      const t = Number(m.order_target_usd || 0); if (!t) return;
+      const r = m.region || '', p = m.promotion_category || '', d = m.date || m.execution_date || '', c = m.country || '', cust = m.target_customer || m.customer || '';
+      const dk = `${r}|||${p}|||${d}|||${c}|||${cust}|||${t}`;
+      if (_seenT.has(dk)) return; _seenT.add(dk);
+      const rk = `${r}|||${p}|||${(c || '').trim() || '(Unknown)'}`;
+      _tgtByRPC[rk] = (_tgtByRPC[rk] || 0) + t;
+    });
+    Object.keys(agg).forEach(r => Object.keys(agg[r]).forEach(p => {
+      const node = agg[r][p];
+      Object.keys(node.countries).forEach(ctry => {
+        node.countries[ctry].target = (_tgtByRPC[`${r}|||${p}|||${ctry}`] || 0) * usdToDisp;
+      });
+    }));
     window._execCache = { fO: fOrders, fM: fMkt, cur: state.currency, base: baselineOn, agg };
   }
 
@@ -6304,11 +6326,6 @@ function renderRegionExecSummary(fOrders, fMkt) {
     const pr = order / target * 100, w = Math.min(100, pr);
     const col = pr < 30 ? '#C8102E' : pr < 70 ? '#B8860B' : '#0A0A0A';
     return `<div style="display:flex;align-items:center;gap:6px"><div style="flex:1;min-width:54px;height:8px;background:var(--surface-3);border-radius:4px;overflow:hidden"><div style="width:${w}%;height:100%;background:${col}"></div></div><span class="mono" style="font-size:11px;min-width:40px;text-align:right;color:${col};font-weight:700">${pr.toFixed(0)}%</span></div>`;
-  };
-  const shareCell = (order, parent) => {
-    if (!(parent > 0)) return '<span class="muted">–</span>';
-    const pr = order / parent * 100, w = Math.min(100, pr);
-    return `<div title="share of parent" style="display:flex;align-items:center;gap:6px"><div style="flex:1;min-width:54px;height:6px;background:var(--surface-3);border-radius:4px;overflow:hidden"><div style="width:${w}%;height:100%;background:var(--blue)"></div></div><span class="mono" style="font-size:10px;min-width:34px;text-align:right;color:var(--text-2)">${pr.toFixed(0)}%</span></div>`;
   };
   const romiCell = (order, cost) => { if (!(cost > 0)) return '<span class="muted">–</span>'; const r = (order - cost) / cost * 100; return `<span class="${r >= 0 ? 't-green' : 't-red'}" style="font-weight:700">${fmtPct(r)}</span>`; };
   const statusOf = (order, target, cost) => {
@@ -6345,7 +6362,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
   const noteEl = document.getElementById('execSummaryNote');
   if (noteEl) noteEl.innerHTML =
     (baselineOn ? '' : '<span class="t-red">Prev Year & YoY need Baseline (top toolbar). </span>') +
-    '<span class="muted">Click a row to drill down: Region → Campaign → Country → Customer.</span>';
+    '<span class="muted">Click a row to drill down: Region → Campaign → Country → Customer. Country target/cost are actual; customer values are allocated by order share.</span>';
 
   // ── Sort segment state / binding ──
   const seg = document.getElementById('segExecSort');
@@ -6370,7 +6387,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
     <th class="text-right" title="campaign start → today">Period Order</th>
     <th class="text-right" title="same period last year">Prev Year</th>
     <th class="text-right" title="vs same period last year">YoY Growth</th>
-    <th style="min-width:120px" title="Order ÷ Target (region/campaign) · share of parent (country/customer)">Progress</th>
+    <th style="min-width:120px" title="Order ÷ Target">Progress</th>
     <th class="text-right" title="(Order − Cost) ÷ Cost">ROMI</th>
   </tr></thead>`;
 
@@ -6412,24 +6429,26 @@ function renderRegionExecSummary(fOrders, fMkt) {
         const nCust = Object.keys(cd.customers || {}).length;
         body += `<tr data-exec-key="${kKey}" style="cursor:pointer;background:var(--surface)">
           <td style="padding-left:40px">${caret(kOpen)}🌐 ${cd.country} <span class="muted" style="font-size:10px">· ${nCust} cust</span></td>
-          <td class="text-right mono muted">–</td>
+          <td class="text-right mono t-purple">${cd.target > 0 ? fmtMoney(cd.target) : '–'}</td>
           <td class="text-right mono t-green">${fmtMoney(cd.order)}</td>
           <td class="text-right mono muted">${baselineOn && cd.prev > 0 ? fmtMoney(cd.prev) : '–'}</td>
           <td class="text-right mono">${yoyCell(cd.order, cd.prev)}</td>
-          <td>${shareCell(cd.order, c.order)}</td>
-          <td class="text-right mono muted">–</td>
+          <td>${progCell(cd.order, cd.target)}</td>
+          <td class="text-right mono">${romiCell(cd.order, cd.cost)}</td>
         </tr>`;
         if (!kOpen) return;
         const custs = Object.entries(cd.customers || {}).map(([k, v]) => ({ cust:k, ...v })).sort((a, b) => b.order - a.order);
         custs.forEach(u => {
+          const _sh = cd.order > 0 ? u.order / cd.order : 0;  // customer target/cost allocated from country by order share
+          const _ut = cd.target * _sh, _uc = cd.cost * _sh;
           body += `<tr style="background:var(--surface)">
             <td style="padding-left:64px" class="muted"><span style="margin-right:5px">•</span>${u.cust}</td>
-            <td class="text-right mono muted">–</td>
+            <td class="text-right mono t-purple">${_ut > 0 ? fmtMoney(_ut) : '–'}</td>
             <td class="text-right mono t-green">${fmtMoney(u.order)}</td>
             <td class="text-right mono muted">${baselineOn && u.prev > 0 ? fmtMoney(u.prev) : '–'}</td>
             <td class="text-right mono">${yoyCell(u.order, u.prev)}</td>
-            <td>${shareCell(u.order, cd.order)}</td>
-            <td class="text-right mono muted">–</td>
+            <td>${progCell(u.order, _ut)}</td>
+            <td class="text-right mono">${romiCell(u.order, _uc)}</td>
           </tr>`;
         });
       });
