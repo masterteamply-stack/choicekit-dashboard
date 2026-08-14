@@ -2079,12 +2079,7 @@ header .mono b.t-orange {
             <h3 class="h-section">Region × Campaign Summary</h3>
           </div>
           <div class="chart-tools">
-            <span class="label-mono" style="font-size:11px">SORT</span>
-            <div class="seg" id="segExecSort">
-              <button data-v="status" class="active">Weak first</button>
-              <button data-v="order">Order</button>
-              <button data-v="progress">Progress</button>
-            </div>
+            <span class="label-mono" style="font-size:11px;color:var(--text-3)">Sorted by Progress ▲</span>
             <div class="widget-order-controls"></div>
           </div>
         </div>
@@ -6349,15 +6344,15 @@ function renderRegionExecSummary(fOrders, fMkt) {
     return `<div style="display:flex;align-items:center;gap:6px"><div style="flex:1;min-width:54px;height:8px;background:var(--surface-3);border-radius:4px;overflow:hidden"><div style="width:${w}%;height:100%;background:${col}"></div></div><span class="mono" style="font-size:11px;min-width:40px;text-align:right;color:${col};font-weight:700">${pr.toFixed(0)}%</span></div>`;
   };
   const romiCell = (order, cost) => { if (!(cost > 0)) return '<span class="muted">–</span>'; const r = (order - cost) / cost * 100; return `<span class="${r >= 0 ? 't-green' : 't-red'}" style="font-weight:700">${fmtPct(r)}</span>`; };
+  // Status reflects campaign HEALTH, not raw target attainment: a profitable
+  // (ROMI ≥ 0) or actively-ordering region is On track; only a real loss or a
+  // total absence of orders is flagged. (Target attainment is shown separately in
+  // the Progress column, which is naturally low mid-period vs a full-period target.)
   const statusOf = (order, target, cost) => {
     const romi = cost > 0 ? (order - cost) / cost * 100 : null;
     if (order === 0 && (target > 0 || cost > 0)) return { rank:0, dot:'🔴', label:'No orders', color:'#C8102E', bg:'var(--bad-soft)' };
     if (romi != null && romi < 0) return { rank:0, dot:'🔴', label:'Loss', color:'#C8102E', bg:'var(--bad-soft)' };
-    if (target > 0) { const pr = order / target * 100;
-      if (pr < 30) return { rank:0, dot:'🔴', label:'Behind', color:'#C8102E', bg:'var(--bad-soft)' };
-      if (pr < 70) return { rank:1, dot:'🟡', label:'Watch', color:'#B8860B', bg:'rgba(184,134,11,.10)' };
-      return { rank:2, dot:'🟢', label:'On track', color:'#0a7d2e', bg:'var(--good-soft)' }; }
-    return order > 0 ? { rank:2, dot:'🟢', label:'Active', color:'#0a7d2e', bg:'var(--good-soft)' } : { rank:1, dot:'⚪', label:'Idle', color:'var(--text-3)', bg:'var(--surface-3)' };
+    return order > 0 ? { rank:2, dot:'🟢', label:'On track', color:'#0a7d2e', bg:'var(--good-soft)' } : { rank:1, dot:'⚪', label:'Idle', color:'var(--text-3)', bg:'var(--surface-3)' };
   };
   const statusBtn = s => `<span style="display:inline-block;font-size:10px;font-weight:700;padding:2px 9px;border-radius:12px;border:1px solid ${s.color};background:${s.bg};color:${s.color};white-space:nowrap">${s.dot} ${s.label}</span>`;
 
@@ -6372,11 +6367,12 @@ function renderRegionExecSummary(fOrders, fMkt) {
     return { region, camps, ...R, nin, nout, status: statusOf(R.order, R.target, R.cost) };
   }).filter(r => r.camps.length > 0);
 
-  const sortMode = state.execSort || 'status';
+  // Always sorted by Progress (Period Order ÷ Order Target), lowest first — the
+  // least-advanced regions surface at the top. (No user-facing sort selector.)
   regionList.sort((a, b) => {
-    if (sortMode === 'order') return b.order - a.order;
-    if (sortMode === 'progress') { const pa = a.target > 0 ? a.order / a.target : 9e9, pb = b.target > 0 ? b.order / b.target : 9e9; return pa - pb; }
-    return a.status.rank - b.status.rank || b.order - a.order;
+    const pa = a.target > 0 ? a.order / a.target : Infinity;
+    const pb = b.target > 0 ? b.order / b.target : Infinity;
+    return pa - pb;
   });
 
   // ── Note (minimal) ──
@@ -6386,30 +6382,18 @@ function renderRegionExecSummary(fOrders, fMkt) {
     '<span class="muted">Click a row to drill down: Region → Campaign → Country → Customer. Country target/cost are actual; customer values are allocated by order share.</span>';
 
   // ── Sort segment state / binding ──
-  const seg = document.getElementById('segExecSort');
-  if (seg) {
-    seg.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.v === sortMode));
-    if (!seg.dataset.wired) {
-      seg.dataset.wired = '1';
-      seg.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
-        state.execSort = b.dataset.v;
-        try { localStorage.setItem('ck_exec_sort', state.execSort); } catch (_) {}
-        const a = window._lastExecArgs || {}; renderRegionExecSummary(a.f, a.m);
-      }));
-    }
-  }
 
   // ── Table (collapsible tree) ──
   const tbl = document.getElementById('tblRegionExecSummary');
   if (!tbl) return;
   const THEAD = `<thead><tr>
     <th style="min-width:300px">Region ▸ Campaign ▸ Country ▸ Customer</th>
-    <th class="text-right" title="marketing.csv Order_Target($)">Order Target</th>
-    <th class="text-right" title="campaign start → today">Period Order</th>
-    <th class="text-right" title="same period last year">Prev Year</th>
+    <th class="text-right" title="marketing.csv Order_Target($) — full campaign target">Order Target</th>
+    <th class="text-right" title="orders during the campaign period (start → today)">Campaign Period Order</th>
+    <th class="text-right" title="orders in the same period last year (baseline)">Prior-Yr Same Period</th>
     <th class="text-right" title="vs same period last year">YoY Growth</th>
-    <th style="min-width:120px" title="Order ÷ Target">Progress</th>
-    <th class="text-right" title="(Order − Cost) ÷ Cost">ROMI</th>
+    <th style="min-width:120px" title="Campaign Period Order ÷ Order Target">Progress</th>
+    <th class="text-right" title="(Order − Marketing Cost) ÷ Marketing Cost">ROMI</th>
   </tr></thead>`;
 
   let body = '';
@@ -6432,7 +6416,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
     R.camps.forEach(c => {
       const cKey = 'C|' + R.region + '|' + c.camp, cOpen = !!state.execOpen[cKey];
       body += `<tr data-exec-key="${cKey}" style="cursor:pointer">
-        <td style="padding-left:18px">${caret(cOpen)}<b>${c.camp}</b> <span style="margin-left:6px">${sellBadge(c.sell)} ${badge('📅 ' + (c.start || '–'))} ${badge('💰 ' + fmtMoneyShort(c.cost))}</span></td>
+        <td style="padding-left:18px">${caret(cOpen)}<b>${c.camp}</b> <span style="margin-left:6px">${sellBadge(c.sell)} ${badge('📅 ' + (c.start || '–'))}</span></td>
         <td class="text-right mono">${c.target > 0 ? fmtMoney(c.target) : '–'}</td>
         <td class="text-right mono t-green">${fmtMoney(c.order)}</td>
         <td class="text-right mono muted">${baselineOn && c.prev > 0 ? fmtMoney(c.prev) : '–'}</td>
