@@ -1,4 +1,4 @@
-m.date,end.date,region,country,promotion_theme,promotion_category,target_product,activity_type,title,customer,customer_code,expected_cost,actual_cost,Bizreward,currency,kpi_metric,target,sell_type,owner,Order_Target($),SELL-OUT Target($)
+Start.date,end.date,region,country,promotion_theme,promotion_category,target_product,activity_type,title,customer,customer_code,expected_cost,actual_cost,Bizreward,currency,kpi_metric,target,sell_type,owner,Order_Target($),SELL-OUT Target($)
 2026-03-02,2026-11-30,NA,캐나다,CHOICE_KIT,Strategic Partner Program,All items in the market,Event,Incentive Trip,Lordco Auto Parts,289029,28620000,0,x,KRW,STARTED,B2B,SELL_IN,DH,1185141,해당 고객사 년간 총 매출 목표 달성이 목표
 2026-04-03,2026-04-03,NA,캐나다,CHOICE_KIT,Strategic Partner Program,All items in the market,CONTENT,SNS Content,Lordco Auto Parts,289029,879541,879541,x,KRW,RELEASED,B2B,SELL_IN,DH,0,
 2026-04-17,2026-04-17,NA,캐나다,CHOICE_KIT,Strategic Partner Program,All items in the market,CONTENT,SNS Content,Lordco Auto Parts,289029,1053590,1053590,x,KRW,RELEASED,B2B,SELL_IN,DH,0,

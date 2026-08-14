@@ -3364,9 +3364,10 @@ async function parseMarketingCSV(file) {
         const orderTgtUsd = num(pick(r,'Order_Target($)','order_target($)','order_target_usd','order_target','ordertarget'));
         return {
           activity_id: str(pick(r,'activity_id')) || `MKT-${Date.now()}-${i}`,
-          date: str(pick(r,'m.date','execution_date','date')),
+          date: str(pick(r,'Start.date','m.date','execution_date','date')),
           end_date: str(pick(r,'end.date','end_date','end')).slice(0,10),
-          region: resolveRegion(pick(r,'region'), pick(r,'country'), str(pick(r,'m.date','execution_date','date'))),
+          sellout_target_note: str(pick(r,'SELL-OUT Target($)','sell_out_target','sellout_target')),
+          region: resolveRegion(pick(r,'region'), pick(r,'country'), str(pick(r,'Start.date','m.date','execution_date','date'))),
           country: normalizeCountry(pick(r,'country')),
           promotion_category: promCat || '(unspecified)',
           category: normalizeCategory(tgtProd || promCat),
@@ -6150,20 +6151,32 @@ function renderRegionExecSummary(fOrders, fMkt) {
   const today = _todayStr();
   const cfg = state.campaignTargetSkus || {};
 
-  // ── Campaign start dates (same rule as Promotion Performance) ──
-  const promoStart = {}, promoStartAll = {};
+  // ── Campaign start dates — PER (region, campaign) from the marketing STARTED date
+  // (fallback: earliest activity in that region/campaign, then the campaign's global
+  // earliest). A campaign can start on different dates in different regions (e.g.
+  // Trade promotion: Korea 2026-04-24, ASIA 2026-06-01), so a single global start was
+  // wrong for multi-region campaigns — this uses each region's own start.
+  const _rcStarted = {}, _rcAll = {}, _gStarted = {}, _gAll = {}, _soNote = {};
   (state.marketing || []).forEach(m => {
     const p = (m.promotion_category || m.promotion_id || '').trim();
-    const d = (m.execution_date || m.date || '').trim();
+    const rg = m.region || '';
+    const d = (m.date || m.execution_date || '').trim().slice(0, 10);
     const kpi = (m.kpi_metric || '').trim().toUpperCase();
-    if (!p || !d) return;
-    if (!promoStartAll[p] || d < promoStartAll[p]) promoStartAll[p] = d;
-    if (kpi === 'STARTED') { if (!promoStart[p] || d < promoStart[p]) promoStart[p] = d; }
+    if (!p) return;
+    const note = (m.sellout_target_note || '').trim();
+    if (note && !_soNote[p]) _soNote[p] = note;   // per-campaign SELL-OUT Target note (text)
+    if (!d) return;
+    const k = rg + '|||' + p;
+    if (!_gAll[p] || d < _gAll[p]) _gAll[p] = d;
+    if (kpi === 'STARTED') { if (!_gStarted[p] || d < _gStarted[p]) _gStarted[p] = d; }
+    if (!rg) return;
+    if (!_rcAll[k] || d < _rcAll[k]) _rcAll[k] = d;
+    if (kpi === 'STARTED') { if (!_rcStarted[k] || d < _rcStarted[k]) _rcStarted[k] = d; }
   });
-  Object.keys(promoStartAll).forEach(p => { if (!promoStart[p]) promoStart[p] = promoStartAll[p]; });
-  Object.keys(promoStart).forEach(p => { if (promoStart[p] < '2026-01-02') promoStart[p] = '2026-01-02'; });
-  const _explicitStart = { 'CTR MarketFit Campaign':'2026-03-01','Asian vehicle':'2026-03-01','European vehicle':'2026-03-01','Korean & Japanese vehicles':'2026-08-01' };
-  Object.keys(_explicitStart).forEach(p => { promoStart[p] = _explicitStart[p]; });
+  const startFor = (rg, p) => {
+    const k = rg + '|||' + p;
+    return _rcStarted[k] || _rcAll[k] || _gStarted[p] || _gAll[p] || '';
+  };
 
   // Campaign end date = latest end.date across the campaign's marketing rows.
   const promoEnd = {};
@@ -6232,7 +6245,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
     agg = {};
     const ensure = (r, p) => {
       agg[r] = agg[r] || {};
-      if (!agg[r][p]) agg[r][p] = { order:0, cost:0, target:0, prev:0, start:promoStart[p] || '', end:promoEnd[p] || '', sell:sellTypeOf(p), countries:{} };
+      if (!agg[r][p]) agg[r][p] = { order:0, cost:0, target:0, prev:0, start:startFor(r, p), end:promoEnd[p] || '', sell:sellTypeOf(p), soNote:_soNote[p] || '', countries:{} };
       return agg[r][p];
     };
     const bucket = (node, country, cust, amt, field) => {
@@ -6248,7 +6261,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
       const p = (o.promotion_category || o.promotion_id || '').trim();
       if (_skipCamp(p)) return;
       const r = o.region || ''; if (!r) return;
-      const st = promoStart[p];
+      const st = startFor(r, p);
       if (st && (o.order_date || '') < st) return;
       const _en = promoEnd[p]; const _hi = (_en && _en < today) ? _en : today;
       if ((o.order_date || '') > _hi) return;   // cap Period Order at the campaign end date
@@ -6310,7 +6323,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
         const p = resolveBaselineCamp(o);
         if (_skipCamp(p) || !p) return;
         const r = normalizeRegion(o.region || ''); if (!r) return;
-        const st = promoStart[p]; if (!st) return;
+        const st = startFor(r, p); if (!st) return;
         const en = promoEnd[p]; const hi = (en && en < today) ? en : today;
         const d = o.order_date || '';
         if (d < _addYears(st, -1) || d > _addYears(hi, -1)) return;
@@ -6430,7 +6443,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
       const cKey = 'C|' + R.region + '|' + c.camp, cOpen = !!state.execOpen[cKey];
       body += `<tr data-exec-key="${cKey}" style="cursor:pointer">
         <td style="padding-left:18px">${caret(cOpen)}<b>${c.camp}</b> <span style="margin-left:6px">${sellBadge(c.sell)} ${badge('📅 ' + (c.start || '–') + (c.end ? ' → ' + c.end : ''))}${c.end && c.end < today ? ` <span class="badge-tag" style="font-size:9px;padding:1px 6px;height:auto;line-height:1.6;color:#0a7d2e;border-color:#0a7d2e;background:var(--good-soft);font-weight:700">✓ DONE</span>` : ''}</span></td>
-        <td class="text-right mono">${c.target > 0 ? fmtMoney(c.target) : '–'}</td>
+        <td class="text-right mono">${c.target > 0 ? fmtMoney(c.target) : '–'}${c.soNote ? ` <span title="SELL-OUT Target: ${String(c.soNote).replace(/\"/g,'&quot;')}" style="cursor:help;color:var(--accent);font-weight:700">ⓢ</span>` : ''}</td>
         <td class="text-right mono t-green">${fmtMoney(c.order)}</td>
         <td class="text-right mono muted">${baselineOn && c.prev > 0 ? fmtMoney(c.prev) : '–'}</td>
         <td class="text-right mono">${yoyCell(c.order, c.prev)}</td>
