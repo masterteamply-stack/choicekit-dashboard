@@ -1917,6 +1917,8 @@ header .mono b.t-orange {
           </div>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
+          <span class="label-mono muted">Region</span>
+          <select id="selPotRegion" style="min-width:130px"><option value="__all__">All regions</option></select>
           <span class="label-mono muted">Promotions</span>
           <select id="selPotPromo" style="min-width:180px"><option value="__all__">All promotions</option></select>
           <span class="label-mono muted" id="potSummary" style="margin-left:auto">–</span>
@@ -2146,6 +2148,8 @@ header .mono b.t-orange {
               <p class="label-mono" style="margin-top:4px">Campaign별 Top 고객 · 트렌드</p>
             </div>
             <div class="chart-tools">
+              <span class="label-mono" style="font-size:11px">REGION</span>
+              <select id="selCustTrendRegion" style="min-width:120px;height:34px;padding:4px 10px;font-size:13px"></select>
               <span class="label-mono" style="font-size:11px">CAMPAIGN</span>
               <select id="selCustTrendCamp" style="min-width:180px;height:34px;padding:4px 10px;font-size:13px"></select>
               <span class="label-mono" style="font-size:11px">TOP N</span>
@@ -2576,6 +2580,7 @@ let state = {
   budgetExpandedCountries: JSON.parse(localStorage.getItem('ck_budget_exp_c') || '[]'),
   custTrendProductMode: localStorage.getItem('ck_cust_trend_pmode') || 'amount',
   custTrendCampaign: localStorage.getItem('ck_cust_trend_camp') || '__all__',
+  custTrendRegion: localStorage.getItem('ck_cust_trend_region') || '__all__',
   custTrendN: Number(localStorage.getItem('ck_cust_trend_n') || 5),
   custTrendCustomer: localStorage.getItem('ck_cust_trend_customer') || '',
   custTrendGrain: localStorage.getItem('ck_cust_trend_grain') || 'month',
@@ -2589,6 +2594,7 @@ let state = {
   potPeriod: localStorage.getItem('ck_pot_period') || 'month',   // region | year | quarter | month
   potMetric: localStorage.getItem('ck_pot_metric') || 'amount',   // amount | qty
   potPromo:  localStorage.getItem('ck_pot_promo')  || '__all__',  // promotion_id or __all__
+  potRegion: localStorage.getItem('ck_pot_region') || '__all__',
 
   // — SKU Explorer widget —
   // Default to 'aggregate' so users see the full promotion impact summary first,
@@ -5425,18 +5431,16 @@ function renderQuarterly(fOrders) {
 
 function renderCustomerTrend(fOrders, fMkt) {
   // 캠페인 select 채우기
+  const ctRgn = state.custTrendRegion || '__all__';
+  const rSel = document.getElementById('selCustTrendRegion');
+  if (rSel) rSel.innerHTML = _regionOptsHTML(fOrders, ctRgn);
   const sel = document.getElementById('selCustTrendCamp');
   if (sel) {
-    const camps = Array.from(new Set(fOrders.map(o=>o.promotion_category).filter(Boolean))).sort();
-    const optHTML = _promoOptsHTML(camps, state.custTrendCampaign, 'All Campaigns');
-    const fillKey = camps.join('|') + '::' + (_campRegionMap.__k||'') + '::' + (state.custTrendCampaign||'');
-    if (sel.dataset.fillKey !== fillKey) {
-      sel.innerHTML = optHTML;
-      // if the stored selection is no longer a valid option, fall back to All
-      if (!Array.from(sel.options).some(o=>o.value===state.custTrendCampaign)) state.custTrendCampaign='__all__';
-      sel.value = state.custTrendCampaign;
-      sel.dataset.fillKey = fillKey;
-    }
+    const camps = _campsInRegion(fOrders, ctRgn);
+    // drop a stale campaign that isn't in the chosen region
+    if (state.custTrendCampaign !== '__all__' && !camps.includes(state.custTrendCampaign)) state.custTrendCampaign = '__all__';
+    sel.innerHTML = _campOptsHTML(camps, state.custTrendCampaign, 'All campaigns');
+    sel.value = state.custTrendCampaign;
     const nSel = document.getElementById('selCustTrendN');
     if (nSel) nSel.value = String(state.custTrendN||5);
   }
@@ -5446,14 +5450,12 @@ function renderCustomerTrend(fOrders, fMkt) {
     b.classList.toggle('active', b.dataset.v === (state.custTrendGrain||'month'));
   });
 
-  const _cs = _promoSel(state.custTrendCampaign);
-  const camp = _cs.camp;
-  const scoped = camp==='__all__' ? fOrders
-    : fOrders.filter(o => (o.promotion_category||'')===camp && (!_cs.region || (o.region||'')===_cs.region));
+  const _rg = state.custTrendRegion || '__all__';
+  const camp = state.custTrendCampaign || '__all__';
+  const scoped = fOrders.filter(o => (_rg==='__all__' || (o.region||'')===_rg) && (camp==='__all__' || (o.promotion_category||'')===camp));
 
   // 고객별 집계: qty, amount, marketing cost (해당 캠페인 region/country 기준 추정)
-  const mktScoped = camp==='__all__' ? fMkt
-    : fMkt.filter(m => (m.promotion_category||'')===camp && (!_cs.region || _canonRegion(m.region)===_cs.region));
+  const mktScoped = fMkt.filter(m => (_rg==='__all__' || _canonRegion(m.region)===_rg) && (camp==='__all__' || (m.promotion_category||'')===camp));
 
   const byCust = {};
   scoped.forEach(o => {
@@ -8547,6 +8549,31 @@ function campLabel(name) {
    A selector value may be a plain campaign, or a compound "campaign␟REGION" for one
    region of a multi-region campaign. Matching adds a region condition only for the
    selecting widget; deep links carry just the raw campaign (region not encoded). */
+// ── Region-first selection helpers (widget-scoped) ──
+// Distinct campaigns present in fOrders within a region ('__all__' = all regions).
+function _campsInRegion(fOrders, region){
+  const s = new Set();
+  (fOrders||[]).forEach(o => {
+    if (region==='__all__' || (o.region||'')===region) {
+      const p = String(o.promotion_category||'').trim(); if (p) s.add(p);
+    }
+  });
+  return Array.from(s).sort();
+}
+// Region <option>s for the regions actually present in fOrders.
+function _regionOptsHTML(fOrders, cur){
+  const q = s => String(s).replace(/"/g,'&quot;');
+  const present = REGIONS.filter(r => (fOrders||[]).some(o => (o.region||'')===r));
+  return `<option value="__all__"${cur==='__all__'?' selected':''}>All regions</option>` +
+    present.map(r => `<option value="${q(r)}"${cur===r?' selected':''}>${q(r)}</option>`).join('');
+}
+// Campaign <option>s (plain values, already region-scoped by caller).
+function _campOptsHTML(camps, cur, allLabel){
+  const q = s => String(s).replace(/"/g,'&quot;');
+  return `<option value="__all__"${(!cur||cur==='__all__')?' selected':''}>${allLabel||'All campaigns'}</option>` +
+    camps.map(c => `<option value="${q(c)}"${cur===c?' selected':''}>${q(c)}</option>`).join('');
+}
+
 const _RSPLIT = '\u241f';
 function _canonRegion(r){ r=String(r||'').trim().toUpperCase().replace(/ /g,'_');
   return ({MIDDLE_EAST:'MENA',AFRICA:'MENA',ASIA_PACIFIC:'ASIA',N_AMERICA:'NA'})[r]||r; }
@@ -8581,13 +8608,15 @@ function listPromotionKeys(orders, marketing) {
 }
 
 function populatePotPromoSelect(fOrders) {
+  const potRgn = state.potRegion || '__all__';
+  const rSel = document.getElementById('selPotRegion');
+  if (rSel) rSel.innerHTML = _regionOptsHTML(fOrders, potRgn);
   const sel = document.getElementById('selPotPromo');
   if (!sel) return;
-  const keys = listPromotionKeys(fOrders);
-  const cur = state.potPromo;
-  sel.innerHTML = _promoOptsHTML(keys, cur, 'All promotions');
-  if (cur && Array.from(sel.options).some(o=>o.value===cur)) sel.value = cur;
-  else { state.potPromo = '__all__'; sel.value = '__all__'; }
+  const keys = _campsInRegion(fOrders, potRgn);
+  if (state.potPromo !== '__all__' && !keys.includes(state.potPromo)) state.potPromo = '__all__';
+  sel.innerHTML = _campOptsHTML(keys, state.potPromo, 'All promotions');
+  sel.value = state.potPromo;
 }
 
 /* ===== Promotion Order Trends - 전년 동기간 비교 추가 ===== */
@@ -8595,9 +8624,9 @@ function renderPromoOrderTrendWithYoY(fOrders, fMkt) {
   populatePotPromoSelect(fOrders);
   
   // 현재 필터링된 오더
-  const _ps = _promoSel(state.potPromo);
-  const promoFilter = _ps.camp;
-  const orders = fOrders.filter(o => promoFilter === '__all__' || (promoKeyOfOrder(o) === promoFilter && (!_ps.region || (o.region||'') === _ps.region)));
+  const _rg = state.potRegion || '__all__';
+  const promoFilter = state.potPromo || '__all__';
+  const orders = fOrders.filter(o => (_rg === '__all__' || (o.region||'') === _rg) && (promoFilter === '__all__' || promoKeyOfOrder(o) === promoFilter));
   const metric = state.potMetric;
   const valOf = (o) => metric === 'qty' ? (Number(o.qty)||0) : convOrder(o);
 
@@ -8659,9 +8688,9 @@ function renderPromoOrderTrend(fOrders, fMkt) {
   document.querySelectorAll('#segPotMetric button').forEach(b => b.classList.toggle('active', b.dataset.v === state.potMetric));
 
   // scope orders by selected promotion (potPromo)
-  const _ps = _promoSel(state.potPromo);
-  const promoFilter = _ps.camp;
-  const orders = fOrders.filter(o => promoFilter === '__all__' || (promoKeyOfOrder(o) === promoFilter && (!_ps.region || (o.region||'') === _ps.region)));
+  const _rg = state.potRegion || '__all__';
+  const promoFilter = state.potPromo || '__all__';
+  const orders = fOrders.filter(o => (_rg === '__all__' || (o.region||'') === _rg) && (promoFilter === '__all__' || promoKeyOfOrder(o) === promoFilter));
   const metric = state.potMetric; // 'amount' | 'qty'
   const valOf  = (o) => metric === 'qty' ? (Number(o.qty)||0) : convOrder(o);
 
@@ -10809,6 +10838,11 @@ document.addEventListener('change', e => {
   if (e.target.id === 'selPromoCtrFilter') {
     state.promoCtrFilter = e.target.value; persist(); renderAll();
   }
+  if (e.target.id === 'selCustTrendRegion') {
+    state.custTrendRegion = e.target.value; state.custTrendCampaign = '__all__';
+    try { localStorage.setItem('ck_cust_trend_region', state.custTrendRegion); } catch(_){}
+    persist(); renderAll(); return;
+  }
   if (e.target.id === 'selCustTrendCamp') {
     state.custTrendCampaign = e.target.value; persist(); renderAll(); return;
   }
@@ -10846,6 +10880,11 @@ document.addEventListener('change', e => {
     if (state.promoCtrPeriod === 'custom') renderAll();
   }
   // ── new widgets ──
+  if (e.target.id === 'selPotRegion') {
+    state.potRegion = e.target.value; state.potPromo = '__all__';
+    try { localStorage.setItem('ck_pot_region', state.potRegion); } catch(_){}
+    persist(); renderAll();
+  }
   if (e.target.id === 'selPotPromo') {
     state.potPromo = e.target.value; persist(); renderAll();
   }
@@ -12146,6 +12185,8 @@ function applyDeepLinkParams() {
   state.potPromo = '__all__';
   state.custTrendCampaign = '__all__';
   state.skuAggPromo = '__all__';
+  state.potRegion = '__all__';
+  state.custTrendRegion = '__all__';
   const setOne = (key, v) => { if (v) f[key] = [v]; };   // global multi-select filters
   setOne('regions',   sp.get('region'));
   setOne('countries', sp.get('country'));
