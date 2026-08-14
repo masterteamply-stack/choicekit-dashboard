@@ -2085,6 +2085,7 @@ header .mono b.t-orange {
               <button data-v="quarter">Quarter</button>
               <button data-v="year">Year</button>
             </div>
+            <select id="promoFilterRegionSel" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-1);margin-right:6px"><option value="__all__">All regions</option></select>
             <select id="promoFilterSel" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-1)">
               <option value="__all__">All promotions</option>
             </select>
@@ -2577,6 +2578,7 @@ let state = {
   ckiThreshold: parseFloat(localStorage.getItem('ck_cki_threshold') || '5000'),
   ckiCompare: localStorage.getItem('ck_cki_compare') || 'mom',
   promoFilter: localStorage.getItem('ck_promo_filter') || '__all__',
+  promoFilterRegion: localStorage.getItem('ck_promo_filter_region') || '__all__',
   campaignTargetSkus: {},
   regionMetric: localStorage.getItem('ck_region_metric') || 'order',
   breakdownRegion: localStorage.getItem('ck_breakdown_region') || '__all__',
@@ -6119,6 +6121,11 @@ function periodLabelOf(period) {
   return period === 'year' ? 'Year' : (period === 'quarter' ? 'Quarter' : 'Month');
 }
 async function renderPromoChart(fOrders, fMkt) {
+  // ── widget-scoped region (Promotion Performance) ──
+  const _ppRgn = state.promoFilterRegion || '__all__';
+  const _ppO = _ppRgn === '__all__' ? (state.orders||[]) : (state.orders||[]).filter(o => (o.region||'') === _ppRgn);
+  const _ppP = _ppRgn === '__all__' ? (state.preOrders||[]) : (state.preOrders||[]).filter(o => (o.region||'') === _ppRgn);
+  if (_ppRgn !== '__all__') { fOrders = fOrders.filter(o => (o.region||'') === _ppRgn); fMkt = fMkt.filter(m => _canonRegion(m.region) === _ppRgn); }
   try {
   const period = state.promoPerfPeriod || 'month';
 
@@ -6330,7 +6337,7 @@ async function renderPromoChart(fOrders, fMkt) {
     }
   });
   // Fill SKU-based campaigns without an explicit list from tagged orders.
-  (state.orders || []).forEach(o => {
+  (_ppO || []).forEach(o => {
     const p = o.promotion_category;
     if (!p || explicitTargets[p]) return;       // explicit config wins
     promoMatchBy[p] = promoMatchBy[p] || 'sku';
@@ -6384,8 +6391,8 @@ async function renderPromoChart(fOrders, fMkt) {
   // year / region / period filters produce consistent numbers everywhere.
   // preOrders are strictly for prior-period (before) comparison.
   const _baScanSource = fOrdersST;   // orders.csv, user filters applied
-  const _fPreOrders = (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length)
-    ? state.preOrders : [];
+  const _fPreOrders = (state.preOrdersEnabled && Array.isArray(_ppP) && _ppP.length)
+    ? _ppP : [];
   // For the BEFORE window we need both current filtered orders AND baseline rows
   // that match the same promotion target (SKU/customer).
   const _baPrevSource = _fPreOrders.length ? fOrdersST.concat(_fPreOrders) : fOrdersST;
@@ -6595,16 +6602,20 @@ async function renderPromoChart(fOrders, fMkt) {
   const cmpSel = document.getElementById('promoCmpSel');
   if (cmpSel) cmpSel.value = state.promoCmp || 'off';
   // Promotion filter — limit the chart to a single campaign at a time.
-  const promoFilter = state.promoFilter || '__all__';
+  const _ppRgnSel = document.getElementById('promoFilterRegionSel');
+  if (_ppRgnSel) _ppRgnSel.innerHTML = _regionOptsHTML(_ppRgn === '__all__' ? state.orders : (state.orders||[]), _ppRgn);
   const filterSel = document.getElementById('promoFilterSel');
-  if (filterSel) {
+  {
     const promoNames = Array.from(new Set(
-      (state.orders || []).map(o => o.promotion_category || '').filter(Boolean)
+      (_ppO || []).map(o => o.promotion_category || '').filter(Boolean)
     )).sort();
-    filterSel.innerHTML = '<option value="__all__">All promotions</option>' +
-      promoNames.map(p => `<option value="${String(p).replace(/"/g,'&quot;')}">${campLabel(p)}</option>`).join('');
-    filterSel.value = promoNames.includes(promoFilter) ? promoFilter : '__all__';
+    if ((state.promoFilter||'__all__') !== '__all__' && !promoNames.includes(state.promoFilter)) state.promoFilter = '__all__';
+    if (filterSel) {
+      filterSel.innerHTML = _campOptsHTML(promoNames, state.promoFilter, 'All promotions');
+      filterSel.value = state.promoFilter;
+    }
   }
+  const promoFilter = state.promoFilter || '__all__';
   // Scope the current-period order set to the selected promotion (if any).
   const fOrdersScoped = (promoFilter === '__all__')
     ? fOrdersST
@@ -6619,11 +6630,11 @@ async function renderPromoChart(fOrders, fMkt) {
     if (scopeMatchBy === 'customer') {
       const cc = (cfg.target_customers || []).map(c => String(c).trim()).filter(Boolean);
       scopeCustSet = new Set(cc.length ? cc :
-        (state.orders||[]).filter(o => o.promotion_category===promoFilter).map(o => (o.customer||'').trim()).filter(Boolean));
+        (_ppO||[]).filter(o => o.promotion_category===promoFilter).map(o => (o.customer||'').trim()).filter(Boolean));
     } else {
       const ss = (cfg.target_skus || []).map(s => String(s).trim()).filter(Boolean);
       scopeSkuSet = new Set(ss.length ? ss :
-        (state.orders||[]).filter(o => o.promotion_category===promoFilter).map(o => (o.sku||'').trim()).filter(Boolean));
+        (_ppO||[]).filter(o => o.promotion_category===promoFilter).map(o => (o.sku||'').trim()).filter(Boolean));
     }
   }
   const periodBuckets = Array.from(new Set(
@@ -6701,7 +6712,7 @@ async function renderPromoChart(fOrders, fMkt) {
   //    real trend. Baseline rows are classified into a promotion ONLY when
   //    both the target (SKU/customer) AND the campaign region match — so e.g.
   //    Asian vehicle (CIS) excludes the same SKUs' EUROPE / NA sales.
-  if (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length) {
+  if (state.preOrdersEnabled && Array.isArray(_ppP) && _ppP.length) {
     const preIdx = state._preIdx;
 
     // ── SKU 기반 / Customer 기반 캠페인 분류 ──
@@ -6725,7 +6736,7 @@ async function renderPromoChart(fOrders, fMkt) {
     custBasedPromos.forEach(p => {
       promoActualCusts[p] = new Set((_cfg[p].target_customers||[]).map(c=>c.trim()));
     });
-    (state.orders||[]).forEach(o => {
+    (_ppO||[]).forEach(o => {
       const p = (o.promotion_category||'').trim();
       if (!custBasedPromos.has(p)) return;
       const start = promoStart[p];
@@ -6805,7 +6816,7 @@ async function renderPromoChart(fOrders, fMkt) {
       }
     } else {
       // no index 또는 region dim — 전체 스캔
-      state.preOrders.forEach(processBaseline);
+      _ppP.forEach(processBaseline);
     }
     // Re-collect period buckets from the combined series (baseline adds older buckets).
     const allPks = new Set(periodBuckets);
@@ -6909,12 +6920,12 @@ async function renderPromoChart(fOrders, fMkt) {
     //   여기서는 cmpSeries를 채우지 않음 (baseline 실데이터만 cmpSeries에 들어감).
 
     // 번들 기반 집계 (preIdx 있을 때만 추가 보강)
-    const baselineRows = (state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length)
-      ? state.preOrders : [];
+    const baselineRows = (state.preOrdersEnabled && Array.isArray(_ppP) && _ppP.length)
+      ? _ppP : [];
     const knownPromos = Object.keys(state.campaignTargetSkus || {});
     const preIdx = state._preIdx;
     const _buyerMap = {};
-    (state.orders || []).forEach(o => {
+    (_ppO || []).forEach(o => {
       const bn = (o.customer_no || '').toString().trim();
       const cn = (o.customer || '').trim();
       if (bn && cn && !_buyerMap[bn]) _buyerMap[bn] = cn;
@@ -6927,7 +6938,7 @@ async function renderPromoChart(fOrders, fMkt) {
     // 실제 참여 고객 확장 (시작일 이후 오더한 고객)
     const _cmpActualCusts = {};
     _custBasedCmp.forEach(p => { _cmpActualCusts[p] = new Set((_cfgCmp[p].target_customers||[]).map(c=>c.trim())); });
-    (state.orders||[]).forEach(o => {
+    (_ppO||[]).forEach(o => {
       const p=(o.promotion_category||'').trim();
       if (!_custBasedCmp.has(p)) return;
       const start=promoStart[p];
@@ -6991,8 +7002,8 @@ async function renderPromoChart(fOrders, fMkt) {
         scopedBaseline = rows;
       }
     } else {
-      // preIdx 미준비 → state.preOrders(baseline) 직접 사용 (fallback). 인덱스 없이도 전년 표시.
-      const _baseAll = (state.preOrdersEnabled && Array.isArray(state.preOrders)) ? state.preOrders : [];
+      // preIdx 미준비 → _ppP(baseline) 직접 사용 (fallback). 인덱스 없이도 전년 표시.
+      const _baseAll = (state.preOrdersEnabled && Array.isArray(_ppP)) ? _ppP : [];
       if (promoFilter !== '__all__') {
         scopedBaseline = _baseAll.filter(o => _resolvePreOrderPromo(o) === promoFilter);
       } else {
@@ -7002,7 +7013,7 @@ async function renderPromoChart(fOrders, fMkt) {
     // promoFilter === '__all__' 일 때: fOrdersST 전체(날짜 필터 무관) + baseline을 포함
     // promotion_category 태그가 있는 orders.csv rows를 연도 관계없이 모두 포함
     const allOrdersForCmp = (promoFilter === '__all__')
-      ? (state.orders || []).filter(o => o.promotion_category && o.promotion_category !== '(none)' && o.promotion_category !== 'PRE_ORDER')
+      ? (_ppO || []).filter(o => o.promotion_category && o.promotion_category !== '(none)' && o.promotion_category !== 'PRE_ORDER')
       : fOrdersScoped || [];
     const srcAll = allOrdersForCmp.concat(scopedBaseline);
     srcAll.forEach(o => {
@@ -7350,7 +7361,7 @@ async function renderPromoChart(fOrders, fMkt) {
     });
     const chartBuckets = periodBuckets.length
       ? periodBuckets
-      : Array.from(new Set((state.orders||[]).map(o=>periodKey(o.order_date,period)).filter(Boolean))).sort();
+      : Array.from(new Set((_ppO||[]).map(o=>periodKey(o.order_date,period)).filter(Boolean))).sort();
     if (!chartBuckets.length) { renderPromoTable(); return; }
 
     // 현재 datasets (per campaign line)
@@ -7488,7 +7499,7 @@ async function renderPromoChart(fOrders, fMkt) {
   // campaign-level windows (baAmt[ownerPromo]) for each row's before/after.
   //
   // ORDER AMT scope (per-entity, matches promotion-level convention):
-  //   sum of UNFILTERED (state.orders + state.preOrders) for this specific
+  //   sum of UNFILTERED (_ppO + _ppP) for this specific
   //   entity, post-owner-campaign-start. Same match logic as 현재 but sliced
   //   to one SKU or one customer at a time.
   function buildEntitySummary(dim) {
@@ -7499,7 +7510,7 @@ async function renderPromoChart(fOrders, fMkt) {
       model:'', region:'', country:'',
       beforeAmt:0, afterAmt:0,
     };
-    (state.orders || []).forEach(o => {
+    (_ppO || []).forEach(o => {
       const key = dim === 'sku' ? (o.sku||'').trim() : (o.customer||'').trim();
       if (!key) return;
       const owner = dim === 'sku' ? skuToPromo[key] : custToPromo[key];
@@ -7517,7 +7528,7 @@ async function renderPromoChart(fOrders, fMkt) {
       if (!e.country) e.country = (o.country || '').trim();
     });
     // Baseline contribution to PRIOR ORDER AMT only (preOrders = previous-year comparison).
-    if (state.preOrdersEnabled && Array.isArray(state.preOrders)) {
+    if (state.preOrdersEnabled && Array.isArray(_ppP)) {
       const preIdx = state._preIdx;
       const scanEntity = o => {
         const key = dim === 'sku' ? (o.sku||'').trim() : (o.customer||'').trim();
@@ -7536,7 +7547,7 @@ async function renderPromoChart(fOrders, fMkt) {
           rows.forEach(scanEntity);
         });
       } else {
-        state.preOrders.forEach(scanEntity);
+        _ppP.forEach(scanEntity);
       }
     }
     // Before/After using each entity's owner-campaign window.
@@ -7592,7 +7603,7 @@ async function renderPromoChart(fOrders, fMkt) {
       const _ts2=new Set(_ps2.flatMap(p=>(_cfg2[p]?.target_skus||[]).map(s=>s.trim())));
       const _bk2=(promoFilter!=='__all__'&&execBuckets&&execBuckets.length)?execBuckets:(chartBuckets||periodBuckets||[]);
       const _sm={};
-      (state.orders||[]).forEach(o=>{
+      (_ppO||[]).forEach(o=>{
         const p=(o.promotion_category||'').trim();if(!_ps2.includes(p))return;
         const ps=promoStart[p];if(ps&&o.order_date<ps)return;
         if(_beforeCountryStart(o,p))return;   // 국가별 시작일 이전 제외
@@ -7618,6 +7629,9 @@ async function renderPromoChart(fOrders, fMkt) {
   }
 }
 function renderPromoTable() {
+  const _ppRgn = state.promoFilterRegion || '__all__';
+  const _ppO = _ppRgn === '__all__' ? (state.orders||[]) : (state.orders||[]).filter(o => (o.region||'') === _ppRgn);
+  const _ppP = _ppRgn === '__all__' ? (state.preOrders||[]) : (state.preOrders||[]).filter(o => (o.region||'') === _ppRgn);
   try {
   const period=state.promoPerfPeriod||'month',_cmpMode=state.promoCmp||'yoy';
   // 전년 MKT COST (Cost_customer.csv 기반, KRW→USD 환산)
@@ -7641,7 +7655,7 @@ function renderPromoTable() {
     });
   }
   const _prevLabel={yoy:'YoY',qoq:'QoQ',mom:'MoM',off:'–'}[_cmpMode]||'YoY';
-  const fOrders=state.orders.filter(matchOrder).filter(o=>isRegionVisible(o.region));
+  const fOrders=_ppO.filter(matchOrder).filter(o=>isRegionVisible(o.region));
   const fMkt=state.marketing.filter(matchMkt).filter(m=>isRegionVisible(m.region));
   const _allSummary=window._lastPromoSummary||[],_baAmt=window._lastBaAmt||{},cmpSeries=window._lastPromoCmpSeries||{};
   const _promoFilter=state.promoFilter||'__all__';
@@ -7667,8 +7681,8 @@ function renderPromoTable() {
     if(mb2==='sku'){(c2.target_skus||[]).forEach(s=>{_ctrToPromoOv[s.trim()]=p;});}
     else{(c2.target_customers||[]).forEach(c=>{_custToPromoOv[c.trim()]=p;});}
   });
-  const _prevSrcOv=(state.preOrdersEnabled&&Array.isArray(state.preOrders)&&state.preOrders.length)
-    ?(state.orders||[]).concat(state.preOrders):(state.orders||[]);
+  const _prevSrcOv=(state.preOrdersEnabled&&Array.isArray(_ppP)&&_ppP.length)
+    ?(_ppO||[]).concat(_ppP):(_ppO||[]);
   const curPeriods=Array.from(new Set(fOrders.map(o=>periodKey(o.order_date,period)).filter(Boolean))).sort();
   const ovEl=document.getElementById('tblPromoMonthly'),rnEl=document.getElementById('promoOverviewRange');
   if(ovEl&&_cmpMode!=='off'&&curPeriods.length){
@@ -7742,7 +7756,7 @@ function renderPromoTable() {
   // ddP: 역추적 맵 빌드 (baseline PRE_ORDER → 캠페인)
   const _ddpCtrToPromo={}, _ddpCustToPromo={};
   // 활성 캠페인(현재 orders에 실제 존재) — 같은 고객이 여러 캠페인에 있을 때 활성 캠페인 우선
-  const _ddpActive=new Set((state.orders||[]).map(o=>o.promotion_category).filter(Boolean));
+  const _ddpActive=new Set((_ppO||[]).map(o=>o.promotion_category).filter(Boolean));
   Object.keys(state.campaignTargetSkus||{}).forEach(p=>{
     const c2=(state.campaignTargetSkus||{})[p]||{},mb2=(c2.match_by||'sku').toLowerCase();
     if(mb2==='sku'){(c2.target_skus||[]).forEach(s=>{_ddpCtrToPromo[s.trim()]=p;});}
@@ -7752,7 +7766,7 @@ function renderPromoTable() {
     });}
   });
   const PAT_DDP=/^PO-([^-]+)-/;
-  [...(state.orders||[]),...((state.preOrdersEnabled&&Array.isArray(state.preOrders))?state.preOrders:[])].forEach(o=>{
+  [...(_ppO||[]),...((state.preOrdersEnabled&&Array.isArray(_ppP))?_ppP:[])].forEach(o=>{
     const d=o.order_date||'';if(!d)return;
     // 캠페인 결정: promotion_category 또는 역추적
     let pr=(o.promotion_category||o._promo||'').trim();
@@ -7791,7 +7805,7 @@ function renderPromoTable() {
   // 국가별·고객사별 캠페인 시작일 (STARTED 마케팅 행 기준 — 같은 캠페인도 지역/국가마다 시작일이 다를 수 있음). ddM과 동일한 country 정규화 키 사용.
   const ddStart={};const ddStartC={};fMkt.forEach(m=>{if((m.kpi_metric||'').trim().toUpperCase()!=='STARTED')return;const pr=(m.promotion_category||'').trim();if(!_sp.has(pr))return;const d=(m.date||'').trim();if(!d)return;const country=(normalizeCountry(m.country||'')||m.country||m.region||'–');const cust=(m.target_customer||'').trim();if(!ddStart[pr])ddStart[pr]={};if(!ddStart[pr][country]||d<ddStart[pr][country])ddStart[pr][country]=d;if(cust){if(!ddStartC[pr])ddStartC[pr]={};if(!ddStartC[pr][cust]||d<ddStartC[pr][cust])ddStartC[pr][cust]=d;}});
     // 고객 전체 거래 집계 (캠페인 무관 — 모든 SKU). customer 기반 캠페인 고객행에 전체 YoY 표시용.
-    // 올해: state.orders 전체 / 작년: state.preOrders(baseline) 전체. 고객명(normalizeCustomer) 기준.
+    // 올해: _ppO 전체 / 작년: _ppP(baseline) 전체. 고객명(normalizeCustomer) 기준.
     const ddCustAll={}; // promo → cust(norm) → {cur, prev}
     // 전체거래(작년→올해)는 customer 기반뿐 아니라 SKU 기반 캠페인 고객행에도 표시.
     // customer 캠페인: target_customers 대상. SKU 캠페인: 실제 주문 발생 고객(dd[promo]) 대상.
@@ -7813,7 +7827,7 @@ function renderPromoTable() {
       });
       // 전체 거래(캠페인 무관)는 baseline(STANDARD 등 전체 거래 포함)을 기준으로 집계.
       // baseline에는 2025·2026 전체 거래가 모두 들어있음. orders.csv(캠페인 주문)는 baseline에 없는 건만 추가.
-      const _base=(state.preOrdersEnabled&&Array.isArray(state.preOrders))?state.preOrders:[];
+      const _base=(state.preOrdersEnabled&&Array.isArray(_ppP))?_ppP:[];
       const _baseKey2026=new Set(); // 올해 baseline 거래 키 (orders 중복 방지)
       window._custCountryMap=window._custCountryMap||{};const _custCountry=window._custCountryMap;
       _base.forEach(o=>{
@@ -7833,7 +7847,7 @@ function renderPromoTable() {
         if(_isTarget&&d>='2026-01-01'){ _baseKey2026.add(cn+'|'+d+'|'+(o.sku||'')+'|'+(o.qty||'')); }
       });
       // orders.csv 2026 캠페인 주문 — baseline 2026에 없는 건만 전체거래 올해에 추가
-      (state.orders||[]).forEach(o=>{
+      (_ppO||[]).forEach(o=>{
         const d=o.order_date||''; if(d<'2026-01-01')return;
         const cn=normalizeCustomer(o);
         const amt=convOrder(o);
@@ -10830,6 +10844,11 @@ document.addEventListener('change', e => {
     try { localStorage.setItem('ck_cki_compare', state.ckiCompare); } catch(_){}
     renderAll(); return;
   }
+  if (e.target.id === 'promoFilterRegionSel') {
+    state.promoFilterRegion = e.target.value; state.promoFilter = '__all__';
+    try { localStorage.setItem('ck_promo_filter_region', state.promoFilterRegion); localStorage.setItem('ck_promo_filter','__all__'); } catch(_){}
+    persist(); renderAll(); return;
+  }
   if (e.target.id === 'promoFilterSel') {
     state.promoFilter = e.target.value;
     try { localStorage.setItem('ck_promo_filter', state.promoFilter); } catch(_){}
@@ -12203,6 +12222,7 @@ function applyDeepLinkParams() {
   // link shows ALL campaigns aggregated, not a stale per-campaign selection.
   f.regions = []; f.countries = []; f.customers = []; f.sellTypes = [];
   state.promoFilter = '__all__';
+  state.promoFilterRegion = '__all__';
   state.potPromo = '__all__';
   state.custTrendCampaign = '__all__';
   state.skuAggPromo = '__all__';
