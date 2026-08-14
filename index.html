@@ -3365,6 +3365,7 @@ async function parseMarketingCSV(file) {
         return {
           activity_id: str(pick(r,'activity_id')) || `MKT-${Date.now()}-${i}`,
           date: str(pick(r,'m.date','execution_date','date')),
+          end_date: str(pick(r,'end.date','end_date','end')).slice(0,10),
           region: resolveRegion(pick(r,'region'), pick(r,'country'), str(pick(r,'m.date','execution_date','date'))),
           country: normalizeCountry(pick(r,'country')),
           promotion_category: promCat || '(unspecified)',
@@ -6164,6 +6165,15 @@ function renderRegionExecSummary(fOrders, fMkt) {
   const _explicitStart = { 'CTR MarketFit Campaign':'2026-03-01','Asian vehicle':'2026-03-01','European vehicle':'2026-03-01','Korean & Japanese vehicles':'2026-08-01' };
   Object.keys(_explicitStart).forEach(p => { promoStart[p] = _explicitStart[p]; });
 
+  // Campaign end date = latest end.date across the campaign's marketing rows.
+  const promoEnd = {};
+  (state.marketing || []).forEach(m => {
+    const p = (m.promotion_category || m.promotion_id || '').trim();
+    const e = (m.end_date || '').trim().slice(0, 10);
+    if (!p || !e) return;
+    if (!promoEnd[p] || e > promoEnd[p]) promoEnd[p] = e;
+  });
+
   // ── Sell type (SKU-based + Strategic Partner = SELL-IN; else marketing majority) ──
   const sellCnt = {};
   (state.marketing || []).forEach(m => {
@@ -6222,7 +6232,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
     agg = {};
     const ensure = (r, p) => {
       agg[r] = agg[r] || {};
-      if (!agg[r][p]) agg[r][p] = { order:0, cost:0, target:0, prev:0, start:promoStart[p] || '', sell:sellTypeOf(p), countries:{} };
+      if (!agg[r][p]) agg[r][p] = { order:0, cost:0, target:0, prev:0, start:promoStart[p] || '', end:promoEnd[p] || '', sell:sellTypeOf(p), countries:{} };
       return agg[r][p];
     };
     const bucket = (node, country, cust, amt, field) => {
@@ -6240,6 +6250,8 @@ function renderRegionExecSummary(fOrders, fMkt) {
       const r = o.region || ''; if (!r) return;
       const st = promoStart[p];
       if (st && (o.order_date || '') < st) return;
+      const _en = promoEnd[p]; const _hi = (_en && _en < today) ? _en : today;
+      if ((o.order_date || '') > _hi) return;   // cap Period Order at the campaign end date
       if (_beforeCountryStart(o, p)) return;
       if (!campMatch(o, p)) return;
       const amt = convOrder(o);
@@ -6299,8 +6311,9 @@ function renderRegionExecSummary(fOrders, fMkt) {
         if (_skipCamp(p) || !p) return;
         const r = normalizeRegion(o.region || ''); if (!r) return;
         const st = promoStart[p]; if (!st) return;
+        const en = promoEnd[p]; const hi = (en && en < today) ? en : today;
         const d = o.order_date || '';
-        if (d < _addYears(st, -1) || d > _addYears(today, -1)) return;
+        if (d < _addYears(st, -1) || d > _addYears(hi, -1)) return;
         if (agg[r] && agg[r][p]) {
           const amt = convOrder(o);
           agg[r][p].prev += amt;
@@ -6416,7 +6429,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
     R.camps.forEach(c => {
       const cKey = 'C|' + R.region + '|' + c.camp, cOpen = !!state.execOpen[cKey];
       body += `<tr data-exec-key="${cKey}" style="cursor:pointer">
-        <td style="padding-left:18px">${caret(cOpen)}<b>${c.camp}</b> <span style="margin-left:6px">${sellBadge(c.sell)} ${badge('📅 ' + (c.start || '–'))}</span></td>
+        <td style="padding-left:18px">${caret(cOpen)}<b>${c.camp}</b> <span style="margin-left:6px">${sellBadge(c.sell)} ${badge('📅 ' + (c.start || '–') + (c.end ? ' → ' + c.end : ''))}${c.end && c.end < today ? ` <span class="badge-tag" style="font-size:9px;padding:1px 6px;height:auto;line-height:1.6;color:#0a7d2e;border-color:#0a7d2e;background:var(--good-soft);font-weight:700">✓ DONE</span>` : ''}</span></td>
         <td class="text-right mono">${c.target > 0 ? fmtMoney(c.target) : '–'}</td>
         <td class="text-right mono t-green">${fmtMoney(c.order)}</td>
         <td class="text-right mono muted">${baselineOn && c.prev > 0 ? fmtMoney(c.prev) : '–'}</td>
