@@ -1690,14 +1690,14 @@ header .mono b.t-orange {
     </div>
     <span class="live">● LIVE</span>
     <span class="data-updated" id="dataUpdatedDates"></span>
-    <select id="jumpToSel" class="jump-to" title="해당 그래프로 바로 이동" aria-label="Jump to section">
+    <select id="jumpToSel" class="jump-to" title="Jump to section" aria-label="Jump to section">
       <option value="">JUMP TO ▾</option>
       <option value="promoOrderTrend">Order Trends</option>
       <option value="promoctr">Promo × CTR</option>
       <option value="topinsights">Top Insights</option>
       <option value="customertrend">Customer Trend</option>
       <option value="region">Region</option>
-      <option value="regionExecSummary">권역별 캠페인 종합 현황</option>
+      <option value="regionExecSummary">Region × Campaign Summary</option>
       <option value="promo">Promotion Performance</option>
       <option value="skuExplorer">SKU Analysis</option>
       <option value="planexec">Plan vs Execution</option>
@@ -2064,7 +2064,7 @@ header .mono b.t-orange {
             <div class="chart-wrap" style="height:340px"><canvas id="chRegion"></canvas></div>
           </div>
           <div>
-            <p class="label-mono" style="font-size:11px;margin-bottom:6px;text-align:center">ACTIVITY 유형 <span id="breakdownRegionLbl" class="t-blue">(All)</span></p>
+            <p class="label-mono" style="font-size:11px;margin-bottom:6px;text-align:center">ACTIVITY TYPE <span id="breakdownRegionLbl" class="t-blue">(All)</span></p>
             <div id="breakdownTabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
             <div class="chart-wrap" style="height:240px"><canvas id="chActivity"></canvas></div>
             <div style="overflow:auto;margin-top:8px;max-height:160px"><table id="tblBreakdown" style="font-size:12px"></table></div>
@@ -2076,15 +2076,14 @@ header .mono b.t-orange {
       <div class="panel widget" data-widget-id="regionExecSummary">
         <div class="widget-head">
           <div>
-            <h3 class="h-section">권역별 캠페인 종합 현황</h3>
-            <p class="label-mono" style="margin-top:4px">권역 → 캠페인 · 진행률 · 마케팅 투입비 · Sell 타입 · 기간 오더/목표/전년비 · ROMI · 부진 권역 하이라이트</p>
+            <h3 class="h-section">Region × Campaign Summary</h3>
           </div>
           <div class="chart-tools">
             <span class="label-mono" style="font-size:11px">SORT</span>
             <div class="seg" id="segExecSort">
-              <button data-v="status" class="active">부진순</button>
-              <button data-v="order">오더순</button>
-              <button data-v="progress">진행률순</button>
+              <button data-v="status" class="active">Weak first</button>
+              <button data-v="order">Order</button>
+              <button data-v="progress">Progress</button>
             </div>
             <div class="widget-order-controls"></div>
           </div>
@@ -2139,7 +2138,7 @@ header .mono b.t-orange {
         <div class="widget-head">
           <div>
             <h3 class="h-section">Campaign Plan vs Execution — Drill-down Explorer</h3>
-            <p class="label-mono" style="margin-top:4px">🟢 정상 &nbsp;🟡 주의 &nbsp;🔴 초과/손실</p>
+            <p class="label-mono" style="margin-top:4px">🟢 On track &nbsp;🟡 Watch &nbsp;🔴 Over / Loss</p>
           </div>
           <div class="chart-tools">
             <span class="label-mono" style="font-size:11px">SORT</span>
@@ -2170,7 +2169,7 @@ header .mono b.t-orange {
           <div class="widget-head">
             <div>
               <h3 class="h-section">Top Customer Order Trend · by Campaign</h3>
-              <p class="label-mono" style="margin-top:4px">Campaign별 Top 고객 · 트렌드</p>
+              <p class="label-mono" style="margin-top:4px">Top customers by campaign</p>
             </div>
             <div class="chart-tools">
               <span class="label-mono" style="font-size:11px">REGION</span>
@@ -2218,7 +2217,7 @@ header .mono b.t-orange {
         <div class="widget-head">
           <div>
             <h3 class="h-section">Quarterly Performance Comparison</h3>
-            <p class="label-mono" style="margin-top:4px">분기별 성과 비교 · 오더 전환의 지속성 검증</p>
+            <p class="label-mono" style="margin-top:4px">Q1 / Q2 / Q3 to date</p>
           </div>
           <div class="chart-tools">
             <div class="seg" id="segQuarterMetric">
@@ -2241,7 +2240,7 @@ header .mono b.t-orange {
         <div class="widget-head">
           <div>
             <h3 class="h-section">SKU Analysis</h3>
-            <p class="label-mono" style="margin-top:4px">프로모션 전/후 SKU 오더 비교</p>
+            <p class="label-mono" style="margin-top:4px">Before / after promotion</p>
           </div>
           <div class="chart-tools">
             <span class="label-mono muted" style="font-size:11px">Region</span>
@@ -2275,11 +2274,11 @@ header .mono b.t-orange {
         <!-- 고객별 SKU 전환 심층 분석 (작년 vs 올해 SKU 다양성 / 캠페인 SKU 전환) -->
         <div id="skuCustConvWrap" style="margin-top:18px;display:none">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-            <span class="label-mono" style="font-size:11px">고객별 SKU 전환 분석 · 작년 vs 올해 (해당 region 고객)</span>
+            <span class="label-mono" style="font-size:11px">SKU switching · last year vs this year</span>
             <span class="label-mono muted" id="skuCustConvSummary" style="font-size:10px"></span>
           </div>
           <div style="overflow:auto;max-height:340px"><table id="tblSkuCustConv" style="font-size:12px"></table></div>
-          <p class="label-mono muted" style="font-size:10px;margin-top:6px">신규전환 = 작년엔 없던 SKU를 올해 주문 · 유지 = 작년·올해 모두 주문 · 이탈 = 작년엔 주문했으나 올해 미주문</p>
+          <p class="label-mono muted" style="font-size:10px;margin-top:6px">New = ordered this year, not last year · Retained = both years · Lost = last year only</p>
         </div>
       </div>
 
@@ -2323,7 +2322,7 @@ header .mono b.t-orange {
         <div class="widget-head">
           <div>
             <h3 class="h-section">Sales Trend — Promotion Category & Region</h3>
-            <p class="label-mono" style="margin-top:4px">Promotion Category / Region 월별 추이</p>
+            <p class="label-mono" style="margin-top:4px">Monthly trend by category / region</p>
           </div>
           <div class="chart-tools">
             <span class="label-mono" style="font-size:11px">VIEW</span>
@@ -2350,17 +2349,17 @@ header .mono b.t-orange {
          <div class="widget-head">
            <div>
              <h3 class="h-section">Marketing Budget — Allocation & Status by Region</h3>
-             <p class="label-mono" style="margin-top:4px">Budget 배분 · 집행 현황</p>
+             <p class="label-mono" style="margin-top:4px">Allocation vs execution</p>
            </div>
            <div class="widget-order-controls"></div>
          </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
             <div>
-              <p class="label-mono" style="font-size:11px;margin-bottom:6px;text-align:center">BUDGET 배분</p>
+              <p class="label-mono" style="font-size:11px;margin-bottom:6px;text-align:center">BUDGET ALLOCATION</p>
               <div class="chart-wrap" style="height:300px"><canvas id="chBudgetAlloc"></canvas></div>
             </div>
             <div>
-              <p class="label-mono" id="execShareLabel" style="font-size:11px;margin-bottom:6px;text-align:center">EXECUTION 비중</p>
+              <p class="label-mono" id="execShareLabel" style="font-size:11px;margin-bottom:6px;text-align:center">EXECUTION SHARE</p>
               <div class="chart-wrap" style="height:300px"><canvas id="chBudgetExec"></canvas></div>
             </div>
           </div>
@@ -5146,8 +5145,8 @@ function renderBudgetStatus(fMkt) {
   const execLblEl = document.getElementById('execShareLabel');
   if (execLblEl) {
     execLblEl.innerHTML = selectedRegion === '__all__'
-      ? 'EXECUTION 비중'
-      : `<span style="color:var(--blue)">${selectedRegion}</span> 집행 비중 · <button class="btn ghost" style="padding:2px 8px;font-size:10px;margin-left:6px" onclick="window.__clearBudgetExecFilter()">All</button>`;
+      ? 'EXECUTION SHARE'
+      : `<span style="color:var(--blue)">${selectedRegion}</span> execution share · <button class="btn ghost" style="padding:2px 8px;font-size:10px;margin-left:6px" onclick="window.__clearBudgetExecFilter()">All</button>`;
   }
 
   // ── Region → Country → Customer 3단계 아코디언 테이블 ──
@@ -6276,7 +6275,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
     return order > 0 ? '<span class="t-green" style="font-weight:700">▲ NEW</span>' : '<span class="muted">–</span>';
   };
   const progCell = (order, target) => {
-    if (!(target > 0)) return '<span class="muted" style="font-size:10px">목표없음</span>';
+    if (!(target > 0)) return '<span class="muted" style="font-size:10px">No target</span>';
     const pr = order / target * 100, w = Math.min(100, pr);
     const col = pr < 30 ? '#C8102E' : pr < 70 ? '#B8860B' : '#0A0A0A';
     return `<div style="display:flex;align-items:center;gap:6px"><div style="flex:1;min-width:54px;height:8px;background:var(--surface-3);border-radius:4px;overflow:hidden"><div style="width:${w}%;height:100%;background:${col}"></div></div><span class="mono" style="font-size:11px;min-width:40px;text-align:right;color:${col};font-weight:700">${pr.toFixed(0)}%</span></div>`;
@@ -6285,13 +6284,13 @@ function renderRegionExecSummary(fOrders, fMkt) {
   const sellBadge = s => `<span class="badge-tag" style="font-size:10px;padding:1px 6px;height:auto;line-height:1.5;${s === 'SELL-IN' ? '' : 'color:var(--accent);border-color:var(--accent)'}">${s === 'SELL-IN' ? 'SELL-IN' : 'SELL-OUT'}</span>`;
   const statusOf = (order, target, cost) => {
     const romi = cost > 0 ? (order - cost) / cost * 100 : null;
-    if (order === 0 && (target > 0 || cost > 0)) return { rank:0, dot:'🔴', label:'무오더', cls:'t-red' };
-    if (romi != null && romi < 0) return { rank:0, dot:'🔴', label:'적자', cls:'t-red' };
+    if (order === 0 && (target > 0 || cost > 0)) return { rank:0, dot:'🔴', label:'No orders', cls:'t-red' };
+    if (romi != null && romi < 0) return { rank:0, dot:'🔴', label:'Loss', cls:'t-red' };
     if (target > 0) { const pr = order / target * 100;
-      if (pr < 30) return { rank:0, dot:'🔴', label:'부진', cls:'t-red' };
-      if (pr < 70) return { rank:1, dot:'🟡', label:'주의', cls:'t-yellow' };
-      return { rank:2, dot:'🟢', label:'정상', cls:'t-green' }; }
-    return order > 0 ? { rank:2, dot:'🟢', label:'진행중', cls:'t-green' } : { rank:1, dot:'⚪', label:'대기', cls:'muted' };
+      if (pr < 30) return { rank:0, dot:'🔴', label:'Behind', cls:'t-red' };
+      if (pr < 70) return { rank:1, dot:'🟡', label:'Watch', cls:'t-yellow' };
+      return { rank:2, dot:'🟢', label:'On track', cls:'t-green' }; }
+    return order > 0 ? { rank:2, dot:'🟢', label:'Active', cls:'t-green' } : { rank:1, dot:'⚪', label:'Idle', cls:'muted' };
   };
 
   // ── 권역 요약 + 정렬 ──
@@ -6316,11 +6315,11 @@ function renderRegionExecSummary(fOrders, fMkt) {
   if (weakEl) {
     const weak = regionList.filter(r => r.status.rank === 0);
     weakEl.innerHTML = weak.length
-      ? `<div style="background:var(--bad-soft);border:1px solid var(--bad);border-radius:8px;padding:8px 12px"><span class="label-mono" style="font-size:11px;color:var(--bad);margin-right:8px">⚠ 부진 권역 (${weak.length})</span>${weak.map(r => `<span class="badge-tag t-red" style="margin:2px 3px;font-size:11px">${r.region} · 오더 ${fmtMoneyShort(r.order)}${r.target > 0 ? ` / 목표 ${fmtMoneyShort(r.target)} (${(r.order / r.target * 100).toFixed(0)}%)` : ''}${r.cost > 0 && (r.order - r.cost) / r.cost * 100 < 0 ? ' · ROMI 적자' : ''}</span>`).join('')}</div>`
-      : `<div style="background:var(--good-soft);border:1px solid var(--line-2);border-radius:8px;padding:8px 12px"><span class="label-mono" style="font-size:11px">🟢 부진 권역 없음 — 모든 권역 진행률/ROMI 정상</span></div>`;
+      ? `<div style="background:var(--bad-soft);border:1px solid var(--bad);border-radius:8px;padding:8px 12px"><span class="label-mono" style="font-size:11px;color:var(--bad);margin-right:8px">⚠ Weak regions (${weak.length})</span>${weak.map(r => `<span class="badge-tag t-red" style="margin:2px 3px;font-size:11px">${r.region} · Order ${fmtMoneyShort(r.order)}${r.target > 0 ? ` / Target ${fmtMoneyShort(r.target)} (${(r.order / r.target * 100).toFixed(0)}%)` : ''}${r.cost > 0 && (r.order - r.cost) / r.cost * 100 < 0 ? ' · ROMI loss' : ''}</span>`).join('')}</div>`
+      : `<div style="background:var(--good-soft);border:1px solid var(--line-2);border-radius:8px;padding:8px 12px"><span class="label-mono" style="font-size:11px">🟢 All regions on track</span></div>`;
   }
   const noteEl = document.getElementById('execSummaryNote');
-  if (noteEl) noteEl.innerHTML = `진행률 = 기간 오더 ÷ 기간 오더 목표 · ROMI = (기간 오더 − 마케팅 투입비) ÷ 마케팅 투입비 · 기간 = 각 캠페인 시작일~오늘 · 전년 = 전년 동기간(baseline)${baselineOn ? '' : ' <span class="t-red">— Baseline 미로드: 상단 Baseline 버튼을 켜면 전년/상승률이 계산됩니다</span>'} · 표시통화 ${state.currency}`;
+  if (noteEl) noteEl.innerHTML = baselineOn ? '' : '<span class="t-red">Prev Year & YoY Growth require Baseline — enable it in the top toolbar.</span>';
 
   // ── 정렬 세그먼트 상태/바인딩 ──
   const seg = document.getElementById('segExecSort');
@@ -6340,16 +6339,16 @@ function renderRegionExecSummary(fOrders, fMkt) {
   const tbl = document.getElementById('tblRegionExecSummary');
   if (!tbl) return;
   const THEAD = `<thead><tr>
-    <th style="min-width:210px">권역 / 캠페인</th>
-    <th>TYPE</th>
-    <th>기간 시작</th>
-    <th class="text-right" title="marketing.csv actual_cost 합">마케팅 투입비</th>
-    <th class="text-right" title="marketing.csv Order_Target($) 합">기간 오더 목표</th>
-    <th class="text-right" title="캠페인 시작일~오늘 오더">기간 오더</th>
-    <th class="text-right" title="전년 동기간(baseline)">전년 기간</th>
-    <th class="text-right" title="(올해−전년)÷전년">상승률</th>
-    <th style="min-width:120px" title="기간 오더 ÷ 기간 오더 목표">진행률</th>
-    <th class="text-right" title="(기간 오더−마케팅 투입비)÷마케팅 투입비">ROMI</th>
+    <th style="min-width:210px">Region / Campaign</th>
+    <th>Type</th>
+    <th>Start</th>
+    <th class="text-right" title="marketing.csv actual_cost">Mktg Cost</th>
+    <th class="text-right" title="marketing.csv Order_Target($)">Order Target</th>
+    <th class="text-right" title="campaign start → today">Period Order</th>
+    <th class="text-right" title="same period last year">Prev Year</th>
+    <th class="text-right" title="vs same period last year">YoY Growth</th>
+    <th style="min-width:120px" title="Order ÷ Target">Progress</th>
+    <th class="text-right" title="(Order − Cost) ÷ Cost">ROMI</th>
   </tr></thead>`;
 
   let body = '';
@@ -6357,7 +6356,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
   regionList.forEach(R => {
     G.order += R.order; G.cost += R.cost; G.target += R.target; G.prev += R.prev;
     body += `<tr style="background:var(--surface-2);border-top:2px solid var(--border)">
-      <td><span style="font-size:13px">${R.status.dot}</span> <b style="font-size:13px">${R.region}</b> <span class="muted" style="font-size:11px">· ${R.camps.length}개 캠페인</span> <span class="badge-tag ${R.status.cls}" style="font-size:10px;padding:1px 6px;height:auto;line-height:1.5;margin-left:4px">${R.status.label}</span></td>
+      <td><span style="font-size:13px">${R.status.dot}</span> <b style="font-size:13px">${R.region}</b> <span class="muted" style="font-size:11px">· ${R.camps.length} campaigns</span> <span class="badge-tag ${R.status.cls}" style="font-size:10px;padding:1px 6px;height:auto;line-height:1.5;margin-left:4px">${R.status.label}</span></td>
       <td></td>
       <td></td>
       <td class="text-right mono t-orange" style="font-weight:700">${fmtMoney(R.cost)}</td>
@@ -6384,7 +6383,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
     });
   });
   body += `<tr style="border-top:2px solid var(--border);font-weight:800">
-    <td>TOTAL <span class="muted" style="font-size:11px;font-weight:500">· ${regionList.length}개 권역</span></td>
+    <td>TOTAL <span class="muted" style="font-size:11px;font-weight:500">· ${regionList.length} regions</span></td>
     <td></td><td></td>
     <td class="text-right mono t-orange">${fmtMoney(G.cost)}</td>
     <td class="text-right mono t-purple">${G.target > 0 ? fmtMoney(G.target) : '–'}</td>
@@ -6394,7 +6393,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
     <td>${progCell(G.order, G.target)}</td>
     <td class="text-right mono">${romiCell(G.order, G.cost)}</td>
   </tr>`;
-  tbl.innerHTML = THEAD + `<tbody>${body || '<tr><td colspan="10" class="muted" style="text-align:center;padding:16px">데이터 없음</td></tr>'}</tbody>`;
+  tbl.innerHTML = THEAD + `<tbody>${body || '<tr><td colspan="10" class="muted" style="text-align:center;padding:16px">No data</td></tr>'}</tbody>`;
 }
 
 function periodLabelOf(period) {
@@ -11323,7 +11322,7 @@ const WIDGET_LABELS = {
   'category':'Sales Trend — Promotion Category & Region',
   'planexec':'Campaign Plan vs Execution — Drill-down Explorer',
   'promo':'Promotion Performance',
-  'regionExecSummary':'권역별 캠페인 종합 현황 (Region × Campaign)',
+  'regionExecSummary':'Region × Campaign Summary',
   'region':'Region — Order, Marketing & Activity Breakdown',
   'budgetstatus':'Marketing Budget — Allocation & Status by Region',
   'customertrend':'Top Customer Order Trend · by Campaign',
@@ -12344,7 +12343,7 @@ window.publishSnapshot = publishSnapshot;
    per-widget controls. The existing hash handler (window._jumpToWidget) then
    scrolls to the #anchor widget. Filter state is reflected back into the URL,
    and each linkable widget gets a "Copy link" button. */
-const _DL_WIDGETS = ['region','promoOrderTrend','customertrend','quarterly','skuExplorer','planexec','activities','budgetstatus'];
+const _DL_WIDGETS = ['regionExecSummary','promo','promoctr','topinsights','region','promoOrderTrend','customertrend','quarterly','skuExplorer','planexec','activities','budgetstatus','category'];
 
 function _dlCampaignForAnchor(anchor) {
   // region-split selections carry "campaign␟REGION"; deep links use just the campaign
