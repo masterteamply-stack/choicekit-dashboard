@@ -1936,6 +1936,8 @@ header .mono b.t-orange {
             <p class="label-mono" style="margin-top:4px">Drill into a row for customer detail</p>
           </div>
           <div class="chart-tools">
+            <span class="label-mono" style="font-size:11px">REGION</span>
+            <select id="selPromoCtrRegion" style="min-width:120px;height:34px;padding:4px 10px;font-size:13px"><option value="__all__">All regions</option></select>
             <span class="label-mono" style="font-size:11px">PROMO</span>
             <select id="selPromoCtrPromo" style="min-width:160px;height:34px;padding:4px 10px;font-size:13px">
               <option value="__all__">All Promotions</option>
@@ -2219,7 +2221,9 @@ header .mono b.t-orange {
             <p class="label-mono" style="margin-top:4px">프로모션 전/후 SKU 오더 비교</p>
           </div>
           <div class="chart-tools">
-            <span class="label-mono muted" style="font-size:11px">Promotion</span>
+            <span class="label-mono muted" style="font-size:11px">Region</span>
+            <select id="selSkuAggRegion" style="min-width:120px;font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface)"><option value="__all__">All regions</option></select>
+            <span class="label-mono muted" style="font-size:11px;margin-left:8px">Promotion</span>
             <select id="selSkuAggPromo" style="min-width:220px;font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface)"></select>
             <span class="label-mono muted" style="margin-left:8px;font-size:11px">Compare</span>
             <div class="seg" id="segSkuCmp">
@@ -2557,6 +2561,7 @@ let state = {
   promoCtrSortKey: localStorage.getItem('ck_promoctr_sort_key') || 'amount',
   promoCtrSortDir: localStorage.getItem('ck_promoctr_sort_dir') || 'desc',
   promoCtrPromo:  localStorage.getItem('ck_promoctr_promo')  || '__all__',
+  promoCtrRegion: localStorage.getItem('ck_promoctr_region') || '__all__',
   promoCtrPeriod: localStorage.getItem('ck_promoctr_period') || 'all',
   promoCtrFrom:   localStorage.getItem('ck_promoctr_from')   || '',
   promoCtrTo:     localStorage.getItem('ck_promoctr_to')     || '',
@@ -2604,6 +2609,7 @@ let state = {
   skuQuery: localStorage.getItem('ck_sku_query') || '',           // typed SKU (individual mode)
   skuPromo: localStorage.getItem('ck_sku_promo') || '',   // promotion_id (individual mode)
   skuAggPromo: localStorage.getItem('ck_sku_agg_promo') || '__all__',  // __all__ = 전체 프로모션
+  skuAggRegion: localStorage.getItem('ck_sku_agg_region') || '__all__',
   skuAggDrillSku: '',                                             // session: drilled-into SKU in aggregate mode
 
   hiddenWidgets: (localStorage.getItem('ck_widget_order_v') === WIDGET_ORDER_VERSION
@@ -3649,10 +3655,11 @@ function periodPresetRange(preset, customFrom, customTo) {
 // Used by Top Insights and Promo CTR widgets — they have their OWN filters,
 // independent from the global filter bar.
 function applyWidgetScope(allOrders, opts) {
-  const { promo, period, customFrom, customTo } = opts || {};
+  const { promo, region, period, customFrom, customTo } = opts || {};
   const { from, to } = periodPresetRange(period || 'all', customFrom, customTo);
   return allOrders.filter(o => {
     if (!o) return false;
+    if (region && region !== '__all__' && (o.region||'') !== region) return false;
     if (promo && promo !== '__all__' && promoKeyOfOrder(o) !== promo) return false;
     if (from && o.order_date < from) return false;
     if (to   && o.order_date > to)   return false;
@@ -5744,12 +5751,10 @@ function renderTopInsights(fOrders) {
   // ── Populate promo dropdown ──
   const promoSel = document.getElementById('selTopInsightsPromo');
   if (promoSel) {
-    const allPromos = listPromotionKeys(fOrders);
-    promoSel.innerHTML = `<option value="__all__">All Promotions</option>` +
-      allPromos.map(p => `<option value="${p}" ${p===state.topInsightsPromo?'selected':''}>${campLabel(p)}</option>`).join('');
-    if (state.topInsightsPromo !== '__all__' && !allPromos.includes(state.topInsightsPromo)) {
-      state.topInsightsPromo = '__all__'; promoSel.value = '__all__';
-    }
+    const allPromos = _campsInRegion(fOrders, state.topInsightsRegion || '__all__');
+    if (state.topInsightsPromo !== '__all__' && !allPromos.includes(state.topInsightsPromo)) state.topInsightsPromo = '__all__';
+    promoSel.innerHTML = _campOptsHTML(allPromos, state.topInsightsPromo, 'All Promotions');
+    promoSel.value = state.topInsightsPromo;
   }
 
   // ── Period segmented control state ──
@@ -5869,20 +5874,21 @@ function renderPromoCtrChart(fOrders) {
   // ── Widget-level scope (independent from global filter bar) ──
   const scoped = applyWidgetScope(fOrders, {
     promo: state.promoCtrPromo,
+    region: state.promoCtrRegion,
     period: state.promoCtrPeriod,
     customFrom: state.promoCtrFrom,
     customTo: state.promoCtrTo,
   });
 
-  // ── Populate promo dropdown ──
+  // ── Populate region + promo dropdowns ──
+  const rgnSel = document.getElementById('selPromoCtrRegion');
+  if (rgnSel) rgnSel.innerHTML = _regionOptsHTML(fOrders, state.promoCtrRegion || '__all__');
   const promoSel = document.getElementById('selPromoCtrPromo');
   if (promoSel) {
-    const allPromos = listPromotionKeys(fOrders);
-    promoSel.innerHTML = `<option value="__all__">All Promotions</option>` +
-      allPromos.map(p => `<option value="${p}" ${p===state.promoCtrPromo?'selected':''}>${campLabel(p)}</option>`).join('');
-    if (state.promoCtrPromo !== '__all__' && !allPromos.includes(state.promoCtrPromo)) {
-      state.promoCtrPromo = '__all__'; promoSel.value = '__all__';
-    }
+    const allPromos = _campsInRegion(fOrders, state.promoCtrRegion || '__all__');
+    if (state.promoCtrPromo !== '__all__' && !allPromos.includes(state.promoCtrPromo)) state.promoCtrPromo = '__all__';
+    promoSel.innerHTML = _campOptsHTML(allPromos, state.promoCtrPromo, 'All Promotions');
+    promoSel.value = state.promoCtrPromo;
   }
   // ── Period segmented control state ──
   document.querySelectorAll('#segPromoCtrPeriod button').forEach(b =>
@@ -8870,16 +8876,25 @@ function listSkus(orders) {
 
 function populateSkuUI(fOrders) {
   const _ord = fOrders || state.orders || [];
-  const promoKeys = listPromotionKeys(_ord);
+  const _skuRgn = state.skuAggRegion || '__all__';
+  const promoKeys = _campsInRegion(_ord, _skuRgn);
 
-  // Promotion selector (only control now). Default: first promotion (or All).
+  // Region + Promotion selectors. Picking a region resets the promotion to All.
+  const rgnSelA = document.getElementById('selSkuAggRegion');
+  if (rgnSelA) {
+    rgnSelA.innerHTML = _regionOptsHTML(_ord, _skuRgn);
+    rgnSelA.value = _skuRgn;
+    if (!rgnSelA._ckH) { rgnSelA._ckH = true; rgnSelA.addEventListener('change', e => {
+      state.skuAggRegion = e.target.value; state.skuAggPromo = '__all__';
+      try{localStorage.setItem('ck_sku_agg_region',state.skuAggRegion);localStorage.setItem('ck_sku_agg_promo','__all__');}catch(_){}
+      const fO=state.orders.filter(matchOrder).filter(o=>isRegionVisible(o.region)); renderSkuExplorer(fO, []); }); }
+  }
   const aggSel = document.getElementById('selSkuAggPromo');
   if (aggSel) {
     const cur = state.skuAggPromo || '__all__';
-    aggSel.innerHTML = '<option value="__all__">All Promotions</option>' +
-                       promoKeys.map(k => `<option value="${k}">${campLabel(k)}</option>`).join('');
-    aggSel.value = (cur === '__all__' || promoKeys.includes(cur)) ? cur : '__all__';
-    if (state.skuAggPromo !== aggSel.value) state.skuAggPromo = aggSel.value;
+    if (cur !== '__all__' && !promoKeys.includes(cur)) state.skuAggPromo = '__all__';
+    aggSel.innerHTML = _campOptsHTML(promoKeys, state.skuAggPromo, 'All Promotions');
+    aggSel.value = state.skuAggPromo;
     if (!aggSel._ckH) { aggSel._ckH = true; aggSel.addEventListener('change', e => { state.skuAggPromo = e.target.value; try{localStorage.setItem('ck_sku_agg_promo',state.skuAggPromo);}catch(_){} const fO=state.orders.filter(matchOrder).filter(o=>isRegionVisible(o.region)); renderSkuExplorer(fO, []); }); }
   }
   // Mode/tab are fixed now: always aggregate + before/after.
@@ -9535,6 +9550,7 @@ function renderSkuAggregate(fOrders) {
   const brkTbl  = document.getElementById('tblSkuAggBreakdown');
 
   const promo = state.skuAggPromo || '__all__';
+  const skuRgn = state.skuAggRegion || '__all__';
 
   // ── 데이터 소스: state.orders + baseline (state.preOrders) ──
   // Include baseline so YoY-period Before window has real data. orders.csv
@@ -9562,7 +9578,7 @@ function renderSkuAggregate(fOrders) {
   // 프로모션 필터
   const promoOrders = promo === '__all__'
     ? baseOrd
-    : baseOrd.filter(o => promoKeyOfOrder(o) === promo);
+    : baseOrd.filter(o => promoKeyOfOrder(o) === promo && (skuRgn === '__all__' || (o.region||'') === skuRgn));
 
   // No silent fallback: if a specific promotion was selected but has no matching
   // orders, surface that honestly. (Earlier behavior fell back to ALL orders,
@@ -10867,6 +10883,11 @@ document.addEventListener('change', e => {
   if (e.target.id === 'inpTopInsightsTo') {
     state.topInsightsTo = e.target.value; persist();
     if (state.topInsightsPeriod === 'custom') renderAll();
+  }
+  if (e.target.id === 'selPromoCtrRegion') {
+    state.promoCtrRegion = e.target.value; state.promoCtrPromo = '__all__';
+    try { localStorage.setItem('ck_promoctr_region', state.promoCtrRegion); } catch(_){}
+    persist(); renderAll();
   }
   if (e.target.id === 'selPromoCtrPromo') {
     state.promoCtrPromo = e.target.value; persist(); renderAll();
@@ -12187,6 +12208,8 @@ function applyDeepLinkParams() {
   state.skuAggPromo = '__all__';
   state.potRegion = '__all__';
   state.custTrendRegion = '__all__';
+  state.skuAggRegion = '__all__';
+  state.promoCtrRegion = '__all__';
   const setOne = (key, v) => { if (v) f[key] = [v]; };   // global multi-select filters
   setOne('regions',   sp.get('region'));
   setOne('countries', sp.get('country'));
