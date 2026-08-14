@@ -4397,7 +4397,10 @@ function renderAll() {
   // ── Phase 3: PromoChart + PromoOrderTrend ──
   _deferRender(async () => {
     await renderPromoChart(fOrders, fMkt);
-    if (_promoAfterTotal !== null) {
+    // _promoAfterTotal은 Promotion Performance 위젯의 권역 셀렉터(state.promoFilterRegion)로
+    // 스코프될 수 있음. 최상단 헤더 KPI(Order Amount / Achievement / ROI)는 항상 전역이어야 하므로,
+    // 위젯 권역이 특정 권역으로 선택돼 있으면 헤더를 덮어쓰지 않고 동기 단계의 전역 값을 유지한다.
+    if (_promoAfterTotal !== null && (state.promoFilterRegion || '__all__') === '__all__') {
       document.getElementById('kpiOrder').textContent = fmtMoney(_promoAfterTotal);
       document.getElementById('kpiOrderSub').textContent = `after campaign start · post-campaign total`;
       const tgtPctUpd = orderTargetDisp > 0 ? (_promoAfterTotal / orderTargetDisp) * 100 : 0;
