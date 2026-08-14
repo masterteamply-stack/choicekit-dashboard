@@ -1697,6 +1697,7 @@ header .mono b.t-orange {
       <option value="topinsights">Top Insights</option>
       <option value="customertrend">Customer Trend</option>
       <option value="region">Region</option>
+      <option value="regionExecSummary">권역별 캠페인 종합 현황</option>
       <option value="promo">Promotion Performance</option>
       <option value="skuExplorer">SKU Analysis</option>
       <option value="planexec">Plan vs Execution</option>
@@ -2069,6 +2070,28 @@ header .mono b.t-orange {
             <div style="overflow:auto;margin-top:8px;max-height:160px"><table id="tblBreakdown" style="font-size:12px"></table></div>
           </div>
         </div>
+      </div>
+
+      <!-- 권역별 캠페인 종합 현황 (above Promotion Performance) -->
+      <div class="panel widget" data-widget-id="regionExecSummary">
+        <div class="widget-head">
+          <div>
+            <h3 class="h-section">권역별 캠페인 종합 현황</h3>
+            <p class="label-mono" style="margin-top:4px">권역 → 캠페인 · 진행률 · 마케팅 투입비 · Sell 타입 · 기간 오더/목표/전년비 · ROMI · 부진 권역 하이라이트</p>
+          </div>
+          <div class="chart-tools">
+            <span class="label-mono" style="font-size:11px">SORT</span>
+            <div class="seg" id="segExecSort">
+              <button data-v="status" class="active">부진순</button>
+              <button data-v="order">오더순</button>
+              <button data-v="progress">진행률순</button>
+            </div>
+            <div class="widget-order-controls"></div>
+          </div>
+        </div>
+        <div id="execSummaryWeak" style="margin-bottom:12px"></div>
+        <div id="execSummaryNote" class="label-mono muted" style="font-size:11px;margin-bottom:10px;line-height:1.5"></div>
+        <div style="overflow-x:auto"><table id="tblRegionExecSummary" style="font-size:12px;min-width:940px"></table></div>
       </div>
 
        <!-- Marketing Budget Allocation & Status by Region -->
@@ -2518,7 +2541,7 @@ function colorForCampaign(name) {
 // (Promotion Order Trend — overlaps with Promotion Performance). Both can be
 // re-enabled in Settings.
 const DEFAULT_WIDGET_ORDER = [
-  'promo','skuExplorer',
+  'regionExecSummary','promo','skuExplorer',
   'planexec','customertrend','quarterly','promoctr','topinsights',
   'budgetstatus','region','activities'
 ];
@@ -2575,6 +2598,7 @@ let state = {
   promoTableDim: _promoDefaultsApplied ? (localStorage.getItem('ck_promo_table_dim') || 'promotion') : 'promotion',
   promoFilter: localStorage.getItem('ck_promo_filter') || '__all__',
   promoFilterRegion: localStorage.getItem('ck_promo_filter_region') || '__all__',
+  execSort: localStorage.getItem('ck_exec_sort') || 'status',
   campaignTargetSkus: {},
   regionMetric: localStorage.getItem('ck_region_metric') || 'order',
   breakdownRegion: localStorage.getItem('ck_breakdown_region') || '__all__',
@@ -4354,6 +4378,7 @@ function renderAll() {
   _deferRender(() => {
     renderRegionChart(fOrdersPP, fMkt);
     renderTopInsights(fOrdersPP);
+    try { renderRegionExecSummary(fOrders, fMkt); } catch (e) { console.warn('renderRegionExecSummary failed:', e); }
   }, 16);
 
   // ── Phase 2a: PlanExec, CustomerTrend ──
@@ -6111,6 +6136,256 @@ function renderPromoCtrDetail(fOrders, dim, filterVal) {
       <td class="text-right mono t-blue">${fmtNum(r.qty)}</td>
       <td class="text-right mono t-green">${fmtMoney(r.amount)}</td>
     </tr>`).join('')||'<tr><td colspan="6" class="muted" style="text-align:center;padding:12px">No data</td></tr>'}</tbody>`;
+}
+
+/* ===== 권역별 캠페인 종합 현황 (Region × Campaign Executive Summary) =====
+   Promotion Performance 위에 위치. 권역 → 캠페인 단위로 진행률 · 마케팅 투입비 ·
+   Sell 타입 · 기간 오더 목표/기간 오더/전년 기간/상승률 · ROMI를 한눈에 정리.
+   집계 기준은 Promotion Performance와 동일(캠페인 시작일, target SKU/customer,
+   region gate, country-start override)하게 맞춰 숫자가 일치하도록 함.
+   부진 권역은 상단 스트립 + 상태 뱃지 + 진행률 색상으로 명확히 표시. */
+function renderRegionExecSummary(fOrders, fMkt) {
+  const panel = document.querySelector('.widget[data-widget-id="regionExecSummary"]');
+  if (!panel) return;
+  window._lastExecArgs = { f: fOrders, m: fMkt };
+  const usdToDisp = usdToDisplay();
+  const today = _todayStr();
+  const cfg = state.campaignTargetSkus || {};
+
+  // ── 캠페인 시작일 (Promotion Performance와 동일 규칙) ──
+  const promoStart = {}, promoStartAll = {};
+  (state.marketing || []).forEach(m => {
+    const p = (m.promotion_category || m.promotion_id || '').trim();
+    const d = (m.execution_date || m.date || '').trim();
+    const kpi = (m.kpi_metric || '').trim().toUpperCase();
+    if (!p || !d) return;
+    if (!promoStartAll[p] || d < promoStartAll[p]) promoStartAll[p] = d;
+    if (kpi === 'STARTED') { if (!promoStart[p] || d < promoStart[p]) promoStart[p] = d; }
+  });
+  Object.keys(promoStartAll).forEach(p => { if (!promoStart[p]) promoStart[p] = promoStartAll[p]; });
+  Object.keys(promoStart).forEach(p => { if (promoStart[p] < '2026-01-02') promoStart[p] = '2026-01-02'; });
+  const _explicitStart = { 'CTR MarketFit Campaign':'2026-03-01','Asian vehicle':'2026-03-01','European vehicle':'2026-03-01','Korean & Japanese vehicles':'2026-08-01' };
+  Object.keys(_explicitStart).forEach(p => { promoStart[p] = _explicitStart[p]; });
+
+  // ── Sell 타입 (캠페인별, marketing.csv sell_type 우세값 / match_by fallback) ──
+  const sellCnt = {};
+  (state.marketing || []).forEach(m => {
+    const p = (m.promotion_category || '').trim(); if (!p) return;
+    const st = (m.sell_type || '').trim().toUpperCase().replace(/_/g, '-');
+    const norm = st === 'SELL-IN' ? 'IN' : st === 'SELL-OUT' ? 'OUT' : null; if (!norm) return;
+    sellCnt[p] = sellCnt[p] || { IN:0, OUT:0 }; sellCnt[p][norm]++;
+  });
+  const sellTypeOf = p => {
+    const c = sellCnt[p];
+    if (c) { if (c.IN && c.OUT) return c.IN >= c.OUT ? 'SELL-IN' : 'SELL-OUT'; return c.IN ? 'SELL-IN' : 'SELL-OUT'; }
+    const mb = ((cfg[p] && (cfg[p].match_by || 'sku')) || 'sku').toLowerCase();
+    return mb === 'customer' ? 'SELL-OUT' : 'SELL-IN';
+  };
+
+  // ── 캠페인 매칭 (Promotion Performance sum 로직과 동일) ──
+  const campMatch = (o, k) => {
+    const c = cfg[k]; if (!c) return true;
+    const mb = (c.match_by || 'sku').toLowerCase();
+    if (mb === 'sku') {
+      const ts = new Set((c.target_skus || []).map(s => s.trim().toUpperCase()));
+      const sk = (o.sku || o.ctr_code || '').trim().toUpperCase();
+      if (ts.size > 0 && !ts.has(sk)) return false;
+      if (c.region) {
+        const allow = new Set((Array.isArray(c.region) ? c.region : [c.region]).map(x => normalizeRegion(x)).filter(Boolean));
+        const rg = normalizeRegion(o.region || '');
+        if (allow.size > 0 && rg && !allow.has(rg)) return false;
+      }
+      if (c.target_countries && c.target_countries.length) {
+        const ac = c.target_countries.map(x => normalizeCountry(x) || String(x).trim().toUpperCase());
+        const rc = normalizeCountry(o.country || '') || String(o.country || '').trim().toUpperCase();
+        if (rc && !ac.includes(rc)) return false;
+      }
+    } else {
+      const tc = new Set((c.target_customers || []).map(x => x.trim()));
+      if (tc.size > 0 && !tc.has((o.customer || '').trim())) return false;
+    }
+    return true;
+  };
+  const _skipCamp = p => !p || p === 'OTHER' || p === '(none)' || p === '(unspecified)' || p === 'PRE_ORDER';
+
+  // ── 집계 구조 agg[region][camp] = {order,cost,target,prev,start,sell} ──
+  const agg = {};
+  const ensure = (r, p) => {
+    agg[r] = agg[r] || {};
+    if (!agg[r][p]) agg[r][p] = { order:0, cost:0, target:0, prev:0, start:promoStart[p] || '', sell:sellTypeOf(p) };
+    return agg[r][p];
+  };
+
+  // 올해 기간 오더 (캠페인 태그 + 매칭 + 시작일 이후 + 국가 시작일 게이트)
+  (fOrders || []).forEach(o => {
+    const p = (o.promotion_category || o.promotion_id || '').trim();
+    if (_skipCamp(p)) return;
+    const r = o.region || ''; if (!r) return;
+    const st = promoStart[p];
+    if (st && (o.order_date || '') < st) return;
+    if (_beforeCountryStart(o, p)) return;
+    if (!campMatch(o, p)) return;
+    ensure(r, p).order += convOrder(o);
+  });
+
+  // 마케팅 실집행 비용 (region × campaign)
+  (fMkt || []).forEach(m => {
+    const p = (m.promotion_category || '').trim();
+    if (_skipCamp(p)) return;
+    const r = m.region || ''; if (!r) return;
+    ensure(r, p).cost += convMktActual(m);
+  });
+
+  // 기간 오더 목표 (marketing.csv Order_Target($) → region|campaign)
+  const derived = deriveOrderTargets(fMkt);
+  Object.keys(derived.byRegionPromo || {}).forEach(key => {
+    const sep = key.indexOf('|||'); if (sep < 0) return;
+    const r = key.slice(0, sep), p = key.slice(sep + 3);
+    if (_skipCamp(p) || !r) return;
+    const t = Number(derived.byRegionPromo[key] || 0) * usdToDisp;
+    if (t > 0) ensure(r, p).target += t;
+  });
+
+  // 전년 동기간 오더 (baseline / pre_orders) — 시작일~오늘 창을 -1년 이동
+  const baselineOn = !!state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length > 0;
+  if (baselineOn) {
+    (state.preOrders || []).forEach(o => {
+      const p = promoKeyOfOrder(o);
+      if (_skipCamp(p)) return;
+      const r = normalizeRegion(o.region || ''); if (!r) return;
+      const st = promoStart[p]; if (!st) return;
+      const d = o.order_date || '';
+      if (d < _addYears(st, -1) || d > _addYears(today, -1)) return;
+      if (agg[r] && agg[r][p]) agg[r][p].prev += convOrder(o);
+    });
+  }
+
+  // ── 셀 렌더 헬퍼 ──
+  const yoyCell = (order, prev) => {
+    if (!baselineOn) return '<span class="muted">–</span>';
+    if (prev > 0) { const pct = (order - prev) / prev * 100; return pct >= 0 ? `<span class="t-green" style="font-weight:700">▲ ${pct.toFixed(0)}%</span>` : `<span class="t-red" style="font-weight:700">▼ ${Math.abs(pct).toFixed(0)}%</span>`; }
+    return order > 0 ? '<span class="t-green" style="font-weight:700">▲ NEW</span>' : '<span class="muted">–</span>';
+  };
+  const progCell = (order, target) => {
+    if (!(target > 0)) return '<span class="muted" style="font-size:10px">목표없음</span>';
+    const pr = order / target * 100, w = Math.min(100, pr);
+    const col = pr < 30 ? '#C8102E' : pr < 70 ? '#B8860B' : '#0A0A0A';
+    return `<div style="display:flex;align-items:center;gap:6px"><div style="flex:1;min-width:54px;height:8px;background:var(--surface-3);border-radius:4px;overflow:hidden"><div style="width:${w}%;height:100%;background:${col}"></div></div><span class="mono" style="font-size:11px;min-width:40px;text-align:right;color:${col};font-weight:700">${pr.toFixed(0)}%</span></div>`;
+  };
+  const romiCell = (order, cost) => { if (!(cost > 0)) return '<span class="muted">–</span>'; const r = (order - cost) / cost * 100; return `<span class="${r >= 0 ? 't-green' : 't-red'}" style="font-weight:700">${fmtPct(r)}</span>`; };
+  const sellBadge = s => `<span class="badge-tag" style="font-size:10px;padding:1px 6px;height:auto;line-height:1.5;${s === 'SELL-IN' ? '' : 'color:var(--accent);border-color:var(--accent)'}">${s === 'SELL-IN' ? 'SELL-IN' : 'SELL-OUT'}</span>`;
+  const statusOf = (order, target, cost) => {
+    const romi = cost > 0 ? (order - cost) / cost * 100 : null;
+    if (order === 0 && (target > 0 || cost > 0)) return { rank:0, dot:'🔴', label:'무오더', cls:'t-red' };
+    if (romi != null && romi < 0) return { rank:0, dot:'🔴', label:'적자', cls:'t-red' };
+    if (target > 0) { const pr = order / target * 100;
+      if (pr < 30) return { rank:0, dot:'🔴', label:'부진', cls:'t-red' };
+      if (pr < 70) return { rank:1, dot:'🟡', label:'주의', cls:'t-yellow' };
+      return { rank:2, dot:'🟢', label:'정상', cls:'t-green' }; }
+    return order > 0 ? { rank:2, dot:'🟢', label:'진행중', cls:'t-green' } : { rank:1, dot:'⚪', label:'대기', cls:'muted' };
+  };
+
+  // ── 권역 요약 + 정렬 ──
+  let regionList = Object.keys(agg).map(region => {
+    const camps = Object.keys(agg[region])
+      .filter(p => { const x = agg[region][p]; return x.order > 0 || x.cost > 0 || x.target > 0; })
+      .map(p => ({ camp:p, ...agg[region][p] }))
+      .sort((a, b) => b.order - a.order);
+    const R = camps.reduce((s, c) => { s.order += c.order; s.cost += c.cost; s.target += c.target; s.prev += c.prev; return s; }, { order:0, cost:0, target:0, prev:0 });
+    return { region, camps, ...R, status: statusOf(R.order, R.target, R.cost) };
+  }).filter(r => r.camps.length > 0);
+
+  const sortMode = state.execSort || 'status';
+  regionList.sort((a, b) => {
+    if (sortMode === 'order') return b.order - a.order;
+    if (sortMode === 'progress') { const pa = a.target > 0 ? a.order / a.target : 9e9, pb = b.target > 0 ? b.order / b.target : 9e9; return pa - pb; }
+    return a.status.rank - b.status.rank || b.order - a.order;
+  });
+
+  // ── 부진 권역 스트립 ──
+  const weakEl = document.getElementById('execSummaryWeak');
+  if (weakEl) {
+    const weak = regionList.filter(r => r.status.rank === 0);
+    weakEl.innerHTML = weak.length
+      ? `<div style="background:var(--bad-soft);border:1px solid var(--bad);border-radius:8px;padding:8px 12px"><span class="label-mono" style="font-size:11px;color:var(--bad);margin-right:8px">⚠ 부진 권역 (${weak.length})</span>${weak.map(r => `<span class="badge-tag t-red" style="margin:2px 3px;font-size:11px">${r.region} · 오더 ${fmtMoneyShort(r.order)}${r.target > 0 ? ` / 목표 ${fmtMoneyShort(r.target)} (${(r.order / r.target * 100).toFixed(0)}%)` : ''}${r.cost > 0 && (r.order - r.cost) / r.cost * 100 < 0 ? ' · ROMI 적자' : ''}</span>`).join('')}</div>`
+      : `<div style="background:var(--good-soft);border:1px solid var(--line-2);border-radius:8px;padding:8px 12px"><span class="label-mono" style="font-size:11px">🟢 부진 권역 없음 — 모든 권역 진행률/ROMI 정상</span></div>`;
+  }
+  const noteEl = document.getElementById('execSummaryNote');
+  if (noteEl) noteEl.innerHTML = `진행률 = 기간 오더 ÷ 기간 오더 목표 · ROMI = (기간 오더 − 마케팅 투입비) ÷ 마케팅 투입비 · 기간 = 각 캠페인 시작일~오늘 · 전년 = 전년 동기간(baseline)${baselineOn ? '' : ' <span class="t-red">— Baseline 미로드: 상단 Baseline 버튼을 켜면 전년/상승률이 계산됩니다</span>'} · 표시통화 ${state.currency}`;
+
+  // ── 정렬 세그먼트 상태/바인딩 ──
+  const seg = document.getElementById('segExecSort');
+  if (seg) {
+    seg.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.v === sortMode));
+    if (!seg.dataset.wired) {
+      seg.dataset.wired = '1';
+      seg.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+        state.execSort = b.dataset.v;
+        try { localStorage.setItem('ck_exec_sort', state.execSort); } catch (_) {}
+        const a = window._lastExecArgs || {}; renderRegionExecSummary(a.f, a.m);
+      }));
+    }
+  }
+
+  // ── 테이블 ──
+  const tbl = document.getElementById('tblRegionExecSummary');
+  if (!tbl) return;
+  const THEAD = `<thead><tr>
+    <th style="min-width:210px">권역 / 캠페인</th>
+    <th>TYPE</th>
+    <th>기간 시작</th>
+    <th class="text-right" title="marketing.csv actual_cost 합">마케팅 투입비</th>
+    <th class="text-right" title="marketing.csv Order_Target($) 합">기간 오더 목표</th>
+    <th class="text-right" title="캠페인 시작일~오늘 오더">기간 오더</th>
+    <th class="text-right" title="전년 동기간(baseline)">전년 기간</th>
+    <th class="text-right" title="(올해−전년)÷전년">상승률</th>
+    <th style="min-width:120px" title="기간 오더 ÷ 기간 오더 목표">진행률</th>
+    <th class="text-right" title="(기간 오더−마케팅 투입비)÷마케팅 투입비">ROMI</th>
+  </tr></thead>`;
+
+  let body = '';
+  const G = { order:0, cost:0, target:0, prev:0 };
+  regionList.forEach(R => {
+    G.order += R.order; G.cost += R.cost; G.target += R.target; G.prev += R.prev;
+    body += `<tr style="background:var(--surface-2);border-top:2px solid var(--border)">
+      <td><span style="font-size:13px">${R.status.dot}</span> <b style="font-size:13px">${R.region}</b> <span class="muted" style="font-size:11px">· ${R.camps.length}개 캠페인</span> <span class="badge-tag ${R.status.cls}" style="font-size:10px;padding:1px 6px;height:auto;line-height:1.5;margin-left:4px">${R.status.label}</span></td>
+      <td></td>
+      <td></td>
+      <td class="text-right mono t-orange" style="font-weight:700">${fmtMoney(R.cost)}</td>
+      <td class="text-right mono t-purple" style="font-weight:700">${R.target > 0 ? fmtMoney(R.target) : '–'}</td>
+      <td class="text-right mono t-green" style="font-weight:800">${fmtMoney(R.order)}</td>
+      <td class="text-right mono muted">${baselineOn && R.prev > 0 ? fmtMoney(R.prev) : '–'}</td>
+      <td class="text-right mono">${yoyCell(R.order, R.prev)}</td>
+      <td>${progCell(R.order, R.target)}</td>
+      <td class="text-right mono">${romiCell(R.order, R.cost)}</td>
+    </tr>`;
+    R.camps.forEach(c => {
+      body += `<tr>
+        <td style="padding-left:24px">${c.camp}</td>
+        <td>${sellBadge(c.sell)}</td>
+        <td class="mono muted" style="font-size:11px">${c.start || '–'}</td>
+        <td class="text-right mono">${fmtMoney(c.cost)}</td>
+        <td class="text-right mono">${c.target > 0 ? fmtMoney(c.target) : '–'}</td>
+        <td class="text-right mono t-green">${fmtMoney(c.order)}</td>
+        <td class="text-right mono muted">${baselineOn && c.prev > 0 ? fmtMoney(c.prev) : '–'}</td>
+        <td class="text-right mono">${yoyCell(c.order, c.prev)}</td>
+        <td>${progCell(c.order, c.target)}</td>
+        <td class="text-right mono">${romiCell(c.order, c.cost)}</td>
+      </tr>`;
+    });
+  });
+  body += `<tr style="border-top:2px solid var(--border);font-weight:800">
+    <td>TOTAL <span class="muted" style="font-size:11px;font-weight:500">· ${regionList.length}개 권역</span></td>
+    <td></td><td></td>
+    <td class="text-right mono t-orange">${fmtMoney(G.cost)}</td>
+    <td class="text-right mono t-purple">${G.target > 0 ? fmtMoney(G.target) : '–'}</td>
+    <td class="text-right mono t-green">${fmtMoney(G.order)}</td>
+    <td class="text-right mono muted">${baselineOn && G.prev > 0 ? fmtMoney(G.prev) : '–'}</td>
+    <td class="text-right mono">${yoyCell(G.order, G.prev)}</td>
+    <td>${progCell(G.order, G.target)}</td>
+    <td class="text-right mono">${romiCell(G.order, G.cost)}</td>
+  </tr>`;
+  tbl.innerHTML = THEAD + `<tbody>${body || '<tr><td colspan="10" class="muted" style="text-align:center;padding:16px">데이터 없음</td></tr>'}</tbody>`;
 }
 
 function periodLabelOf(period) {
@@ -11039,6 +11314,7 @@ const WIDGET_LABELS = {
   'category':'Sales Trend — Promotion Category & Region',
   'planexec':'Campaign Plan vs Execution — Drill-down Explorer',
   'promo':'Promotion Performance',
+  'regionExecSummary':'권역별 캠페인 종합 현황 (Region × Campaign)',
   'region':'Region — Order, Marketing & Activity Breakdown',
   'budgetstatus':'Marketing Budget — Allocation & Status by Region',
   'customertrend':'Top Customer Order Trend · by Campaign',
@@ -12365,6 +12641,19 @@ function injectCopyLinkButtons() {
         localStorage.setItem('ck_widget_order', JSON.stringify(wo));
       }
       localStorage.setItem('ck_quarterly_added_v1', '1');
+    }
+  } catch (e) {}
+  // One-time: insert the Region × Campaign Executive Summary right above
+  // Promotion Performance for users who already have a saved widget order.
+  try {
+    if (localStorage.getItem('ck_exec_summary_added_v1') !== '1') {
+      const wo = state.widgetOrder;
+      if (wo.indexOf('regionExecSummary') === -1) {
+        const pi = wo.indexOf('promo');
+        if (pi > -1) wo.splice(pi, 0, 'regionExecSummary'); else wo.unshift('regionExecSummary');
+        localStorage.setItem('ck_widget_order', JSON.stringify(wo));
+      }
+      localStorage.setItem('ck_exec_summary_added_v1', '1');
     }
   } catch (e) {}
   try { applyDeepLinkParams(); } catch (e) { console.warn('[init] deep-link params failed:', e); }
