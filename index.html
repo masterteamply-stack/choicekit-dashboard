@@ -5334,7 +5334,7 @@ function renderQuarterly(fOrders) {
       if (!r.camps.length) return '<span class="muted">–</span>';
       const chips = r.camps.map(c => {
         const isNew = r.newCamps.includes(c);
-        return `<span style="display:inline-block;font-size:10px;line-height:1.4;padding:1px 6px;margin:1px;border-radius:4px;border:1px solid var(--border);${isNew?'background:rgba(52,199,89,.14);border-color:rgba(52,199,89,.5);font-weight:600':'background:var(--surface-2,rgba(127,127,127,.06))'}">${c}${isNew?' <span style="color:#34c759">＋</span>':''}</span>`;
+        return `<span style="display:inline-block;font-size:10px;line-height:1.4;padding:1px 6px;margin:1px;border-radius:4px;border:1px solid var(--border);${isNew?'background:rgba(52,199,89,.14);border-color:rgba(52,199,89,.5);font-weight:600':'background:var(--surface-2,rgba(127,127,127,.06))'}">${campLabel(c)}${isNew?' <span style="color:#34c759">＋</span>':''}</span>`;
       }).join(' ');
       return `<div style="font-weight:600;margin-bottom:3px">${r.camps.length} active</div><div style="text-align:left;white-space:normal">${chips}</div>`;
     };
@@ -5428,7 +5428,7 @@ function renderCustomerTrend(fOrders, fMkt) {
   const sel = document.getElementById('selCustTrendCamp');
   if (sel) {
     const camps = Array.from(new Set(fOrders.map(o=>o.promotion_category).filter(Boolean))).sort();
-    const opts = ['<option value="__all__">All Campaigns</option>', ...camps.map(c=>`<option value="${c}">${c}</option>`)];
+    const opts = ['<option value="__all__">All Campaigns</option>', ...camps.map(c=>`<option value="${c}">${campLabel(c)}</option>`)];
     if (sel.dataset.fillKey !== camps.join('|')) {
       sel.innerHTML = opts.join('');
       sel.value = state.custTrendCampaign && (state.custTrendCampaign==='__all__' || camps.includes(state.custTrendCampaign))
@@ -5739,7 +5739,7 @@ function renderTopInsights(fOrders) {
   if (promoSel) {
     const allPromos = listPromotionKeys(fOrders);
     promoSel.innerHTML = `<option value="__all__">All Promotions</option>` +
-      allPromos.map(p => `<option value="${p}" ${p===state.topInsightsPromo?'selected':''}>${p}</option>`).join('');
+      allPromos.map(p => `<option value="${p}" ${p===state.topInsightsPromo?'selected':''}>${campLabel(p)}</option>`).join('');
     if (state.topInsightsPromo !== '__all__' && !allPromos.includes(state.topInsightsPromo)) {
       state.topInsightsPromo = '__all__'; promoSel.value = '__all__';
     }
@@ -5872,7 +5872,7 @@ function renderPromoCtrChart(fOrders) {
   if (promoSel) {
     const allPromos = listPromotionKeys(fOrders);
     promoSel.innerHTML = `<option value="__all__">All Promotions</option>` +
-      allPromos.map(p => `<option value="${p}" ${p===state.promoCtrPromo?'selected':''}>${p}</option>`).join('');
+      allPromos.map(p => `<option value="${p}" ${p===state.promoCtrPromo?'selected':''}>${campLabel(p)}</option>`).join('');
     if (state.promoCtrPromo !== '__all__' && !allPromos.includes(state.promoCtrPromo)) {
       state.promoCtrPromo = '__all__'; promoSel.value = '__all__';
     }
@@ -6144,7 +6144,7 @@ async function renderPromoChart(fOrders, fMkt) {
   if (filterSel2) {
     const cur = filterSel2.value;
     filterSel2.innerHTML = '<option value="__all__">All promotions</option>' +
-      [...sellTypePromos].sort().map(p => `<option value="${p}"${cur===p?' selected':''}>${p}</option>`).join('');
+      [...sellTypePromos].sort().map(p => `<option value="${p}"${cur===p?' selected':''}>${campLabel(p)}</option>`).join('');
     if (![...sellTypePromos].includes(cur) && cur !== '__all__') {
       filterSel2.value = '__all__';
       state.promoFilter = '__all__';
@@ -6589,7 +6589,7 @@ async function renderPromoChart(fOrders, fMkt) {
       (state.orders || []).map(o => o.promotion_category || '').filter(Boolean)
     )).sort();
     filterSel.innerHTML = '<option value="__all__">All promotions</option>' +
-      promoNames.map(p => `<option value="${String(p).replace(/"/g,'&quot;')}">${p}</option>`).join('');
+      promoNames.map(p => `<option value="${String(p).replace(/"/g,'&quot;')}">${campLabel(p)}</option>`).join('');
     filterSel.value = promoNames.includes(promoFilter) ? promoFilter : '__all__';
   }
   // Scope the current-period order set to the selected promotion (if any).
@@ -8516,6 +8516,28 @@ function promoKeyOfOrder(o) {
 }
 function promoKeyOfMkt(m)   { return m.promotion_category || m.promotion_id || 'OTHER'; }
 
+/* Campaign display label with region prefix, e.g. "[CIS] Asian vehicle".
+   Region(s) derived dynamically from orders + marketing (auto-updates with data);
+   value/keys stay the raw promotion_category so filters & deep links are unaffected. */
+function _campRegionMap() {
+  const n = ((state.orders&&state.orders.length)||0) + ((state.marketing&&state.marketing.length)||0);
+  if (window.__crmN === n && window.__crm) return window.__crm;
+  const CANON = r => { r = String(r||'').trim().toUpperCase().replace(/ /g,'_');
+    return ({ MIDDLE_EAST:'MENA', AFRICA:'MENA', ASIA_PACIFIC:'ASIA', N_AMERICA:'NA' })[r] || r; };
+  const sets = {};
+  const add = (p, r) => { p = String(p||'').trim(); r = CANON(r);
+    if (p && r && p !== '(unspecified)') (sets[p] = sets[p] || new Set()).add(r); };
+  (state.orders||[]).forEach(o => add(o.promotion_category, o.region));
+  (state.marketing||[]).forEach(m => add(m.promotion_category, m.region));
+  const out = {}; Object.keys(sets).forEach(p => out[p] = Array.from(sets[p]).sort().join('/'));
+  window.__crm = out; window.__crmN = n; return out;
+}
+function campLabel(name) {
+  if (!name || name === '__all__' || name === '') return name;
+  const r = _campRegionMap()[name];
+  return r ? `[${r}] ${name}` : name;
+}
+
 function listPromotionKeys(orders, marketing) {
   const set = new Set();
   (orders || state.orders).forEach(o => { const k = promoKeyOfOrder(o); if (k) set.add(k); });
@@ -8529,7 +8551,7 @@ function populatePotPromoSelect(fOrders) {
   const keys = listPromotionKeys(fOrders);
   const cur = state.potPromo;
   sel.innerHTML = '<option value="__all__">All promotions</option>' +
-    keys.map(k => `<option value="${k}">${k}</option>`).join('');
+    keys.map(k => `<option value="${k}">${campLabel(k)}</option>`).join('');
   if (cur && (cur === '__all__' || keys.includes(cur))) sel.value = cur;
   else { state.potPromo = '__all__'; sel.value = '__all__'; }
 }
@@ -8790,7 +8812,7 @@ function populateSkuUI(fOrders) {
   if (aggSel) {
     const cur = state.skuAggPromo || '__all__';
     aggSel.innerHTML = '<option value="__all__">All Promotions</option>' +
-                       promoKeys.map(k => `<option value="${k}">${k}</option>`).join('');
+                       promoKeys.map(k => `<option value="${k}">${campLabel(k)}</option>`).join('');
     aggSel.value = (cur === '__all__' || promoKeys.includes(cur)) ? cur : '__all__';
     if (state.skuAggPromo !== aggSel.value) state.skuAggPromo = aggSel.value;
     if (!aggSel._ckH) { aggSel._ckH = true; aggSel.addEventListener('change', e => { state.skuAggPromo = e.target.value; try{localStorage.setItem('ck_sku_agg_promo',state.skuAggPromo);}catch(_){} const fO=state.orders.filter(matchOrder).filter(o=>isRegionVisible(o.region)); renderSkuExplorer(fO, []); }); }
@@ -9238,7 +9260,7 @@ function buildAnnualSeries(orders) {
 function renderChoiceKitImpact(fOrders, fMkt) {
   const cfg=state.campaignTargetSkus||{},pns=Object.keys(cfg);if(!pns.length)return;
   const sel=document.getElementById('ckiPromoSel');
-  if(sel){const cur=state.ckiPromo||'__all__';sel.innerHTML=`<option value="__all__">All Promotions</option>`+pns.map(p=>`<option value="${p.replace(/"/g,'&quot;')}"${p===cur?' selected':''}>${p}</option>`).join('');if(state.ckiPromo!==sel.value)state.ckiPromo=sel.value;if(!sel._ckH){sel._ckH=true;sel.addEventListener('change',e=>{state.ckiPromo=e.target.value;try{localStorage.setItem('ck_cki_promo',state.ckiPromo);}catch(_){}const fO=state.orders.filter(matchOrder).filter(o=>isRegionVisible(o.region)),fM=state.marketing.filter(matchMkt).filter(m=>isRegionVisible(m.region));renderChoiceKitImpact(fO,fM);});}}
+  if(sel){const cur=state.ckiPromo||'__all__';sel.innerHTML=`<option value="__all__">All Promotions</option>`+pns.map(p=>`<option value="${p.replace(/"/g,'&quot;')}"${p===cur?' selected':''}>${campLabel(p)}</option>`).join('');if(state.ckiPromo!==sel.value)state.ckiPromo=sel.value;if(!sel._ckH){sel._ckH=true;sel.addEventListener('change',e=>{state.ckiPromo=e.target.value;try{localStorage.setItem('ck_cki_promo',state.ckiPromo);}catch(_){}const fO=state.orders.filter(matchOrder).filter(o=>isRegionVisible(o.region)),fM=state.marketing.filter(matchMkt).filter(m=>isRegionVisible(m.region));renderChoiceKitImpact(fO,fM);});}}
   const cmpMode=state.ckiCompare||'mom';
   document.querySelectorAll('#ckiCmpSeg button').forEach(b=>{b.classList.toggle('active',b.dataset.v===cmpMode);if(!b._ckH){b._ckH=true;b.addEventListener('click',()=>{state.ckiCompare=b.dataset.v;try{localStorage.setItem('ck_cki_compare',state.ckiCompare);}catch(_){}const fO=state.orders.filter(matchOrder).filter(o=>isRegionVisible(o.region)),fM=state.marketing.filter(matchMkt).filter(m=>isRegionVisible(m.region));renderChoiceKitImpact(fO,fM);});}});
   const sP=state.ckiPromo||'__all__',isAll=sP==='__all__',aC=isAll?pns:[sP];
