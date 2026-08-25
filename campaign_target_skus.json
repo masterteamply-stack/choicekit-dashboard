@@ -6527,7 +6527,8 @@
    "PT. Denso Centra",
    "Seri Wathana Enterprise Co., Ltd",
    "YOUNG AUTO SUPPLY CO., INC.",
-   "ZENTRALINK OTOPARTS"
+   "ZENTRALINK OTOPARTS",
+   "세종파츠플러스 유한회사"
   ]
  },
  "Strategic Partner Program": {
@@ -6537,8 +6538,7 @@
   ],
   "match_by": "customer",
   "target_customers": [
-   "Lordco Auto Parts",
-   "세종파츠플러스 유한회사"
+   "Lordco Auto Parts"
   ]
  },
  "Mexico Awakening Campaign": {
