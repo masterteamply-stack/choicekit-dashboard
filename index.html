@@ -6354,8 +6354,8 @@ function renderRegionExecSummary(fOrders, fMkt) {
   // ── Cell renderers ──
   const badge = (txt, extra = '') => `<span class="badge-tag" style="font-size:10px;padding:1px 6px;height:auto;line-height:1.6;${extra}">${txt}</span>`;
   const sellBadge = s => {
-    const st = s === 'SELL-IN' ? '' : (s === 'STRATEGIC' ? 'color:var(--purple);border-color:var(--purple)' : 'color:var(--accent);border-color:var(--accent)');
-    return `<span class="badge-tag" style="font-size:10px;padding:1px 6px;height:auto;line-height:1.6;${st}">${s}</span>`;
+    if (s === 'SELL-OUT') return `<span class="badge-tag" style="font-size:10px;padding:1px 7px;height:auto;line-height:1.6;background:var(--accent);color:#fff;border-color:var(--accent);font-weight:800;letter-spacing:.03em">SELL-OUT</span>`;
+    return `<span class="badge-tag" style="font-size:10px;padding:1px 6px;height:auto;line-height:1.6">${s}</span>`;
   };
   const caret = open => `<span class="mono" style="color:var(--text-3);margin-right:5px;display:inline-block;width:9px">${open ? '▾' : '▸'}</span>`;
   const yoyCell = (order, prev) => {
@@ -6452,10 +6452,17 @@ function renderRegionExecSummary(fOrders, fMkt) {
       <td class="text-right mono">${romiCell(R.order, R.cost)}</td>
     </tr>`;
     if (!rOpen) return;
-    R.camps.forEach(c => {
+    // SELL-IN campaigns first (tracking focus), then SELL-OUT grouped below a divider.
+    const _sortedCamps = R.camps.slice().sort((a, b) => ((a.sell === 'SELL-OUT') - (b.sell === 'SELL-OUT')) || (b.order - a.order));
+    let _soDivider = false;
+    _sortedCamps.forEach(c => {
+      const isSO = c.sell === 'SELL-OUT';
+      if (isSO && !_soDivider) { _soDivider = true;
+        body += `<tr><td colspan="7" style="padding:3px 0 3px 18px;background:var(--surface-2);border-top:1px dashed var(--accent);font-size:10px;font-weight:800;letter-spacing:.05em;color:var(--accent)">SELL-OUT · 별도 관리 (managed separately)</td></tr>`;
+      }
       const cKey = 'C|' + R.region + '|' + c.camp, cOpen = !!state.execOpen[cKey];
-      body += `<tr data-exec-key="${cKey}" style="cursor:pointer">
-        <td style="padding-left:18px">${caret(cOpen)}<b>${c.camp}</b> <span style="margin-left:6px">${sellBadge(c.sell)} ${badge('📅 ' + (c.start || '–') + (c.end ? ' → ' + c.end : ''))}${c.end && c.end < today ? ` <span class="badge-tag" style="font-size:9px;padding:1px 6px;height:auto;line-height:1.6;color:#0a7d2e;border-color:#0a7d2e;background:var(--good-soft);font-weight:700">✓ DONE</span>` : ''}</span></td>
+      body += `<tr data-exec-key="${cKey}" style="cursor:pointer;${isSO ? 'background:var(--surface-2)' : ''}">
+        <td style="padding-left:18px;${isSO ? 'border-left:3px solid var(--accent)' : ''}">${caret(cOpen)}<b>${c.camp}</b> <span style="margin-left:6px">${sellBadge(c.sell)} ${badge('📅 ' + (c.start || '–') + (c.end ? ' → ' + c.end : ''))}${c.end && c.end < today ? ` <span class="badge-tag" style="font-size:9px;padding:1px 6px;height:auto;line-height:1.6;color:#0a7d2e;border-color:#0a7d2e;background:var(--good-soft);font-weight:700">✓ DONE</span>` : ''}</span></td>
         <td class="text-right mono">${c.target > 0 ? fmtMoney(c.target) : '–'}${c.soNote ? ` <span title="SELL-OUT Target: ${String(c.soNote).replace(/\"/g,'&quot;')}" style="cursor:help;color:var(--accent);font-weight:700">ⓢ</span>` : ''}</td>
         <td class="text-right mono t-green">${fmtMoney(c.order)}</td>
         <td class="text-right mono muted">${baselineOn && c.prev > 0 ? fmtMoney(c.prev) : '–'}</td>
