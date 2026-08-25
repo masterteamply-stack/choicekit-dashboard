@@ -6197,8 +6197,12 @@ function renderRegionExecSummary(fOrders, fMkt) {
   // customer campaign (specific customers, +10% YoY order goal) is STRATEGIC; any
   // campaign without a SKU list is SELL-OUT.
   const _STRATEGIC_CAMPS = new Set(['Strategic Partner Program']);
+  // Portfolio Expansion is a product-portfolio sell-in even though it is now matched
+  // by customer (its MENA target customers), so classify it SELL-IN explicitly.
+  const _SELLIN_FORCE = new Set(['Portfolio Expansion Program']);
   const sellTypeOf = p => {
     if (_STRATEGIC_CAMPS.has(p)) return 'STRATEGIC';
+    if (_SELLIN_FORCE.has(p)) return 'SELL-IN';
     const c = cfg[p] || {};
     const hasSku = ((c.match_by || 'sku').toLowerCase() === 'sku') && (c.target_skus || []).length > 0;
     return hasSku ? 'SELL-IN' : 'SELL-OUT';

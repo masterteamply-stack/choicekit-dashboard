@@ -6139,7 +6139,21 @@
    "GK1566",
    "GK1567"
   ],
-  "match_by": "sku"
+  "match_by": "customer",
+  "target_customers": [
+   "AL ZAIM UNITED CO.,LTD",
+   "AMP-DUBAI",
+   "AUTO TRUCK PARTS",
+   "DYNATRADE",
+   "Diamond Auto Spare Parts",
+   "EMERALD SPARE PARTS",
+   "ENGINEERING AUTOMOTIVE CO.",
+   "EURL TASSRIAA",
+   "MESK AL-BARARI",
+   "MOOJID",
+   "MOTOR WORLD",
+   "TREEQ ALMAL FOR IMPORT CARS"
+  ]
  },
  "Asian vehicle": {
   "region": "CIS",
@@ -6502,19 +6516,20 @@
   "region": "ASIA",
   "match_by": "customer",
   "target_customers": [
+   "Auto Business Corporation Ltd.",
+   "CHIN SENG HUAT",
+   "CHUAN LAM AUTO SUPPLY",
    "GP Mobility Public Company Limited",
    "GTB LIMITED.,CO",
-   "YOUNG AUTO SUPPLY CO., INC.",
-   "Seri Wathana Enterprise Co., Ltd",
+   "Kailos International Pty Ltd",
+   "MARBORO AUTO PARTS (M) SDN. BHD.",
    "MAST MOTORING AUTOPARTS SOLUTIONS AND",
    "NAM BAC AUTO SPARE PART CORPORATION.",
-   "CHUAN LAM AUTO SUPPLY",
-   "MARBORO AUTO PARTS (M) SDN. BHD.",
    "PT. Denso Centra",
+   "Seri Wathana Enterprise Co., Ltd",
+   "YOUNG AUTO SUPPLY CO., INC.",
    "ZENTRALINK OTOPARTS",
-   "Kailos International Pty Ltd",
-   "세종파츠플러스 유한회사",
-   "Auto Business Corporation Ltd."
+   "세종파츠플러스 유한회사"
   ]
  },
  "Strategic Partner Program": {
@@ -6524,9 +6539,7 @@
   ],
   "match_by": "customer",
   "target_customers": [
-   "Lordco Auto Parts",
-   "PLUSCAR S.A",
-   "SUPER REPUESTOS"
+   "Lordco Auto Parts"
   ]
  },
  "Mexico Awakening Campaign": {
