@@ -3255,6 +3255,8 @@ function showToast(text, ms) {
 function deriveOrderTargets(mktRows) {
   const byRegion = {};
   const byRegionPromo = {};
+  const byRegionPromoIn = {};   // Σ Order_Target where sell_type = SELL_IN  (Order Target)
+  const byRegionPromoOut = {};  // Σ Order_Target where sell_type = SELL_OUT (Sell-out Target)
   // Dedupe by full row identity (date + country + customer + target value).
   // The same campaign+region often has the same target value repeated across
   // multiple country/customer rows of a campaign block (e.g. CIS Asian vehicle
@@ -3269,13 +3271,16 @@ function deriveOrderTargets(mktRows) {
     const d = m.date || m.execution_date || '';
     const c = m.country || '';
     const cust = m.target_customer || m.customer || '';
-    const k = `${r}|||${p}|||${d}|||${c}|||${cust}|||${t}`;
+    const st = String(m.sell_type||'').toUpperCase().replace(/[\s-]/g,'_');
+    const k = `${r}|||${p}|||${d}|||${c}|||${cust}|||${st}|||${t}`;
     if (seen.has(k)) return;
     seen.add(k);
     byRegion[r] = (byRegion[r]||0) + t;
     byRegionPromo[r+'|||'+p] = (byRegionPromo[r+'|||'+p]||0) + t;
+    if (st === 'SELL_OUT') byRegionPromoOut[r+'|||'+p] = (byRegionPromoOut[r+'|||'+p]||0) + t;
+    else byRegionPromoIn[r+'|||'+p] = (byRegionPromoIn[r+'|||'+p]||0) + t;
   });
-  return { byRegion, byRegionPromo };
+  return { byRegion, byRegionPromo, byRegionPromoIn, byRegionPromoOut };
 }
 function getRegionOrderTargetUSD(region, derived) {
   // CSV-derived value is the source of truth.
@@ -6242,7 +6247,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
     agg = {};
     const ensure = (r, p) => {
       agg[r] = agg[r] || {};
-      if (!agg[r][p]) agg[r][p] = { order:0, cost:0, target:0, prev:0, start:startFor(r, p), end:promoEnd[p] || '', sell:sellTypeOf(p), soNote:_soNote[p] || '', countries:{} };
+      if (!agg[r][p]) agg[r][p] = { order:0, cost:0, target:0, otIn:0, otOut:0, prev:0, start:startFor(r, p), end:promoEnd[p] || '', sell:sellTypeOf(p), soNote:_soNote[p] || '', countries:{} };
       return agg[r][p];
     };
     const bucket = (node, country, cust, amt, field) => {
@@ -6285,13 +6290,26 @@ function renderRegionExecSummary(fOrders, fMkt) {
 
     // Order target (marketing.csv Order_Target($) → region|campaign)
     const derived = deriveOrderTargets(fMkt);
-    Object.keys(derived.byRegionPromo || {}).forEach(key => {
+    const _applyTgt = (mapObj, field) => Object.keys(mapObj || {}).forEach(key => {
       const sep = key.indexOf('|||'); if (sep < 0) return;
-      const r = key.slice(0, sep), p = key.slice(sep + 3);
+      const r = normalizeRegion(key.slice(0, sep)) || key.slice(0, sep), p = key.slice(sep + 3);
       if (_skipCamp(p) || !r) return;
-      const t = Number(derived.byRegionPromo[key] || 0) * usdToDisp;
-      if (t > 0) ensure(r, p).target += t;
+      const t = Number(mapObj[key] || 0) * usdToDisp;
+      if (t > 0) { const n = ensure(r, p); n[field] += t; n.target += t; }
     });
+    _applyTgt(derived.byRegionPromoIn, 'otIn');    // SELL_IN → Order Target
+    _applyTgt(derived.byRegionPromoOut, 'otOut');  // SELL_OUT → Sell-out Target
+    // Region-aware sell classification from marketing sell_type: SELL-IN / SELL-OUT / BOTH.
+    const _sellByRC = {};
+    (fMkt || []).forEach(m => {
+      const r = normalizeRegion(m.region || ''); const p = (m.promotion_category || '').trim();
+      if (!r || !p) return;
+      (_sellByRC[r + '|||' + p] = _sellByRC[r + '|||' + p] || new Set()).add(String(m.sell_type||'').toUpperCase().replace(/[\s-]/g,'_'));
+    });
+    Object.keys(agg).forEach(r => Object.keys(agg[r]).forEach(p => {
+      const s = _sellByRC[r + '|||' + p];
+      if (s) agg[r][p].sell = (s.has('SELL_IN') && s.has('SELL_OUT')) ? 'BOTH' : (s.has('SELL_OUT') && !s.has('SELL_IN')) ? 'SELL-OUT' : 'SELL-IN';
+    }));
 
     // Prior-year same period (baseline / pre_orders) — window shifted −1yr, incl. country/customer.
     // Attribution: resolve each baseline order to a campaign by target-customer / target-SKU
@@ -6353,10 +6371,9 @@ function renderRegionExecSummary(fOrders, fMkt) {
 
   // ── Cell renderers ──
   const badge = (txt, extra = '') => `<span class="badge-tag" style="font-size:10px;padding:1px 6px;height:auto;line-height:1.6;${extra}">${txt}</span>`;
-  const sellBadge = s => {
-    if (s === 'SELL-OUT') return `<span class="badge-tag" style="font-size:10px;padding:1px 7px;height:auto;line-height:1.6;background:var(--accent);color:#fff;border-color:var(--accent);font-weight:800;letter-spacing:.03em">SELL-OUT</span>`;
-    return `<span class="badge-tag" style="font-size:10px;padding:1px 6px;height:auto;line-height:1.6">${s}</span>`;
-  };
+  const _soBadge = `<span class="badge-tag" style="font-size:10px;padding:1px 7px;height:auto;line-height:1.6;background:var(--accent);color:#fff;border-color:var(--accent);font-weight:800;letter-spacing:.03em">SELL-OUT</span>`;
+  const _siBadge = `<span class="badge-tag" style="font-size:10px;padding:1px 6px;height:auto;line-height:1.6">SELL-IN</span>`;
+  const sellBadge = s => s === 'SELL-OUT' ? _soBadge : (s === 'BOTH' ? (_siBadge + ' ' + _soBadge) : _siBadge);
   const caret = open => `<span class="mono" style="color:var(--text-3);margin-right:5px;display:inline-block;width:9px">${open ? '▾' : '▸'}</span>`;
   const yoyCell = (order, prev) => {
     if (!baselineOn) return '<span class="muted">–</span>';
@@ -6388,7 +6405,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
       .filter(p => { const x = agg[region][p]; return x.order > 0 || x.cost > 0 || x.target > 0; })
       .map(p => ({ camp:p, ...agg[region][p] }))
       .sort((a, b) => b.order - a.order);
-    const R = camps.reduce((s, c) => { s.order += c.order; s.cost += c.cost; s.target += c.target; s.prev += c.prev; return s; }, { order:0, cost:0, target:0, prev:0 });
+    const R = camps.reduce((s, c) => { s.order += c.order; s.cost += c.cost; s.target += c.target; s.prev += c.prev; s.otIn += (c.otIn||0); s.otOut += (c.otOut||0); return s; }, { order:0, cost:0, target:0, prev:0, otIn:0, otOut:0 });
     let nin = 0, nout = 0; camps.forEach(c => c.sell === 'SELL-IN' ? nin++ : nout++);
     return { region, camps, ...R, nin, nout, status: statusOf(R.order, R.target, R.cost) };
   }).filter(r => r.camps.length > 0);
@@ -6428,7 +6445,8 @@ function renderRegionExecSummary(fOrders, fMkt) {
   if (!tbl) return;
   const THEAD = `<thead><tr>
     <th style="min-width:300px">Region ▸ Campaign ▸ Country ▸ Customer</th>
-    <th class="text-right" title="marketing.csv Order_Target($) — full campaign target">Order Target</th>
+    <th class="text-right" title="Σ Order_Target($) of SELL-IN activities">Order Target</th>
+    <th class="text-right" title="Σ Order_Target($) of SELL-OUT activities" style="color:var(--accent)">Sell-out Target</th>
     <th class="text-right" title="orders during the campaign period (start → today)">Campaign Period Order</th>
     <th class="text-right" title="orders in the same period last year (baseline)">Prior-Yr Same Period</th>
     <th class="text-right" title="vs same period last year">YoY Growth</th>
@@ -6437,14 +6455,15 @@ function renderRegionExecSummary(fOrders, fMkt) {
   </tr></thead>`;
 
   let body = '';
-  const G = { order:0, cost:0, target:0, prev:0 };
+  const G = { order:0, cost:0, target:0, prev:0, otIn:0, otOut:0 };
   regionList.forEach(R => {
-    G.order += R.order; G.cost += R.cost; G.target += R.target; G.prev += R.prev;
+    G.order += R.order; G.cost += R.cost; G.target += R.target; G.prev += R.prev; G.otIn += R.otIn; G.otOut += R.otOut;
     const rKey = 'R|' + R.region, rOpen = !!state.execOpen[rKey];
     const ribbon = `${badge(`${R.camps.length} camp`)} ${badge(`💰 ${fmtMoneyShort(R.cost)}`)}`;
     body += `<tr data-exec-key="${rKey}" style="cursor:pointer;background:var(--surface-2);border-top:2px solid var(--border)">
       <td>${statusBtn(R.status)} ${caret(rOpen)}<b style="font-size:13px">${R.region}</b> <span style="margin-left:6px">${ribbon}</span></td>
-      <td class="text-right mono t-purple" style="font-weight:700">${R.target > 0 ? fmtMoney(R.target) : '–'}</td>
+      <td class="text-right mono t-purple" style="font-weight:700">${R.otIn > 0 ? fmtMoney(R.otIn) : '–'}</td>
+      <td class="text-right mono" style="font-weight:700;color:var(--accent)">${R.otOut > 0 ? fmtMoney(R.otOut) : '–'}</td>
       <td class="text-right mono t-green" style="font-weight:800">${fmtMoney(R.order)}</td>
       <td class="text-right mono muted">${baselineOn && R.prev > 0 ? fmtMoney(R.prev) : '–'}</td>
       <td class="text-right mono">${yoyCell(R.order, R.prev)}</td>
@@ -6458,12 +6477,13 @@ function renderRegionExecSummary(fOrders, fMkt) {
     _sortedCamps.forEach(c => {
       const isSO = c.sell === 'SELL-OUT';
       if (isSO && !_soDivider) { _soDivider = true;
-        body += `<tr><td colspan="7" style="padding:3px 0 3px 18px;background:var(--surface-2);border-top:1px dashed var(--accent);font-size:10px;font-weight:800;letter-spacing:.05em;color:var(--accent)">SELL-OUT · 별도 관리 (managed separately)</td></tr>`;
+        body += `<tr><td colspan="8" style="padding:3px 0 3px 18px;background:var(--surface-2);border-top:1px dashed var(--accent);font-size:10px;font-weight:800;letter-spacing:.05em;color:var(--accent)">SELL-OUT · 별도 관리 (managed separately)</td></tr>`;
       }
       const cKey = 'C|' + R.region + '|' + c.camp, cOpen = !!state.execOpen[cKey];
       body += `<tr data-exec-key="${cKey}" style="cursor:pointer;${isSO ? 'background:var(--surface-2)' : ''}">
         <td style="padding-left:18px;${isSO ? 'border-left:3px solid var(--accent)' : ''}">${caret(cOpen)}<b>${c.camp}</b> <span style="margin-left:6px">${sellBadge(c.sell)} ${badge('📅 ' + (c.start || '–') + (c.end ? ' → ' + c.end : ''))}${c.end && c.end < today ? ` <span class="badge-tag" style="font-size:9px;padding:1px 6px;height:auto;line-height:1.6;color:#0a7d2e;border-color:#0a7d2e;background:var(--good-soft);font-weight:700">✓ DONE</span>` : ''}</span></td>
-        <td class="text-right mono">${c.target > 0 ? fmtMoney(c.target) : '–'}${c.soNote ? ` <span title="SELL-OUT Target: ${String(c.soNote).replace(/\"/g,'&quot;')}" style="cursor:help;color:var(--accent);font-weight:700">ⓢ</span>` : ''}</td>
+        <td class="text-right mono">${c.otIn > 0 ? fmtMoney(c.otIn) : '–'}</td>
+        <td class="text-right mono" style="color:var(--accent)">${c.otOut > 0 ? fmtMoney(c.otOut) : '–'}${c.soNote ? ` <span title="SELL-OUT Target: ${String(c.soNote).replace(/\"/g,'&quot;')}" style="cursor:help;color:var(--accent);font-weight:700">ⓢ</span>` : ''}</td>
         <td class="text-right mono t-green">${fmtMoney(c.order)}</td>
         <td class="text-right mono muted">${baselineOn && c.prev > 0 ? fmtMoney(c.prev) : '–'}</td>
         <td class="text-right mono">${yoyCell(c.order, c.prev)}</td>
@@ -6473,14 +6493,15 @@ function renderRegionExecSummary(fOrders, fMkt) {
       if (!cOpen) return;
       const countries = Object.entries(c.countries || {}).map(([k, v]) => ({ country:k, ...v })).sort((a, b) => b.order - a.order);
       if (!countries.length) {
-        body += `<tr><td style="padding-left:40px" class="muted" colspan="7">No country detail</td></tr>`;
+        body += `<tr><td style="padding-left:40px" class="muted" colspan="8">No country detail</td></tr>`;
       }
       countries.forEach(cd => {
         const kKey = 'K|' + R.region + '|' + c.camp + '|' + cd.country, kOpen = !!state.execOpen[kKey];
         const nCust = Object.keys(cd.customers || {}).length;
         body += `<tr data-exec-key="${kKey}" style="cursor:pointer;background:var(--surface)">
           <td style="padding-left:40px">${caret(kOpen)}🌐 ${cd.country} <span class="muted" style="font-size:10px">· ${nCust} cust</span></td>
-          <td class="text-right mono t-purple">${cd.target > 0 ? fmtMoney(cd.target) : '–'}</td>
+          <td class="text-right mono t-purple">${(c.sell !== 'SELL-OUT' && cd.target > 0) ? fmtMoney(cd.target) : '–'}</td>
+          <td class="text-right mono" style="color:var(--accent)">${(c.sell === 'SELL-OUT' && cd.target > 0) ? fmtMoney(cd.target) : '–'}</td>
           <td class="text-right mono t-green">${fmtMoney(cd.order)}</td>
           <td class="text-right mono muted">${baselineOn && cd.prev > 0 ? fmtMoney(cd.prev) : '–'}</td>
           <td class="text-right mono">${yoyCell(cd.order, cd.prev)}</td>
@@ -6494,7 +6515,8 @@ function renderRegionExecSummary(fOrders, fMkt) {
           const _ut = cd.target * _sh, _uc = cd.cost * _sh;
           body += `<tr style="background:var(--surface)">
             <td style="padding-left:64px" class="muted"><span style="margin-right:5px">•</span>${u.cust}</td>
-            <td class="text-right mono t-purple">${_ut > 0 ? fmtMoney(_ut) : '–'}</td>
+            <td class="text-right mono t-purple">${(c.sell !== 'SELL-OUT' && _ut > 0) ? fmtMoney(_ut) : '–'}</td>
+            <td class="text-right mono" style="color:var(--accent)">${(c.sell === 'SELL-OUT' && _ut > 0) ? fmtMoney(_ut) : '–'}</td>
             <td class="text-right mono t-green">${fmtMoney(u.order)}</td>
             <td class="text-right mono muted">${baselineOn && u.prev > 0 ? fmtMoney(u.prev) : '–'}</td>
             <td class="text-right mono">${yoyCell(u.order, u.prev)}</td>
@@ -6507,14 +6529,15 @@ function renderRegionExecSummary(fOrders, fMkt) {
   });
   body += `<tr style="border-top:2px solid var(--border);font-weight:800">
     <td>TOTAL <span class="muted" style="font-size:11px;font-weight:500">· ${regionList.length} regions</span> ${badge('💰 ' + fmtMoneyShort(G.cost))}</td>
-    <td class="text-right mono t-purple">${G.target > 0 ? fmtMoney(G.target) : '–'}</td>
+    <td class="text-right mono t-purple">${G.otIn > 0 ? fmtMoney(G.otIn) : '–'}</td>
+    <td class="text-right mono" style="color:var(--accent)">${G.otOut > 0 ? fmtMoney(G.otOut) : '–'}</td>
     <td class="text-right mono t-green">${fmtMoney(G.order)}</td>
     <td class="text-right mono muted">${baselineOn && G.prev > 0 ? fmtMoney(G.prev) : '–'}</td>
     <td class="text-right mono">${yoyCell(G.order, G.prev)}</td>
     <td>${progCell(G.order, G.target)}</td>
     <td class="text-right mono">${romiCell(G.order, G.cost)}</td>
   </tr>`;
-  tbl.innerHTML = THEAD + `<tbody>${body || '<tr><td colspan="7" class="muted" style="text-align:center;padding:16px">No data</td></tr>'}</tbody>`;
+  tbl.innerHTML = THEAD + `<tbody>${body || '<tr><td colspan="8" class="muted" style="text-align:center;padding:16px">No data</td></tr>'}</tbody>`;
 
   // Drill-down toggle (delegated, idempotent)
   if (!tbl.dataset.treeWired) {
