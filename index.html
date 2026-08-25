@@ -6290,26 +6290,18 @@ function renderRegionExecSummary(fOrders, fMkt) {
 
     // Order target (marketing.csv Order_Target($) → region|campaign)
     const derived = deriveOrderTargets(fMkt);
-    const _applyTgt = (mapObj, field) => Object.keys(mapObj || {}).forEach(key => {
+    // Sell classification follows the Program (F) rule ONLY (sellTypeOf / _SELLOUT_CAMPS),
+    // NOT the per-row sell_type column: a campaign is SELL-OUT iff it is a Sell-Out Promotion,
+    // otherwise SELL-IN. The campaign's total Order_Target goes to Sell-out Target when the
+    // campaign is SELL-OUT, otherwise to Order Target. (No BOTH; a region can still show both
+    // columns when it contains a mix of SELL-IN and SELL-OUT campaigns.)
+    Object.keys(derived.byRegionPromo || {}).forEach(key => {
       const sep = key.indexOf('|||'); if (sep < 0) return;
       const r = normalizeRegion(key.slice(0, sep)) || key.slice(0, sep), p = key.slice(sep + 3);
       if (_skipCamp(p) || !r) return;
-      const t = Number(mapObj[key] || 0) * usdToDisp;
-      if (t > 0) { const n = ensure(r, p); n[field] += t; n.target += t; }
+      const t = Number(derived.byRegionPromo[key] || 0) * usdToDisp;
+      if (t > 0) { const n = ensure(r, p); n.target += t; if (sellTypeOf(p) === 'SELL-OUT') n.otOut += t; else n.otIn += t; }
     });
-    _applyTgt(derived.byRegionPromoIn, 'otIn');    // SELL_IN → Order Target
-    _applyTgt(derived.byRegionPromoOut, 'otOut');  // SELL_OUT → Sell-out Target
-    // Region-aware sell classification from marketing sell_type: SELL-IN / SELL-OUT / BOTH.
-    const _sellByRC = {};
-    (fMkt || []).forEach(m => {
-      const r = normalizeRegion(m.region || ''); const p = (m.promotion_category || '').trim();
-      if (!r || !p) return;
-      (_sellByRC[r + '|||' + p] = _sellByRC[r + '|||' + p] || new Set()).add(String(m.sell_type||'').toUpperCase().replace(/[\s-]/g,'_'));
-    });
-    Object.keys(agg).forEach(r => Object.keys(agg[r]).forEach(p => {
-      const s = _sellByRC[r + '|||' + p];
-      if (s) agg[r][p].sell = (s.has('SELL_IN') && s.has('SELL_OUT')) ? 'BOTH' : (s.has('SELL_OUT') && !s.has('SELL_IN')) ? 'SELL-OUT' : 'SELL-IN';
-    }));
 
     // Prior-year same period (baseline / pre_orders) — window shifted −1yr, incl. country/customer.
     // Attribution: resolve each baseline order to a campaign by target-customer / target-SKU
