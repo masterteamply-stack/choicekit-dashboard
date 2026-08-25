@@ -6196,17 +6196,11 @@ function renderRegionExecSummary(fOrders, fMkt) {
   // Classification: a campaign with a target-SKU list is SELL-IN; the strategic
   // customer campaign (specific customers, +10% YoY order goal) is STRATEGIC; any
   // campaign without a SKU list is SELL-OUT.
-  const _STRATEGIC_CAMPS = new Set(['Strategic Partner Program']);
-  // Portfolio Expansion is a product-portfolio sell-in even though it is now matched
-  // by customer (its MENA target customers), so classify it SELL-IN explicitly.
-  const _SELLIN_FORCE = new Set(['Portfolio Expansion Program']);
-  const sellTypeOf = p => {
-    if (_STRATEGIC_CAMPS.has(p)) return 'STRATEGIC';
-    if (_SELLIN_FORCE.has(p)) return 'SELL-IN';
-    const c = cfg[p] || {};
-    const hasSku = ((c.match_by || 'sku').toLowerCase() === 'sku') && (c.target_skus || []).length > 0;
-    return hasSku ? 'SELL-IN' : 'SELL-OUT';
-  };
+  // Sell-type by marketing Program (F column): only the Sell-Out promotions are
+  // SELL-OUT (managed separately in the dashboard); every other campaign is SELL-IN,
+  // which is the sell-in tracking focus.
+  const _SELLOUT_CAMPS = new Set(['Trade promotion', 'Sell-Out Promotion', 'SELL-OUT Promotion']);
+  const sellTypeOf = p => _SELLOUT_CAMPS.has(p) ? 'SELL-OUT' : 'SELL-IN';
 
   // ── Campaign matching (same as Promotion Performance sum logic) ──
   const campMatch = (o, k) => {

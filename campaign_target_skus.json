@@ -6521,15 +6521,13 @@
    "CHUAN LAM AUTO SUPPLY",
    "GP Mobility Public Company Limited",
    "GTB LIMITED.,CO",
-   "Kailos International Pty Ltd",
    "MARBORO AUTO PARTS (M) SDN. BHD.",
    "MAST MOTORING AUTOPARTS SOLUTIONS AND",
    "NAM BAC AUTO SPARE PART CORPORATION.",
    "PT. Denso Centra",
    "Seri Wathana Enterprise Co., Ltd",
    "YOUNG AUTO SUPPLY CO., INC.",
-   "ZENTRALINK OTOPARTS",
-   "세종파츠플러스 유한회사"
+   "ZENTRALINK OTOPARTS"
   ]
  },
  "Strategic Partner Program": {
@@ -6539,7 +6537,8 @@
   ],
   "match_by": "customer",
   "target_customers": [
-   "Lordco Auto Parts"
+   "Lordco Auto Parts",
+   "세종파츠플러스 유한회사"
   ]
  },
  "Mexico Awakening Campaign": {
