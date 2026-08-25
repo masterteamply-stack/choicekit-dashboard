@@ -6548,7 +6548,10 @@ function periodLabelOf(period) {
 }
 async function renderPromoChart(fOrders, fMkt) {
   // ── widget-scoped region (Promotion Performance) ──
-  const _ppRgn = state.promoFilterRegion || '__all__';
+  const _regSel = state.promoFilterRegion || '__all__';
+  const _pSel = _promoSel(state.promoFilter || '__all__');        // region-split promo selection {camp, region}
+  const _ppRgn = _pSel.region || _regSel;                          // effective DATA region (promo-split region wins)
+  const _optScope = _regSel === '__all__' ? (state.orders||[]) : (state.orders||[]).filter(o => (o.region||'') === _regSel);
   const _ppO = _ppRgn === '__all__' ? (state.orders||[]) : (state.orders||[]).filter(o => (o.region||'') === _ppRgn);
   const _ppP = _ppRgn === '__all__' ? (state.preOrders||[]) : (state.preOrders||[]).filter(o => (o.region||'') === _ppRgn);
   if (_ppRgn !== '__all__') { fOrders = fOrders.filter(o => (o.region||'') === _ppRgn); fMkt = fMkt.filter(m => _canonRegion(m.region) === _ppRgn); }
@@ -6588,13 +6591,12 @@ async function renderPromoChart(fOrders, fMkt) {
   // promoFilterSel 옵션을 sell_type에 맞게 동적 업데이트
   const filterSel2 = document.getElementById('promoFilterSel');
   if (filterSel2) {
-    const cur = filterSel2.value;
-    filterSel2.innerHTML = '<option value="__all__">All promotions</option>' +
-      [...sellTypePromos].sort().map(p => `<option value="${p}"${cur===p?' selected':''}>${campLabel(p)}</option>`).join('');
-    if (![...sellTypePromos].includes(cur) && cur !== '__all__') {
-      filterSel2.value = '__all__';
-      state.promoFilter = '__all__';
-    }
+    const cur = state.promoFilter || filterSel2.value;
+    const _allow = new Set([...sellTypePromos]);
+    filterSel2.innerHTML = _promoRegionOptsFromOrders(_optScope, cur, 'All promotions', _allow);
+    filterSel2.value = cur;
+    const _curCamp = _promoSel(cur).camp;
+    if (_curCamp !== '__all__' && !_allow.has(_curCamp)) { filterSel2.value = '__all__'; state.promoFilter = '__all__'; }
   }
   // sync 탭 버튼
   document.querySelectorAll('#segPromoSellType button').forEach(b => {
@@ -7029,19 +7031,17 @@ async function renderPromoChart(fOrders, fMkt) {
   if (cmpSel) cmpSel.value = state.promoCmp || 'off';
   // Promotion filter — limit the chart to a single campaign at a time.
   const _ppRgnSel = document.getElementById('promoFilterRegionSel');
-  if (_ppRgnSel) _ppRgnSel.innerHTML = _regionOptsHTML(_ppRgn === '__all__' ? state.orders : (state.orders||[]), _ppRgn);
+  if (_ppRgnSel) _ppRgnSel.innerHTML = _regionOptsHTML(state.orders||[], _regSel);
   const filterSel = document.getElementById('promoFilterSel');
   {
-    const promoNames = Array.from(new Set(
-      (_ppO || []).map(o => o.promotion_category || '').filter(Boolean)
-    )).sort();
-    if ((state.promoFilter||'__all__') !== '__all__' && !promoNames.includes(state.promoFilter)) state.promoFilter = '__all__';
+    const _optCamps = new Set((_optScope || []).map(o => (o.promotion_category||'').trim()).filter(Boolean));
+    if (_pSel.camp !== '__all__' && !_optCamps.has(_pSel.camp)) state.promoFilter = '__all__';
     if (filterSel) {
-      filterSel.innerHTML = _campOptsHTML(promoNames, state.promoFilter, 'All promotions');
+      filterSel.innerHTML = _promoRegionOptsFromOrders(_optScope, state.promoFilter, 'All promotions');
       filterSel.value = state.promoFilter;
     }
   }
-  const promoFilter = state.promoFilter || '__all__';
+  const promoFilter = _pSel.camp || '__all__';   // camp part; the promo-split region is already folded into _ppRgn
   // Scope the current-period order set to the selected promotion (if any).
   const fOrdersScoped = (promoFilter === '__all__')
     ? fOrdersST
@@ -7436,6 +7436,7 @@ async function renderPromoChart(fOrders, fMkt) {
         scopedBaseline = _baseAll.filter(o => { const k = _resolvePreOrderPromo(o); return k && _cfgCmp[k]; });
       }
     }
+    if (_ppRgn !== '__all__' && Array.isArray(scopedBaseline)) scopedBaseline = scopedBaseline.filter(o => _canonRegion(o.region) === _ppRgn);
     // promoFilter === '__all__' 일 때: fOrdersST 전체(날짜 필터 무관) + baseline을 포함
     // promotion_category 태그가 있는 orders.csv rows를 연도 관계없이 모두 포함
     const allOrdersForCmp = (promoFilter === '__all__')
@@ -9044,6 +9045,26 @@ function _promoOptsHTML(keys, curValue, allLabel){
     } else {
       h += `<option value="${q(k)}"${cur===k?' selected':''}>${q(campLabel(k))}</option>`;
     }
+  });
+  return h;
+}
+// Region-split promotion options built from the actually-present (campaign, region)
+// pairs in a given order set: a campaign spanning multiple regions in that set gets
+// one option per region (value "camp␟REGION", label "[REGION] camp"); single-region
+// campaigns stay plain. Lets ASIA vs LATAM of the same promotion be picked separately.
+function _promoRegionOptsFromOrders(ppO, cur, allLabel, allowCamps){
+  const pairs = {};
+  (ppO||[]).forEach(o => { const p=(o.promotion_category||'').trim(); if(!p) return;
+    if(allowCamps && !allowCamps.has(p)) return;
+    (pairs[p]=pairs[p]||new Set()).add((o.region||'').trim()); });
+  const q = s => String(s).replace(/"/g,'&quot;');
+  const c = cur || '__all__';
+  let h = `<option value="__all__"${c==='__all__'?' selected':''}>${allLabel||'All promotions'}</option>`;
+  Object.keys(pairs).sort().forEach(p => {
+    const regs = Array.from(pairs[p]).filter(Boolean).sort();
+    if (regs.length > 1) regs.forEach(r => { const v = p + _RSPLIT + r;
+      h += `<option value="${q(v)}"${c===v?' selected':''}>[${r}] ${q(p)}</option>`; });
+    else h += `<option value="${q(p)}"${c===p?' selected':''}>${q(campLabel(p))}</option>`;
   });
   return h;
 }
