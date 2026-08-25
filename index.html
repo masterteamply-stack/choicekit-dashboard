@@ -5470,7 +5470,7 @@ function renderCustomerTrend(fOrders, fMkt) {
     const camps = _campsInRegion(fOrders, ctRgn);
     // drop a stale campaign that isn't in the chosen region
     if (state.custTrendCampaign !== '__all__' && !camps.includes(state.custTrendCampaign)) state.custTrendCampaign = '__all__';
-    sel.innerHTML = _campOptsHTML(camps, state.custTrendCampaign, 'All campaigns');
+    sel.innerHTML = _promoRegionOptsFromOrders(_scopeOrdersByRegion(fOrders, ctRgn), state.custTrendCampaign, 'All campaigns');
     sel.value = state.custTrendCampaign;
     const nSel = document.getElementById('selCustTrendN');
     if (nSel) nSel.value = String(state.custTrendN||5);
@@ -5777,7 +5777,7 @@ function renderTopInsights(fOrders) {
   if (promoSel) {
     const allPromos = _campsInRegion(fOrders, state.topInsightsRegion || '__all__');
     if (state.topInsightsPromo !== '__all__' && !allPromos.includes(state.topInsightsPromo)) state.topInsightsPromo = '__all__';
-    promoSel.innerHTML = _campOptsHTML(allPromos, state.topInsightsPromo, 'All Promotions');
+    promoSel.innerHTML = _promoRegionOptsFromOrders(_scopeOrdersByRegion(fOrders, state.topInsightsRegion || '__all__'), state.topInsightsPromo, 'All Promotions');
     promoSel.value = state.topInsightsPromo;
   }
 
@@ -5911,7 +5911,7 @@ function renderPromoCtrChart(fOrders) {
   if (promoSel) {
     const allPromos = _campsInRegion(fOrders, state.promoCtrRegion || '__all__');
     if (state.promoCtrPromo !== '__all__' && !allPromos.includes(state.promoCtrPromo)) state.promoCtrPromo = '__all__';
-    promoSel.innerHTML = _campOptsHTML(allPromos, state.promoCtrPromo, 'All Promotions');
+    promoSel.innerHTML = _promoRegionOptsFromOrders(_scopeOrdersByRegion(fOrders, state.promoCtrRegion || '__all__'), state.promoCtrPromo, 'All Promotions');
     promoSel.value = state.promoCtrPromo;
   }
   // ── Period segmented control state ──
@@ -9064,9 +9064,29 @@ function _promoRegionOptsFromOrders(ppO, cur, allLabel, allowCamps){
     const regs = Array.from(pairs[p]).filter(Boolean).sort();
     if (regs.length > 1) regs.forEach(r => { const v = p + _RSPLIT + r;
       h += `<option value="${q(v)}"${c===v?' selected':''}>[${r}] ${q(p)}</option>`; });
-    else h += `<option value="${q(p)}"${c===p?' selected':''}>${q(campLabel(p))}</option>`;
+    else { const r0 = regs[0];
+      h += `<option value="${q(p)}"${c===p?' selected':''}>${r0 ? '['+q(r0)+'] '+q(p) : q(campLabel(p))}</option>`; }
   });
   return h;
+}
+
+// Region-scope an order array for building a widget's promotion options.
+function _scopeOrdersByRegion(orders, rgn){
+  return (rgn && rgn !== '__all__') ? (orders||[]).filter(o => (o.region||'') === rgn) : (orders||[]);
+}
+// Apply a (possibly region-split) promo-selector value ("camp\u241fREGION") to a widget's
+// campaign + region state keys. A region-split value pins BOTH the region and the campaign
+// (so a multi-region campaign like SELL-OUT Promotion / Strategic Partner Program is shown
+// for that one region only); a plain value sets just the campaign. This keeps every widget's
+// existing region+campaign matching untouched — the region is folded into the region selector.
+function _applyPromoSelValue(val, campKey, rgnKey, rgnLSKey, countryKey){
+  const s = _promoSel(val || '__all__');
+  state[campKey] = s.camp || '__all__';
+  if (s.region){
+    state[rgnKey] = s.region;
+    if (countryKey) state[countryKey] = '__all__';
+    if (rgnLSKey){ try { localStorage.setItem(rgnLSKey, s.region); } catch(_){} }
+  }
 }
 
 function listPromotionKeys(orders, marketing) {
@@ -9084,7 +9104,7 @@ function populatePotPromoSelect(fOrders) {
   if (!sel) return;
   const keys = _campsInRegion(fOrders, potRgn);
   if (state.potPromo !== '__all__' && !keys.includes(state.potPromo)) state.potPromo = '__all__';
-  sel.innerHTML = _campOptsHTML(keys, state.potPromo, 'All promotions');
+  sel.innerHTML = _promoRegionOptsFromOrders(_scopeOrdersByRegion(fOrders, potRgn), state.potPromo, 'All promotions');
   sel.value = state.potPromo;
 }
 
@@ -9356,9 +9376,9 @@ function populateSkuUI(fOrders) {
   if (aggSel) {
     const cur = state.skuAggPromo || '__all__';
     if (cur !== '__all__' && !promoKeys.includes(cur)) state.skuAggPromo = '__all__';
-    aggSel.innerHTML = _campOptsHTML(promoKeys, state.skuAggPromo, 'All Promotions');
+    aggSel.innerHTML = _promoRegionOptsFromOrders(_scopeOrdersByRegion(_ord, _skuRgn), state.skuAggPromo, 'All Promotions');
     aggSel.value = state.skuAggPromo;
-    if (!aggSel._ckH) { aggSel._ckH = true; aggSel.addEventListener('change', e => { state.skuAggPromo = e.target.value; try{localStorage.setItem('ck_sku_agg_promo',state.skuAggPromo);}catch(_){} const fO=state.orders.filter(matchOrder).filter(o=>isRegionVisible(o.region)); renderSkuExplorer(fO, []); }); }
+    if (!aggSel._ckH) { aggSel._ckH = true; aggSel.addEventListener('change', e => { _applyPromoSelValue(e.target.value,'skuAggPromo','skuAggRegion','ck_sku_agg_region'); try{localStorage.setItem('ck_sku_agg_promo',state.skuAggPromo);}catch(_){} const fO=state.orders.filter(matchOrder).filter(o=>isRegionVisible(o.region)); renderSkuExplorer(fO, []); }); }
   }
   // Mode/tab are fixed now: always aggregate + before/after.
   state.skuMode = 'aggregate';
@@ -11199,7 +11219,7 @@ document.addEventListener('change', e => {
     persist(); renderAll(); return;
   }
   if (e.target.id === 'selCustTrendCamp') {
-    state.custTrendCampaign = e.target.value; persist(); renderAll(); return;
+    _applyPromoSelValue(e.target.value,'custTrendCampaign','custTrendRegion','ck_cust_trend_region'); persist(); renderAll(); return;
   }
   if (e.target.id === 'selCustTrendN') {
     state.custTrendN = Number(e.target.value)||5; persist(); renderAll(); return;
@@ -11213,7 +11233,7 @@ document.addEventListener('change', e => {
     state.topInsightsCountry = e.target.value; persist(); renderAll();
   }
   if (e.target.id === 'selTopInsightsPromo') {
-    state.topInsightsPromo = e.target.value; persist(); renderAll();
+    _applyPromoSelValue(e.target.value,'topInsightsPromo','topInsightsRegion',null,'topInsightsCountry'); persist(); renderAll();
   }
   if (e.target.id === 'inpTopInsightsFrom') {
     state.topInsightsFrom = e.target.value; persist();
@@ -11229,7 +11249,7 @@ document.addEventListener('change', e => {
     persist(); renderAll();
   }
   if (e.target.id === 'selPromoCtrPromo') {
-    state.promoCtrPromo = e.target.value; persist(); renderAll();
+    _applyPromoSelValue(e.target.value,'promoCtrPromo','promoCtrRegion','ck_promoctr_region'); persist(); renderAll();
   }
   if (e.target.id === 'inpPromoCtrFrom') {
     state.promoCtrFrom = e.target.value; persist();
@@ -11246,10 +11266,10 @@ document.addEventListener('change', e => {
     persist(); renderAll();
   }
   if (e.target.id === 'selPotPromo') {
-    state.potPromo = e.target.value; persist(); renderAll();
+    _applyPromoSelValue(e.target.value,'potPromo','potRegion','ck_pot_region'); persist(); renderAll();
   }
   if (e.target.id === 'selSkuAggPromo') {
-    state.skuAggPromo = e.target.value;
+    _applyPromoSelValue(e.target.value,'skuAggPromo','skuAggRegion','ck_sku_agg_region');
     state.skuAggDrillSku = ''; // changing promotion resets drill-in
     persist(); renderAll();
   }
