@@ -1836,10 +1836,8 @@ header .mono b.t-orange {
           <h2 class="h-section">Marketing KPI · Order-based</h2>
           <p class="label-mono" style="margin-top:5px">Display currency: <span id="curLabel">USD</span></p>
         </div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <span class="label-mono">Order Target (<span class="curLabelSm">USD</span>)</span>
-          <span class="kpi-num" id="orderTargetDisplay" style="font-size:22px">$0</span>
-          <button class="btn ghost" onclick="openBudgetModal()" title="Edit in Budgets modal">⚙ Edit</button>
+        <div style="display:none">
+          <span class="kpi-num" id="orderTargetDisplay">$0</span>
         </div>
       </div>
 
@@ -1863,7 +1861,7 @@ header .mono b.t-orange {
         <div class="hero-card ord" style="border-color:rgba(200,155,255,.5);background:rgba(200,155,255,.08)">
           <div class="label-mono" style="color:var(--purple)">Achievement</div>
           <div class="kpi-num" id="kpiAchv">0%</div>
-          <div class="sub" id="kpiAchvSub">vs Order Target</div>
+          <div class="sub" id="kpiAchvSub">avg campaign progress</div>
         </div>
         <div class="hero-card roi" id="kpiRoiCard">
           <div class="label-mono">Marketing ROI (Executed)</div>
@@ -4285,8 +4283,10 @@ function renderAll() {
   document.getElementById('kpiBudgetSub').innerHTML = `${fMkt.length} activities · ${planUseEl} budget used`;
   document.getElementById('kpiOrder').textContent = fmtMoney(orderAmt);
   document.getElementById('kpiOrderSub').textContent = `${fmtNum(totalOrders)} orders · ${fmtNum(totalQty)} pcs · after campaign start`;
-  document.getElementById('kpiAchv').textContent = orderTargetDisp>0 ? fmtPct(tgtPct) : '–';
-  document.getElementById('kpiAchvSub').textContent = `Target ${fmtMoney(orderTargetDisp)}`;
+  // Achievement = simple mean of each campaign's progress (set authoritatively by
+  // renderRegionExecSummary); show the last known value here for an instant paint.
+  document.getElementById('kpiAchv').textContent = (window._execMeanProgress != null) ? fmtPct(window._execMeanProgress) : '–';
+  document.getElementById('kpiAchvSub').textContent = 'avg campaign progress';
   document.getElementById('kpiRoi').textContent = mktCost>0 ? fmtPct(roi) : '–';
   document.getElementById('kpiRoiCard').classList.toggle('neg', roi<0);
 
@@ -4398,8 +4398,6 @@ function renderAll() {
     if (_promoAfterTotal !== null && (state.promoFilterRegion || '__all__') === '__all__') {
       document.getElementById('kpiOrder').textContent = fmtMoney(_promoAfterTotal);
       document.getElementById('kpiOrderSub').textContent = `after campaign start · post-campaign total`;
-      const tgtPctUpd = orderTargetDisp > 0 ? (_promoAfterTotal / orderTargetDisp) * 100 : 0;
-      document.getElementById('kpiAchv').textContent = orderTargetDisp > 0 ? fmtPct(tgtPctUpd) : '–';
       const roiUpd = mktCost > 0 ? ((_promoAfterTotal - mktCost) / mktCost) * 100 : 0;
       document.getElementById('kpiRoi').textContent = mktCost > 0 ? fmtPct(roiUpd) : '–';
       document.getElementById('kpiRoiCard').classList.toggle('neg', roiUpd < 0);
@@ -6195,14 +6193,15 @@ function renderRegionExecSummary(fOrders, fMkt) {
     const norm = st === 'SELL-IN' ? 'IN' : st === 'SELL-OUT' ? 'OUT' : null; if (!norm) return;
     sellCnt[p] = sellCnt[p] || { IN:0, OUT:0 }; sellCnt[p][norm]++;
   });
-  const _SELLIN_CAMPS = new Set(['Strategic Partner Program']);
+  // Classification: a campaign with a target-SKU list is SELL-IN; the strategic
+  // customer campaign (specific customers, +10% YoY order goal) is STRATEGIC; any
+  // campaign without a SKU list is SELL-OUT.
+  const _STRATEGIC_CAMPS = new Set(['Strategic Partner Program']);
   const sellTypeOf = p => {
-    const mb = ((cfg[p] && (cfg[p].match_by || 'sku')) || 'sku').toLowerCase();
-    if (mb === 'sku') return 'SELL-IN';
-    if (_SELLIN_CAMPS.has(p)) return 'SELL-IN';
-    const c = sellCnt[p];
-    if (c) { if (c.IN && c.OUT) return c.IN >= c.OUT ? 'SELL-IN' : 'SELL-OUT'; return c.IN ? 'SELL-IN' : 'SELL-OUT'; }
-    return 'SELL-OUT';
+    if (_STRATEGIC_CAMPS.has(p)) return 'STRATEGIC';
+    const c = cfg[p] || {};
+    const hasSku = ((c.match_by || 'sku').toLowerCase() === 'sku') && (c.target_skus || []).length > 0;
+    return hasSku ? 'SELL-IN' : 'SELL-OUT';
   };
 
   // ── Campaign matching (same as Promotion Performance sum logic) ──
@@ -6356,7 +6355,10 @@ function renderRegionExecSummary(fOrders, fMkt) {
 
   // ── Cell renderers ──
   const badge = (txt, extra = '') => `<span class="badge-tag" style="font-size:10px;padding:1px 6px;height:auto;line-height:1.6;${extra}">${txt}</span>`;
-  const sellBadge = s => `<span class="badge-tag" style="font-size:10px;padding:1px 6px;height:auto;line-height:1.6;${s === 'SELL-IN' ? '' : 'color:var(--accent);border-color:var(--accent)'}">${s}</span>`;
+  const sellBadge = s => {
+    const st = s === 'SELL-IN' ? '' : (s === 'STRATEGIC' ? 'color:var(--purple);border-color:var(--purple)' : 'color:var(--accent);border-color:var(--accent)');
+    return `<span class="badge-tag" style="font-size:10px;padding:1px 6px;height:auto;line-height:1.6;${st}">${s}</span>`;
+  };
   const caret = open => `<span class="mono" style="color:var(--text-3);margin-right:5px;display:inline-block;width:9px">${open ? '▾' : '▸'}</span>`;
   const yoyCell = (order, prev) => {
     if (!baselineOn) return '<span class="muted">–</span>';
@@ -6401,6 +6403,20 @@ function renderRegionExecSummary(fOrders, fMkt) {
     return pa - pb;
   });
 
+  // ── Header Achievement = simple mean of each campaign's progress (order ÷ target),
+  // aggregating a campaign's regions first, then averaging across campaigns. ──
+  const _campAgg = {};
+  Object.keys(agg).forEach(r => Object.keys(agg[r]).forEach(p => {
+    const x = agg[r][p]; if (!(x.order > 0 || x.cost > 0 || x.target > 0)) return;
+    const t = _campAgg[p] || (_campAgg[p] = { order:0, target:0 });
+    t.order += x.order; t.target += x.target;
+  }));
+  const _progs = Object.values(_campAgg).filter(t => t.target > 0).map(t => t.order / t.target * 100);
+  const _meanProg = _progs.length ? _progs.reduce((s, v) => s + v, 0) / _progs.length : null;
+  window._execMeanProgress = _meanProg;
+  { const el = document.getElementById('kpiAchv'); if (el) el.textContent = _meanProg != null ? fmtPct(_meanProg) : '–';
+    const sub = document.getElementById('kpiAchvSub'); if (sub) sub.textContent = _progs.length ? `avg of ${_progs.length} campaigns' progress` : 'avg campaign progress'; }
+
   // ── Note (minimal) ──
   const noteEl = document.getElementById('execSummaryNote');
   if (noteEl) noteEl.innerHTML =
@@ -6427,8 +6443,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
   regionList.forEach(R => {
     G.order += R.order; G.cost += R.cost; G.target += R.target; G.prev += R.prev;
     const rKey = 'R|' + R.region, rOpen = !!state.execOpen[rKey];
-    const sellMix = (R.nin && R.nout) ? badge(`IN ${R.nin} / OUT ${R.nout}`) : (R.nin ? sellBadge('SELL-IN') : sellBadge('SELL-OUT'));
-    const ribbon = `${badge(`${R.camps.length} camp`)} ${badge(`💰 ${fmtMoneyShort(R.cost)}`)} ${sellMix}`;
+    const ribbon = `${badge(`${R.camps.length} camp`)} ${badge(`💰 ${fmtMoneyShort(R.cost)}`)}`;
     body += `<tr data-exec-key="${rKey}" style="cursor:pointer;background:var(--surface-2);border-top:2px solid var(--border)">
       <td>${statusBtn(R.status)} ${caret(rOpen)}<b style="font-size:13px">${R.region}</b> <span style="margin-left:6px">${ribbon}</span></td>
       <td class="text-right mono t-purple" style="font-weight:700">${R.target > 0 ? fmtMoney(R.target) : '–'}</td>
