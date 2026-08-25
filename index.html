@@ -9016,8 +9016,10 @@ function _regionOptsHTML(fOrders, cur){
 // Campaign <option>s (plain values, already region-scoped by caller).
 function _campOptsHTML(camps, cur, allLabel){
   const q = s => String(s).replace(/"/g,'&quot;');
+  // Display label is region-prefixed ([REGION] name via campLabel); the option VALUE
+  // stays the raw campaign name so filtering by promotion_category is unaffected.
   return `<option value="__all__"${(!cur||cur==='__all__')?' selected':''}>${allLabel||'All campaigns'}</option>` +
-    camps.map(c => `<option value="${q(c)}"${cur===c?' selected':''}>${q(c)}</option>`).join('');
+    camps.map(c => `<option value="${q(c)}"${cur===c?' selected':''}>${q(campLabel(c))}</option>`).join('');
 }
 
 const _RSPLIT = '\u241f';
