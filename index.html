@@ -2150,9 +2150,9 @@ header .mono b.t-orange {
           <div id="planExecCards" style="display:flex;flex-direction:column;gap:8px"></div>
           <div>
             <div class="chart-wrap" style="height:300px;margin-bottom:10px"><canvas id="chPlanExec"></canvas></div>
-            <div style="overflow:visible"><table id="tblPlanExecDetail" style="font-size:12px"></table></div>
           </div>
         </div>
+        <div style="overflow-x:auto;margin-top:12px"><table id="tblPlanExecDetail" style="font-size:12px;min-width:860px;width:100%"></table></div>
         <!-- Needs Attention (그래프 아래) -->
         <div id="planExecAttention" style="margin-top:12px"></div>
       </div>
@@ -4826,7 +4826,7 @@ function renderPlanExecDetail(items, level) {
       ? `ACHV 계산 불가 — Order Target이 설정되지 않음`
       : `ACHV = ${fmtMoney(x.orderAmt)} ÷ ${fmtMoney(x.orderTarget)} × 100 = ${x.achv.toFixed(1)}%`;
     return `<tr>
-      <td>${h.dot} <b>${x.name}</b></td>
+      <td style="white-space:nowrap">${h.dot} <b>${x.name}</b></td>
       <td class="text-right mono t-orange">${fmtMoney(x.mktBudget)}</td>
       <td class="text-right mono t-yellow" title="현재까지 집행된 actual_cost">${fmtMoney(x.costActual)}</td>
       <td class="text-right mono muted" title="${_prevYr} executed cost">${x.costActualPrev>0?fmtMoney(x.costActualPrev):'–'}</td>
@@ -4837,7 +4837,7 @@ function renderPlanExecDetail(items, level) {
       <td class="text-right mono ${x.achv==null?'muted':(x.achv>=100?'t-green':x.achv>=70?'t-yellow':'t-red')}" title="${achvTooltip.replace(/"/g,'&quot;')}">${x.achv==null?'–':x.achv.toFixed(0)+'%'}</td>
       <td class="text-right mono ${roiCls}" style="font-weight:700" title="${roiTooltip.replace(/"/g,'&quot;')}">${x.roi==null?'–':fmtPct(x.roi)}</td>
       <td class="text-right mono ${roiPrevCls}" title="${roiPrevTooltip.replace(/"/g,'&quot;')}">${x.roiPrev==null?'–':fmtPct(x.roiPrev)}</td>
-      <td class="mono ${x.earliestExec?'t-blue':'muted'}">${x.earliestExec||'–'}</td>
+      <td class="mono ${x.earliestExec?'t-blue':'muted'}" style="white-space:nowrap">${x.earliestExec||'–'}</td>
     </tr>`;
   }).join('') || `<tr><td colspan="12" class="muted" style="text-align:center;padding:12px">No data</td></tr>`;
   tbl.innerHTML = `
@@ -6792,7 +6792,7 @@ async function renderPromoChart(fOrders, fMkt) {
     let ny = y, nm = m;
     if (mode === 'yoy') ny = y - 1;
     else if (mode === 'qoq') { nm = m - 3; while (nm < 1) { nm += 12; ny -= 1; } }
-    else if (mode === 'mom') { ny -= 1; nm = m; }  // 전년 동월
+    else if (mode === 'mom') { nm = m - 1; if (nm < 1) { nm = 12; ny -= 1; } }  // 올해 전월 (직전 달)
     return `${ny}-${String(nm).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
   }
   // The table's comparison follows the chart's mode; if 'off', the table falls
@@ -7305,8 +7305,8 @@ async function renderPromoChart(fOrders, fMkt) {
     const [ys, ms] = pk.split('-'); let y = +ys, m = +ms;
     if (mode === 'yoy') return `${y - 1}-${String(m).padStart(2,'0')}`;
     if (mode === 'qoq') { m -= 3; while (m < 1) { m += 12; y -= 1; } return `${y}-${String(m).padStart(2,'0')}`; }
-    // mom → 전년 동월 (같은 월, 1년 전)
-    return `${y - 1}-${String(m).padStart(2,'0')}`;
+    // mom → 올해 전월 (직전 달, 같은 해 흐름)
+    m -= 1; if (m < 1) { m = 12; y -= 1; } return `${y}-${String(m).padStart(2,'0')}`;
   }
 
   // ── Campaign execution window (only meaningful when a single promotion is selected) ──
@@ -8093,7 +8093,7 @@ function renderPromoTable() {
   function shiftBucket(pk,mode,per){
     if(!pk)return'';if(per==='year')return String(parseInt(pk,10)-1);
     if(per==='quarter'){const[ys,qs]=pk.split('-Q');let y=+ys,q=+qs;if(mode==='yoy')return`${y-1}-Q${q}`;q--;if(q<1){q=4;y--;}return`${y}-Q${q}`;}
-    const[ys,ms]=pk.split('-');let y=+ys,m=+ms;if(mode==='yoy')return`${y-1}-${String(m).padStart(2,'0')}`;if(mode==='qoq'){m-=3;while(m<1){m+=12;y--;}return`${y}-${String(m).padStart(2,'0')}`;}return`${y-1}-${String(m).padStart(2,'0')}`;
+    const[ys,ms]=pk.split('-');let y=+ys,m=+ms;if(mode==='yoy')return`${y-1}-${String(m).padStart(2,'0')}`;if(mode==='qoq'){m-=3;while(m<1){m+=12;y--;}return`${y}-${String(m).padStart(2,'0')}`;}m-=1;if(m<1){m=12;y--;}return`${y}-${String(m).padStart(2,'0')}`;
   }
   const _fd=d=>d?d.replace(/^20(\d\d)-(\d\d).*$/,"'$1.$2"):'';
   const dtag=(cur,prv)=>{const d=prv>0?((cur-prv)/prv)*100:null;return d==null?'<span class="muted">–</span>':d>=0?`<span class="t-green" style="font-size:10px">▲${d.toFixed(0)}%</span>`:`<span class="t-red" style="font-size:10px">▼${Math.abs(d).toFixed(0)}%</span>`;};
@@ -8145,7 +8145,7 @@ function renderPromoTable() {
         if(tC.size>0&&!tC.has((o.customer||'').trim()))return;
       }
       const amt=(o[PRE_ORDER_MARK]&&o.amount_usd!=null)?Number(o.amount_usd)*usdToDisplay():convOrder(o);
-      const pk=periodKey(`${parseInt(d.slice(0,4))+1}-${d.slice(5)}`,period);
+      const _fwdM=_cmpMode==='qoq'?3:_cmpMode==='mom'?1:12;const pk=periodKey(_addMonths(d,_fwdM),period);
       if(pk)pPA[pk]=(pPA[pk]||0)+amt;
     });
     const gC=Object.values(pCA).reduce((s,v)=>s+v,0);
