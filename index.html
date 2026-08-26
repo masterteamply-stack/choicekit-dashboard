@@ -7035,13 +7035,22 @@ async function renderPromoChart(fOrders, fMkt) {
   const filterSel = document.getElementById('promoFilterSel');
   {
     const _optCamps = new Set((_optScope || []).map(o => (o.promotion_category||'').trim()).filter(Boolean));
-    if (_pSel.camp !== '__all__' && !_optCamps.has(_pSel.camp)) state.promoFilter = '__all__';
+    // Region count per campaign in scope → detect a stale PLAIN multi-region value
+    // (e.g. 'Strategic Partner Program' = KOREA/NA) left in state.promoFilter that no
+    // longer maps to any per-region split option, which would desync the dropdown to
+    // "All promotions" while the data stayed scoped to that single campaign.
+    const _optCampRgns = {};
+    (_optScope || []).forEach(o => { const p=(o.promotion_category||'').trim(); if(!p) return;
+      (_optCampRgns[p] = _optCampRgns[p] || new Set()).add((o.region||'').trim()); });
+    const _plainMultiRgn = _pSel.camp !== '__all__' && !_pSel.region && ((_optCampRgns[_pSel.camp]||new Set()).size > 1);
+    if (_pSel.camp !== '__all__' && (!_optCamps.has(_pSel.camp) || _plainMultiRgn)) state.promoFilter = '__all__';
     if (filterSel) {
       filterSel.innerHTML = _promoRegionOptsFromOrders(_optScope, state.promoFilter, 'All promotions');
       filterSel.value = state.promoFilter;
     }
   }
-  const promoFilter = _pSel.camp || '__all__';   // camp part; the promo-split region is already folded into _ppRgn
+  // Re-derive from the (possibly reset) filter so KPI/data scope matches the dropdown.
+  const promoFilter = _promoSel(state.promoFilter || '__all__').camp || '__all__';
   // Scope the current-period order set to the selected promotion (if any).
   const fOrdersScoped = (promoFilter === '__all__')
     ? fOrdersST
@@ -7597,11 +7606,44 @@ async function renderPromoChart(fOrders, fMkt) {
       const _dSkuTag = _prvSkuN > 0
         ? `<span class="${_dSkuN>=0?'t-green':'t-red'}">${_dSkuN>=0?'▲':'▼'}${Math.abs(_dSkuN)} SKUs</span>`
         : '';
+      // ── MoM/QoQ: KPI cards are BUCKET-level — Current Total keeps the full
+      //    all-promotions period, but the "Total" card shows THIS month/quarter only
+      //    and Δ Change compares it to the immediately previous month/quarter.
+      //    YoY keeps the full-period (same-period-last-year) comparison. ──
+      const _bucketPer = cmpMode === 'qoq' ? 'quarter' : 'month';
+      const _curBk = periodKey(_todayStr(), _bucketPer);
+      const _prvBk = shiftBucket(_curBk, cmpMode, _bucketPer);
+      const _bkSum = {};
+      ((promoFilter === '__all__') ? fOrders : fOrdersScoped).forEach(o => {
+        const _p = (o.promotion_category||'').trim();
+        if (!_p || _p === '(none)') return;
+        const _st = promoStart[_p];
+        if (_st && o.order_date < _st) return;
+        if (typeof _beforeCountryStart === 'function' && _beforeCountryStart(o, _p)) return;
+        const _bk = periodKey(o.order_date, _bucketPer);
+        if (!_bk) return;
+        _bkSum[_bk] = (_bkSum[_bk] || 0) + convOrder(o);
+      });
+      const _curBkTotal = _bkSum[_curBk] || 0;
+      const _prvBkTotal = _bkSum[_prvBk] || 0;
+      const _dBk = _prvBkTotal > 0 ? ((_curBkTotal - _prvBkTotal) / _prvBkTotal) * 100 : null;
+      const _bkTag = _dBk == null
+        ? (_curBkTotal > 0 ? '<span class="t-green">▲ NEW</span>' : '<span class="t-muted">–</span>')
+        : _dBk >= 0 ? `<span class="t-green">▲ ${_dBk.toFixed(1)}%</span>` : `<span class="t-red">▼ ${Math.abs(_dBk).toFixed(1)}%</span>`;
+
       cmpKpiEl.style.display = 'grid';
-      cmpKpiEl.innerHTML =
-        card('Current Total', _skuSub(curTotal), subWindow) +
-        card(`${modeLabelKo} Total`, _prvSkuSub(priorTotal), subPrior) +
-        card('Δ Change', `${tag} ${_dSkuTag}`, `Current vs ${modeLabelKo}`);
+      if (cmpMode === 'mom' || cmpMode === 'qoq') {
+        const _unit = cmpMode === 'qoq' ? '분기' : '달';
+        cmpKpiEl.innerHTML =
+          card('Current Total', _skuSub(curTotal), subWindow) +
+          card(`${modeLabelKo} Total`, fmtMoney(_curBkTotal), `이번 ${_unit} · ${_fmt(_curBk)}`) +
+          card('Δ Change', _bkTag, `${_fmt(_curBk)} vs ${_fmt(_prvBk)} · 전${_unit} ${fmtMoney(_prvBkTotal)}`);
+      } else {
+        cmpKpiEl.innerHTML =
+          card('Current Total', _skuSub(curTotal), subWindow) +
+          card(`${modeLabelKo} Total`, _prvSkuSub(priorTotal), subPrior) +
+          card('Δ Change', `${tag} ${_dSkuTag}`, `Current vs ${modeLabelKo}`);
+      }
     }
     // ── For single-promotion compare view, switch the chart to a grouped BAR ──
     // Build a bar chart whose x-axis = the campaign's execution months and
