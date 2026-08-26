@@ -4288,10 +4288,11 @@ function renderAll() {
   document.getElementById('kpiBudgetSub').innerHTML = `${fMkt.length} activities · ${planUseEl} budget used`;
   document.getElementById('kpiOrder').textContent = fmtMoney(orderAmt);
   document.getElementById('kpiOrderSub').textContent = `${fmtNum(totalOrders)} orders · ${fmtNum(totalQty)} pcs · after campaign start`;
-  // Achievement = simple mean of each campaign's progress (set authoritatively by
-  // renderRegionExecSummary); show the last known value here for an instant paint.
+  // Achievement = overall order-target attainment Σorder ÷ Σtarget (set authoritatively
+  // by renderRegionExecSummary, matching the summary Grand-Total Progress); show the
+  // last known value here for an instant paint.
   document.getElementById('kpiAchv').textContent = (window._execMeanProgress != null) ? fmtPct(window._execMeanProgress) : '–';
-  document.getElementById('kpiAchvSub').textContent = 'avg campaign progress';
+  document.getElementById('kpiAchvSub').textContent = 'order ÷ target';
   document.getElementById('kpiRoi').textContent = mktCost>0 ? fmtPct(roi) : '–';
   document.getElementById('kpiRoiCard').classList.toggle('neg', roi<0);
 
@@ -6490,11 +6491,19 @@ function renderRegionExecSummary(fOrders, fMkt) {
     const t = _campAgg[p] || (_campAgg[p] = { order:0, target:0 });
     t.order += x.order; t.target += x.target;
   }));
-  const _progs = Object.values(_campAgg).filter(t => t.target > 0).map(t => t.order / t.target * 100);
-  const _meanProg = _progs.length ? _progs.reduce((s, v) => s + v, 0) / _progs.length : null;
-  window._execMeanProgress = _meanProg;
-  { const el = document.getElementById('kpiAchv'); if (el) el.textContent = _meanProg != null ? fmtPct(_meanProg) : '–';
-    const sub = document.getElementById('kpiAchvSub'); if (sub) sub.textContent = _progs.length ? `avg of ${_progs.length} campaigns' progress` : 'avg campaign progress'; }
+  // WEIGHTED overall = Σ(order) ÷ Σ(order target) across campaigns that have a target.
+  // This equals the summary Grand-Total Progress row (G.order ÷ G.target); a simple
+  // mean of per-campaign progress diverged from it (small-target campaigns skew a mean).
+  // Sum over the SAME campaign set as the summary Grand-Total row (order>0||cost>0||
+  // target>0), so achievement === Grand-Total Progress (G.order ÷ G.target) exactly.
+  const _campVals = Object.values(_campAgg);
+  const _totOrder = _campVals.reduce((s, t) => s + t.order, 0);   // = G.order
+  const _totTarget = _campVals.reduce((s, t) => s + t.target, 0); // = G.target
+  const _overallProg = _totTarget > 0 ? _totOrder / _totTarget * 100 : null;
+  const _nTgt = _campVals.filter(t => t.target > 0).length;
+  window._execMeanProgress = _overallProg;
+  { const el = document.getElementById('kpiAchv'); if (el) el.textContent = _overallProg != null ? fmtPct(_overallProg) : '–';
+    const sub = document.getElementById('kpiAchvSub'); if (sub) sub.textContent = _nTgt ? `order ÷ target · ${_nTgt} campaigns` : 'order ÷ target'; }
 
   // ── Note (minimal) ──
   const noteEl = document.getElementById('execSummaryNote');
