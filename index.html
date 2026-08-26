@@ -8186,9 +8186,10 @@ function renderPromoTable() {
   const fMkt=state.marketing.filter(matchMkt).filter(m=>isRegionVisible(m.region));
   const _allSummary=window._lastPromoSummary||[],_baAmt=window._lastBaAmt||{},cmpSeries=window._lastPromoCmpSeries||{};
   const _promoFilter=state.promoFilter||'__all__';
-  const _mktST={};
-  (state.marketing||[]).forEach(m=>{const p=(m.promotion_category||'').trim(),st=(m.sell_type||'').trim().toUpperCase().replace(/_/g,'-');if(!p||!st)return;const n=st==='SELL-IN'?'SELL-IN':st==='SELL-OUT'?'SELL-OUT':null;if(n&&!_mktST[p])_mktST[p]=n;});
-  const _cfg0=state.campaignTargetSkus||{};Object.keys(_cfg0).forEach(p=>{if(!_mktST[p])_mktST[p]=(_cfg0[p].match_by||'sku').toLowerCase()==='customer'?'SELL-OUT':'SELL-IN';});
+  // Classify by Program name (campSellType), NOT the marketing sell_type column
+  // (which no longer exists and defaulted every row to SELL_IN, so customer-based
+  // Sell-Out campaigns were wrongly grouped under SELL-IN).
+  const _mktST=new Proxy({},{get:(_,p)=>campSellType(String(p))});
   const summary=_allSummary.filter(p=>_promoFilter==='__all__'||(p.promotion||p.key||'')===_promoFilter);
   function shiftBucket(pk,mode,per){
     if(!pk)return'';if(per==='year')return String(parseInt(pk,10)-1);
@@ -8390,6 +8391,49 @@ function renderPromoTable() {
         });
       });
     }
+  // ── Split-only campaigns (SELL-OUT Promotion): ASIA / LATAM shown as SEPARATE
+  //    rows in this campaign-first table (distinct promotions sharing a name). The
+  //    campaign's summary entry + drill maps are partitioned by each country's region
+  //    into 'camp\u241fREGION' keys; buildRow/buildDrill then render '[REGION] camp'
+  //    with a region-scoped drill, both under the SELL-OUT subtotal. ──
+  {
+    const _ctryReg = {};
+    (state.orders||[]).forEach(o=>{
+      const ck = normalizeCountry(o.country||'') || (o.country||'').trim() || (o.region||'') || '\u2013';
+      const rg = normalizeRegion(o.region||'');
+      if (ck && rg && !_ctryReg[ck]) _ctryReg[ck] = rg;
+    });
+    summary.slice().forEach(s=>{
+      const promo = (s.promotion||s.key||'').trim();
+      if (!_SPLIT_ONLY_CAMPS.has(promo)) return;
+      const allC = new Set([...Object.keys(dd[promo]||{}), ...Object.keys(ddP[promo]||{}), ...Object.keys(ddM[promo]||{}), ...Object.keys(ddMC[promo]||{})]);
+      const byReg = {};
+      allC.forEach(c=>{ const rg = _ctryReg[c] || 'OTHER'; (byReg[rg]=byReg[rg]||[]).push(c); });
+      const regs = Object.keys(byReg);
+      if (regs.length <= 1) return;
+      const idx = summary.indexOf(s); if (idx>=0) summary.splice(idx,1);
+      regs.sort().forEach(rg=>{
+        const key = promo + '\u241f' + rg;
+        dd[key]={}; ddP[key]={}; ddM[key]={}; ddMC[key]={}; ddStart[key]={}; ddStartC[key]=ddStartC[promo]||{}; ddCustAll[key]=ddCustAll[promo]||{};
+        let ordN=0, curA=0, prvA=0, expT=0, actT=0, baStart='';
+        byReg[rg].forEach(c=>{
+          if(dd[promo] && dd[promo][c]){ dd[key][c]=dd[promo][c]; Object.values(dd[promo][c]).forEach(v=>{ordN+=v.orders||0; curA+=v.amt||0;}); }
+          if(ddP[promo] && ddP[promo][c]){ ddP[key][c]=ddP[promo][c]; Object.values(ddP[promo][c]).forEach(v=>{prvA+=v||0;}); }
+          if(ddM[promo] && ddM[promo][c]){ ddM[key][c]=ddM[promo][c]; expT+=ddM[promo][c].expected||0; actT+=ddM[promo][c].actual||0; }
+          if(ddMC[promo] && ddMC[promo][c]) ddMC[key][c]=ddMC[promo][c];
+          if(ddStart[promo] && ddStart[promo][c]){ ddStart[key][c]=ddStart[promo][c]; if(!baStart||ddStart[promo][c]<baStart) baStart=ddStart[promo][c]; }
+        });
+        _baAmt[key] = _baAmt[promo] || {};
+        summary.push(Object.assign({}, s, {
+          promotion:key, key:key, _region:rg, regionLabel:rg,
+          orders:ordN, afterAmt:curA, orderAmt:curA, beforeAmt:prvA,
+          expected:expT, actual:actT,
+          roi: actT>0 ? ((curA-actT)/actT)*100 : (s.roi!=null?s.roi:null),
+          baStart: baStart || s.baStart,
+        }));
+      });
+    });
+  }
   const rc={CIS:'#5856D6',MENA:'#FF9500',LATAM:'#34C759',ASIA:'#0A84FF',EUROPE:'#FF375F',NA:'#BF5AF2'};
   const rbadge=label=>{if(!label)return'';return label.split(',').map(r=>{const k=r.trim().toUpperCase(),c=rc[k]||'#86868B';return`<span style="display:inline-block;background:${c}18;color:${c};border:1px solid ${c}40;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;margin-left:4px;vertical-align:middle">${r.trim()}</span>`;}).join('');};
   const sbadge=st=>st==='SELL-IN'?'<span style="background:#C8102E;color:#fff;font-size:8px;padding:1px 5px;border-radius:8px;font-weight:700;vertical-align:middle;margin-left:4px">SELL-IN</span>':'<span style="background:#0A84FF;color:#fff;font-size:8px;padding:1px 5px;border-radius:8px;font-weight:700;vertical-align:middle;margin-left:4px">SELL-OUT</span>';
@@ -8413,7 +8457,9 @@ function renderPromoTable() {
   };
   const buildRow=p=>{
     const promo=p.promotion||p.key||'';
-    const st=_mktST[promo]||'SELL-IN',ba=_baAmt[promo]||{};
+    const _rsi=promo.indexOf('\u241f');
+    const _disp=_rsi>=0?('['+promo.slice(_rsi+1)+'] '+promo.slice(0,_rsi)):promo;
+    const st=campSellType(promo),ba=_baAmt[promo]||{};
     const aA=p.afterAmt||p.orderAmt||0,pA=p.beforeAmt||0;
     const d=pA>0?((aA-pA)/pA*100):null;
     const dTag2=d==null?'<span class="muted">–</span>':d>=0?`<span class="t-green">▲${d.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(d).toFixed(1)}%</span>`;
@@ -8424,7 +8470,7 @@ function renderPromoTable() {
     const ptag=_notStarted
       ? `<span class="muted" style="font-size:9px;margin-left:6px;vertical-align:middle">${from} 시작 예정</span>`
       : (from?`<span class="muted" style="font-size:9px;margin-left:6px;vertical-align:middle">${from}${to&&to!==from?' ~ '+to:''}</span>`:'');
-    return`<tr class="promo-main-row" data-promo="${promo.replace(/"/g,'&quot;')}" style="cursor:pointer" onclick="togglePromoDrill(this,'${promo.replace(/'/g,"\'")}')"><td><span style="color:#86868B;font-size:11px;margin-right:4px" class="promo-drill-arrow">▶</span><b>${promo||'–'}</b>${sbadge(st)}${rbadge(p.regionLabel)}${(()=>{const _RGN=new Set(['CIS','MENA','LATAM','ASIA','NA','EUROPE','OCEANIA','KOREA','ASIA_PACIFIC','MIDDLE_EAST','N_AMERICA']);const _cn=ddM[promo]?Object.keys(ddM[promo]).filter(c=>c&&c!=='–'&&!_RGN.has(c.toUpperCase().replace(/ /g,'_'))).length:0;return _cn>0?`<span style="display:inline-block;background:#86868B14;color:#636366;border:1px solid #86868B33;font-size:9px;font-weight:600;padding:1px 6px;border-radius:6px;margin-left:4px;vertical-align:middle" title="캠페인 참여(마케팅 집행) 국가 수">🌐 ${_cn}개국</span>`:'';})()}${ptag}${p.baStart?`<br><span class="muted" style="font-size:10px;padding-left:16px">from ${p.baStart}</span>`:''}</td><td class="text-right mono">${fmtNum(p.orders)}</td><td class="text-right mono t-green" style="font-weight:700">${fmtMoney(aA)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted">${pA>0?fmtMoney(pA):'–'}</td>`:''}<td class="text-right mono">${dTag2}</td><td class="text-right mono muted" style="border-left:1px solid var(--border)">–</td><td class="text-right mono muted">–</td><td class="text-right mono t-yellow" style="border-left:1px solid var(--border)">${fmtMoney(p.expected||0)}</td><td class="text-right mono t-orange">${fmtMoney(p.actual||0)}</td><td class="text-right mono ${rCls}" style="font-weight:700">${roi}</td></tr>${buildDrill(promo)}`;
+    return`<tr class="promo-main-row" data-promo="${promo.replace(/"/g,'&quot;')}" style="cursor:pointer" onclick="togglePromoDrill(this,'${promo.replace(/'/g,"\'")}')"><td><span style="color:#86868B;font-size:11px;margin-right:4px" class="promo-drill-arrow">▶</span><b>${_disp||'–'}</b>${sbadge(st)}${rbadge(p.regionLabel)}${(()=>{const _RGN=new Set(['CIS','MENA','LATAM','ASIA','NA','EUROPE','OCEANIA','KOREA','ASIA_PACIFIC','MIDDLE_EAST','N_AMERICA']);const _cn=ddM[promo]?Object.keys(ddM[promo]).filter(c=>c&&c!=='–'&&!_RGN.has(c.toUpperCase().replace(/ /g,'_'))).length:0;return _cn>0?`<span style="display:inline-block;background:#86868B14;color:#636366;border:1px solid #86868B33;font-size:9px;font-weight:600;padding:1px 6px;border-radius:6px;margin-left:4px;vertical-align:middle" title="캠페인 참여(마케팅 집행) 국가 수">🌐 ${_cn}개국</span>`:'';})()}${ptag}${p.baStart?`<br><span class="muted" style="font-size:10px;padding-left:16px">from ${p.baStart}</span>`:''}</td><td class="text-right mono">${fmtNum(p.orders)}</td><td class="text-right mono t-green" style="font-weight:700">${fmtMoney(aA)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted">${pA>0?fmtMoney(pA):'–'}</td>`:''}<td class="text-right mono">${dTag2}</td><td class="text-right mono muted" style="border-left:1px solid var(--border)">–</td><td class="text-right mono muted">–</td><td class="text-right mono t-yellow" style="border-left:1px solid var(--border)">${fmtMoney(p.expected||0)}</td><td class="text-right mono t-orange">${fmtMoney(p.actual||0)}</td><td class="text-right mono ${rCls}" style="font-weight:700">${roi}</td></tr>${buildDrill(promo)}`;
   };
   const subRow=(label,rows,color,dedupPrv)=>{
     const tot=rows.reduce((s,p)=>s+(p.afterAmt||p.orderAmt||0),0);
@@ -8435,8 +8481,8 @@ function renderPromoTable() {
     const exp=rows.reduce((s,p)=>s+(p.expected||0),0),act=rows.reduce((s,p)=>s+(p.actual||0),0);
     return`<tr style="background:${color};font-weight:700;border-top:1px solid var(--border)"><td style="padding-left:8px;font-size:12px"><b>${label}</b><span class="muted" style="font-size:10px;margin-left:6px">${rows.length}개 캠페인</span></td><td class="text-right mono">${fmtNum(rows.reduce((s,p)=>s+(p.orders||0),0))}</td><td class="text-right mono t-green" style="font-weight:800">${fmtMoney(tot)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted">${prv>0?fmtMoney(prv):'–'}</td>`:''}<td class="text-right mono">${dt}</td><td class="text-right mono muted" style="border-left:1px solid var(--border)">–</td><td class="text-right mono muted">–</td><td class="text-right mono t-yellow" style="border-left:1px solid var(--border)">${fmtMoney(exp)}</td><td class="text-right mono t-orange">${fmtMoney(act)}</td><td class="text-right mono">${act>0?fmtPct(((tot-act)/act)*100):'–'}</td></tr>`;
   };
-  const siS=summary.filter(p=>(_mktST[p.promotion||p.key||'']||'SELL-IN')==='SELL-IN');
-  const soS=summary.filter(p=>(_mktST[p.promotion||p.key||'']||'SELL-IN')==='SELL-OUT');
+  const siS=summary.filter(p=>campSellType(p.promotion||p.key||'')==='SELL-IN');
+  const soS=summary.filter(p=>campSellType(p.promotion||p.key||'')==='SELL-OUT');
   const allS=[...siS,...soS];
   const gT=allS.reduce((s,p)=>s+(p.afterAmt||p.orderAmt||0),0),gP=(window._baBeforeDedup&&typeof window._baBeforeDedup.grand==='number')?window._baBeforeDedup.grand:allS.reduce((s,p)=>s+(p.beforeAmt||0),0);
   const gd=gP>0?((gT-gP)/gP*100):null,gdTag=gd==null?'–':gd>=0?`<span class="t-green">▲${gd.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(gd).toFixed(1)}%</span>`;
@@ -8444,7 +8490,7 @@ function renderPromoTable() {
   const colCmp=_cmpMode!=='off'?`<th class="text-right">CK 전년</th>`:'';
   const head=`<thead><tr><th>PROMOTION</th><th class="text-right">CK ORDERS</th><th class="text-right">CK ORDER AMT</th>${colCmp}<th class="text-right">CK Δ%</th><th class="text-right" style="border-left:1px solid var(--border)">전체거래 ('25→'26)</th><th class="text-right">전체 YoY</th><th class="text-right" style="border-left:1px solid var(--border)">MKT BUDGET</th><th class="text-right">EXECUTED</th><th class="text-right">Marketing ROI</th></tr></thead>`;
   let body='<tbody>';
-  const _grpKinds=(arr)=>{const cfgm=state.campaignTargetSkus||{};let hasSku=false,hasCust=false;arr.forEach(p=>{const nm=p.promotion||p.key||'';const mb=((cfgm[nm]||{}).match_by||'sku').toLowerCase();if(mb==='customer')hasCust=true;else hasSku=true;});const parts=[];if(hasSku)parts.push('SKU-based');if(hasCust)parts.push('Customer-based');return parts.join(' · ');};
+  const _grpKinds=(arr)=>{const cfgm=state.campaignTargetSkus||{};let hasSku=false,hasCust=false;arr.forEach(p=>{const nm=(p.promotion||p.key||'').split('\u241f')[0];const mb=((cfgm[nm]||{}).match_by||'sku').toLowerCase();if(mb==='customer')hasCust=true;else hasSku=true;});const parts=[];if(hasSku)parts.push('SKU-based');if(hasCust)parts.push('Customer-based');return parts.join(' · ');};
   if(siS.length){body+=`<tr style="background:rgba(200,16,46,0.04)"><td colspan="${_cmpMode!=='off'?10:9}" style="padding:6px 10px;font-size:11px;font-weight:700;color:#C8102E;letter-spacing:0.05em">📦 SELL-IN · ${_grpKinds(siS)}</td></tr>`;body+=siS.map(buildRow).join('');body+=subRow('📦 SELL-IN Subtotal',siS,'rgba(200,16,46,0.06)',(window._baBeforeDedup?window._baBeforeDedup.SELL_IN:undefined));}
   if(soS.length){body+=`<tr style="background:rgba(10,132,255,0.04)"><td colspan="${_cmpMode!=='off'?10:9}" style="padding:6px 10px;font-size:11px;font-weight:700;color:#0A84FF;letter-spacing:0.05em">🤝 SELL-OUT · ${_grpKinds(soS)}</td></tr>`;body+=soS.map(buildRow).join('');body+=subRow('🤝 SELL-OUT Subtotal',soS,'rgba(10,132,255,0.06)',(window._baBeforeDedup?window._baBeforeDedup.SELL_OUT:undefined));}
   body+=`<tr style="background:rgba(0,0,0,0.06);font-weight:800;border-top:2px solid var(--border)"><td style="font-size:13px"><b>🏆 CHOICE KIT Total</b></td><td class="text-right mono">${fmtNum(allS.reduce((s,p)=>s+(p.orders||0),0))}</td><td class="text-right mono t-green" style="font-size:14px;font-weight:900">${fmtMoney(gT)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted" style="font-size:13px">${gP>0?fmtMoney(gP):'–'}</td>`:''}<td class="text-right mono" style="font-size:12px">${gdTag}</td><td class="text-right mono muted" style="border-left:1px solid var(--border)">–</td><td class="text-right mono muted">–</td><td class="text-right mono t-yellow" style="border-left:1px solid var(--border)">${fmtMoney(gE)}</td><td class="text-right mono t-orange">${fmtMoney(gA)}</td><td class="text-right mono">${gA>0?fmtPct(((gT-gA)/gA)*100):'–'}</td></tr></tbody>`;
@@ -9156,6 +9202,11 @@ function _promoOptsHTML(keys, curValue, allLabel){
 // (e.g. SELL-OUT Promotion: ASIA and LATAM are different promotions). These get NO
 // combined "all regions" option — only per-region entries.
 const _SPLIT_ONLY_CAMPS = new Set(['SELL-OUT Promotion', 'Sell-Out Promotion', 'Trade promotion']);
+// Canonical SELL-IN / SELL-OUT classification used across the WHOLE dashboard: a
+// campaign is SELL-OUT iff its Program name is a Sell-Out Promotion (matches the
+// Region x Campaign summary's rule). Strips any 'camp␟REGION' region-split suffix.
+const _SELLOUT_CAMP_NAMES = new Set(['Trade promotion', 'Sell-Out Promotion', 'SELL-OUT Promotion']);
+const campSellType = p => _SELLOUT_CAMP_NAMES.has(String(p||'').split('\u241f')[0].trim()) ? 'SELL-OUT' : 'SELL-IN';
 function _promoRegionOptsFromOrders(ppO, cur, allLabel, allowCamps){
   const pairs = {};
   (ppO||[]).forEach(o => { const p=(o.promotion_category||'').trim(); if(!p) return;
