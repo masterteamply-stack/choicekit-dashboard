@@ -6258,15 +6258,32 @@ function renderRegionExecSummary(fOrders, fMkt) {
       uu[field] += amt;
     };
 
-    // This-year period order (campaign tag + match + start gate + country-start gate)
+    // This-year period order — gated to MATCH Promotion Performance / KPI section
+    // (the single source of truth = baAmt.after / _afterByPromo). Use the campaign's
+    // GLOBAL start (_gStarted → _gAll) and cap at TODAY, NOT the campaign end date:
+    // capping at the end date dropped post-end orders (e.g. Mexico Worldcup) and the
+    // per-region start dropped a few pre-region-start orders (e.g. SELL-OUT), making
+    // the Campaign Period Order total diverge from #promo / KPI. The per-region
+    // STARTED date is still shown in the Start column (node.start = startFor(r,p));
+    // it no longer gates the order sum.
+    // Effective campaign start = the SAME basis Promotion Performance uses for
+    // promoStart: global STARTED (→ _gAll fallback), floored at 2026-01-02, with the
+    // same explicit per-campaign overrides. Using an identical start guarantees the
+    // order set (and thus the Campaign Period Order total) equals #promo / KPI even
+    // if future data lands in the floor/override gap.
+    const _EXPSTART = { 'CTR MarketFit Campaign':'2026-03-01', 'Asian vehicle':'2026-03-01', 'European vehicle':'2026-03-01', 'Korean & Japanese vehicles':'2026-08-01' };
+    const _campStart = p => {
+      if (_EXPSTART[p]) return _EXPSTART[p];
+      const s = _gStarted[p] || _gAll[p] || '';
+      return (s && s < '2026-01-02') ? '2026-01-02' : s;
+    };
     (fOrders || []).forEach(o => {
       const p = (o.promotion_category || o.promotion_id || '').trim();
       if (_skipCamp(p)) return;
       const r = o.region || ''; if (!r) return;
-      const st = startFor(r, p);
-      if (st && (o.order_date || '') < st) return;
-      const _en = promoEnd[p]; const _hi = (_en && _en < today) ? _en : today;
-      if ((o.order_date || '') > _hi) return;   // cap Period Order at the campaign end date
+      const gst = _campStart(p);
+      if (gst && (o.order_date || '') < gst) return;
+      if ((o.order_date || '') > today) return;   // cap at today (campaign impact runs to date)
       if (_beforeCountryStart(o, p)) return;
       if (!campMatch(o, p)) return;
       const amt = convOrder(o);
