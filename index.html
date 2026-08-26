@@ -7035,15 +7035,11 @@ async function renderPromoChart(fOrders, fMkt) {
   const filterSel = document.getElementById('promoFilterSel');
   {
     const _optCamps = new Set((_optScope || []).map(o => (o.promotion_category||'').trim()).filter(Boolean));
-    // Region count per campaign in scope → detect a stale PLAIN multi-region value
-    // (e.g. 'Strategic Partner Program' = KOREA/NA) left in state.promoFilter that no
-    // longer maps to any per-region split option, which would desync the dropdown to
-    // "All promotions" while the data stayed scoped to that single campaign.
-    const _optCampRgns = {};
-    (_optScope || []).forEach(o => { const p=(o.promotion_category||'').trim(); if(!p) return;
-      (_optCampRgns[p] = _optCampRgns[p] || new Set()).add((o.region||'').trim()); });
-    const _plainMultiRgn = _pSel.camp !== '__all__' && !_pSel.region && ((_optCampRgns[_pSel.camp]||new Set()).size > 1);
-    if (_pSel.camp !== '__all__' && (!_optCamps.has(_pSel.camp) || _plainMultiRgn)) state.promoFilter = '__all__';
+    // Reset only when the selected campaign is entirely absent from the current scope.
+    // A plain multi-region value is a valid "all regions" combined option (see
+    // _promoRegionOptsFromOrders), so it is honored — deep links (?campaign=) and
+    // persisted whole-campaign selections scope the widget across all their regions.
+    if (_pSel.camp !== '__all__' && !_optCamps.has(_pSel.camp)) state.promoFilter = '__all__';
     if (filterSel) {
       filterSel.innerHTML = _promoRegionOptsFromOrders(_optScope, state.promoFilter, 'All promotions');
       filterSel.value = state.promoFilter;
@@ -9104,8 +9100,13 @@ function _promoRegionOptsFromOrders(ppO, cur, allLabel, allowCamps){
   let h = `<option value="__all__"${c==='__all__'?' selected':''}>${allLabel||'All promotions'}</option>`;
   Object.keys(pairs).sort().forEach(p => {
     const regs = Array.from(pairs[p]).filter(Boolean).sort();
-    if (regs.length > 1) regs.forEach(r => { const v = p + _RSPLIT + r;
-      h += `<option value="${q(v)}"${c===v?' selected':''}>[${r}] ${q(p)}</option>`; });
+    if (regs.length > 1) {
+      // Combined "all regions" entry (plain value) first — represents the whole
+      // campaign across its regions — then one entry per region.
+      h += `<option value="${q(p)}"${c===p?' selected':''}>${q(campLabel(p))}</option>`;
+      regs.forEach(r => { const v = p + _RSPLIT + r;
+        h += `<option value="${q(v)}"${c===v?' selected':''}>[${r}] ${q(p)}</option>`; });
+    }
     else { const r0 = regs[0];
       h += `<option value="${q(p)}"${c===p?' selected':''}>${r0 ? '['+q(r0)+'] '+q(p) : q(campLabel(p))}</option>`; }
   });
