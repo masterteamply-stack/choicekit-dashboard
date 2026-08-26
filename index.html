@@ -8427,11 +8427,17 @@ function renderPromoTable() {
   //    with a region-scoped drill, both under the SELL-OUT subtotal. ──
   {
     const _ctryReg = {};
-    (state.orders||[]).forEach(o=>{
-      const ck = normalizeCountry(o.country||'') || (o.country||'').trim() || (o.region||'') || '\u2013';
-      const rg = normalizeRegion(o.region||'');
+    // Build country → region from BOTH orders AND marketing: a country may appear in
+    // a split campaign only via marketing/prior-year (0 current orders) — e.g. SELL-OUT
+    // Promotion Vietnam/Malaysia — so an orders-only map would leave it region-less and
+    // dump it into an 'OTHER' bucket. Use the same country key as the drill maps.
+    const _addReg = (rawC, rawR) => {
+      const ck = normalizeCountry(rawC||'') || String(rawC||'').trim() || String(rawR||'') || '\u2013';
+      const rg = normalizeRegion(rawR||'');
       if (ck && rg && !_ctryReg[ck]) _ctryReg[ck] = rg;
-    });
+    };
+    (state.orders||[]).forEach(o=>_addReg(o.country, o.region));
+    (state.marketing||[]).forEach(m=>_addReg(m.country, m.region));
     summary.slice().forEach(s=>{
       const promo = (s.promotion||s.key||'').trim();
       if (!_SPLIT_ONLY_CAMPS.has(promo)) return;
