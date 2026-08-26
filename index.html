@@ -5747,15 +5747,16 @@ function renderTopInsights(fOrders) {
       // 1순위: orders.make_model (DB/CSV 직접값)
       const raw = (o['make_model'] || '').trim();
       if (raw) return raw;
-      // 2순위: CTR 매핑 테이블 (sku → make_model)
-      const ctr = (o['sku'] || o['order_id'] || '').trim();
+      // 2순위: CTR 매핑 테이블 (sku/CTR Code → make_model)
+      const ctr = (o['sku'] || o['ctr_code'] || o['CTR Code'] || o['order_id'] || '').trim();
       if (ctr) { const m = resolveModel(ctr, 'full'); if (m) return m; }
-      // 3순위: product fallback
-      return (o['product'] || '').trim() || '(unspecified)';
+      // 실제 차종이 없으면 제외 (product로 폴백하지 않음 — Vehicle Model 차원엔 차종만)
+      return '';
     }
     const v = o[key];
     if (v && String(v).trim()) return String(v).trim();
-    return '(unspecified)';
+    // 값 없음(예: product 미지정) → 집계에서 제외 (아래에서 빈 키 skip)
+    return '';
   };
   const labelMap = { model:'Vehicle Model', product:'Product', ctr:'CTR Code' };
   const colorMap = { model:'#0A0A0A', product:'#A1A1A6', ctr:'#757575' };
@@ -5820,12 +5821,17 @@ function renderTopInsights(fOrders) {
   const agg = {};
   scoped.forEach(o => {
     const k = valKey(o, primaryKey, dim);
-    agg[k] = agg[k] || { key:k, qty:0, amount:0, orders:0, regions:new Set(), countries:new Set() };
+    if (!k) return;   // 값 없음(미매칭/미지정) → 표시하지 않음
+    agg[k] = agg[k] || { key:k, qty:0, amount:0, orders:0, regions:new Set(), countries:new Set(), ctr:{} };
     agg[k].qty += Number(o.qty)||0;
     agg[k].amount += convOrder(o);
     agg[k].orders += 1;
     if (o.region) agg[k].regions.add(o.region);
     if (o.country) agg[k].countries.add(o.country);
+    // 품번(CTR Code)별 드릴다운 집계
+    const _cc = (o['CTR Code'] || o.ctr_code || o.sku || '').trim();
+    if (_cc) { const e = agg[k].ctr[_cc] || (agg[k].ctr[_cc] = { ctr:_cc, qty:0, amount:0, orders:0, product:(o.product||'').trim(), model:(o.make_model||'').trim() });
+      e.qty += Number(o.qty)||0; e.amount += convOrder(o); e.orders += 1; }
   });
   const rows = Object.values(agg)
     .sort((a,b) => metric==='qty' ? b.qty-a.qty : b.amount-a.amount)
@@ -5872,18 +5878,41 @@ function renderTopInsights(fOrders) {
         <th class="text-right">REGIONS</th><th class="text-right">COUNTRIES</th>
         <th class="text-right">ORDERS</th><th class="text-right">QTY</th><th class="text-right">AMOUNT</th>
       </tr></thead>
-      <tbody>${rows.map((r,i)=>`<tr>
-        <td class="mono muted">${i+1}</td>
+      <tbody>${rows.map((r,i)=>{
+        const _canDrill = (dim==='product'||dim==='model');
+        const _cr = _canDrill ? Object.values(r.ctr||{}).sort((a,b)=>metric==='qty'?b.qty-a.qty:b.amount-a.amount).slice(0,10) : [];
+        const _drill = _cr.map(c=>`<tr class="ti-drill" data-tii="${i}" style="display:none;background:rgba(0,0,0,0.022)">
+          <td></td>
+          <td style="padding-left:22px;font-size:11px"><span style="color:var(--blue)">└</span> <b class="mono">${c.ctr}</b>${(dim==='model'&&c.product)?`<span class="muted" style="font-size:10px;margin-left:6px">${c.product}</span>`:((dim==='product'&&c.model)?`<span class="muted" style="font-size:10px;margin-left:6px">${c.model}</span>`:'')}</td>
+          <td class="text-right mono muted" style="font-size:11px">–</td>
+          <td class="text-right mono muted" style="font-size:11px">–</td>
+          <td class="text-right mono" style="font-size:11px">${fmtNum(c.orders)}</td>
+          <td class="text-right mono ${metric==='qty'?'t-blue':''}" style="font-size:11px">${fmtNum(c.qty)}</td>
+          <td class="text-right mono ${metric==='amount'?'t-green':''}" style="font-size:11px">${fmtMoney(c.amount)}</td>
+        </tr>`).join('');
+        return `<tr class="ti-main" data-tii="${i}" ${_canDrill&&_cr.length?`style="cursor:pointer" onclick="toggleTopInsightDrill(this)"`:''}>
+        <td class="mono muted">${_canDrill&&_cr.length?'<span class="ti-arrow" style="color:#86868B;margin-right:3px">▶</span>':''}${i+1}</td>
         <td><b>${r.key}</b></td>
         <td class="text-right mono">${r.regions.size}</td>
         <td class="text-right mono">${r.countries.size}</td>
         <td class="text-right mono">${fmtNum(r.orders)}</td>
         <td class="text-right mono ${metric==='qty'?'t-blue':''}">${fmtNum(r.qty)}</td>
         <td class="text-right mono ${metric==='amount'?'t-green':''}">${fmtMoney(r.amount)}</td>
-      </tr>`).join('') || '<tr><td colspan="7" class="muted" style="text-align:center;padding:12px">No data</td></tr>'}</tbody>`;
+      </tr>${_drill}`;}).join('') || '<tr><td colspan="7" class="muted" style="text-align:center;padding:12px">No data</td></tr>'}</tbody>`;
   }
 }
 
+
+// Top Insights drill-down: expand a Vehicle Model / Product row to its CTR Codes (품번).
+window.toggleTopInsightDrill = function(row){
+  const tbl = row.closest('table'); const idx = row.dataset.tii; if(!tbl || idx==null) return;
+  const drills = tbl.querySelectorAll('.ti-drill[data-tii="'+idx+'"]');
+  const arrow = row.querySelector('.ti-arrow');
+  const open = row.dataset.open === '1';
+  drills.forEach(r=>{ r.style.display = open ? 'none' : ''; });
+  row.dataset.open = open ? '0' : '1';
+  if (arrow) arrow.textContent = open ? '▶' : '▼';
+};
 
 /* Promotion Category × Top CTR Sales — dim/metric/filter switching */
 function renderPromoCtrChart(fOrders) {
