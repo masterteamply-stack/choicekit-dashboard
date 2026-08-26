@@ -6244,6 +6244,19 @@ function renderRegionExecSummary(fOrders, fMkt) {
     const rc = normalizeCountry(country || '') || String(country || '').trim().toUpperCase();
     return ac.includes(rc);
   };
+  // Canonical country KEY for the drill-down so one customer's orders never scatter
+  // across '(Unknown)' / 'KOREA' / '한국'. Orders are parsed with normalizeCountry(),
+  // which returns '' for region-named countries like KOREA — so a Korea customer's
+  // current orders would land in '(Unknown)' while the raw-country baseline lands in
+  // 'KOREA'. Prefer the normalized English country; if empty, use the raw value; if
+  // still empty (blank or region-named), fall back to the region.
+  const _ctryKey = (rawCountry, region) => {
+    const nc = normalizeCountry(rawCountry || '');
+    if (nc) return nc;
+    const raw = String(rawCountry || '').trim();
+    if (raw) return raw;
+    return normalizeRegion(region || '') || '(Unknown)';
+  };
 
   const baselineOn = !!state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length > 0;
 
@@ -6301,7 +6314,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
       const amt = convOrder(o);
       const node = ensure(r, p);
       node.order += amt;
-      bucket(node, o.country, o.customer, amt, 'order');
+      bucket(node, _ctryKey(o.country, r), o.customer, amt, 'order');
     });
 
     // Marketing executed cost (region × campaign), also bucketed by country
@@ -6312,7 +6325,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
       const node = ensure(r, p);
       const cost = convMktActual(m);
       node.cost += cost;
-      const ctry = (m.country || '').trim() || '(Unknown)';
+      const ctry = _ctryKey(m.country, r);
       const cc = node.countries[ctry] || (node.countries[ctry] = { order:0, prev:0, cost:0, target:0, customers:{} });
       cc.cost += cost;
     });
@@ -6367,7 +6380,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
         if (agg[r] && agg[r][p]) {
           const amt = convOrder(o);
           agg[r][p].prev += amt;
-          bucket(agg[r][p], o.country, o.customer, amt, 'prev');
+          bucket(agg[r][p], _ctryKey(o.country, r), o.customer, amt, 'prev');
         }
       });
     }
@@ -6379,7 +6392,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
       const r = m.region || '', p = m.promotion_category || '', d = m.date || m.execution_date || '', c = m.country || '', cust = m.target_customer || m.customer || '';
       const dk = `${r}|||${p}|||${d}|||${c}|||${cust}|||${t}`;
       if (_seenT.has(dk)) return; _seenT.add(dk);
-      const rk = `${r}|||${p}|||${(c || '').trim() || '(Unknown)'}`;
+      const rk = `${r}|||${p}|||${_ctryKey(c, r)}`;
       _tgtByRPC[rk] = (_tgtByRPC[rk] || 0) + t;
     });
     Object.keys(agg).forEach(r => Object.keys(agg[r]).forEach(p => {
