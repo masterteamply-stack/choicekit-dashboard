@@ -6232,6 +6232,18 @@ function renderRegionExecSummary(fOrders, fMkt) {
     return true;
   };
   const _skipCamp = p => !p || p === 'OTHER' || p === '(none)' || p === '(unspecified)' || p === 'PRE_ORDER';
+  // Country gate for the drill-down: for SKU campaigns that specify target_countries,
+  // ONLY the target countries are attributed/shown. Non-target countries and blank/
+  // '(Unknown)' are excluded (strict — a blank country can't be confirmed as target).
+  const _ctryAllowedExec = (country, camp) => {
+    const cc = cfg[camp];
+    if (!cc || (cc.match_by || 'sku').toLowerCase() !== 'sku') return true;
+    const tcs = cc.target_countries;
+    if (!tcs || !tcs.length) return true;
+    const ac = tcs.map(x => normalizeCountry(x) || String(x).trim().toUpperCase());
+    const rc = normalizeCountry(country || '') || String(country || '').trim().toUpperCase();
+    return ac.includes(rc);
+  };
 
   const baselineOn = !!state.preOrdersEnabled && Array.isArray(state.preOrders) && state.preOrders.length > 0;
 
@@ -6346,6 +6358,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
       (state.preOrders || []).forEach(o => {
         const p = resolveBaselineCamp(o);
         if (_skipCamp(p) || !p) return;
+        if (!_ctryAllowedExec(o.country, p)) return;   // exclude non-target countries from prior-year too
         const r = normalizeRegion(o.region || ''); if (!r) return;
         const st = startFor(r, p); if (!st) return;
         const en = promoEnd[p]; const hi = (en && en < today) ? en : today;
@@ -6500,7 +6513,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
         <td class="text-right mono">${romiCell(c.order, c.cost)}</td>
       </tr>`;
       if (!cOpen) return;
-      const countries = Object.entries(c.countries || {}).map(([k, v]) => ({ country:k, ...v })).sort((a, b) => b.order - a.order);
+      const countries = Object.entries(c.countries || {}).map(([k, v]) => ({ country:k, ...v })).filter(cd => _ctryAllowedExec(cd.country, c.camp)).sort((a, b) => b.order - a.order);
       if (!countries.length) {
         body += `<tr><td style="padding-left:40px" class="muted" colspan="8">No country detail</td></tr>`;
       }
