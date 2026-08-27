@@ -6367,12 +6367,27 @@ function renderRegionExecSummary(fOrders, fMkt) {
     // otherwise SELL-IN. The campaign's total Order_Target goes to Sell-out Target when the
     // campaign is SELL-OUT, otherwise to Order Target. (No BOTH; a region can still show both
     // columns when it contains a mix of SELL-IN and SELL-OUT campaigns.)
-    Object.keys(derived.byRegionPromo || {}).forEach(key => {
+    // Sell-out MISSION target: SELL-OUT campaigns measure Progress against the dedicated
+    // SELL-OUT Target($) column (so the Progress bar is the sell-out mission attainment, not
+    // 'No target'); if that column is blank, fall back to the campaign's Order_Target($).
+    const _soTgtByRP = {}; const _soSeen = new Set();
+    (fMkt || []).forEach(m => {
+      const p = (m.promotion_category || '').trim(); if (!p || sellTypeOf(p) !== 'SELL-OUT') return;
+      const v = Number(String(m.sellout_target_note || '').replace(/[^0-9.]/g, '')) || 0; if (!(v > 0)) return;
+      const r = m.region || '', d = m.date || m.execution_date || '', c = m.country || '', cust = m.target_customer || m.customer || '';
+      const k = `${r}|||${p}|||${d}|||${c}|||${cust}|||${v}`; if (_soSeen.has(k)) return; _soSeen.add(k);
+      _soTgtByRP[r + '|||' + p] = (_soTgtByRP[r + '|||' + p] || 0) + v;
+    });
+    const _tgtKeys = new Set([...Object.keys(derived.byRegionPromo || {}), ...Object.keys(_soTgtByRP)]);
+    _tgtKeys.forEach(key => {
       const sep = key.indexOf('|||'); if (sep < 0) return;
       const r = normalizeRegion(key.slice(0, sep)) || key.slice(0, sep), p = key.slice(sep + 3);
       if (_skipCamp(p) || !r) return;
-      const t = Number(derived.byRegionPromo[key] || 0) * usdToDisp;
-      if (t > 0) { const n = ensure(r, p); n.target += t; if (sellTypeOf(p) === 'SELL-OUT') n.otOut += t; else n.otIn += t; }
+      const isSO = sellTypeOf(p) === 'SELL-OUT';
+      const _ordT = Number(derived.byRegionPromo[key] || 0);
+      const _soT = Number(_soTgtByRP[key] || 0);
+      const t = (isSO ? (_soT > 0 ? _soT : _ordT) : _ordT) * usdToDisp;   // SELL-OUT → Sell-out Target first
+      if (t > 0) { const n = ensure(r, p); n.target += t; if (isSO) n.otOut += t; else n.otIn += t; }
     });
 
     // Prior-year same period (baseline / pre_orders) — window shifted −1yr, incl. country/customer.
