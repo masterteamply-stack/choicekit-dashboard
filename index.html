@@ -5382,7 +5382,13 @@ function renderQuarterly(fOrders) {
   const spanTxt = hasQ3 ? `${q3min} ~ ${q3max}` : '부분 분기';
 
   const note = document.getElementById('quarterlyNote');
-  if (note) note.innerHTML = `${(state.preOrders&&state.preOrders.length)?'📊 <b>전년(2025) 비교</b>는 <b>동일 고객 기준</b>(올해 주문 고객의 작년 동기 실적)으로 스코프했습니다. &nbsp;·&nbsp; ':'ℹ️ <b>전년(2025) 분기 비교</b>는 상단 <b>Load pre-orders</b> 로드 시 막대그래프·테이블에 표시됩니다. &nbsp;·&nbsp; '}⚠️ <b>Q3 to date</b>는 ${hasQ3?`<b>${q3min}~${q3max}</b> 기준의 `:''}<b>부분 분기</b> 실적입니다. 단순 QoQ 비교보다는 <b>초기 오더 속도(order velocity) 확인 지표</b>로 해석해야 합니다. &nbsp;·&nbsp; 분기마다 <b>활성 캠페인이 다르므로</b>(아래 <b>Active Campaigns</b> 행 참고), QoQ 증감에는 신규 캠페인 진입 효과가 섞여 있습니다.`;
+  if (note) {
+    // Verbose Q3-to-date / QoQ / active-campaigns explainer removed per request.
+    // Keep only a short, actionable hint when the prior-year baseline isn't loaded.
+    const _hasPre = state.preOrders && state.preOrders.length;
+    note.innerHTML = _hasPre ? '' : 'ℹ️ <b>전년(2025) 분기 비교</b>는 상단 <b>Load pre-orders</b> 로드 시 막대그래프·테이블에 표시됩니다.';
+    note.style.display = note.innerHTML ? '' : 'none';
+  }
 
   // ── comparison table (metrics as rows, quarters as columns) ──
   const tbl = document.getElementById('tblQuarterly');
