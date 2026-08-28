@@ -1,4 +1,33 @@
 {
+  "CTR MarketFit Campaign": {
+    "match_by": "customer",
+    "region": "LATAM",
+    "target_customers": [
+      "ARIAS MOTOR",
+      "AUTOMOVIL SUPPLY",
+      "CLUTCHES DE GUATEMALA",
+      "COJAPAN",
+      "CORVEN S.A.C.I.F.",
+      "CyM Auto Parts",
+      "GC IMP",
+      "HIVIMAR S.A.",
+      "IMPORTACIONES SOL DE KOBE S.A.",
+      "IMPORTADORAS ASOCIADAS",
+      "J.A. VASQUEZ",
+      "MARK'S AUTO SPARE",
+      "NORIEGA S.A.C.",
+      "R24 AUTOMOTIVE",
+      "REFAX PERU",
+      "RENUSA",
+      "RP INTERNATIONAL GROUP INC",
+      "SABANA AUTO PARTS S.A.",
+      "SANKAR'S AUTOWORKS",
+      "SUPER REPUESTOS",
+      "Super Repuestos Honduras S.A.",
+      "Super Repuestos Honduras S.A. de C.V.",
+      "UNIVERSAL DE REPUESTOS"
+    ]
+  },
   "SELL-OUT Promotion": {
     "match_by": "customer",
     "region": [
@@ -2615,12 +2644,6 @@
     "target_countries": [
       "VIETNAM"
     ]
-  },
-  "CTR MarketFit Campaign": {
-    "match_by": "sku",
-    "region": "LATAM",
-    "target_skus": [],
-    "target_customers": []
   },
   "Portfolio Expansion Program": {
     "match_by": "customer",
