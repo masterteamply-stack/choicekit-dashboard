@@ -6619,11 +6619,11 @@ function renderRegionExecSummary(fOrders, fMkt) {
   const THEAD = `<thead><tr>
     <th style="min-width:300px">Region ▸ Campaign ▸ Country ▸ Customer</th>
     <th class="text-right" title="Σ Order_Target($) of SELL-IN activities">Order Target</th>
-    <th class="text-right" title="SELL-OUT Target → Result(실적) · 달성률. marketing.csv SELL-OUT Target($)/Result($)" style="color:var(--accent)">Sell-out Target → 실적</th>
     <th class="text-right" title="orders during the campaign period (start → today)">Campaign Period Order</th>
     <th class="text-right" title="orders in the same period last year (baseline)">Prior-Yr Same Period</th>
     <th class="text-right" title="vs same period last year">YoY Growth</th>
     <th style="min-width:120px" title="Campaign Period Order ÷ Order Target">Progress</th>
+    <th class="text-right" title="SELL-OUT Target → Result(실적) · 달성률. marketing.csv SELL-OUT Target($)/Result($)" style="color:var(--accent)">Sell-out Target → 실적</th>
     <th class="text-right" title="(Order − Marketing Cost) ÷ Marketing Cost">ROMI</th>
   </tr></thead>`;
 
@@ -6636,11 +6636,11 @@ function renderRegionExecSummary(fOrders, fMkt) {
     body += `<tr data-exec-key="${rKey}" style="cursor:pointer;background:var(--surface-2);border-top:2px solid var(--border)">
       <td>${statusBtn(R.status)} ${caret(rOpen)}<b style="font-size:13px">${R.region}</b> <span style="margin-left:6px">${ribbon}</span></td>
       <td class="text-right mono t-purple" style="font-weight:700">${R.otIn > 0 ? fmtMoney(R.otIn) : '–'}</td>
-      <td class="text-right mono" style="font-weight:700;color:var(--accent)">${_soCell(R.otOut, R.soResult)}</td>
       <td class="text-right mono t-green" style="font-weight:800">${fmtMoney(R.order)}</td>
       <td class="text-right mono muted">${baselineOn && R.prev > 0 ? fmtMoney(R.prev) : '–'}</td>
       <td class="text-right mono">${yoyCell(R.order, R.prev)}</td>
       <td>${progCell(R.order, R.target)}</td>
+      <td class="text-right mono" style="font-weight:700;color:var(--accent)">${_soCell(R.otOut, R.soResult)}</td>
       <td class="text-right mono">${romiCell(R.order, R.cost)}</td>
     </tr>`;
     if (!rOpen) return;
@@ -6656,11 +6656,11 @@ function renderRegionExecSummary(fOrders, fMkt) {
       body += `<tr data-exec-key="${cKey}" style="cursor:pointer;${isSO ? 'background:var(--surface-2)' : ''}">
         <td style="padding-left:18px;${isSO ? 'border-left:3px solid var(--accent)' : ''}">${caret(cOpen)}<b>${c.camp}</b> <span style="margin-left:6px">${sellBadge(c.sell)} ${badge('📅 ' + (c.start || '–') + (c.end ? ' → ' + c.end : ''))}${c.end && c.end < today ? ` <span class="badge-tag" style="font-size:9px;padding:1px 6px;height:auto;line-height:1.6;color:#0a7d2e;border-color:#0a7d2e;background:var(--good-soft);font-weight:700">✓ DONE</span>` : ''}</span></td>
         <td class="text-right mono">${c.otIn > 0 ? fmtMoney(c.otIn) : '–'}</td>
-        <td class="text-right mono" style="color:var(--accent)">${_soCell(c.otOut, c.soResult)}${c.soNote ? ` <span title="SELL-OUT Target: ${String(c.soNote).replace(/\"/g,'&quot;')}" style="cursor:help;color:var(--accent);font-weight:700">ⓢ</span>` : ''}</td>
         <td class="text-right mono t-green">${fmtMoney(c.order)}</td>
         <td class="text-right mono muted">${baselineOn && c.prev > 0 ? fmtMoney(c.prev) : '–'}</td>
         <td class="text-right mono">${yoyCell(c.order, c.prev)}</td>
         <td>${progCell(c.order, c.target)}</td>
+        <td class="text-right mono" style="color:var(--accent)">${_soCell(c.otOut, c.soResult)}${c.soNote ? ` <span title="SELL-OUT Target: ${String(c.soNote).replace(/\"/g,'&quot;')}" style="cursor:help;color:var(--accent);font-weight:700">ⓢ</span>` : ''}</td>
         <td class="text-right mono">${romiCell(c.order, c.cost)}</td>
       </tr>`;
       if (!cOpen) return;
@@ -6674,11 +6674,11 @@ function renderRegionExecSummary(fOrders, fMkt) {
         body += `<tr data-exec-key="${kKey}" style="cursor:pointer;background:var(--surface)">
           <td style="padding-left:40px">${caret(kOpen)}🌐 ${cd.country} <span class="muted" style="font-size:10px">· ${nCust} cust</span></td>
           <td class="text-right mono t-purple">${(c.sell !== 'SELL-OUT' && cd.target > 0) ? fmtMoney(cd.target) : '–'}</td>
-          <td class="text-right mono" style="color:var(--accent)">${(c.sell === 'SELL-OUT' && cd.target > 0) ? fmtMoney(cd.target) : '–'}</td>
           <td class="text-right mono t-green">${fmtMoney(cd.order)}</td>
           <td class="text-right mono muted">${baselineOn && cd.prev > 0 ? fmtMoney(cd.prev) : '–'}</td>
           <td class="text-right mono">${yoyCell(cd.order, cd.prev)}</td>
           <td>${progCell(cd.order, cd.target)}</td>
+          <td class="text-right mono" style="color:var(--accent)">${(c.sell === 'SELL-OUT' && cd.target > 0) ? fmtMoney(cd.target) : '–'}</td>
           <td class="text-right mono">${romiCell(cd.order, cd.cost)}</td>
         </tr>`;
         if (!kOpen) return;
@@ -6689,11 +6689,11 @@ function renderRegionExecSummary(fOrders, fMkt) {
           body += `<tr style="background:var(--surface)">
             <td style="padding-left:64px" class="muted"><span style="margin-right:5px">•</span>${u.cust}</td>
             <td class="text-right mono t-purple">${(c.sell !== 'SELL-OUT' && _ut > 0) ? fmtMoney(_ut) : '–'}</td>
-            <td class="text-right mono" style="color:var(--accent)">${(c.sell === 'SELL-OUT' && _ut > 0) ? fmtMoney(_ut) : '–'}</td>
             <td class="text-right mono t-green">${fmtMoney(u.order)}</td>
             <td class="text-right mono muted">${baselineOn && u.prev > 0 ? fmtMoney(u.prev) : '–'}</td>
             <td class="text-right mono">${yoyCell(u.order, u.prev)}</td>
             <td>${progCell(u.order, _ut)}</td>
+            <td class="text-right mono" style="color:var(--accent)">${(c.sell === 'SELL-OUT' && _ut > 0) ? fmtMoney(_ut) : '–'}</td>
             <td class="text-right mono">${romiCell(u.order, _uc)}</td>
           </tr>`;
         });
@@ -6703,11 +6703,11 @@ function renderRegionExecSummary(fOrders, fMkt) {
   body += `<tr style="border-top:2px solid var(--border);font-weight:800">
     <td>TOTAL <span class="muted" style="font-size:11px;font-weight:500">· ${regionList.length} regions</span> ${badge('💰 ' + fmtMoneyShort(G.cost))}</td>
     <td class="text-right mono t-purple">${G.otIn > 0 ? fmtMoney(G.otIn) : '–'}</td>
-    <td class="text-right mono" style="color:var(--accent)">${_soCell(G.otOut, G.soResult)}</td>
     <td class="text-right mono t-green">${fmtMoney(G.order)}</td>
     <td class="text-right mono muted">${baselineOn && G.prev > 0 ? fmtMoney(G.prev) : '–'}</td>
     <td class="text-right mono">${yoyCell(G.order, G.prev)}</td>
     <td>${progCell(G.order, G.target)}</td>
+    <td class="text-right mono" style="color:var(--accent)">${_soCell(G.otOut, G.soResult)}</td>
     <td class="text-right mono">${romiCell(G.order, G.cost)}</td>
   </tr>`;
   tbl.innerHTML = THEAD + `<tbody>${body || '<tr><td colspan="8" class="muted" style="text-align:center;padding:16px">No data</td></tr>'}</tbody>`;
