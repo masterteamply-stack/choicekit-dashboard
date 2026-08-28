@@ -184,38 +184,9 @@
       "TAJIKISTAN"
     ]
   },
-  "Mexico Worldcup Promotion": {
+  "Mexico Awakening Campaign": {
     "match_by": "sku",
     "region": "LATAM",
-    "target_skus": [
-      "CQ0096L",
-      "CQ0096R",
-      "GV0130",
-      "CL0240",
-      "GV0131",
-      "GV0135",
-      "CB0161",
-      "CQ0280L",
-      "CQ0280R",
-      "CL0477",
-      "CR0490",
-      "CE0536L",
-      "CE0536R",
-      "CB0336"
-    ],
-    "target_customers": [
-      "REFATRIX"
-    ],
-    "target_countries": [
-      "MEXICO"
-    ]
-  },
-  "Mexico Awakening Campaign": {
-    "match_by": "customer",
-    "region": "LATAM",
-    "target_customers": [
-      "REFATRIX"
-    ],
     "target_skus": []
   },
   "European vehicle": {
@@ -2646,34 +2617,7 @@
   "CTR MarketFit Campaign": {
     "match_by": "sku",
     "region": "LATAM",
-    "target_skus": [
-      "CB0331",
-      "CE0507",
-      "CE0508",
-      "CL0477",
-      "CQ0273L",
-      "CQ0273R",
-      "CR0476",
-      "GV1043",
-      "PL0477",
-      "CB0418",
-      "CE0787R",
-      "CE0787L",
-      "CQ0312R",
-      "CQ0312L",
-      "PL0586",
-      "CL0586",
-      "GV0497",
-      "GV1091",
-      "GV1048R",
-      "GV1048L",
-      "CB0459",
-      "CB0450",
-      "CE0909L",
-      "CE0909R",
-      "GV1447",
-      "GY1758G"
-    ],
+    "target_skus": [],
     "target_customers": []
   },
   "Portfolio Expansion Program": {

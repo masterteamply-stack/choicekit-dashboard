@@ -6390,7 +6390,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
     // same explicit per-campaign overrides. Using an identical start guarantees the
     // order set (and thus the Campaign Period Order total) equals #promo / KPI even
     // if future data lands in the floor/override gap.
-    const _EXPSTART = { 'CTR MarketFit Campaign':'2026-03-01', 'Asian vehicle':'2026-03-01', 'European vehicle':'2026-03-01', 'Korean & Japanese vehicles':'2026-08-01' };
+    const _EXPSTART = { 'CTR MarketFit Campaign':'2026-02-11', 'Asian vehicle':'2026-03-01', 'European vehicle':'2026-03-01', 'Korean & Japanese vehicles':'2026-08-01' };
     const _campStart = p => {
       if (_EXPSTART[p]) return _EXPSTART[p];
       const s = _gStarted[p] || _gAll[p] || '';
