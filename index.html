@@ -5449,28 +5449,41 @@ function renderQuarterly(fOrders) {
   if (c1) {
     const data = rows.map(r => metric==='amount' ? r.amt : r.qty);
     const dataPrev = rows.map(r => metric==='amount' ? r.prevAmt : r.prevQty);
-    const _lblFull = v => metric==='amount' ? fmtMoney(v) : fmtNum(v);
+    // per-bar values by year (2025 uses prev*, 2026 uses current)
+    const _mVals = ctx => { const r=rows[ctx.dataIndex]||{}; const is25=ctx.dataset.label==='2025';
+      return { amt: is25?(r.prevAmt||0):(r.amt||0), qty: is25?(r.prevQty||0):(r.qty||0), items: is25?(r.prevSku||0):(r.sku||0) }; };
+    const _mColor = ctx => ctx.dataset.label==='2026' ? 'rgba(74,125,255,1)' : '#8e8e93';
     charts.quarterAmt = new Chart(c1, {
       type: 'bar',
       data: { labels, datasets: [
+        // 2025 first (left), then 2026
+        ...(hasPrev ? [{ label: '2025',
+          data: dataPrev, backgroundColor: 'rgba(142,142,147,.5)',
+          borderColor: 'rgba(142,142,147,1)', borderWidth: 0,
+          borderRadius: 6, borderSkipped: false }] : []),
         { label: '2026',
           data, backgroundColor: rows.map((r,i)=> r.q==='Q3' ? 'rgba(74,125,255,.45)' : 'rgba(74,125,255,.85)'),
           borderColor: 'rgba(74,125,255,1)', borderWidth: rows.map(r=> r.q==='Q3'?1.5:0),
           borderRadius: 6, borderSkipped: false },
-        ...(hasPrev ? [{ label: '2025 (전년)',
-          data: dataPrev, backgroundColor: 'rgba(142,142,147,.5)',
-          borderColor: 'rgba(142,142,147,1)', borderWidth: 0,
-          borderRadius: 6, borderSkipped: false }] : []),
       ]},
       options: { responsive:true, maintainAspectRatio:false,
-        layout:{ padding:{ top: 26 } },
-        plugins:{ legend:{display:hasPrev, position:'bottom'},
-          title:{display:true, text: (metric==='amount'?'Quarterly Order Amount':'Quarterly Order Qty')+(hasPrev?' — 2026 vs 2025':''), font:{size:12}},
-          datalabels:{ display:true, anchor:'end', align:'end', offset:1, clamp:true, rotation:0,
-            color: ctx => ctx.datasetIndex===0 ? 'rgba(74,125,255,1)' : '#8e8e93',
-            font:{ size:9, weight:'700' }, formatter: v => (v>0 ? _lblFull(v) : '') },
-          tooltip:{ callbacks:{ label: ctx => (ctx.dataset.label||'')+': '+(metric==='amount' ? fmtMoney(ctx.parsed.y) : fmtNum(ctx.parsed.y)+' qty') } } },
-        scales:{ y:{ beginAtZero:true, ticks:{ callback: v => metric==='amount' ? fmtMoneyShort(v) : fmtNum(v) } } } }
+        layout:{ padding:{ top: 42, bottom: 4 } },
+        plugins:{ legend:{display:false},
+          title:{display:true, text: (metric==='amount'?'Quarterly Order Amount':'Quarterly Order Qty')+(hasPrev?' — 2025 vs 2026':''), font:{size:12}},
+          datalabels:{ display:true, labels: {
+            // amount + qty(PCS) + 품목수 on top of each bar
+            metrics: { anchor:'end', align:'end', offset:3, clamp:true, textAlign:'center',
+              color:_mColor, font:{ size:8, weight:'700', lineHeight:1.15 },
+              formatter: (v,ctx)=> { const m=_mVals(ctx); if(!(m.amt>0||m.qty>0)) return '';
+                return fmtMoney(m.amt)+'\n'+fmtNum(m.qty)+' PCS · '+fmtNum(m.items)+'품목'; } },
+            // year label under each bar
+            year: { anchor:'start', align:'bottom', offset:3, clamp:false,
+              color:_mColor, font:{ size:10, weight:'800' },
+              formatter: (v,ctx)=> { const m=_mVals(ctx); return (m.amt>0||m.qty>0) ? ctx.dataset.label : ''; } }
+          } },
+          tooltip:{ callbacks:{ label: ctx => { const m=_mVals(ctx); return ctx.dataset.label+': '+fmtMoney(m.amt)+' · '+fmtNum(m.qty)+' PCS · '+fmtNum(m.items)+'품목'; } } } },
+        scales:{ y:{ beginAtZero:true, ticks:{ callback: v => metric==='amount' ? fmtMoneyShort(v) : fmtNum(v) } },
+                 x:{ ticks:{ font:{ weight:'700' } } } } }
     });
   }
   if (charts.quarterExpand) charts.quarterExpand.destroy();
