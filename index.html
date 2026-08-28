@@ -6405,6 +6405,9 @@ function renderRegionExecSummary(fOrders, fMkt) {
       if ((o.order_date || '') > today) return;   // cap at today (campaign impact runs to date)
       if (_beforeCountryStart(o, p)) return;
       if (!campMatch(o, p)) return;
+      // SELL-OUT campaigns: the exec row tracks the campaign's SELL-IN order impact,
+      // so count SELL-IN orders only (SELL-OUT is shown via Sell-out Target -> Result).
+      if (sellTypeOf(p) === 'SELL-OUT' && String(o.sell_type || '').toUpperCase().replace(/_/g, '-') !== 'SELL-IN') return;
       const amt = convOrder(o);
       const node = ensure(r, p);
       node.order += amt;
@@ -6468,7 +6471,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
           if (_ordT > 0) n.otIn += _ordT * usdToDisp;                 // set up SELL-IN order target
           if (_soT > 0) n.otOut += _soT * usdToDisp;                  // SELL-OUT target only (no SELL-IN fallback into otOut)
           if (_soR > 0) n.soResult += _soR;
-          n.target += (_soT > 0 ? _soT : _ordT) * usdToDisp;          // progress denominator
+          n.target += _ordT * usdToDisp;                              // progress vs SELL-IN order target
         }
       } else {
         const t = _ordT * usdToDisp;
