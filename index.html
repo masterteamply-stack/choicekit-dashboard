@@ -5347,13 +5347,34 @@ function renderQuarterly(fOrders) {
     if (q === 'Q3') { if (d < q3min) q3min = d; if (d > q3max) q3max = d; }
   });
   const val = (q, mtr) => (mtr==='amount' ? agg[q].amt : agg[q].qty);
+  // ── prior-year (2025) same quarters, from the loaded baseline (state.preOrders) ──
+  // Scope prior-year to the SAME customer base as the current (2026) tracked orders, so
+  // the YoY isn't distorted by comparing the campaign-scoped current view against the full
+  // baseline (matches how the dashboard scopes baseline YoY by customer membership).
+  const _norm = s => String(s||'').trim().toLowerCase();
+  const _curCusts = new Set();
+  (fOrders||[]).forEach(o => { const d=o.order_date||''; if(d.startsWith('2026')){ const c=_norm(o.customer); if(c) _curCusts.add(c); } });
+  const aggPrev = {}; QORDER.forEach(q => aggPrev[q] = { amt:0, qty:0, cust:new Set(), sku:new Set() });
+  (state.preOrders || []).forEach(o => {
+    const d = o.order_date || ''; if (!d.startsWith('2025')) return;
+    if (_curCusts.size && !_curCusts.has(_norm(o.customer))) return;   // same tracked customers only
+    const q = qOf(d); if (!aggPrev[q]) return;
+    aggPrev[q].amt += convOrder(o); aggPrev[q].qty += num(o.qty);
+    const cu = str(o.customer); if (cu) aggPrev[q].cust.add(cu);
+    const sk = str(o.sku); if (sk) aggPrev[q].sku.add(sk);
+  });
+  const valPrev = (q, mtr) => (mtr==='amount' ? aggPrev[q].amt : aggPrev[q].qty);
+  const hasPrev = QORDER.some(q => aggPrev[q].amt > 0 || aggPrev[q].qty > 0);
   const rows = QORDER.map((q,i) => {
     const a = agg[q], nc = a.cust.size;
     const prev = i>0 ? val(QORDER[i-1], metric) : null;
     const cur = val(q, metric);
     const prevCamps = i>0 ? agg[QORDER[i-1]].camps : new Set();
     const camps = Array.from(a.camps).sort();
+    const pv = valPrev(q, metric);
     return { q, label: q==='Q3'?'Q3 to date':q, amt:a.amt, qty:a.qty, cust:nc, sku:a.sku.size,
+             prevAmt:aggPrev[q].amt, prevQty:aggPrev[q].qty, prevCust:aggPrev[q].cust.size, prevSku:aggPrev[q].sku.size,
+             yoy: (pv>0) ? (cur/pv-1)*100 : null,
              avg: nc ? a.amt/nc : 0, qoq: (prev && prev>0) ? (cur/prev-1)*100 : null,
              camps, newCamps: camps.filter(c => !prevCamps.has(c)) };
   });
@@ -5361,7 +5382,7 @@ function renderQuarterly(fOrders) {
   const spanTxt = hasQ3 ? `${q3min} ~ ${q3max}` : '부분 분기';
 
   const note = document.getElementById('quarterlyNote');
-  if (note) note.innerHTML = `⚠️ <b>Q3 to date</b>는 ${hasQ3?`<b>${q3min}~${q3max}</b> 기준의 `:''}<b>부분 분기</b> 실적입니다. 단순 QoQ 비교보다는 <b>초기 오더 속도(order velocity) 확인 지표</b>로 해석해야 합니다. &nbsp;·&nbsp; 분기마다 <b>활성 캠페인이 다르므로</b>(아래 <b>Active Campaigns</b> 행 참고), QoQ 증감에는 신규 캠페인 진입 효과가 섞여 있습니다.`;
+  if (note) note.innerHTML = `${(state.preOrders&&state.preOrders.length)?'📊 <b>전년(2025) 비교</b>는 <b>동일 고객 기준</b>(올해 주문 고객의 작년 동기 실적)으로 스코프했습니다. &nbsp;·&nbsp; ':'ℹ️ <b>전년(2025) 분기 비교</b>는 상단 <b>Load pre-orders</b> 로드 시 막대그래프·테이블에 표시됩니다. &nbsp;·&nbsp; '}⚠️ <b>Q3 to date</b>는 ${hasQ3?`<b>${q3min}~${q3max}</b> 기준의 `:''}<b>부분 분기</b> 실적입니다. 단순 QoQ 비교보다는 <b>초기 오더 속도(order velocity) 확인 지표</b>로 해석해야 합니다. &nbsp;·&nbsp; 분기마다 <b>활성 캠페인이 다르므로</b>(아래 <b>Active Campaigns</b> 행 참고), QoQ 증감에는 신규 캠페인 진입 효과가 섞여 있습니다.`;
 
   // ── comparison table (metrics as rows, quarters as columns) ──
   const tbl = document.getElementById('tblQuarterly');
@@ -5376,9 +5397,15 @@ function renderQuarterly(fOrders) {
       }).join(' ');
       return `<div style="font-weight:600;margin-bottom:3px">${r.camps.length} active</div><div style="text-align:left;white-space:normal">${chips}</div>`;
     };
+    const _pyCell = (getPrev, fmt) => r => hasPrev ? `<span class="muted">${fmt(getPrev(r))}</span>` : '<span class="muted">–</span>';
+    const _yoyCell = (getCur, getPrev) => r => { const pv=getPrev(r); return pv>0 ? `<span class="${getCur(r)>=pv?'t-green':'t-red'}">${getCur(r)>=pv?'+':''}${((getCur(r)/pv-1)*100).toFixed(1)}%</span>` : '<span class="muted">–</span>'; };
     const metricRows = [
-      ['Order Amount', r => `<span class="t-green">${fmtMoney(r.amt)}</span>`],
-      ['Order Qty', r => fmtNum(r.qty)],
+      ['Order Amount <span class="muted" style="font-weight:400">· 2026</span>', r => `<span class="t-green">${fmtMoney(r.amt)}</span>`],
+      ['<span style="opacity:.65;font-weight:500">└ 전년(2025)</span>', _pyCell(r=>r.prevAmt, fmtMoney)],
+      ['<span style="opacity:.65;font-weight:500">└ YoY</span>', _yoyCell(r=>r.amt, r=>r.prevAmt)],
+      ['Order Qty <span class="muted" style="font-weight:400">· 2026</span>', r => fmtNum(r.qty)],
+      ['<span style="opacity:.65;font-weight:500">└ 전년(2025)</span>', _pyCell(r=>r.prevQty, fmtNum)],
+      ['<span style="opacity:.65;font-weight:500">└ YoY</span>', _yoyCell(r=>r.qty, r=>r.prevQty)],
       ['Ordering Customers', r => fmtNum(r.cust)],
       ['SKU Items', r => fmtNum(r.sku)],
       ['Avg. Order Amount / Customer', r => fmtMoney(r.avg)],
@@ -5415,17 +5442,28 @@ function renderQuarterly(fOrders) {
   const c1 = document.getElementById('chQuarterAmt');
   if (c1) {
     const data = rows.map(r => metric==='amount' ? r.amt : r.qty);
+    const dataPrev = rows.map(r => metric==='amount' ? r.prevAmt : r.prevQty);
+    const _lblFull = v => metric==='amount' ? fmtMoney(v) : fmtNum(v);
     charts.quarterAmt = new Chart(c1, {
       type: 'bar',
-      data: { labels, datasets: [{
-        label: metric==='amount' ? `Order Amount (${money})` : 'Order Qty',
-        data, backgroundColor: rows.map((r,i)=> r.q==='Q3' ? 'rgba(74,125,255,.45)' : 'rgba(74,125,255,.85)'),
-        borderColor: 'rgba(74,125,255,1)', borderWidth: rows.map(r=> r.q==='Q3'?1.5:0),
-        borderRadius: 6, borderSkipped: false,
-      }]},
+      data: { labels, datasets: [
+        { label: '2026',
+          data, backgroundColor: rows.map((r,i)=> r.q==='Q3' ? 'rgba(74,125,255,.45)' : 'rgba(74,125,255,.85)'),
+          borderColor: 'rgba(74,125,255,1)', borderWidth: rows.map(r=> r.q==='Q3'?1.5:0),
+          borderRadius: 6, borderSkipped: false },
+        ...(hasPrev ? [{ label: '2025 (전년)',
+          data: dataPrev, backgroundColor: 'rgba(142,142,147,.5)',
+          borderColor: 'rgba(142,142,147,1)', borderWidth: 0,
+          borderRadius: 6, borderSkipped: false }] : []),
+      ]},
       options: { responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{display:false}, title:{display:true, text: metric==='amount'?'Quarterly Order Amount':'Quarterly Order Qty', font:{size:12}},
-          tooltip:{ callbacks:{ label: ctx => metric==='amount' ? ' '+fmtMoney(ctx.parsed.y) : ' '+fmtNum(ctx.parsed.y)+' qty' } } },
+        layout:{ padding:{ top: 26 } },
+        plugins:{ legend:{display:hasPrev, position:'bottom'},
+          title:{display:true, text: (metric==='amount'?'Quarterly Order Amount':'Quarterly Order Qty')+(hasPrev?' — 2026 vs 2025':''), font:{size:12}},
+          datalabels:{ display:true, anchor:'end', align:'end', offset:1, clamp:true, rotation:0,
+            color: ctx => ctx.datasetIndex===0 ? 'rgba(74,125,255,1)' : '#8e8e93',
+            font:{ size:9, weight:'700' }, formatter: v => (v>0 ? _lblFull(v) : '') },
+          tooltip:{ callbacks:{ label: ctx => (ctx.dataset.label||'')+': '+(metric==='amount' ? fmtMoney(ctx.parsed.y) : fmtNum(ctx.parsed.y)+' qty') } } },
         scales:{ y:{ beginAtZero:true, ticks:{ callback: v => metric==='amount' ? fmtMoneyShort(v) : fmtNum(v) } } } }
     });
   }
