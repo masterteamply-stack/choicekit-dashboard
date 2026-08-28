@@ -3370,6 +3370,7 @@ async function parseMarketingCSV(file) {
           date: str(pick(r,'Start.date','m.date','execution_date','date')),
           end_date: str(pick(r,'end.date','end_date','end')).slice(0,10),
           sellout_target_note: str(pick(r,'SELL-OUT Target($)','sell_out_target','sellout_target')),
+          sellout_result: str(pick(r,'SELL-OUT Result($)','sell_out_result','sellout_result')),
           region: resolveRegion(pick(r,'region'), pick(r,'country'), str(pick(r,'Start.date','m.date','execution_date','date'))),
           country: normalizeCountry(pick(r,'country')),
           promotion_category: promCat || '(unspecified)',
@@ -6365,7 +6366,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
     agg = {};
     const ensure = (r, p) => {
       agg[r] = agg[r] || {};
-      if (!agg[r][p]) agg[r][p] = { order:0, cost:0, target:0, otIn:0, otOut:0, prev:0, start:startFor(r, p), end:promoEnd[p] || '', sell:sellTypeOf(p), soNote:_soNote[p] || '', countries:{} };
+      if (!agg[r][p]) agg[r][p] = { order:0, cost:0, target:0, otIn:0, otOut:0, soResult:0, prev:0, start:startFor(r, p), end:promoEnd[p] || '', sell:sellTypeOf(p), soNote:_soNote[p] || '', countries:{} };
       return agg[r][p];
     };
     const bucket = (node, country, cust, amt, field) => {
@@ -6441,7 +6442,16 @@ function renderRegionExecSummary(fOrders, fMkt) {
       const k = `${r}|||${p}|||${d}|||${c}|||${cust}|||${v}`; if (_soSeen.has(k)) return; _soSeen.add(k);
       _soTgtByRP[r + '|||' + p] = (_soTgtByRP[r + '|||' + p] || 0) + v;
     });
-    const _tgtKeys = new Set([...Object.keys(derived.byRegionPromo || {}), ...Object.keys(_soTgtByRP)]);
+    // SELL-OUT Result($) — actual sell-out attained (marketing.csv), summed per region|campaign
+    const _soResByRP = {}; const _soResSeen = new Set();
+    (fMkt || []).forEach(m => {
+      const p = (m.promotion_category || '').trim(); if (!p || sellTypeOf(p) !== 'SELL-OUT') return;
+      const v = Number(String(m.sellout_result || '').replace(/[^0-9.]/g, '')) || 0; if (!(v > 0)) return;
+      const r = m.region || '', d = m.date || m.execution_date || '', c = m.country || '', cust = m.target_customer || m.customer || '';
+      const k = `${r}|||${p}|||${d}|||${c}|||${cust}|||${v}`; if (_soResSeen.has(k)) return; _soResSeen.add(k);
+      _soResByRP[r + '|||' + p] = (_soResByRP[r + '|||' + p] || 0) + v;
+    });
+    const _tgtKeys = new Set([...Object.keys(derived.byRegionPromo || {}), ...Object.keys(_soTgtByRP), ...Object.keys(_soResByRP)]);
     _tgtKeys.forEach(key => {
       const sep = key.indexOf('|||'); if (sep < 0) return;
       const r = normalizeRegion(key.slice(0, sep)) || key.slice(0, sep), p = key.slice(sep + 3);
@@ -6450,7 +6460,8 @@ function renderRegionExecSummary(fOrders, fMkt) {
       const _ordT = Number(derived.byRegionPromo[key] || 0);
       const _soT = Number(_soTgtByRP[key] || 0);
       const t = (isSO ? (_soT > 0 ? _soT : _ordT) : _ordT) * usdToDisp;   // SELL-OUT → Sell-out Target first
-      if (t > 0) { const n = ensure(r, p); n.target += t; if (isSO) n.otOut += t; else n.otIn += t; }
+      const _soR = (Number(_soResByRP[key] || 0)) * usdToDisp;
+      if (t > 0 || (isSO && _soR > 0)) { const n = ensure(r, p); if (t > 0) { n.target += t; if (isSO) n.otOut += t; else n.otIn += t; } if (isSO && _soR > 0) n.soResult += _soR; }
     });
 
     // Prior-year same period (baseline / pre_orders) — window shifted −1yr, incl. country/customer.
@@ -6548,7 +6559,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
       .filter(p => { const x = agg[region][p]; return x.order > 0 || x.cost > 0 || x.target > 0; })
       .map(p => ({ camp:p, ...agg[region][p] }))
       .sort((a, b) => b.order - a.order);
-    const R = camps.reduce((s, c) => { s.order += c.order; s.cost += c.cost; s.target += c.target; s.prev += c.prev; s.otIn += (c.otIn||0); s.otOut += (c.otOut||0); return s; }, { order:0, cost:0, target:0, prev:0, otIn:0, otOut:0 });
+    const R = camps.reduce((s, c) => { s.order += c.order; s.cost += c.cost; s.target += c.target; s.prev += c.prev; s.otIn += (c.otIn||0); s.otOut += (c.otOut||0); s.soResult += (c.soResult||0); return s; }, { order:0, cost:0, target:0, prev:0, otIn:0, otOut:0, soResult:0 });
     let nin = 0, nout = 0; camps.forEach(c => c.sell === 'SELL-IN' ? nin++ : nout++);
     return { region, camps, ...R, nin, nout, status: statusOf(R.order, R.target, R.cost) };
   }).filter(r => r.camps.length > 0);
@@ -6594,10 +6605,21 @@ function renderRegionExecSummary(fOrders, fMkt) {
   // ── Table (collapsible tree) ──
   const tbl = document.getElementById('tblRegionExecSummary');
   if (!tbl) return;
+  // SELL-OUT Target → Result(실적) with 달성률. res from marketing.csv SELL-OUT Result($).
+  const _soCell = (tgt, res) => {
+    if (!(tgt > 0) && !(res > 0)) return '–';
+    let out = tgt > 0 ? fmtMoney(tgt) : '–';
+    if (res > 0) {
+      const pct = tgt > 0 ? Math.round(res / tgt * 100) : null;
+      const col = (pct == null) ? 'var(--accent)' : (pct >= 100 ? '#0a7d2e' : (pct >= 60 ? 'var(--accent)' : '#c026d3'));
+      out += ` <span style="color:var(--text-3)">→</span> <b style="color:${col}">${fmtMoney(res)}</b>${pct != null ? ` <span style="font-size:10px;color:${col}">(${pct}%)</span>` : ''}`;
+    }
+    return out;
+  };
   const THEAD = `<thead><tr>
     <th style="min-width:300px">Region ▸ Campaign ▸ Country ▸ Customer</th>
     <th class="text-right" title="Σ Order_Target($) of SELL-IN activities">Order Target</th>
-    <th class="text-right" title="Σ Order_Target($) of SELL-OUT activities" style="color:var(--accent)">Sell-out Target</th>
+    <th class="text-right" title="SELL-OUT Target → Result(실적) · 달성률. marketing.csv SELL-OUT Target($)/Result($)" style="color:var(--accent)">Sell-out Target → 실적</th>
     <th class="text-right" title="orders during the campaign period (start → today)">Campaign Period Order</th>
     <th class="text-right" title="orders in the same period last year (baseline)">Prior-Yr Same Period</th>
     <th class="text-right" title="vs same period last year">YoY Growth</th>
@@ -6606,15 +6628,15 @@ function renderRegionExecSummary(fOrders, fMkt) {
   </tr></thead>`;
 
   let body = '';
-  const G = { order:0, cost:0, target:0, prev:0, otIn:0, otOut:0 };
+  const G = { order:0, cost:0, target:0, prev:0, otIn:0, otOut:0, soResult:0 };
   regionList.forEach(R => {
-    G.order += R.order; G.cost += R.cost; G.target += R.target; G.prev += R.prev; G.otIn += R.otIn; G.otOut += R.otOut;
+    G.order += R.order; G.cost += R.cost; G.target += R.target; G.prev += R.prev; G.otIn += R.otIn; G.otOut += R.otOut; G.soResult += (R.soResult||0);
     const rKey = 'R|' + R.region, rOpen = !!state.execOpen[rKey];
     const ribbon = `${badge(`${R.camps.length} camp`)} ${badge(`💰 ${fmtMoneyShort(R.cost)}`)}`;
     body += `<tr data-exec-key="${rKey}" style="cursor:pointer;background:var(--surface-2);border-top:2px solid var(--border)">
       <td>${statusBtn(R.status)} ${caret(rOpen)}<b style="font-size:13px">${R.region}</b> <span style="margin-left:6px">${ribbon}</span></td>
       <td class="text-right mono t-purple" style="font-weight:700">${R.otIn > 0 ? fmtMoney(R.otIn) : '–'}</td>
-      <td class="text-right mono" style="font-weight:700;color:var(--accent)">${R.otOut > 0 ? fmtMoney(R.otOut) : '–'}</td>
+      <td class="text-right mono" style="font-weight:700;color:var(--accent)">${_soCell(R.otOut, R.soResult)}</td>
       <td class="text-right mono t-green" style="font-weight:800">${fmtMoney(R.order)}</td>
       <td class="text-right mono muted">${baselineOn && R.prev > 0 ? fmtMoney(R.prev) : '–'}</td>
       <td class="text-right mono">${yoyCell(R.order, R.prev)}</td>
@@ -6634,7 +6656,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
       body += `<tr data-exec-key="${cKey}" style="cursor:pointer;${isSO ? 'background:var(--surface-2)' : ''}">
         <td style="padding-left:18px;${isSO ? 'border-left:3px solid var(--accent)' : ''}">${caret(cOpen)}<b>${c.camp}</b> <span style="margin-left:6px">${sellBadge(c.sell)} ${badge('📅 ' + (c.start || '–') + (c.end ? ' → ' + c.end : ''))}${c.end && c.end < today ? ` <span class="badge-tag" style="font-size:9px;padding:1px 6px;height:auto;line-height:1.6;color:#0a7d2e;border-color:#0a7d2e;background:var(--good-soft);font-weight:700">✓ DONE</span>` : ''}</span></td>
         <td class="text-right mono">${c.otIn > 0 ? fmtMoney(c.otIn) : '–'}</td>
-        <td class="text-right mono" style="color:var(--accent)">${c.otOut > 0 ? fmtMoney(c.otOut) : '–'}${c.soNote ? ` <span title="SELL-OUT Target: ${String(c.soNote).replace(/\"/g,'&quot;')}" style="cursor:help;color:var(--accent);font-weight:700">ⓢ</span>` : ''}</td>
+        <td class="text-right mono" style="color:var(--accent)">${_soCell(c.otOut, c.soResult)}${c.soNote ? ` <span title="SELL-OUT Target: ${String(c.soNote).replace(/\"/g,'&quot;')}" style="cursor:help;color:var(--accent);font-weight:700">ⓢ</span>` : ''}</td>
         <td class="text-right mono t-green">${fmtMoney(c.order)}</td>
         <td class="text-right mono muted">${baselineOn && c.prev > 0 ? fmtMoney(c.prev) : '–'}</td>
         <td class="text-right mono">${yoyCell(c.order, c.prev)}</td>
@@ -6681,7 +6703,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
   body += `<tr style="border-top:2px solid var(--border);font-weight:800">
     <td>TOTAL <span class="muted" style="font-size:11px;font-weight:500">· ${regionList.length} regions</span> ${badge('💰 ' + fmtMoneyShort(G.cost))}</td>
     <td class="text-right mono t-purple">${G.otIn > 0 ? fmtMoney(G.otIn) : '–'}</td>
-    <td class="text-right mono" style="color:var(--accent)">${G.otOut > 0 ? fmtMoney(G.otOut) : '–'}</td>
+    <td class="text-right mono" style="color:var(--accent)">${_soCell(G.otOut, G.soResult)}</td>
     <td class="text-right mono t-green">${fmtMoney(G.order)}</td>
     <td class="text-right mono muted">${baselineOn && G.prev > 0 ? fmtMoney(G.prev) : '–'}</td>
     <td class="text-right mono">${yoyCell(G.order, G.prev)}</td>
