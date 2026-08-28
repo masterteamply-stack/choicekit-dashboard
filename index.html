@@ -6457,11 +6457,23 @@ function renderRegionExecSummary(fOrders, fMkt) {
       const r = normalizeRegion(key.slice(0, sep)) || key.slice(0, sep), p = key.slice(sep + 3);
       if (_skipCamp(p) || !r) return;
       const isSO = sellTypeOf(p) === 'SELL-OUT';
-      const _ordT = Number(derived.byRegionPromo[key] || 0);
-      const _soT = Number(_soTgtByRP[key] || 0);
-      const t = (isSO ? (_soT > 0 ? _soT : _ordT) : _ordT) * usdToDisp;   // SELL-OUT → Sell-out Target first
-      const _soR = (Number(_soResByRP[key] || 0)) * usdToDisp;
-      if (t > 0 || (isSO && _soR > 0)) { const n = ensure(r, p); if (t > 0) { n.target += t; if (isSO) n.otOut += t; else n.otIn += t; } if (isSO && _soR > 0) n.soResult += _soR; }
+      const _ordT = Number(derived.byRegionPromo[key] || 0);   // SELL-IN Order_Target (marketing rows default SELL_IN)
+      const _soT = Number(_soTgtByRP[key] || 0);               // SELL-OUT Target
+      const _soR = (Number(_soResByRP[key] || 0)) * usdToDisp; // SELL-OUT Result
+      if (isSO) {
+        // SELL-OUT campaign: SELL-IN Order_Target -> otIn (Order Target col),
+        // SELL-OUT Target -> otOut, SELL-OUT Result -> soResult.
+        if (_ordT > 0 || _soT > 0 || _soR > 0) {
+          const n = ensure(r, p);
+          if (_ordT > 0) n.otIn += _ordT * usdToDisp;                 // set up SELL-IN order target
+          if (_soT > 0) n.otOut += _soT * usdToDisp;                  // SELL-OUT target only (no SELL-IN fallback into otOut)
+          if (_soR > 0) n.soResult += _soR;
+          n.target += (_soT > 0 ? _soT : _ordT) * usdToDisp;          // progress denominator
+        }
+      } else {
+        const t = _ordT * usdToDisp;
+        if (t > 0) { const n = ensure(r, p); n.target += t; n.otIn += t; }
+      }
     });
 
     // Prior-year same period (baseline / pre_orders) — window shifted −1yr, incl. country/customer.
