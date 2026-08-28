@@ -5467,18 +5467,24 @@ function renderQuarterly(fOrders) {
           borderRadius: 6, borderSkipped: false },
       ]},
       options: { responsive:true, maintainAspectRatio:false,
-        layout:{ padding:{ top: 42, bottom: 4 } },
+        layout:{ padding:{ top: 48, bottom: 6 } },
         plugins:{ legend:{display:false},
-          title:{display:true, text: (metric==='amount'?'Quarterly Order Amount':'Quarterly Order Qty')+(hasPrev?' — 2025 vs 2026':''), font:{size:12}},
+          title:{display:true, text: '분기별 오더 분석'+(hasPrev?' — 2025 vs 2026':''), font:{size:13, weight:'700'}},
           datalabels:{ display:true, labels: {
-            // amount + qty(PCS) + 품목수 on top of each bar
-            metrics: { anchor:'end', align:'end', offset:3, clamp:true, textAlign:'center',
-              color:_mColor, font:{ size:8, weight:'700', lineHeight:1.15 },
+            // 오더 금액: 막대 내부(상단)에 흰 글씨 + 어두운 외곽선(어느 막대에서도 잘 보이게)
+            amount: { anchor:'end', align:'start', offset:6, clamp:true, clip:false, textAlign:'center',
+              color:'#ffffff', textStrokeColor:'rgba(0,0,0,.6)', textStrokeWidth:3,
+              font:{ size:12, weight:'800' },
+              formatter: (v,ctx)=> { const m=_mVals(ctx); return m.amt>0 ? fmtMoney(m.amt) : ''; } },
+            // 수량(PCS) · 품목수: 막대 위, 각각 한 줄씩, 크고 진하게
+            metrics: { anchor:'end', align:'end', offset:5, clamp:true, textAlign:'center',
+              color: ctx => ctx.dataset.label==='2026' ? '#0B4FCB' : '#3A3A3C',
+              font:{ size:11, weight:'800', lineHeight:1.35 },
               formatter: (v,ctx)=> { const m=_mVals(ctx); if(!(m.amt>0||m.qty>0)) return '';
-                return fmtMoney(m.amt)+'\n'+fmtNum(m.qty)+' PCS · '+fmtNum(m.items)+'품목'; } },
-            // year label under each bar
-            year: { anchor:'start', align:'bottom', offset:3, clamp:false,
-              color:_mColor, font:{ size:10, weight:'800' },
+                return fmtNum(m.qty)+' PCS\n'+fmtNum(m.items)+' 품목'; } },
+            // 연도: 막대 아래
+            year: { anchor:'start', align:'bottom', offset:4, clamp:false,
+              color: ctx => ctx.dataset.label==='2026' ? '#0B4FCB' : '#3A3A3C', font:{ size:12, weight:'800' },
               formatter: (v,ctx)=> { const m=_mVals(ctx); return (m.amt>0||m.qty>0) ? ctx.dataset.label : ''; } }
           } },
           tooltip:{ callbacks:{ label: ctx => { const m=_mVals(ctx); return ctx.dataset.label+': '+fmtMoney(m.amt)+' · '+fmtNum(m.qty)+' PCS · '+fmtNum(m.items)+'품목'; } } } },
