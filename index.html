@@ -6709,7 +6709,14 @@ async function renderPromoChart(fOrders, fMkt) {
   const _ppP = _ppRgn === '__all__' ? (state.preOrders||[]) : (state.preOrders||[]).filter(o => (o.region||'') === _ppRgn);
   if (_ppRgn !== '__all__') { fOrders = fOrders.filter(o => (o.region||'') === _ppRgn); fMkt = fMkt.filter(m => _canonRegion(m.region) === _ppRgn); }
   try {
-  const period = state.promoPerfPeriod || 'month';
+  // The comparison chart's bucket granularity must match the comparison UNIT:
+  // QoQ = quarter-vs-quarter (quarter buckets), MoM = month-vs-month (month buckets).
+  // Otherwise QoQ rendered monthly bars each shifted −3 months (a monthly compare).
+  // YoY / Off respect the Month/Quarter/Year period toggle.
+  const _cmpM = state.promoCmp || 'off';
+  const period = _cmpM === 'qoq' ? 'quarter'
+               : _cmpM === 'mom' ? 'month'
+               : (state.promoPerfPeriod || 'month');
 
   // ── SELL-IN / SELL-OUT 필터 ──
   // marketing.csv의 sell_type 기준으로 캠페인을 분류
