@@ -185,9 +185,11 @@
     ]
   },
   "Mexico Awakening Campaign": {
-    "match_by": "sku",
+    "match_by": "customer",
     "region": "LATAM",
-    "target_skus": []
+    "target_customers": [
+      "REFATRIX"
+    ]
   },
   "European vehicle": {
     "match_by": "sku",
