@@ -7214,6 +7214,11 @@ async function renderPromoChart(fOrders, fMkt) {
     if (filterSel) {
       filterSel.innerHTML = _promoRegionOptsFromOrders(_optScope, state.promoFilter, 'All promotions');
       filterSel.value = state.promoFilter;
+      // If the current filter has no matching option in this scope (e.g. a deep-linked
+      // campaign that isn't a valid option here), the <select> falls back to its first
+      // option ('All promotions'). Sync state so the TABLE/KPI match what's shown —
+      // otherwise the dropdown reads 'All promotions' while the table stays pinned.
+      if (filterSel.value !== state.promoFilter) { state.promoFilter = filterSel.value || '__all__'; }
     }
   }
   // Re-derive from the (possibly reset) filter so KPI/data scope matches the dropdown.
@@ -8308,12 +8313,16 @@ function renderPromoTable() {
   const fOrders=_ppO.filter(matchOrder).filter(o=>isRegionVisible(o.region));
   const fMkt=state.marketing.filter(matchMkt).filter(m=>isRegionVisible(m.region));
   const _allSummary=window._lastPromoSummary||[],_baAmt=window._lastBaAmt||{},cmpSeries=window._lastPromoCmpSeries||{};
-  const _promoFilter=state.promoFilter||'__all__';
+  // Resolve the promo filter exactly like the chart/KPI do: a region-split value
+  // ('camp␟REGION') decodes to its base campaign, and '__all__' shows every campaign.
+  // (Using the raw state.promoFilter here let the table diverge from the chart, so
+  // 'All promotions' could still leave the table pinned to one campaign.)
+  const _promoFilter=(typeof _promoSel==='function' ? (_promoSel(state.promoFilter||'__all__').camp) : (state.promoFilter||'__all__')) || '__all__';
   // Classify by Program name (campSellType), NOT the marketing sell_type column
   // (which no longer exists and defaulted every row to SELL_IN, so customer-based
   // Sell-Out campaigns were wrongly grouped under SELL-IN).
   const _mktST=new Proxy({},{get:(_,p)=>campSellType(String(p))});
-  const summary=_allSummary.filter(p=>_promoFilter==='__all__'||(p.promotion||p.key||'')===_promoFilter);
+  const summary=_allSummary.filter(p=>_promoFilter==='__all__'||((p.promotion||p.key||'').split(_RSPLIT)[0])===_promoFilter);
   function shiftBucket(pk,mode,per){
     if(!pk)return'';if(per==='year')return String(parseInt(pk,10)-1);
     if(per==='quarter'){const[ys,qs]=pk.split('-Q');let y=+ys,q=+qs;if(mode==='yoy')return`${y-1}-Q${q}`;q--;if(q<1){q=4;y--;}return`${y}-Q${q}`;}
