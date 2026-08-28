@@ -6632,7 +6632,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
   regionList.forEach(R => {
     G.order += R.order; G.cost += R.cost; G.target += R.target; G.prev += R.prev; G.otIn += R.otIn; G.otOut += R.otOut; G.soResult += (R.soResult||0);
     const rKey = 'R|' + R.region, rOpen = !!state.execOpen[rKey];
-    const ribbon = `${badge(`${R.camps.length} camp`)} ${badge(`💰 ${fmtMoneyShort(R.cost)}`)}`;
+    const ribbon = `${badge(`${R.camps.length} camp`)}`;
     body += `<tr data-exec-key="${rKey}" style="cursor:pointer;background:var(--surface-2);border-top:2px solid var(--border)">
       <td>${statusBtn(R.status)} ${caret(rOpen)}<b style="font-size:13px">${R.region}</b> <span style="margin-left:6px">${ribbon}</span></td>
       <td class="text-right mono t-purple" style="font-weight:700">${R.otIn > 0 ? fmtMoney(R.otIn) : '–'}</td>
@@ -6701,7 +6701,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
     });
   });
   body += `<tr style="border-top:2px solid var(--border);font-weight:800">
-    <td>TOTAL <span class="muted" style="font-size:11px;font-weight:500">· ${regionList.length} regions</span> ${badge('💰 ' + fmtMoneyShort(G.cost))}</td>
+    <td>TOTAL <span class="muted" style="font-size:11px;font-weight:500">· ${regionList.length} regions</span></td>
     <td class="text-right mono t-purple">${G.otIn > 0 ? fmtMoney(G.otIn) : '–'}</td>
     <td class="text-right mono t-green">${fmtMoney(G.order)}</td>
     <td class="text-right mono muted">${baselineOn && G.prev > 0 ? fmtMoney(G.prev) : '–'}</td>
