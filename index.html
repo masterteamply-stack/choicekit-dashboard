@@ -4692,7 +4692,9 @@ function renderPlanExec(fOrders, fMkt) {
   const model = buildPlanExecNodes(fOrders, fMkt);
   const path = (state.planExecPath || []).slice(0, 3);
   const { level, items } = getPlanExecLevelData(model, path);
-  const sorted = sortPlanExec(items, state.planExecSort || 'orderAmt');
+  const sorted = sortPlanExec(items, state.planExecSort || 'orderAmt')
+    // 참여 없는 노드 제거 — 예산·집행·예상비용·오더가 전부 0이면 표시하지 않음 (빈 국가/고객 카드 정리)
+    .filter(x => (Number(x.mktBudget)||0) > 0 || (Number(x.costActual)||0) > 0 || (Number(x.costExpected)||0) > 0 || (Number(x.orderAmt)||0) > 0);
 
   document.querySelectorAll('#segPlanExecSort button').forEach(b => b.classList.toggle('active', b.dataset.v===state.planExecSort));
 
