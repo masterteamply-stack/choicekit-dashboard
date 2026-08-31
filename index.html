@@ -6499,10 +6499,15 @@ function renderRegionExecSummary(fOrders, fMkt) {
         if (custKey) return custKey;
         const mm = (o.order_id || '').match(/^PO-([^-]+)-/);
         const ctr = mm ? mm[1] : (o.sku || '').trim();
-        const skuKey = _pm.ctrMap[ctr] || _pm.ctrMap[(o.sku || '').trim()];
+        const _skq = (o.sku || '').trim();
+        const _rr = normalizeRegion(o.region || '');
+        const _rmap = _pm.ctrMapR || {};
+        let skuKey = (_rr && _rmap[_rr] && (_rmap[_rr][ctr] || _rmap[_rr][_skq])) || (_rmap['*'] && (_rmap['*'][ctr] || _rmap['*'][_skq]));
+        if (skuKey) return skuKey;
+        skuKey = _pm.ctrMap[ctr] || _pm.ctrMap[_skq];
         if (skuKey) {
           const allow = _pm.regMap[skuKey];
-          if (allow && allow.size) { const rr = normalizeRegion(o.region || ''); if (rr && !allow.has(rr)) return ''; }
+          if (allow && allow.size) { if (_rr && !allow.has(_rr)) return ''; }
           return skuKey;
         }
         return '';
@@ -9279,7 +9284,7 @@ function promoKeyOfOrder(o) {
   // baseline(PRE_ORDER) 행: order_id의 CTR code 또는 sku/customer로 캠페인 역추적
   if (pc === 'PRE_ORDER' || pc === '') {
     if (!window._promoKeyMaps) {
-      const ctrMap = {}, custMap = {};
+      const ctrMap = {}, custMap = {}, ctrMapR = {};
       const cfg = state.campaignTargetSkus || {};
       // 현재 orders에 실제 존재하는 캠페인 (customer 충돌 시 우선)
       const activePromos = new Set((state.orders||[]).map(o => o.promotion_category).filter(Boolean));
@@ -9287,19 +9292,22 @@ function promoKeyOfOrder(o) {
       Object.keys(cfg).forEach(p => {
         const c = cfg[p] || {}, mb = (c.match_by||'sku').toLowerCase();
         if (mb === 'sku') {
-          (c.target_skus||[]).forEach(s => { ctrMap[s.trim()] = p; });
-          // SKU 기반 캠페인의 region 제한 (Asian/European=CIS, Portfolio=MENA)
-          if (c.region) regMap[p] = new Set((Array.isArray(c.region)?c.region:[c.region]).map(x=>normalizeRegion(x)).filter(Boolean));
+          const _rgs = (Array.isArray(c.region)?c.region:(c.region?[c.region]:[])).map(x=>normalizeRegion(x)).filter(Boolean);
+          const _rk = _rgs.length ? _rgs : ['*'];
+          (c.target_skus||[]).forEach(s => { const t = s.trim(); ctrMap[t] = p; _rk.forEach(rg => { (ctrMapR[rg] = ctrMapR[rg] || {})[t] = p; }); });
+          // SKU 기반 캠페인의 region 제한 (Asian/European=CIS, Portfolio=MENA, CTR MarketFit=LATAM)
+          if (c.region) regMap[p] = new Set(_rgs);
         }
-        else (c.target_customers||[]).forEach(cu => {
+        // SELL-OUT 캠페인은 first-year(전년 없음) → custMap 제외 (고객의 전년 오더를 뺏지 않도록)
+        else if (campSellType(p) !== 'SELL-OUT') (c.target_customers||[]).forEach(cu => {
           const k = cu.trim();
           // 이미 매핑된 고객이 active 캠페인이면 덮어쓰지 않음; 새 캠페인이 active면 우선
           if (!custMap[k] || (activePromos.has(p) && !activePromos.has(custMap[k]))) custMap[k] = p;
         });
       });
-      window._promoKeyMaps = { ctrMap, custMap, regMap };
+      window._promoKeyMaps = { ctrMap, custMap, regMap, ctrMapR };
     }
-    const { ctrMap, custMap, regMap } = window._promoKeyMaps;
+    const { ctrMap, custMap, regMap, ctrMapR } = window._promoKeyMaps;
     const sk = (o.sku || '').trim();
     const m = (o.order_id || '').match(/^PO-([^-]+)-/);
     const ctr = m ? m[1] : sk;
@@ -9307,16 +9315,30 @@ function promoKeyOfOrder(o) {
     const custKey = custMap[(o.customer||'').trim()];
     if (custKey) return custKey;
     // SKU 매칭 — SKU 기반 캠페인은 region 제한 적용 (Asian/European=CIS, Portfolio=MENA)
-    const skuKey = ctrMap[ctr] || ctrMap[sk];
+    const _rr2 = normalizeRegion(o.region || '');
+    let skuKey = (_rr2 && ctrMapR[_rr2] && (ctrMapR[_rr2][ctr] || ctrMapR[_rr2][sk])) || (ctrMapR['*'] && (ctrMapR['*'][ctr] || ctrMapR['*'][sk]));
+    if (skuKey) return skuKey;
+    skuKey = ctrMap[ctr] || ctrMap[sk];
     if (skuKey) {
       const allowR = regMap[skuKey];
       if (allowR && allowR.size) {
-        const rr = normalizeRegion(o.region || '');
-        if (rr && !allowR.has(rr)) return pc || 'OTHER';  // region 불일치 → 캠페인 미귀속
+        if (_rr2 && !allowR.has(_rr2)) return pc || 'OTHER';  // region 불일치 → 캠페인 미귀속
       }
       return skuKey;
     }
     return pc || 'OTHER';
+  }
+  // 태그가 SKU 기반 캠페인인데 SKU 미매칭이면 미귀속 (exec campMatch와 일관: SKU 기준 캠페인은 SKU로만 취합)
+  if (pc) {
+    const _c = (state.campaignTargetSkus || {})[pc];
+    if (_c && (_c.match_by||'sku').toLowerCase() === 'sku') {
+      const _ts = _c.target_skus || [];
+      if (_ts.length) {
+        const _sk = (o.sku || '').trim();
+        const _m = (o.order_id || '').match(/^PO-([^-]+)-/); const _ctr = _m ? _m[1] : _sk;
+        if (_ts.indexOf(_ctr) < 0 && _ts.indexOf(_sk) < 0) return 'OTHER';
+      }
+    }
   }
   return pc || 'OTHER';
 }
