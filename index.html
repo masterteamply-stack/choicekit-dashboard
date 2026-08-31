@@ -5590,9 +5590,10 @@ function renderCustomerTrend(fOrders, fMkt) {
   const byCust = {};
   scoped.forEach(o => {
     const c = o.customer || '(unspecified)';
-    byCust[c] = byCust[c] || { qty:0, amount:0, regions:new Set(), countries:new Set() };
+    byCust[c] = byCust[c] || { qty:0, amount:0, ords:0, regions:new Set(), countries:new Set() };
     byCust[c].qty += Number(o.qty)||0;
     byCust[c].amount += convOrder(o);
+    byCust[c].ords += 1;
     if (o.region) byCust[c].regions.add(o.region);
     if (o.country) byCust[c].countries.add(o.country);
   });
@@ -5622,9 +5623,9 @@ function renderCustomerTrend(fOrders, fMkt) {
     tbl.innerHTML = `
       <thead><tr>
         <th>#</th><th>Customer</th><th class="text-right">Qty</th>
-        <th class="text-right">Amount</th><th class="text-right">Mkt Cost</th>
+        <th class="text-right">Amount</th><th class="text-right">Orders</th><th class="text-right">Mkt Cost</th>
       </tr></thead>
-      <tbody>${!ranking.length ? `<tr><td colspan="5" class="muted" style="text-align:center;padding:18px">이 필터에 해당하는 캠페인 오더가 없습니다 · REGION/CAMPAIGN을 <b>All</b>로 바꿔보세요</td></tr>` : ranking.map((r,i) => {
+      <tbody>${!ranking.length ? `<tr><td colspan="6" class="muted" style="text-align:center;padding:18px">이 필터에 해당하는 캠페인 오더가 없습니다 · REGION/CAMPAIGN을 <b>All</b>로 바꿔보세요</td></tr>` : ranking.map((r,i) => {
         const isSel = r.customer === selectedCustomer;
         return `<tr class="cust-trend-row" data-cust="${r.customer.replace(/"/g,'&quot;')}"
           style="cursor:pointer;${isSel?'background:#1d2940':''}">
@@ -5632,6 +5633,7 @@ function renderCustomerTrend(fOrders, fMkt) {
           <td>${r.customer}${isSel?' <span style="color:#0A0A0A">●</span>':''}</td>
           <td class="text-right mono">${fmtNum(r.qty)}</td>
           <td class="text-right mono t-green">${fmtMoney(r.amount)}</td>
+          <td class="text-right mono">${fmtNum(r.ords||0)}</td>
           <td class="text-right mono t-orange">${fmtMoney(r.mktCost)}</td>
         </tr>`;
       }).join('')}</tbody>`;
