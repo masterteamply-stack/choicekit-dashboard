@@ -10699,10 +10699,6 @@ function renderSkuAggregate(fOrders) {
               <div style="font-size:13px;margin-top:9px">대표 SKU <b>${_trSku}</b></div>
               <div style="font-size:13px;margin-top:3px">차종 <b>${_trModel}</b></div>
             </div>
-          </div>
-          <div style="background:var(--surface-2,rgba(127,127,127,.05));border:1px solid var(--border);border-radius:10px;padding:11px 16px">
-            <div class="label-mono muted" style="font-size:11px;margin-bottom:4px">TOP 3 SKU <span style="font-weight:400">· 판매액순</span></div>
-            ${_t3||'<div class="muted" style="font-size:13px;padding:8px 0">–</div>'}
           </div>`;
       }
 
@@ -10757,14 +10753,17 @@ function renderSkuAggregate(fOrders) {
   // ── Per-SKU breakdown table — always shown in aggregate mode, with click-to-drill ──
   if (brkWrap && brkTbl) {
     brkWrap.style.display = '';
-    // Sort by total quantity descending so the highest-volume SKUs surface first.
-    const rows = perSku.slice().sort((a,b) => (b.total.qty - a.total.qty) || (b.total.amt - a.total.amt));
+    // 차종(make_model) 매핑 — 오더 데이터 기준
+    const _mmMap = {}; (useOrders||[]).forEach(o=>{ const sx=(o.sku||'').trim().toUpperCase(); if(sx&&!_mmMap[sx]){ const m=(o.make_model||'').trim(); if(m)_mmMap[sx]=m; } });
+    const _mmOf = sku => _mmMap[(sku||'').trim().toUpperCase()] || '–';
+    // TOP 20 SKU (수량순) — 캠페인 전/후(Before/After) 비교 포함
+    const rows = perSku.slice().sort((a,b) => (b.total.qty - a.total.qty) || (b.total.amt - a.total.amt)).slice(0,20);
     brkTbl.innerHTML = `
       <thead>
         <tr>
-          <th>SKU</th><th>PRODUCT</th>
+          <th>SKU</th><th>PRODUCT</th><th>차종</th>
           <th class="text-right">ORDERS</th><th class="text-right">QTY</th><th class="text-right">AMOUNT</th>
-          <th class="text-right">BEFORE AMT</th><th class="text-right">AFTER AMT</th><th class="text-right">Δ%</th>
+          <th class="text-right">집행 전</th><th class="text-right">집행 후</th><th class="text-right">Δ%</th>
         </tr>
       </thead>
       <tbody>${rows.map(x => {
@@ -10775,6 +10774,7 @@ function renderSkuAggregate(fOrders) {
         return `<tr data-drill-sku="${x.sku}" style="cursor:pointer;${isSel?'background:rgba(106,182,255,0.18)':''}" title="Click to drill into ${x.sku}">
           <td class="mono">${x.sku}${isSel?' <span class="t-blue">◀</span>':''}</td>
           <td>${x.product || '–'}</td>
+          <td class="muted" style="font-size:11px">${_mmOf(x.sku)}</td>
           <td class="text-right">${fmtNum(x.total.ords)}</td>
           <td class="text-right">${fmtNum(x.total.qty)}</td>
           <td class="text-right">${fmtMoney(x.total.amt)}</td>
