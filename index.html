@@ -2254,6 +2254,7 @@ header .mono b.t-orange {
           </div>
         </div>
         <div id="skuAggBreakdown" style="overflow:auto;max-height:280px"><table id="tblSkuAggBreakdown" style="font-size:12px"></table></div>
+        <div id="skuAggInsight" style="margin-top:18px"></div>
         <!-- 고객별 SKU 전환 심층 분석 (작년 vs 올해 SKU 다양성 / 캠페인 SKU 전환) -->
         <div id="skuCustConvWrap" style="margin-top:18px;display:none">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
@@ -10460,6 +10461,7 @@ function renderSkuAggregate(fOrders) {
         `Marketing activities for this promotion exist (see Plan & Execution / Promotion Performance), ` +
         `but no order rows carry this <code>promotion_category</code>.`;
     }
+    { const _iEN=document.getElementById('skuAggInsight'); if(_iEN) _iEN.innerHTML=''; }
     clearSkuPanels();
     return;
   }
@@ -10642,6 +10644,7 @@ function renderSkuAggregate(fOrders) {
       meta.innerHTML = `<span class="t-blue">▶ Drill-in: <b>${drilled.sku}</b></span> · ${drilled.product || '–'} · ${fmtNum(drilled.total.ords)} orders` +
         ` · <a href="#" id="lnkClearDrill" style="color:var(--blue);text-decoration:underline">Back to aggregate</a>`;
     }
+    { const _iED=document.getElementById('skuAggInsight'); if(_iED) _iED.innerHTML=''; }
     renderSkuBeforeAfter(drilled.ba, { mode:'individual' });
   } else {
     if (meta) {
@@ -10671,20 +10674,42 @@ function renderSkuAggregate(fOrders) {
       let _trName='–',_trAmt=0,_trSku='–',_trModel='–';
       if(_topReg){ _trName=_topReg[0]; _trAmt=_topReg[1].amt; const _tS=Object.entries(_topReg[1].skus).sort((a,b)=>b[1]-a[1])[0]; if(_tS){_trSku=_tS[0]; _trModel=_modelOf(_tS[0])||'–';} }
       const _top3 = _bySkuRank.slice(0,3).map((x,i)=>`${i+1}. <b>${x.sku}</b>${_modelOf(x.sku)?` <span class=\"muted\">${_modelOf(x.sku)}</span>`:''} ${fmtMoney(x.total.amt)}`).join(' &nbsp;·&nbsp; ');
-      meta.innerHTML = `<div style="margin-bottom:8px;font-size:12px"><b>${isAll?'All SKU campaigns':promo}</b> · 대상 SKU <b>${_tgtSkuList.length}</b>개 · 오더 전환 <b class="t-green">${_orderedTgt.size}</b>개 <span class="muted">(${_cvtPct}%)</span> · 총 <b>${fmtNum(totalOrds)}</b> orders · <b class="t-green">${fmtMoney(_totAmt)}</b> 판매 · <span class="muted">click row to drill</span></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px">
-        <div style="background:rgba(10,125,46,0.06);border:1px solid rgba(10,125,46,0.25);border-radius:8px;padding:8px 12px">
-          <div class="label-mono muted" style="font-size:10px">🏆 제일 잘 팔린 SKU</div>
-          <div style="font-size:14px;font-weight:800;margin-top:2px">${_best?_best.sku:'–'} <span class="muted" style="font-weight:500;font-size:11px">${_best?String(_best.product||'').replace(/</g,'&lt;').slice(0,26):''}</span></div>
-          <div style="font-size:11px;margin-top:3px">차종 <b>${_best?(_modelOf(_best.sku)||'–'):'–'}</b> · <b class="t-green">${_best?fmtMoney(_best.total.amt):'–'}</b> · ${_best?fmtNum(_best.total.ords):0} orders · ${_best?fmtNum(_best.total.qty):0} pcs</div>
-        </div>
-        <div style="background:rgba(106,182,255,0.06);border:1px solid rgba(106,182,255,0.25);border-radius:8px;padding:8px 12px">
-          <div class="label-mono muted" style="font-size:10px">📍 최다 판매 지역</div>
-          <div style="font-size:14px;font-weight:800;margin-top:2px">${_trName} <span class="muted" style="font-weight:500;font-size:11px">${fmtMoney(_trAmt)}</span></div>
-          <div style="font-size:11px;margin-top:3px">대표 SKU <b>${_trSku}</b> · 차종 <b>${_trModel}</b></div>
-        </div>
-      </div>
-      <div class="label-mono muted" style="font-size:10px;line-height:1.7">TOP 3 SKU &nbsp; ${_top3||'–'}</div>`;
+      meta.innerHTML = `<div style="font-size:12px"><b>${isAll?'All SKU campaigns':promo}</b> · 대상 SKU <b>${_tgtSkuList.length}</b>개 · 오더 전환 <b class="t-green">${_orderedTgt.size}</b>개 <span class="muted">(${_cvtPct}%)</span> · 총 <b>${fmtNum(totalOrds)}</b> orders · <b class="t-green">${fmtMoney(_totAmt)}</b> 판매 · <span class="muted">click row to drill</span></div>`;
+      // ── 인사이트(베스트셀러·최다지역·TOP3)는 표 아래에 큰 글씨로 배치 ──
+      const _insEl = document.getElementById('skuAggInsight');
+      if (_insEl) {
+        const _esc = t => String(t||'').replace(/</g,'&lt;');
+        const _t3 = _bySkuRank.slice(0,3).map((x,i)=>{ const md=_modelOf(x.sku);
+          return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;${i<2?'border-bottom:1px solid var(--border)':''}">`+
+            `<span style="flex:0 0 24px;height:24px;line-height:24px;text-align:center;border-radius:6px;font-size:13px;font-weight:800;background:${i===0?'rgba(10,125,46,.14)':'var(--surface-2,rgba(127,127,127,.08))'};color:${i===0?'#0A7D2E':'inherit'}">${i+1}</span>`+
+            `<span style="font-size:15px;font-weight:700">${x.sku}</span>`+
+            (md?`<span class="muted" style="font-size:12px">${_esc(md)}</span>`:'')+
+            `<span style="margin-left:auto;font-size:15px;font-weight:800" class="t-green">${fmtMoney(x.total.amt)}</span>`+
+            `<span class="muted" style="font-size:12px;flex:0 0 auto">${fmtNum(x.total.ords)} ord</span></div>`;
+        }).join('');
+        _insEl.innerHTML = `
+          <div class="label-mono muted" style="font-size:12px;margin-bottom:9px;letter-spacing:.03em">💡 SKU 인사이트</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div style="background:rgba(10,125,46,0.06);border:1px solid rgba(10,125,46,0.25);border-radius:10px;padding:13px 16px">
+              <div class="label-mono muted" style="font-size:11px;margin-bottom:5px">🏆 제일 잘 팔린 SKU</div>
+              <div style="font-size:20px;font-weight:800;line-height:1.15">${_best?_best.sku:'–'}</div>
+              <div class="muted" style="font-size:12px;margin-top:2px">${_best?_esc(String(_best.product||'').slice(0,40)):''}</div>
+              <div style="font-size:13px;margin-top:9px">차종 <b>${_best?(_modelOf(_best.sku)||'–'):'–'}</b></div>
+              <div style="font-size:13px;margin-top:3px"><b class="t-green">${_best?fmtMoney(_best.total.amt):'–'}</b> · ${_best?fmtNum(_best.total.ords):0} orders · ${_best?fmtNum(_best.total.qty):0} pcs</div>
+            </div>
+            <div style="background:rgba(106,182,255,0.06);border:1px solid rgba(106,182,255,0.25);border-radius:10px;padding:13px 16px">
+              <div class="label-mono muted" style="font-size:11px;margin-bottom:5px">📍 최다 판매 지역</div>
+              <div style="font-size:20px;font-weight:800;line-height:1.15">${_trName}</div>
+              <div class="muted" style="font-size:12px;margin-top:2px">${fmtMoney(_trAmt)}</div>
+              <div style="font-size:13px;margin-top:9px">대표 SKU <b>${_trSku}</b></div>
+              <div style="font-size:13px;margin-top:3px">차종 <b>${_trModel}</b></div>
+            </div>
+          </div>
+          <div style="background:var(--surface-2,rgba(127,127,127,.05));border:1px solid var(--border);border-radius:10px;padding:11px 16px">
+            <div class="label-mono muted" style="font-size:11px;margin-bottom:4px">TOP 3 SKU <span style="font-weight:400">· 판매액순</span></div>
+            ${_t3||'<div class="muted" style="font-size:13px;padding:8px 0">–</div>'}
+          </div>`;
+      }
     }
     // Show TOTALS (sum across all SKUs) — not averages.
     renderSkuBeforeAfter(total, { mode:'individual' });
