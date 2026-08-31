@@ -4477,7 +4477,7 @@ function buildPlanExecNodes(fOrders, fMkt) {
     const _ps = _peStart[p];
     if (_ps && o.order_date && o.order_date < _ps) return;
     const cust = (o.customer || '–').trim() || '–';
-    const x = ensure(o.region||'–', o.country||'–', p||'–', cust);
+    const x = ensure(o.region||'–', (o.country || (cust!=='–' ? cust : '–')), p||'–', cust);
     const yr = String(o.order_date||'').slice(0,4);
     const amt = convOrder(o);
     if (yr === currYear) {
@@ -4516,7 +4516,7 @@ function buildPlanExecNodes(fOrders, fMkt) {
       // values (CIS, MENA, etc.) that were mistakenly placed in the country cell,
       // so fall back to '–' rather than echoing the region name as a fake country.
       const rawCountry = (o.country || '').trim();
-      const country = normalizeCountry(rawCountry) || (rawCountry && !['CIS','MENA','EUROPE','NA','LATAM','ASIA','RUS','OCEANIA','KOREA'].includes(rawCountry.toUpperCase()) ? rawCountry.toUpperCase() : '–');
+      const country = normalizeCountry(rawCountry) || (rawCountry && !['CIS','MENA','EUROPE','NA','LATAM','ASIA','RUS','OCEANIA','KOREA'].includes(rawCountry.toUpperCase()) ? rawCountry.toUpperCase() : (cust && cust!=='–' ? cust : '–'));
       const x = ensure(reg||'–', country, promoForCust, cust);
       const yr = String(o.order_date||'').slice(0,4);
       const amt = Number(o.amount_usd||0) * usdToDisp;
