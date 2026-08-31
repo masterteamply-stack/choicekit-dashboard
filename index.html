@@ -6705,7 +6705,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
         <td class="text-right mono">${yoyCell(c.order, c.prev)}</td>
         <td class="text-right">${_skuCell((c.skus&&c.skus.size)||0, _tgtSkuN(c.camp))}</td>
         <td>${progCell(c.order, c.target)}</td>
-        <td class="text-right mono" style="color:var(--accent)">${_soCell(c.otOut, c.soResult)}${c.soNote ? ` <span title="SELL-OUT Target: ${String(c.soNote).replace(/\"/g,'&quot;')}" style="cursor:help;color:var(--accent);font-weight:700">ⓢ</span>` : ''}</td>
+        <td class="text-right mono" style="color:var(--accent)">${_soCell(c.otOut, c.soResult)}</td>
         <td class="text-right mono">${romiCell(c.order, c.cost)}</td>
       </tr>`;
       if (!cOpen) return;
