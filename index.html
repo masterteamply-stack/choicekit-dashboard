@@ -2215,6 +2215,7 @@ header .mono b.t-orange {
           <div class="chart-wrap" style="height:300px"><canvas id="chQuarterExpand"></canvas></div>
         </div>
         <div style="overflow:auto"><table id="tblQuarterly"></table></div>
+        <div id="quarterlySkuCoverage" style="margin-top:16px;overflow:auto"></div>
         <div id="quarterlyInsight" class="label-mono" style="font-size:12px;margin-top:14px;padding:11px 13px;border-left:3px solid var(--accent,#4a7dff);background:var(--surface-2,rgba(74,125,255,.05));border-radius:0 8px 8px 0;line-height:1.55"></div>
       </div>
 
@@ -5452,6 +5453,33 @@ function renderQuarterly(fOrders) {
     const avgs = rows.map(r => r.avg);
     const rising = avgs[0] < avgs[1] && (avgs[2]===0 || avgs[1] <= avgs[2] || avgs[2] >= avgs[0]);
     ins.innerHTML = `💡 고객당 평균 오더액이 <b>${rows.map(r=>fmtMoneyShort(r.avg)).join(' → ')}</b>로 ${rising?'상승':'변화'}하고, 주문 고객 수(${rows.map(r=>r.cust).join('→')})와 SKU 수(${rows.map(r=>r.sku).join('→')})가 함께 움직입니다. 분기별 성과 비교를 통해 Choice Kit의 오더 전환이 <b>단기 이벤트성</b>인지, <b>고객·SKU 확장으로 이어지는 지속 성과</b>인지 검증합니다. <span class="muted">(Q3 to date는 ${spanTxt}의 부분 분기 — 초기 오더 속도 지표)</span>`;
+  }
+
+  // ── SKU Item Coverage by Region: 캠페인 오더 SKU를 SELL-IN / SELL-OUT(sell_type)로 분리 ──
+  const _covEl = document.getElementById('quarterlySkuCoverage');
+  if (_covEl) {
+    const _cfgC = new Set(Object.keys(state.campaignTargetSkus || {}));
+    const _bR = {};
+    (state.orders||[]).forEach(o => {
+      if(!(o.order_date||'').startsWith('2026')) return;
+      const r=(o.region||'').trim()||'–', sk=(o.sku||'').trim().toUpperCase();
+      const pp=(o.promotion_category||'').trim();
+      const st=(o.sell_type||'').trim().toUpperCase().replace(/_/g,'-');
+      const e=_bR[r]=(_bR[r]||{si:new Set(),so:new Set(),all:new Set(),cu:new Set()});
+      if(o.customer) e.cu.add((o.customer||'').trim());
+      if(!sk) return; e.all.add(sk);
+      if(!_cfgC.has(pp)) return;              // 캠페인 오더만
+      if(st==='SELL-IN') e.si.add(sk);
+      else if(st==='SELL-OUT') e.so.add(sk);
+    });
+    const _rs = Object.keys(_bR).filter(r=>_bR[r].all.size && isRegionVisible(r)).sort((a,b)=>_bR[b].all.size-_bR[a].all.size);
+    const _T={si:new Set(),so:new Set(),all:new Set(),cu:new Set()};
+    _rs.forEach(r=>{ _bR[r].si.forEach(x=>_T.si.add(r+'|'+x)); _bR[r].so.forEach(x=>_T.so.add(r+'|'+x)); _bR[r].all.forEach(x=>_T.all.add(r+'|'+x)); _bR[r].cu.forEach(x=>_T.cu.add(x)); });
+    const _rowC=(name,e,bold)=>{ const both=[...e.si].filter(x=>e.so.has(x)).length;
+      return `<tr${bold?' style="border-top:2px solid var(--border);font-weight:700"':''}><td style="text-align:left"><b>${name}</b></td><td class="text-right mono t-green">${fmtNum(e.si.size)}</td><td class="text-right mono" style="color:var(--accent)">${fmtNum(e.so.size)}</td><td class="text-right mono muted">${fmtNum(both)}</td><td class="text-right mono">${fmtNum(e.all.size)}</td><td class="text-right mono muted">${fmtNum(e.cu.size)}</td></tr>`; };
+    _covEl.innerHTML = `<div class="label-mono muted" style="font-size:11px;margin-bottom:6px">📦 SKU Item Split — 캠페인 오더의 SELL-IN / SELL-OUT 대상 SKU (2026 · distinct SKU)</div>
+      <table style="font-size:12px;width:100%"><thead><tr><th style="text-align:left">Region</th><th class="text-right">SELL-IN 대상 SKU</th><th class="text-right">SELL-OUT 대상 SKU</th><th class="text-right">양쪽(SI∩SO)</th><th class="text-right">전체 SKU<br><span class="muted" style="font-weight:400">(추적 고객)</span></th><th class="text-right">고객사</th></tr></thead><tbody>${_rs.map(r=>_rowC(r,_bR[r])).join('')}${_rowC('TOTAL',_T,true)}</tbody></table>
+      <p class="label-mono muted" style="font-size:10px;margin-top:5px;line-height:1.5">SELL-IN/SELL-OUT 대상 SKU = 캠페인 오더 중 sell_type이 SELL-IN / SELL-OUT인 distinct SKU · 양쪽 = 두 유형 모두에 나타난 SKU · 전체 SKU = 그 지역 <b>추적 중인 캠페인 고객사</b>의 distinct SKU. <b>비참여(비추적) 고객까지 포함한 지역 전체 고객사 비교</b>는 orders.csv에 없어 SAP 지역 전체 export가 있어야 가능합니다.</p>`;
   }
 
   // ── charts ──
