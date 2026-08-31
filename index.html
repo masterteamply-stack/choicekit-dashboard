@@ -2215,7 +2215,6 @@ header .mono b.t-orange {
           <div class="chart-wrap" style="height:300px"><canvas id="chQuarterExpand"></canvas></div>
         </div>
         <div style="overflow:auto"><table id="tblQuarterly"></table></div>
-        <div id="quarterlySkuCoverage" style="margin-top:16px;overflow:auto"></div>
         <div id="quarterlyInsight" class="label-mono" style="font-size:12px;margin-top:14px;padding:11px 13px;border-left:3px solid var(--accent,#4a7dff);background:var(--surface-2,rgba(74,125,255,.05));border-radius:0 8px 8px 0;line-height:1.55"></div>
       </div>
 
@@ -2230,8 +2229,8 @@ header .mono b.t-orange {
             <select id="selSkuAggRegion" style="min-width:120px;font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface)"><option value="__all__">All regions</option></select>
             <span class="label-mono muted" style="font-size:11px;margin-left:8px">Promotion</span>
             <select id="selSkuAggPromo" style="min-width:220px;font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface)"></select>
-            <span class="label-mono muted" style="margin-left:8px;font-size:11px">Compare</span>
-            <div class="seg" id="segSkuCmp">
+            <span class="label-mono muted" style="margin-left:8px;font-size:11px;display:none">Compare</span>
+            <div class="seg" id="segSkuCmp" style="display:none">
               <button data-v="off" class="active">Off</button>
               <button data-v="yoy">YoY</button>
               <button data-v="qoq">QoQ</button>
@@ -2243,7 +2242,7 @@ header .mono b.t-orange {
         <div id="skuAggMeta" class="label-mono muted" style="font-size:11px;margin-bottom:10px"></div>
         <div id="skuCompareKpis" style="display:none;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px"></div>
         <div id="skuBaSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div style="display:none;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
           <div>
             <div class="label-mono muted" style="font-size:10px;margin-bottom:4px;text-align:center">ORDER AMOUNT — <span id="skuBaAmtTotal" class="t-orange" style="font-weight:700">–</span></div>
             <div class="chart-wrap" style="height:260px"><canvas id="chSkuBeforeAfterAmt"></canvas></div>
@@ -2255,6 +2254,7 @@ header .mono b.t-orange {
         </div>
         <div id="skuAggBreakdown" style="overflow:auto;max-height:280px"><table id="tblSkuAggBreakdown" style="font-size:12px"></table></div>
         <div id="skuAggInsight" style="margin-top:18px"></div>
+        <div id="skuAggEffect" style="margin-top:20px"></div>
         <!-- 고객별 SKU 전환 심층 분석 (작년 vs 올해 SKU 다양성 / 캠페인 SKU 전환) -->
         <div id="skuCustConvWrap" style="margin-top:18px;display:none">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
@@ -5454,33 +5454,6 @@ function renderQuarterly(fOrders) {
     const avgs = rows.map(r => r.avg);
     const rising = avgs[0] < avgs[1] && (avgs[2]===0 || avgs[1] <= avgs[2] || avgs[2] >= avgs[0]);
     ins.innerHTML = `💡 고객당 평균 오더액이 <b>${rows.map(r=>fmtMoneyShort(r.avg)).join(' → ')}</b>로 ${rising?'상승':'변화'}하고, 주문 고객 수(${rows.map(r=>r.cust).join('→')})와 SKU 수(${rows.map(r=>r.sku).join('→')})가 함께 움직입니다. 분기별 성과 비교를 통해 Choice Kit의 오더 전환이 <b>단기 이벤트성</b>인지, <b>고객·SKU 확장으로 이어지는 지속 성과</b>인지 검증합니다. <span class="muted">(Q3 to date는 ${spanTxt}의 부분 분기 — 초기 오더 속도 지표)</span>`;
-  }
-
-  // ── SKU Item Coverage by Region: 캠페인 오더 SKU를 SELL-IN / SELL-OUT(sell_type)로 분리 ──
-  const _covEl = document.getElementById('quarterlySkuCoverage');
-  if (_covEl) {
-    const _cfgC = new Set(Object.keys(state.campaignTargetSkus || {}));
-    const _bR = {};
-    (state.orders||[]).forEach(o => {
-      if(!(o.order_date||'').startsWith('2026')) return;
-      const r=(o.region||'').trim()||'–', sk=(o.sku||'').trim().toUpperCase();
-      const pp=(o.promotion_category||'').trim();
-      const st=(o.sell_type||'').trim().toUpperCase().replace(/_/g,'-');
-      const e=_bR[r]=(_bR[r]||{si:new Set(),so:new Set(),all:new Set(),cu:new Set()});
-      if(o.customer) e.cu.add((o.customer||'').trim());
-      if(!sk) return; e.all.add(sk);
-      if(!_cfgC.has(pp)) return;              // 캠페인 오더만
-      if(st==='SELL-IN') e.si.add(sk);
-      else if(st==='SELL-OUT') e.so.add(sk);
-    });
-    const _rs = Object.keys(_bR).filter(r=>_bR[r].all.size && isRegionVisible(r)).sort((a,b)=>_bR[b].all.size-_bR[a].all.size);
-    const _T={si:new Set(),so:new Set(),all:new Set(),cu:new Set()};
-    _rs.forEach(r=>{ _bR[r].si.forEach(x=>_T.si.add(r+'|'+x)); _bR[r].so.forEach(x=>_T.so.add(r+'|'+x)); _bR[r].all.forEach(x=>_T.all.add(r+'|'+x)); _bR[r].cu.forEach(x=>_T.cu.add(x)); });
-    const _rowC=(name,e,bold)=>{ const both=[...e.si].filter(x=>e.so.has(x)).length;
-      return `<tr${bold?' style="border-top:2px solid var(--border);font-weight:700"':''}><td style="text-align:left"><b>${name}</b></td><td class="text-right mono t-green">${fmtNum(e.si.size)}</td><td class="text-right mono" style="color:var(--accent)">${fmtNum(e.so.size)}</td><td class="text-right mono muted">${fmtNum(both)}</td><td class="text-right mono">${fmtNum(e.all.size)}</td><td class="text-right mono muted">${fmtNum(e.cu.size)}</td></tr>`; };
-    _covEl.innerHTML = `<div class="label-mono muted" style="font-size:11px;margin-bottom:6px">📦 SKU Item Split — 캠페인 오더의 SELL-IN / SELL-OUT 대상 SKU (2026 · distinct SKU)</div>
-      <table style="font-size:12px;width:100%"><thead><tr><th style="text-align:left">Region</th><th class="text-right">SELL-IN 대상 SKU</th><th class="text-right">SELL-OUT 대상 SKU</th><th class="text-right">양쪽(SI∩SO)</th><th class="text-right">전체 SKU<br><span class="muted" style="font-weight:400">(추적 고객)</span></th><th class="text-right">고객사</th></tr></thead><tbody>${_rs.map(r=>_rowC(r,_bR[r])).join('')}${_rowC('TOTAL',_T,true)}</tbody></table>
-      <p class="label-mono muted" style="font-size:10px;margin-top:5px;line-height:1.5">SELL-IN/SELL-OUT 대상 SKU = 캠페인 오더 중 sell_type이 SELL-IN / SELL-OUT인 distinct SKU · 양쪽 = 두 유형 모두에 나타난 SKU · 전체 SKU = 그 지역 <b>추적 중인 캠페인 고객사</b>의 distinct SKU. <b>비참여(비추적) 고객까지 포함한 지역 전체 고객사 비교</b>는 orders.csv에 없어 SAP 지역 전체 export가 있어야 가능합니다.</p>`;
   }
 
   // ── charts ──
@@ -10472,7 +10445,7 @@ function renderSkuAggregate(fOrders) {
         `Marketing activities for this promotion exist (see Plan & Execution / Promotion Performance), ` +
         `but no order rows carry this <code>promotion_category</code>.`;
     }
-    { const _iEN=document.getElementById('skuAggInsight'); if(_iEN) _iEN.innerHTML=''; }
+    { const _iEN=document.getElementById('skuAggInsight'); if(_iEN) _iEN.innerHTML=''; const _eN=document.getElementById('skuAggEffect'); if(_eN) _eN.innerHTML=''; }
     clearSkuPanels();
     return;
   }
@@ -10655,7 +10628,7 @@ function renderSkuAggregate(fOrders) {
       meta.innerHTML = `<span class="t-blue">▶ Drill-in: <b>${drilled.sku}</b></span> · ${drilled.product || '–'} · ${fmtNum(drilled.total.ords)} orders` +
         ` · <a href="#" id="lnkClearDrill" style="color:var(--blue);text-decoration:underline">Back to aggregate</a>`;
     }
-    { const _iED=document.getElementById('skuAggInsight'); if(_iED) _iED.innerHTML=''; }
+    { const _iED=document.getElementById('skuAggInsight'); if(_iED) _iED.innerHTML=''; const _eD=document.getElementById('skuAggEffect'); if(_eD) _eD.innerHTML=''; }
     renderSkuBeforeAfter(drilled.ba, { mode:'individual' });
   } else {
     if (meta) {
@@ -10720,6 +10693,45 @@ function renderSkuAggregate(fOrders) {
             <div class="label-mono muted" style="font-size:11px;margin-bottom:4px">TOP 3 SKU <span style="font-weight:400">· 판매액순</span></div>
             ${_t3||'<div class="muted" style="font-size:13px;padding:8px 0">–</div>'}
           </div>`;
+      }
+
+      // ── 📊 캠페인 효과: 집행 전(전년 동기간) vs 집행 후(올해) — SKU/지역/차종별 증감 ──
+      const _effEl = document.getElementById('skuAggEffect');
+      if (_effEl) {
+        const _md = sku => (typeof resolveModel==='function' ? (resolveModel(sku)||'') : '');
+        const _escE = t => String(t||'').replace(/</g,'&lt;');
+        // SKU별 주 지역(집행 후 오더 기준)
+        const _skuReg = {};
+        perSku.forEach(x => { const rc={}; (x.orders||[]).forEach(o=>{const r=(o.region||'').trim(); if(r) rc[r]=(rc[r]||0)+convOrder(o);}); _skuReg[x.sku]=Object.entries(rc).sort((a,b)=>b[1]-a[1])[0]?.[0]||'–'; });
+        const _eff = perSku.map(x=>({sku:x.sku, model:_md(x.sku)||'–', region:_skuReg[x.sku], before:x.ba.beforeAmt, after:x.ba.afterAmt, inc:x.ba.afterAmt-x.ba.beforeAmt})).filter(e=>e.before>0||e.after>0);
+        const _up = _eff.filter(e=>e.inc>0).sort((a,b)=>b.inc-a.inc);
+        // 차종별 집계
+        const _bm={}; _eff.forEach(e=>{const m=e.model||'(미매핑)'; const g=(_bm[m]=_bm[m]||{before:0,after:0,n:new Set()}); g.before+=e.before; g.after+=e.after; g.n.add(e.sku);});
+        const _ml=Object.entries(_bm).map(([m,g])=>({model:m,before:g.before,after:g.after,inc:g.after-g.before,n:g.n.size})).sort((a,b)=>b.inc-a.inc);
+        const _tB=total.beforeAmt,_tA=total.afterAmt,_tInc=_tA-_tB,_tPct=_tB>0?(_tA/_tB-1)*100:(_tA>0?100:0);
+        const _nUp=_eff.filter(e=>e.inc>0).length, _nDn=_eff.filter(e=>e.inc<0).length;
+        const _verdict = _tInc>0 ? '<span class="t-green" style="font-weight:800">효과 있음 ▲</span>' : (_tInc<0 ? '<span class="t-red" style="font-weight:800">전년比 감소 ▼</span>' : '<span class="muted">변화 미미</span>');
+        const _pct = v => v>0?`<span class="t-green">▲${v.toFixed(0)}%</span>`:(v<0?`<span class="t-red">▼${Math.abs(v).toFixed(0)}%</span>`:'<span class="muted">–</span>');
+        const _incC = v => v>0?`<span class="t-green">+${fmtMoney(v)}</span>`:(v<0?`<span class="t-red">${fmtMoney(v)}</span>`:'<span class="muted">–</span>');
+        _effEl.innerHTML = `
+          <div class="label-mono muted" style="font-size:12px;margin-bottom:10px;letter-spacing:.03em">📊 캠페인 효과 — 집행 전 vs 후 <span style="font-weight:400">· 프로모션 시작일 기준, 전년 동기간과 비교</span></div>
+          <div style="background:var(--surface-2,rgba(127,127,127,.05));border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:12px;display:flex;flex-wrap:wrap;align-items:center;gap:18px">
+            <div><div class="label-mono muted" style="font-size:11px">집행 전 <span style="font-weight:400">(전년 동기간)</span></div><div style="font-size:19px;font-weight:700">${fmtMoney(_tB)}</div></div>
+            <div style="font-size:22px;color:var(--muted)">→</div>
+            <div><div class="label-mono muted" style="font-size:11px">집행 후 <span style="font-weight:400">(올해)</span></div><div style="font-size:19px;font-weight:800">${fmtMoney(_tA)}</div></div>
+            <div style="margin-left:auto;text-align:right"><div style="font-size:18px;font-weight:800">${_incC(_tInc)} ${_pct(_tPct)}</div><div style="font-size:14px;margin-top:3px">${_verdict}</div></div>
+          </div>
+          <div class="muted" style="font-size:12px;margin-bottom:4px">늘어난 SKU <b class="t-green">${_nUp}</b>개 · 줄어든 SKU <b class="t-red">${_nDn}</b>개 <span style="font-size:11px">(전년 동기간 대비)</span></div>
+          <div class="label-mono muted" style="font-size:11px;margin:15px 0 6px">🔼 가장 많이 늘어난 SKU</div>
+          <div style="overflow:auto;max-height:300px"><table style="font-size:12px;width:100%">
+            <thead><tr><th style="text-align:left">SKU</th><th style="text-align:left">차종</th><th style="text-align:left">지역</th><th class="text-right">집행 전</th><th class="text-right">집행 후</th><th class="text-right">증감</th></tr></thead>
+            <tbody>${_up.length? _up.slice(0,15).map(e=>`<tr><td style="text-align:left"><b>${e.sku}</b></td><td style="text-align:left">${_escE(e.model)}</td><td style="text-align:left">${e.region}</td><td class="text-right mono muted">${fmtMoney(e.before)}</td><td class="text-right mono">${fmtMoney(e.after)}</td><td class="text-right mono">${_incC(e.inc)}</td></tr>`).join('') : '<tr><td colspan="6" class="muted" style="text-align:center;padding:14px">전년 동기간 대비 늘어난 SKU가 없습니다</td></tr>'}</tbody>
+          </table></div>
+          <div class="label-mono muted" style="font-size:11px;margin:18px 0 6px">🚗 차종별 증감 <span style="font-weight:400">(어떤 차종 오더가 늘었나)</span></div>
+          <div style="overflow:auto;max-height:260px"><table style="font-size:12px;width:100%">
+            <thead><tr><th style="text-align:left">차종</th><th class="text-right">SKU 수</th><th class="text-right">집행 전</th><th class="text-right">집행 후</th><th class="text-right">증감</th><th class="text-right">%</th></tr></thead>
+            <tbody>${_ml.slice(0,12).map(e=>`<tr><td style="text-align:left"><b>${_escE(e.model)}</b></td><td class="text-right mono muted">${fmtNum(e.n)}</td><td class="text-right mono muted">${fmtMoney(e.before)}</td><td class="text-right mono">${fmtMoney(e.after)}</td><td class="text-right mono">${_incC(e.inc)}</td><td class="text-right mono">${_pct(e.before>0?(e.after/e.before-1)*100:(e.after>0?100:0))}</td></tr>`).join('')}</tbody>
+          </table></div>`;
       }
     }
     // Show TOTALS (sum across all SKUs) — not averages.
