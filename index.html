@@ -5561,10 +5561,13 @@ function renderCustomerTrend(fOrders, fMkt) {
   const _rg = state.custTrendRegion || '__all__';
   const camp = state.custTrendCampaign || '__all__';
   // 캠페인 참여 고객 오더만 추림 — 유효 캠페인 태그(campaignTargetSkus)만 (fOrdersPP 타이밍 의존 제거).
+  // 캠페인 참여 고객 오더만(태그 있는 오더). campaignTargetSkus는 비동기 로드라, 로드 전이면
+  // 태그만 있으면 통과 → 로드 타이밍과 무관하게 항상 데이터가 나오도록.
   const _validPromos = new Set(Object.keys(state.campaignTargetSkus||{}));
   const scoped = fOrders.filter(o => {
     const _pp = (o.promotion_category||'').trim();
-    if (!_validPromos.has(_pp)) return false;
+    if (!_pp || _pp === '(none)') return false;
+    if (_validPromos.size && !_validPromos.has(_pp)) return false;
     return (_rg==='__all__' || (o.region||'')===_rg) && (camp==='__all__' || _pp===camp);
   });
 
@@ -10658,20 +10661,10 @@ function renderSkuAggregate(fOrders) {
     // Show TOTALS (sum across all SKUs) — not averages.
     renderSkuBeforeAfter(total, { mode:'individual' });
 
-    // Append a promotion-TOTAL summary card at the end of the existing BA summary grid
+    // 중복 Before/After 요약 카드 숨김 — SKU 분석(상단 요약·SKU별 표)에 집중.
+    // (총 오더/금액·전환·베스트셀러·최다지역은 상단 요약에, 기간 비교는 Compare KPI에 이미 있음)
     const baSum = document.getElementById('skuBaSummary');
-    if (baSum) {
-      const dTotPct = total.beforeAmt>0 ? ((total.afterAmt-total.beforeAmt)/total.beforeAmt)*100 : null;
-      const totTag = dTotPct==null ? '<span class="t-muted">–</span>'
-        : dTotPct>=0 ? `<span class="t-green">▲ ${dTotPct.toFixed(1)}%</span>` : `<span class="t-red">▼ ${Math.abs(dTotPct).toFixed(1)}%</span>`;
-      const totalCard = document.createElement('div');
-      totalCard.style.cssText = 'background:rgba(106,182,255,0.08);border:1px solid rgba(106,182,255,0.30);border-radius:8px;padding:10px 12px';
-      totalCard.innerHTML = `
-        <div class="label-mono" style="font-size:10px;color:#A1A1A6;letter-spacing:0.05em">PROMOTION TOTAL (n=${n} SKUs)</div>
-        <div style="font-size:16px;font-weight:800;margin-top:2px">${fmtMoney(total.afterAmt)} after</div>
-        <div class="label-mono muted" style="font-size:11px">vs ${fmtMoney(total.beforeAmt)} before · ${totTag}</div>`;
-      baSum.appendChild(totalCard);
-    }
+    if (baSum) { baSum.innerHTML = ''; baSum.style.display = 'none'; }
   }
 
   // ── Per-SKU breakdown table — always shown in aggregate mode, with click-to-drill ──
