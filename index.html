@@ -5590,13 +5590,11 @@ function renderCustomerTrend(fOrders, fMkt) {
   const byCust = {};
   scoped.forEach(o => {
     const c = o.customer || '(unspecified)';
-    byCust[c] = byCust[c] || { qty:0, amount:0, ppAmount:0, regions:new Set(), countries:new Set() };
+    byCust[c] = byCust[c] || { qty:0, amount:0, campAmount:0, regions:new Set(), countries:new Set() };
     byCust[c].qty += Number(o.qty)||0;
     byCust[c].amount += convOrder(o);
-    // 캠페인 기간 오더 금액 (exec Campaign Period Order 기준: 캠페인 시작일 이후 + 국가 시작일 이후)
-    { const _ppc=(o.promotion_category||'').trim(); const _pst=(window._lastPromoStart||{})[_ppc];
-      const _beforeCS=(typeof _beforeCountryStart==='function') && _beforeCountryStart(o,_ppc);
-      if((!_pst||(o.order_date||'')>=_pst) && !_beforeCS) byCust[c].ppAmount += convOrder(o); }
+    // campaign order 금액 (해당 캠페인 target에 매칭되는 오더 = promoKeyOfOrder ≠ OTHER)
+    if ((typeof promoKeyOfOrder==='function') && promoKeyOfOrder(o) !== 'OTHER') byCust[c].campAmount += convOrder(o);
     if (o.region) byCust[c].regions.add(o.region);
     if (o.country) byCust[c].countries.add(o.country);
   });
@@ -5626,7 +5624,7 @@ function renderCustomerTrend(fOrders, fMkt) {
     tbl.innerHTML = `
       <thead><tr>
         <th>#</th><th>Customer</th><th class="text-right">Qty</th>
-        <th class="text-right">Amount</th><th class="text-right">캠페인 기간 오더</th><th class="text-right">Mkt Cost</th>
+        <th class="text-right">Amount</th><th class="text-right">campaign order</th><th class="text-right">Mkt Cost</th>
       </tr></thead>
       <tbody>${!ranking.length ? `<tr><td colspan="6" class="muted" style="text-align:center;padding:18px">이 필터에 해당하는 캠페인 오더가 없습니다 · REGION/CAMPAIGN을 <b>All</b>로 바꿔보세요</td></tr>` : ranking.map((r,i) => {
         const isSel = r.customer === selectedCustomer;
@@ -5636,7 +5634,7 @@ function renderCustomerTrend(fOrders, fMkt) {
           <td>${r.customer}${isSel?' <span style="color:#0A0A0A">●</span>':''}</td>
           <td class="text-right mono">${fmtNum(r.qty)}</td>
           <td class="text-right mono t-green">${fmtMoney(r.amount)}</td>
-          <td class="text-right mono t-blue">${fmtMoney(r.ppAmount||0)}</td>
+          <td class="text-right mono t-blue">${fmtMoney(r.campAmount||0)}</td>
           <td class="text-right mono t-orange">${fmtMoney(r.mktCost)}</td>
         </tr>`;
       }).join('')}</tbody>`;
@@ -5680,11 +5678,8 @@ function renderCustomerTrend(fOrders, fMkt) {
     const _a = convOrder(o);
     amtMap[p] = (amtMap[p]||0) + _a;
     qtyMap[p] = (qtyMap[p]||0) + (Number(o.qty)||0);
-    // 캠페인 기간 오더 (캠페인 시작일 이후 + 국가 시작일 이후 = exec 기준)
-    const _pp = (o.promotion_category||'').trim();
-    const _st = (window._lastPromoStart||{})[_pp];
-    const _beforeCS = (typeof _beforeCountryStart==='function') && _beforeCountryStart(o,_pp);
-    if ((!_st || (o.order_date||'')>=_st) && !_beforeCS) campMap[p] = (campMap[p]||0) + _a;
+    // campaign order (해당 캠페인 target에 매칭되는 오더 = promoKeyOfOrder ≠ OTHER)
+    if ((typeof promoKeyOfOrder==='function') && promoKeyOfOrder(o) !== 'OTHER') campMap[p] = (campMap[p]||0) + _a;
   });
   const periods = Array.from(periodSet).sort();
 
@@ -5693,7 +5688,7 @@ function renderCustomerTrend(fOrders, fMkt) {
     data:{
       labels: periods,
       datasets:[
-        { type:'bar', label:'캠페인 기간 오더', data: periods.map(p=>campMap[p]||0),
+        { type:'bar', label:'campaign order', data: periods.map(p=>campMap[p]||0),
           backgroundColor:'#E5484D', yAxisID:'y', stack:'amt', borderRadius:2 },
         { type:'bar', label:'그 외 오더', data: periods.map(p=>Math.max(0,(amtMap[p]||0)-(campMap[p]||0))),
           backgroundColor:'#0A0A0A', yAxisID:'y', stack:'amt', borderRadius:2 },
@@ -5710,7 +5705,7 @@ function renderCustomerTrend(fOrders, fMkt) {
         tooltip:{ ...chartOpts(true).plugins.tooltip,
           callbacks:{
             label: c => c.dataset.label==='Qty' ? `Qty: ${fmtNum(c.parsed.y)}` : `${c.dataset.label}: ${fmtMoney(c.parsed.y)}`,
-            footer: items => { const bars=items.filter(i=>i.dataset.yAxisID==='y'); const tot=bars.reduce((s,i)=>s+(i.parsed.y||0),0); const cf=bars.find(i=>i.dataset.label==='캠페인 기간 오더'); const camp=cf?(cf.parsed.y||0):0; return tot>0?`전체 ${fmtMoney(tot)} · 캠페인 ${Math.round(camp/tot*100)}%`:''; }
+            footer: items => { const bars=items.filter(i=>i.dataset.yAxisID==='y'); const tot=bars.reduce((s,i)=>s+(i.parsed.y||0),0); const cf=bars.find(i=>i.dataset.label==='campaign order'); const camp=cf?(cf.parsed.y||0):0; return tot>0?`전체 ${fmtMoney(tot)} · campaign ${Math.round(camp/tot*100)}%`:''; }
           } }
       },
       scales:{
