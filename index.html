@@ -4560,6 +4560,15 @@ function buildPlanExecNodes(fOrders, fMkt) {
     const d = (m.date||'').trim();
     if (d && (!x.earliestExec || d < x.earliestExec)) x.earliestExec = d;
   });
+  // 참여하지 않는 지역 제거 — 현재연도 오더도 마케팅 비용도 없는 지역(전년 baseline만, 예: OCEANIA).
+  // isRegionVisible/autoHide 설정과 무관하게 항상 제외.
+  Object.keys(tree).forEach(r => {
+    let _curA = 0, _cst = 0;
+    Object.values(tree[r]).forEach(cm => Object.values(cm).forEach(pm => Object.values(pm).forEach(l => {
+      _curA += l.orderAmt || 0; _cst += (l.costActual || 0) + (l.costExpected || 0);
+    })));
+    if (_curA <= 0 && _cst <= 0) delete tree[r];
+  });
   const aggLeaves = (ls) => {
     const A = {
       orderAmt:0, costActual:0, costExpected:0, costBudget:0, qty:0, ords:0,
