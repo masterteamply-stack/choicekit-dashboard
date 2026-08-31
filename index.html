@@ -4098,9 +4098,17 @@ function renderSkuCompareKpis(skuOrders, extraFilter, promotionStart) {
   //   PREVIOUS period stays comparable to CURRENT.
   // - promotionStart anchors the CURRENT period to the marketing start date so
   //   "after the campaign started" is the natural comparison frame.
+  // 비교 기간을 #promo(Promotion Performance)의 버킷과 동일하게:
+  //  MoM → 이달(1일~오늘), QoQ → 이번 분기(시작~오늘), YoY → 캠페인 기간(시작~오늘)·전년 동기.
+  // (기존엔 모든 모드가 캠페인 전체 기간을 써서 QoQ/MoM 비교가 왜곡됐음)
+  const _cmpM = (typeof getCmpState==='function' ? (getCmpState('sku').mode||'off') : 'off');
+  const _tdy = (typeof window._todayStr==='function' ? window._todayStr() : new Date().toISOString().slice(0,10));
+  let _cf = promotionStart || null;
+  if (_cmpM === 'mom') { _cf = _tdy.slice(0,7) + '-01'; }
+  else if (_cmpM === 'qoq') { const _mn = parseInt(_tdy.slice(5,7),10); const _qm = _mn - ((_mn-1)%3); _cf = _tdy.slice(0,4) + '-' + String(_qm).padStart(2,'0') + '-01'; }
   fillCompareKpis('sku', '#skuCompareKpis', skuOrders, {
     extraFilter,
-    currentFrom: promotionStart || null,
+    currentFrom: _cf,
   });
 }
 
@@ -10614,12 +10622,14 @@ function renderSkuAggregate(fOrders) {
       useOrders.forEach(o => { const sx=(o.sku||'').toUpperCase(); if(sx && !_prodBySku[sx] && o.product) _prodBySku[sx]=o.product; });
       const _tgtSet = new Set(_tgtSkuList);
       const _orderedTgt = new Set(useOrders.map(o=>(o.sku||'').toUpperCase()).filter(sx=>_tgtSet.has(sx)));
-      const _skuChips = _tgtSkuList.slice(0,60).map(sx => {
+      const _CHIP_MAX = 18;
+      const _skuSorted = _tgtSkuList.slice().sort((a,b) => (_orderedTgt.has(b)?1:0) - (_orderedTgt.has(a)?1:0));
+      const _skuChips = _skuSorted.slice(0,_CHIP_MAX).map(sx => {
         const on = _orderedTgt.has(sx);
         const pr = _prodBySku[sx] ? ` <span class="muted">${String(_prodBySku[sx]).replace(/</g,'&lt;').slice(0,20)}</span>` : '';
         return `<span style="display:inline-block;padding:1px 6px;margin:1px;border-radius:4px;border:1px solid ${on?'#0a7d2e':'rgba(0,0,0,0.12)'};background:${on?'rgba(10,125,46,0.08)':'transparent'};font-size:10px">${sx}${pr}</span>`;
       }).join('');
-      meta.innerHTML = `<div style="margin-bottom:5px"><b>${isAll?'All SKU campaigns':promo}</b> · 대상 SKU <b>${_tgtSkuList.length}</b>개 · 오더 전환 <b class="t-green">${_orderedTgt.size}</b>개 · ${fmtNum(totalOrds)} orders · Before/After: ${startTxt} · <span class="muted">click row to drill</span></div><div style="line-height:1.8">${_skuChips}${_tgtSkuList.length>60?` <span class="muted">+${_tgtSkuList.length-60} more</span>`:''}</div>`;
+      meta.innerHTML = `<div style="margin-bottom:5px"><b>${isAll?'All SKU campaigns':promo}</b> · 대상 SKU <b>${_tgtSkuList.length}</b>개 · 오더 전환 <b class="t-green">${_orderedTgt.size}</b>개 · ${fmtNum(totalOrds)} orders · Before/After: ${startTxt} · <span class="muted">click row to drill</span></div><div style="line-height:1.8">${_skuChips}${_tgtSkuList.length>_CHIP_MAX?` <span class="muted">+${_tgtSkuList.length-_CHIP_MAX} more</span>`:''}</div>`;
     }
     // Show TOTALS (sum across all SKUs) — not averages.
     renderSkuBeforeAfter(total, { mode:'individual' });
