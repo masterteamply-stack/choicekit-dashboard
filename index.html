@@ -10363,7 +10363,17 @@ function renderSkuAggregate(fOrders) {
   // typically holds only the current year; the prior-year comparison can only
   // come from the baseline bundle. Each baseline row carries amount_usd and
   // PRE_ORDER_MARK so convOrder handles the conversion transparently.
-  const ordersCsv = (state.orders || []).filter(o => o && o.sku);
+  // exec(요약표) Campaign Period Order와 동일 기준으로 current 주문을 필터:
+  // campMatch(promoKeyOfOrder OTHER 제외) + SELL-OUT은 SELL-IN만 + CTR MarketFit carve-out.
+  // (baseline/전년은 별도 스캔이라 여기서 건드리지 않음)
+  const ordersCsv = (state.orders || []).filter(o => o && o.sku).filter(o => {
+    const _p = (o.promotion_category || '').trim();
+    if (!_p || _p === '(none)') return false;
+    if (promoKeyOfOrder(o) === 'OTHER') return false;
+    if (campSellType(_p) === 'SELL-OUT' && String(o.sell_type||'').toUpperCase().replace(/_/g,'-') !== 'SELL-IN') return false;
+    if (_p === 'CTR MarketFit Campaign') { const _co = _LATAM_CARVEOUT[(o.customer||'').trim()]; if (_co && (o.order_date||'') >= _co[0] && (o.order_date||'') <= _co[1]) return false; }
+    return true;
+  });
   const baselineSrc = (state.preOrdersEnabled && Array.isArray(state.preOrders))
     ? state.preOrders.filter(o => o && o.sku)
     : [];
