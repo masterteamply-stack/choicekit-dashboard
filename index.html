@@ -1934,12 +1934,6 @@ header .mono b.t-orange {
             <p class="label-mono" style="margin-top:4px">Drill into a row for customer detail</p>
           </div>
           <div class="chart-tools">
-            <span class="label-mono" style="font-size:11px">REGION</span>
-            <select id="selPromoCtrRegion" style="min-width:120px;height:34px;padding:4px 10px;font-size:13px"><option value="__all__">All regions</option></select>
-            <span class="label-mono" style="font-size:11px">PROMO</span>
-            <select id="selPromoCtrPromo" style="min-width:160px;height:34px;padding:4px 10px;font-size:13px">
-              <option value="__all__">All Promotions</option>
-            </select>
             <span class="label-mono" style="font-size:11px">PERIOD</span>
             <div class="seg" id="segPromoCtrPeriod">
               <button data-v="all" class="active">All</button>
@@ -1964,10 +1958,6 @@ header .mono b.t-orange {
               <button data-v="amount" class="active">Amount</button>
               <button data-v="qty">Qty</button>
             </div>
-            <span class="label-mono" style="font-size:11px;margin-left:6px">FILTER</span>
-            <select id="selPromoCtrFilter" style="min-width:160px;height:34px;padding:4px 10px;font-size:13px">
-              <option value="__all__">All (overview)</option>
-            </select>
             <div class="widget-order-controls"></div>
           </div>
         </div>
@@ -2571,11 +2561,11 @@ let state = {
   topInsightsTo:     localStorage.getItem('ck_topinsights_to')     || '',
   promoCtrDim: localStorage.getItem('ck_promoctr_dim') || 'category',
   promoCtrMetric: localStorage.getItem('ck_promoctr_metric') || 'amount',
-  promoCtrFilter: localStorage.getItem('ck_promoctr_filter') || '__all__',
+  promoCtrFilter: '__all__',
   promoCtrSortKey: localStorage.getItem('ck_promoctr_sort_key') || 'amount',
   promoCtrSortDir: localStorage.getItem('ck_promoctr_sort_dir') || 'desc',
-  promoCtrPromo:  localStorage.getItem('ck_promoctr_promo')  || '__all__',
-  promoCtrRegion: localStorage.getItem('ck_promoctr_region') || '__all__',
+  promoCtrPromo:  '__all__',
+  promoCtrRegion: '__all__',
   promoCtrPeriod: localStorage.getItem('ck_promoctr_period') || 'all',
   promoCtrFrom:   localStorage.getItem('ck_promoctr_from')   || '',
   promoCtrTo:     localStorage.getItem('ck_promoctr_to')     || '',
@@ -6034,11 +6024,10 @@ function renderPromoCtrChart(fOrders) {
   const allGroups = Array.from(new Set(fOrders.map(groupKey).filter(v=>v!=='–'))).sort();
   // 필터 옵션 갱신
   const labelByDim = {category:'Category', region:'Region', country:'Country'};
-  sel.innerHTML = `<option value="__all__">All ${labelByDim[dim]} (overview)</option>` +
-    allGroups.map(g=>`<option value="${g}" ${g===filterVal?'selected':''}>${g}</option>`).join('');
-  if (filterVal !== '__all__' && !allGroups.includes(filterVal)) {
-    state.promoCtrFilter = '__all__';
-    sel.value = '__all__';
+  if (sel) {
+    sel.innerHTML = `<option value="__all__">All ${labelByDim[dim]} (overview)</option>` +
+      allGroups.map(g=>`<option value="${g}" ${g===filterVal?'selected':''}>${g}</option>`).join('');
+    if (filterVal !== '__all__' && !allGroups.includes(filterVal)) { state.promoCtrFilter = '__all__'; sel.value = '__all__'; }
   }
 
   const ctx = document.getElementById('chPromoCtr');
@@ -10683,7 +10672,13 @@ function renderSkuAggregate(fOrders) {
   const cmpOrders = promo === '__all__'
     ? ordersCsv
     : ordersCsv.filter(o => promoKeyOfOrder(o) === promo);
-  renderSkuCompareKpis(cmpOrders, cmpScope, startDate);
+  // __all__: 각 캠페인 시작일 이후 주문만 current로 (캠페인별 정렬 — 요약표/Promotion Performance와 동일).
+  // 단일 [최초시작일, today] 윈도우가 늦게 시작한 캠페인의 시작 전 주문까지 포함하던 문제 해결.
+  const _cmpStartBP = (promo === '__all__' && baStartDate && baStartDate.byPromo) ? baStartDate.byPromo : null;
+  const _cmpOrdersAligned = _cmpStartBP
+    ? cmpOrders.filter(o => { const _st = _cmpStartBP[promoKeyOfOrder(o)]; return !_st || (o.order_date||'') >= _st; })
+    : cmpOrders;
+  renderSkuCompareKpis(_cmpOrdersAligned, cmpScope, startDate);
   renderSkuCustomerConversion(promo, _cmpCfg, _cmpAllowR, allOrd, startDate);
 }
 
@@ -11834,7 +11829,9 @@ document.addEventListener('click', e => {
     else if (id==='segPlanExecSort'){ state.planExecSort = v; persist(); renderAll(); }
     else if (id==='segSkuCmp'){
       setCmpState('sku', { mode: v, basis: 'auto' });
-      renderAll();
+      // SKU 섹션만 재렌더 — renderAll()이면 위의 #promo 그래프까지 재렌더돼 커플링됨
+      const _fO = state.orders.filter(matchOrder).filter(o=>isRegionVisible(o.region));
+      renderSkuExplorer(_fO, []);
     }
     // ── new widgets ──
     else if (id==='segPotPeriod'){ state.potPeriod = v; persist(); renderAll(); }
