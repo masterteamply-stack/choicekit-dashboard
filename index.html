@@ -6516,6 +6516,8 @@ function renderRegionExecSummary(fOrders, fMkt) {
           if (allow && allow.size) { if (_rr && !allow.has(_rr)) return ''; }
           return skuKey;
         }
+        const custKeySO = _pm.custMapSO && _pm.custMapSO[(o.customer || '').trim()];
+        if (custKeySO) return custKeySO;
         return '';
       };
       (state.preOrders || []).forEach(o => {
@@ -9298,7 +9300,7 @@ function promoKeyOfOrder(o) {
   // baseline(PRE_ORDER) 행: order_id의 CTR code 또는 sku/customer로 캠페인 역추적
   if (pc === 'PRE_ORDER' || pc === '') {
     if (!window._promoKeyMaps) {
-      const ctrMap = {}, custMap = {}, ctrMapR = {};
+      const ctrMap = {}, custMap = {}, ctrMapR = {}, custMapSO = {};
       const cfg = state.campaignTargetSkus || {};
       // 현재 orders에 실제 존재하는 캠페인 (customer 충돌 시 우선)
       const activePromos = new Set((state.orders||[]).map(o => o.promotion_category).filter(Boolean));
@@ -9312,16 +9314,20 @@ function promoKeyOfOrder(o) {
           // SKU 기반 캠페인의 region 제한 (Asian/European=CIS, Portfolio=MENA, CTR MarketFit=LATAM)
           if (c.region) regMap[p] = new Set(_rgs);
         }
-        // SELL-OUT 캠페인은 first-year(전년 없음) → custMap 제외 (고객의 전년 오더를 뺏지 않도록)
-        else if (campSellType(p) !== 'SELL-OUT') (c.target_customers||[]).forEach(cu => {
-          const k = cu.trim();
-          // 이미 매핑된 고객이 active 캠페인이면 덮어쓰지 않음; 새 캠페인이 active면 우선
-          if (!custMap[k] || (activePromos.has(p) && !activePromos.has(custMap[k]))) custMap[k] = p;
-        });
+        // customer 기반 분리: SELL-OUT은 custMapSO(SKU 캠페인보다 '낮은' 우선순위)로, 그 외
+        // (Mexico Awakening/Strategic Partner)는 custMap(SKU보다 '높은' 우선순위)로. → SUPER
+        // REPUESTOS의 CTR MarketFit SKU 구매는 CTR MarketFit으로, 나머지(및 ASIA SELL-OUT
+        // 고객 전체)의 전년 SELL-IN은 SELL-OUT Promotion 전년으로 귀속돼 프로모션 임팩 분석 가능.
+        else { const _tgt = (campSellType(p) === 'SELL-OUT') ? custMapSO : custMap;
+          (c.target_customers||[]).forEach(cu => {
+            const k = cu.trim();
+            if (!_tgt[k] || (activePromos.has(p) && !activePromos.has(_tgt[k]))) _tgt[k] = p;
+          });
+        }
       });
-      window._promoKeyMaps = { ctrMap, custMap, regMap, ctrMapR };
+      window._promoKeyMaps = { ctrMap, custMap, regMap, ctrMapR, custMapSO };
     }
-    const { ctrMap, custMap, regMap, ctrMapR } = window._promoKeyMaps;
+    const { ctrMap, custMap, regMap, ctrMapR, custMapSO } = window._promoKeyMaps;
     const sk = (o.sku || '').trim();
     const m = (o.order_id || '').match(/^PO-([^-]+)-/);
     const ctr = m ? m[1] : sk;
@@ -9340,6 +9346,9 @@ function promoKeyOfOrder(o) {
       }
       return skuKey;
     }
+    // SELL-OUT 고객(custMapSO)은 SKU 캠페인보다 낮은 우선순위로 전년 귀속 (ASIA SELL-OUT 임팩 분석)
+    const custKeySO = custMapSO[(o.customer||'').trim()];
+    if (custKeySO) return custKeySO;
     return pc || 'OTHER';
   }
   // 태그가 SKU 기반 캠페인인데 SKU 미매칭이면 미귀속 (exec campMatch와 일관: SKU 기준 캠페인은 SKU로만 취합)
