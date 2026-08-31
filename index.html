@@ -9806,9 +9806,12 @@ function populateSkuUI(fOrders) {
   }
   const aggSel = document.getElementById('selSkuAggPromo');
   if (aggSel) {
+    // SKU Explorer는 SKU 기반 캠페인만 분석 (customer 기반 SELL-OUT/Mexico/Strategic 제외)
+    const _skuCfgP = state.campaignTargetSkus || {};
+    const _skuBasedSel = new Set(Object.keys(_skuCfgP).filter(p => (_skuCfgP[p].match_by||'sku').toLowerCase() !== 'customer'));
     const cur = state.skuAggPromo || '__all__';
-    if (cur !== '__all__' && !promoKeys.includes(cur)) state.skuAggPromo = '__all__';
-    aggSel.innerHTML = _promoRegionOptsFromOrders(_scopeOrdersByRegion(_ord, _skuRgn), state.skuAggPromo, 'All Promotions');
+    if (cur !== '__all__' && (!promoKeys.includes(cur) || !_skuBasedSel.has(String(cur).split(_RSPLIT)[0]))) state.skuAggPromo = '__all__';
+    aggSel.innerHTML = _promoRegionOptsFromOrders(_scopeOrdersByRegion(_ord, _skuRgn), state.skuAggPromo, 'All SKU campaigns', _skuBasedSel);
     aggSel.value = state.skuAggPromo;
     if (!aggSel._ckH) { aggSel._ckH = true; aggSel.addEventListener('change', e => { _applyPromoSelValue(e.target.value,'skuAggPromo','skuAggRegion','ck_sku_agg_region'); try{localStorage.setItem('ck_sku_agg_promo',state.skuAggPromo);}catch(_){} const fO=state.orders.filter(matchOrder).filter(o=>isRegionVisible(o.region)); renderSkuExplorer(fO, []); }); }
   }
@@ -10361,9 +10364,11 @@ function renderSkuAggregate(fOrders) {
   // exec(요약표) Campaign Period Order와 동일 기준으로 current 주문을 필터:
   // campMatch(promoKeyOfOrder OTHER 제외) + SELL-OUT은 SELL-IN만 + CTR MarketFit carve-out.
   // (baseline/전년은 별도 스캔이라 여기서 건드리지 않음)
+  const _skuBasedCamps = new Set(Object.keys(state.campaignTargetSkus||{}).filter(p => ((state.campaignTargetSkus[p].match_by||'sku').toLowerCase() !== 'customer')));
   const ordersCsv = (state.orders || []).filter(o => o && o.sku).filter(o => {
     const _p = (o.promotion_category || '').trim();
     if (!_p || _p === '(none)') return false;
+    if (!_skuBasedCamps.has(_p)) return false;   // SKU 기반 캠페인만 분석
     if (promoKeyOfOrder(o) === 'OTHER') return false;
     if (campSellType(_p) === 'SELL-OUT' && String(o.sell_type||'').toUpperCase().replace(/_/g,'-') !== 'SELL-IN') return false;
     if (_p === 'CTR MarketFit Campaign') { const _co = _LATAM_CARVEOUT[(o.customer||'').trim()]; if (_co && (o.order_date||'') >= _co[0] && (o.order_date||'') <= _co[1]) return false; }
@@ -10591,7 +10596,21 @@ function renderSkuAggregate(fOrders) {
       const startTxt = isAll
         ? 'per-campaign' // each promotion uses its own marketing start
         : (startDate || '–');
-      meta.textContent = `Promotion: ${isAll?"All":promo} · ${n} SKUs · ${fmtNum(totalOrds)} orders · Before/After split: ${startTxt} · click row to drill`;
+      // 대상 SKU(config) — 개수 + 오더 전환 + 제품 칩
+      const _tgtCfg = state.campaignTargetSkus || {};
+      const _tgtSkuList = isAll
+        ? [...new Set(Object.keys(_tgtCfg).filter(pp=>(_tgtCfg[pp].match_by||'sku').toLowerCase()!=='customer').flatMap(pp=>(_tgtCfg[pp].target_skus||[]).map(x=>String(x).trim().toUpperCase())))]
+        : ((_tgtCfg[promo]&&_tgtCfg[promo].target_skus)||[]).map(x=>String(x).trim().toUpperCase());
+      const _prodBySku = {};
+      useOrders.forEach(o => { const sx=(o.sku||'').toUpperCase(); if(sx && !_prodBySku[sx] && o.product) _prodBySku[sx]=o.product; });
+      const _tgtSet = new Set(_tgtSkuList);
+      const _orderedTgt = new Set(useOrders.map(o=>(o.sku||'').toUpperCase()).filter(sx=>_tgtSet.has(sx)));
+      const _skuChips = _tgtSkuList.slice(0,60).map(sx => {
+        const on = _orderedTgt.has(sx);
+        const pr = _prodBySku[sx] ? ` <span class="muted">${String(_prodBySku[sx]).replace(/</g,'&lt;').slice(0,20)}</span>` : '';
+        return `<span style="display:inline-block;padding:1px 6px;margin:1px;border-radius:4px;border:1px solid ${on?'#0a7d2e':'rgba(0,0,0,0.12)'};background:${on?'rgba(10,125,46,0.08)':'transparent'};font-size:10px">${sx}${pr}</span>`;
+      }).join('');
+      meta.innerHTML = `<div style="margin-bottom:5px"><b>${isAll?'All SKU campaigns':promo}</b> · 대상 SKU <b>${_tgtSkuList.length}</b>개 · 오더 전환 <b class="t-green">${_orderedTgt.size}</b>개 · ${fmtNum(totalOrds)} orders · Before/After: ${startTxt} · <span class="muted">click row to drill</span></div><div style="line-height:1.8">${_skuChips}${_tgtSkuList.length>60?` <span class="muted">+${_tgtSkuList.length-60} more</span>`:''}</div>`;
     }
     // Show TOTALS (sum across all SKUs) — not averages.
     renderSkuBeforeAfter(total, { mode:'individual' });
