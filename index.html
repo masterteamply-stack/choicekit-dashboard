@@ -6366,15 +6366,16 @@ function renderRegionExecSummary(fOrders, fMkt) {
     agg = {};
     const ensure = (r, p) => {
       agg[r] = agg[r] || {};
-      if (!agg[r][p]) agg[r][p] = { order:0, cost:0, target:0, otIn:0, otOut:0, soResult:0, prev:0, start:startFor(r, p), end:promoEnd[p] || '', sell:sellTypeOf(p), soNote:_soNote[p] || '', countries:{} };
+      if (!agg[r][p]) agg[r][p] = { order:0, cost:0, target:0, otIn:0, otOut:0, soResult:0, prev:0, start:startFor(r, p), end:promoEnd[p] || '', sell:sellTypeOf(p), soNote:_soNote[p] || '', countries:{}, skus:new Set() };
       return agg[r][p];
     };
-    const bucket = (node, country, cust, amt, field) => {
+    const bucket = (node, country, cust, amt, field, sku) => {
       country = country || '(Unknown)'; cust = cust || '(Unknown)';
-      const cc = node.countries[country] || (node.countries[country] = { order:0, prev:0, cost:0, target:0, customers:{} });
+      const cc = node.countries[country] || (node.countries[country] = { order:0, prev:0, cost:0, target:0, customers:{}, skus:new Set() });
       cc[field] += amt;
-      const uu = cc.customers[cust] || (cc.customers[cust] = { order:0, prev:0 });
+      const uu = cc.customers[cust] || (cc.customers[cust] = { order:0, prev:0, skus:new Set() });
       uu[field] += amt;
+      if (sku) { (cc.skus || (cc.skus = new Set())).add(sku); (uu.skus || (uu.skus = new Set())).add(sku); }
     };
 
     // This-year period order — gated to MATCH Promotion Performance / KPI section
@@ -6400,6 +6401,8 @@ function renderRegionExecSummary(fOrders, fMkt) {
       const s = _gStarted[p] || _gAll[p] || '';
       return (s && s < '2026-01-02') ? '2026-01-02' : s;
     };
+    const _tgtSets = {};
+    Object.keys(cfg).forEach(pp => { const c = cfg[pp]||{}; if ((c.match_by||'sku').toLowerCase()==='sku' && Array.isArray(c.target_skus) && c.target_skus.length) _tgtSets[pp] = new Set(c.target_skus.map(x=>x.trim().toUpperCase())); });
     (fOrders || []).forEach(o => {
       const p = (o.promotion_category || o.promotion_id || '').trim();
       if (_skipCamp(p)) return;
@@ -6416,7 +6419,10 @@ function renderRegionExecSummary(fOrders, fMkt) {
       const amt = convOrder(o);
       const node = ensure(r, p);
       node.order += amt;
-      bucket(node, _ctryKey(o.country, r), o.customer, amt, 'order');
+      let _hitSku = '';
+      const _tset = _tgtSets[p];
+      if (_tset) { const _sk = (o.sku || o.ctr_code || '').trim().toUpperCase(); if (_tset.has(_sk)) { _hitSku = _sk; node.skus.add(_sk); } }
+      bucket(node, _ctryKey(o.country, r), o.customer, amt, 'order', _hitSku);
     });
 
     // Marketing executed cost (region × campaign), also bucketed by country
@@ -6559,6 +6565,8 @@ function renderRegionExecSummary(fOrders, fMkt) {
     if (prev > 0) { const pct = (order - prev) / prev * 100; return pct >= 0 ? `<span class="t-green" style="font-weight:700">▲ ${pct.toFixed(0)}%</span>` : `<span class="t-red" style="font-weight:700">▼ ${Math.abs(pct).toFixed(0)}%</span>`; }
     return order > 0 ? '<span class="t-green" style="font-weight:700">▲ NEW</span>' : '<span class="muted">–</span>';
   };
+  const _tgtSkuN = p => { const c = cfg[p]||{}; return ((c.match_by||'sku').toLowerCase()==='sku' && Array.isArray(c.target_skus)) ? c.target_skus.length : 0; };
+  const _skuCell = (m, n) => { if (!n) return '<span class="muted">–</span>'; const pct = Math.round(m/n*100); const col = pct>=100 ? '#0a7d2e' : (pct>=50 ? 'var(--accent)' : 'var(--text-3)'); return `<span class="mono" style="font-weight:700;color:${col}">${m}</span><span class="muted mono"> / ${n}</span>`; };
   const progCell = (order, target) => {
     if (!(target > 0)) return '<span class="muted" style="font-size:10px">No target</span>';
     const pr = order / target * 100, w = Math.min(100, pr);
@@ -6647,6 +6655,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
     <th class="text-right" title="orders during the campaign period (start → today)">Campaign Period Order</th>
     <th class="text-right" title="orders in the same period last year (baseline)">Prior-Yr Same Period</th>
     <th class="text-right" title="vs same period last year">YoY Growth</th>
+    <th class="text-right" title="오더로 전환된 target SKU 수 / 캠페인 order target SKU 총수 (SKU 기반 캠페인만; 고객사 기반은 –)">SKU 전환</th>
     <th style="min-width:120px" title="Campaign Period Order ÷ Order Target">Progress</th>
     <th class="text-right" title="SELL-OUT Target → Result(실적) · 달성률. marketing.csv SELL-OUT Target($)/Result($)" style="color:var(--accent)">Sell-out Target → 실적</th>
     <th class="text-right" title="(Order − Marketing Cost) ÷ Marketing Cost">ROMI</th>
@@ -6664,6 +6673,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
       <td class="text-right mono t-green" style="font-weight:800">${fmtMoney(R.order)}</td>
       <td class="text-right mono muted">${baselineOn && R.prev > 0 ? fmtMoney(R.prev) : '–'}</td>
       <td class="text-right mono">${yoyCell(R.order, R.prev)}</td>
+      <td class="text-right">${_skuCell(R.camps.reduce((a,c)=>a+((c.skus&&c.skus.size)||0),0), R.camps.reduce((a,c)=>a+_tgtSkuN(c.camp),0))}</td>
       <td>${progCell(R.order, R.target)}</td>
       <td class="text-right mono" style="font-weight:700;color:var(--accent)">${_soCell(R.otOut, R.soResult)}</td>
       <td class="text-right mono">${romiCell(R.order, R.cost)}</td>
@@ -6675,7 +6685,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
     _sortedCamps.forEach(c => {
       const isSO = c.sell === 'SELL-OUT';
       if (isSO && !_soDivider) { _soDivider = true;
-        body += `<tr><td colspan="8" style="padding:3px 0 3px 18px;background:var(--surface-2);border-top:1px dashed var(--accent);font-size:10px;font-weight:800;letter-spacing:.05em;color:var(--accent)">SELL-OUT · 별도 관리 (managed separately)</td></tr>`;
+        body += `<tr><td colspan="9" style="padding:3px 0 3px 18px;background:var(--surface-2);border-top:1px dashed var(--accent);font-size:10px;font-weight:800;letter-spacing:.05em;color:var(--accent)">SELL-OUT · 별도 관리 (managed separately)</td></tr>`;
       }
       const cKey = 'C|' + R.region + '|' + c.camp, cOpen = !!state.execOpen[cKey];
       body += `<tr data-exec-key="${cKey}" style="cursor:pointer;${isSO ? 'background:var(--surface-2)' : ''}">
@@ -6684,6 +6694,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
         <td class="text-right mono t-green">${fmtMoney(c.order)}</td>
         <td class="text-right mono muted">${baselineOn && c.prev > 0 ? fmtMoney(c.prev) : '–'}</td>
         <td class="text-right mono">${yoyCell(c.order, c.prev)}</td>
+        <td class="text-right">${_skuCell((c.skus&&c.skus.size)||0, _tgtSkuN(c.camp))}</td>
         <td>${progCell(c.order, c.target)}</td>
         <td class="text-right mono" style="color:var(--accent)">${_soCell(c.otOut, c.soResult)}${c.soNote ? ` <span title="SELL-OUT Target: ${String(c.soNote).replace(/\"/g,'&quot;')}" style="cursor:help;color:var(--accent);font-weight:700">ⓢ</span>` : ''}</td>
         <td class="text-right mono">${romiCell(c.order, c.cost)}</td>
@@ -6691,7 +6702,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
       if (!cOpen) return;
       const countries = Object.entries(c.countries || {}).map(([k, v]) => ({ country:k, ...v })).filter(cd => _ctryAllowedExec(cd.country, c.camp)).sort((a, b) => b.order - a.order);
       if (!countries.length) {
-        body += `<tr><td style="padding-left:40px" class="muted" colspan="8">No country detail</td></tr>`;
+        body += `<tr><td style="padding-left:40px" class="muted" colspan="9">No country detail</td></tr>`;
       }
       countries.forEach(cd => {
         const kKey = 'K|' + R.region + '|' + c.camp + '|' + cd.country, kOpen = !!state.execOpen[kKey];
@@ -6702,6 +6713,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
           <td class="text-right mono t-green">${fmtMoney(cd.order)}</td>
           <td class="text-right mono muted">${baselineOn && cd.prev > 0 ? fmtMoney(cd.prev) : '–'}</td>
           <td class="text-right mono">${yoyCell(cd.order, cd.prev)}</td>
+          <td class="text-right">${_skuCell((cd.skus&&cd.skus.size)||0, _tgtSkuN(c.camp))}</td>
           <td>${progCell(cd.order, cd.target)}</td>
           <td class="text-right mono" style="color:var(--accent)">${(c.sell === 'SELL-OUT' && cd.target > 0) ? fmtMoney(cd.target) : '–'}</td>
           <td class="text-right mono">${romiCell(cd.order, cd.cost)}</td>
@@ -6717,6 +6729,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
             <td class="text-right mono t-green">${fmtMoney(u.order)}</td>
             <td class="text-right mono muted">${baselineOn && u.prev > 0 ? fmtMoney(u.prev) : '–'}</td>
             <td class="text-right mono">${yoyCell(u.order, u.prev)}</td>
+            <td class="text-right">${_skuCell((u.skus&&u.skus.size)||0, _tgtSkuN(c.camp))}</td>
             <td>${progCell(u.order, _ut)}</td>
             <td class="text-right mono" style="color:var(--accent)">${(c.sell === 'SELL-OUT' && _ut > 0) ? fmtMoney(_ut) : '–'}</td>
             <td class="text-right mono">${romiCell(u.order, _uc)}</td>
@@ -6731,11 +6744,12 @@ function renderRegionExecSummary(fOrders, fMkt) {
     <td class="text-right mono t-green">${fmtMoney(G.order)}</td>
     <td class="text-right mono muted">${baselineOn && G.prev > 0 ? fmtMoney(G.prev) : '–'}</td>
     <td class="text-right mono">${yoyCell(G.order, G.prev)}</td>
+    <td class="text-right">${_skuCell(regionList.reduce((a,R)=>a+R.camps.reduce((b,c)=>b+((c.skus&&c.skus.size)||0),0),0), regionList.reduce((a,R)=>a+R.camps.reduce((b,c)=>b+_tgtSkuN(c.camp),0),0))}</td>
     <td>${progCell(G.order, G.target)}</td>
     <td class="text-right mono" style="color:var(--accent)">${_soCell(G.otOut, G.soResult)}</td>
     <td class="text-right mono">${romiCell(G.order, G.cost)}</td>
   </tr>`;
-  tbl.innerHTML = THEAD + `<tbody>${body || '<tr><td colspan="8" class="muted" style="text-align:center;padding:16px">No data</td></tr>'}</tbody>`;
+  tbl.innerHTML = THEAD + `<tbody>${body || '<tr><td colspan="9" class="muted" style="text-align:center;padding:16px">No data</td></tr>'}</tbody>`;
 
   // Drill-down toggle (delegated, idempotent)
   if (!tbl.dataset.treeWired) {
