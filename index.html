@@ -5673,12 +5673,18 @@ function renderCustomerTrend(fOrders, fMkt) {
 
   const custOrders = scoped.filter(o => (o.customer||'(unspecified)') === selectedCustomer);
   const periodSet = new Set();
-  const amtMap = {}, qtyMap = {};
+  const amtMap = {}, campMap = {}, qtyMap = {};
   custOrders.forEach(o => {
     const p = periodOf(o.order_date); if (!p) return;
     periodSet.add(p);
-    amtMap[p] = (amtMap[p]||0) + convOrder(o);
+    const _a = convOrder(o);
+    amtMap[p] = (amtMap[p]||0) + _a;
     qtyMap[p] = (qtyMap[p]||0) + (Number(o.qty)||0);
+    // 캠페인 기간 오더 (캠페인 시작일 이후 + 국가 시작일 이후 = exec 기준)
+    const _pp = (o.promotion_category||'').trim();
+    const _st = (window._lastPromoStart||{})[_pp];
+    const _beforeCS = (typeof _beforeCountryStart==='function') && _beforeCountryStart(o,_pp);
+    if ((!_st || (o.order_date||'')>=_st) && !_beforeCS) campMap[p] = (campMap[p]||0) + _a;
   });
   const periods = Array.from(periodSet).sort();
 
@@ -5687,8 +5693,10 @@ function renderCustomerTrend(fOrders, fMkt) {
     data:{
       labels: periods,
       datasets:[
-        { type:'bar', label:'Order Amount', data: periods.map(p=>amtMap[p]||0),
-          backgroundColor:'#0A0A0A', borderRadius:4, yAxisID:'y' },
+        { type:'bar', label:'캠페인 기간 오더', data: periods.map(p=>campMap[p]||0),
+          backgroundColor:'#E5484D', yAxisID:'y', stack:'amt', borderRadius:2 },
+        { type:'bar', label:'그 외 오더', data: periods.map(p=>Math.max(0,(amtMap[p]||0)-(campMap[p]||0))),
+          backgroundColor:'#0A0A0A', yAxisID:'y', stack:'amt', borderRadius:2 },
         { type:'line', label:'Qty', data: periods.map(p=>qtyMap[p]||0),
           borderColor:'#525257', backgroundColor:'#525257', borderWidth:3,
           tension:.3, pointRadius:4, fill:false, yAxisID:'y2' },
@@ -5700,13 +5708,14 @@ function renderCustomerTrend(fOrders, fMkt) {
         ...chartOpts(true).plugins,
         datalabels:{ display:false },
         tooltip:{ ...chartOpts(true).plugins.tooltip,
-          callbacks:{ label: c => c.dataset.label==='Qty'
-            ? `Qty: ${fmtNum(c.parsed.y)}`
-            : `Amount: ${fmtMoney(c.parsed.y)}` } }
+          callbacks:{
+            label: c => c.dataset.label==='Qty' ? `Qty: ${fmtNum(c.parsed.y)}` : `${c.dataset.label}: ${fmtMoney(c.parsed.y)}`,
+            footer: items => { const bars=items.filter(i=>i.dataset.yAxisID==='y'); const tot=bars.reduce((s,i)=>s+(i.parsed.y||0),0); const cf=bars.find(i=>i.dataset.label==='캠페인 기간 오더'); const camp=cf?(cf.parsed.y||0):0; return tot>0?`전체 ${fmtMoney(tot)} · 캠페인 ${Math.round(camp/tot*100)}%`:''; }
+          } }
       },
       scales:{
-        x:{ ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:14}}, grid:{color:'rgba(0,0,0,0.06)'} },
-        y:{ position:'left', ticks:{color:'#0A0A0A',font:{family:'IBM Plex Mono',weight:600,size:14},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:false} },
+        x:{ stacked:true, ticks:{color:'#1D1D1F',font:{family:'IBM Plex Mono',weight:600,size:14}}, grid:{color:'rgba(0,0,0,0.06)'} },
+        y:{ stacked:true, position:'left', ticks:{color:'#0A0A0A',font:{family:'IBM Plex Mono',weight:600,size:14},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}, grid:{color:'rgba(0,0,0,0.06)'}, title:{display:false} },
         y2:{ position:'right', ticks:{color:'#525257',font:{family:'IBM Plex Mono',weight:600,size:14}}, grid:{display:false}, title:{display:false} },
       }
     }
