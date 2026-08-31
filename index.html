@@ -2185,7 +2185,7 @@ header .mono b.t-orange {
             <div>
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap">
                 <span class="label-mono" style="font-size:11px" id="custProdLabel">TOP 10 PRODUCTS</span>
-                <div class="seg" id="segCustProdMode">
+                <div class="seg" id="segCustProdMode" style="display:none">
                   <button data-v="amount" class="active">Amount</button>
                   <button data-v="qty">Qty</button>
                 </div>
@@ -5539,6 +5539,21 @@ function renderQuarterly(fOrders) {
   if (seg) seg.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.v===metric));
 }
 
+// campaign order 판정: 매칭(SKU 캠페인=SKU 타깃 / 고객 캠페인=고객 타깃) + 캠페인 참여기간(시작일·국가시작일 이후).
+// exec Campaign Period Order와 동일 기준(라인 ~8533). 전역 맵(_lastPromo*)은 recomputePromoAgg에서 세팅됨.
+function _isCampaignPeriodOrder(o) {
+  const pr = (o.promotion_category||'').trim(); if (!pr) return false;
+  const _ps = window._lastPromoStart || {}, _pts = window._lastPromoTargetSkus || {},
+        _ptc = window._lastPromoTargetCust || {}, _pmb = window._lastPromoMatchBy || {};
+  const cust = (o.customer||'').trim();
+  const st = (window._lastCustStart||{})[cust] || _ps[pr];   // 고객별 참여 시작일 우선, 없으면 캠페인 시작일
+  if (st && (o.order_date||'') < st) return false;                                   // 참여 시작일 이후
+  if (typeof _beforeCountryStart==='function' && _beforeCountryStart(o, pr)) return false; // 국가 시작일 이후
+  const mb = _pmb[pr] || 'sku';
+  if (mb === 'sku') { const ss = _pts[pr]; if (ss && ss.size>0 && !ss.has((o.sku||o.ctr_code||'').trim())) return false; }
+  else { const cs = _ptc[pr]; if (cs && cs.size>0 && !cs.has(cust)) return false; }
+  return true;
+}
 function renderCustomerTrend(fOrders, fMkt) {
   // 캠페인 select 채우기 — ① localStorage에 남은 stale region 방어(없는 지역이면 __all__로 리셋),
   // ② 셀렉트 채우기 중 에러가 나도 아래 테이블/차트 렌더를 막지 않도록 try/catch로 격리.
@@ -5587,14 +5602,28 @@ function renderCustomerTrend(fOrders, fMkt) {
   // 고객별 집계: qty, amount, marketing cost (해당 캠페인 region/country 기준 추정)
   const mktScoped = fMkt.filter(m => (_rg==='__all__' || _canonRegion(m.region)===_rg) && (camp==='__all__' || (m.promotion_category||'')===camp));
 
+  // 고객별 캠페인 참여 시작일 (SELL-OUT 등 고객별 시작일 상이) — campaign order 기간 판정용
+  window._lastCustStart = (() => {
+    const bc = {};
+    (state.marketing||[]).forEach(m => {
+      const d = (m.date || '').trim(); if (!d) return;
+      const c = (m.customer || '').trim(); if (!c || c.toUpperCase() === 'ALL') return;
+      const kpi = (m.kpi_metric || '').trim().toUpperCase();
+      if (kpi === 'STARTED') { if (!bc[c] || d < bc[c]) bc[c] = d; bc[c+'__s'] = true; }
+      else if (!bc[c+'__s']) { if (!bc[c] || d < bc[c]) bc[c] = d; }
+    });
+    Object.keys(bc).filter(k=>k.endsWith('__s')).forEach(k=>delete bc[k]);
+    return bc;
+  })();
+
   const byCust = {};
   scoped.forEach(o => {
     const c = o.customer || '(unspecified)';
     byCust[c] = byCust[c] || { qty:0, amount:0, campAmount:0, regions:new Set(), countries:new Set() };
     byCust[c].qty += Number(o.qty)||0;
     byCust[c].amount += convOrder(o);
-    // campaign order 금액 (해당 캠페인 target에 매칭되는 오더 = promoKeyOfOrder ≠ OTHER)
-    if ((typeof promoKeyOfOrder==='function') && promoKeyOfOrder(o) !== 'OTHER') byCust[c].campAmount += convOrder(o);
+    // campaign order 금액 = 매칭(SKU/고객) + 캠페인 참여기간(시작일·국가시작일 이후)
+    if (_isCampaignPeriodOrder(o)) byCust[c].campAmount += convOrder(o);
     if (o.region) byCust[c].regions.add(o.region);
     if (o.country) byCust[c].countries.add(o.country);
   });
@@ -5678,8 +5707,8 @@ function renderCustomerTrend(fOrders, fMkt) {
     const _a = convOrder(o);
     amtMap[p] = (amtMap[p]||0) + _a;
     qtyMap[p] = (qtyMap[p]||0) + (Number(o.qty)||0);
-    // campaign order (해당 캠페인 target에 매칭되는 오더 = promoKeyOfOrder ≠ OTHER)
-    if ((typeof promoKeyOfOrder==='function') && promoKeyOfOrder(o) !== 'OTHER') campMap[p] = (campMap[p]||0) + _a;
+    // campaign order = 매칭 + 캠페인 참여기간
+    if (_isCampaignPeriodOrder(o)) campMap[p] = (campMap[p]||0) + _a;
   });
   const periods = Array.from(periodSet).sort();
 
@@ -5723,44 +5752,51 @@ function renderCustomerTrend(fOrders, fMkt) {
 function renderCustomerTopProducts(scopedOrders, selectedCustomer) {
   const tbl = document.getElementById('tblCustProducts');
   const lblEl = document.getElementById('custProdLabel');
-  const mode = state.custTrendProductMode || 'amount';
-  // sync seg buttons
-  document.querySelectorAll('#segCustProdMode button').forEach(b => {
-    b.classList.toggle('active', b.dataset.v === mode);
-  });
   if (!tbl) return;
   if (!selectedCustomer) {
     tbl.innerHTML = '<tbody><tr><td class="muted" style="text-align:center;padding:16px">Select a customer to view products</td></tr></tbody>';
-    if (lblEl) lblEl.textContent = 'TOP 10 PRODUCTS';
+    if (lblEl) lblEl.textContent = '제품별 · 올해 종합 vs campaign order';
     return;
   }
-  if (lblEl) lblEl.innerHTML = `TOP 10 PRODUCTS · <span style="color:var(--blue)">${selectedCustomer}</span>`;
+  if (lblEl) lblEl.innerHTML = `제품별 · <span class="muted">올해 종합 vs campaign order</span> · <span style="color:var(--blue)">${selectedCustomer}</span>`;
 
+  // 올해 종합(total) = 해당 고객사 올해 오더 전체 · campaign order = 매칭+캠페인 참여기간
   const custOrders = scopedOrders.filter(o => (o.customer||'(unspecified)') === selectedCustomer);
   const byProd = {};
   custOrders.forEach(o => {
     const k = o.product || o.ctr_code || '(unspecified)';
-    byProd[k] = byProd[k] || { product:k, ctr:o.ctr_code||'', qty:0, amount:0 };
-    byProd[k].qty += Number(o.qty)||0;
-    byProd[k].amount += convOrder(o);
+    byProd[k] = byProd[k] || { product:k, ctr:o.ctr_code||'', total:0, camp:0 };
+    const a = convOrder(o);
+    byProd[k].total += a;
+    if (_isCampaignPeriodOrder(o)) byProd[k].camp += a;
   });
-  const rows = Object.values(byProd).sort((a,b) => mode==='qty' ? b.qty-a.qty : b.amount-a.amount).slice(0,10);
+  const rows = Object.values(byProd).sort((a,b) => b.total - a.total).slice(0,10);
   if (!rows.length) {
-    tbl.innerHTML = '<tbody><tr><td class="muted" style="text-align:center;padding:16px">No products</td></tr></tbody>';
+    tbl.innerHTML = '<tbody><tr><td class="muted" style="text-align:center;padding:16px">No orders</td></tr></tbody>';
     return;
   }
+  const _tT = rows.reduce((s,r)=>s+r.total,0), _tC = rows.reduce((s,r)=>s+r.camp,0);
   tbl.innerHTML = `
     <thead><tr>
-      <th>#</th><th>PRODUCT</th><th>CTR</th>
-      <th class="text-right">QTY</th><th class="text-right">AMOUNT</th>
+      <th>#</th><th>PRODUCT</th>
+      <th class="text-right">올해 종합</th><th class="text-right">campaign order</th><th class="text-right">캠페인%</th>
     </tr></thead>
-    <tbody>${rows.map((r,i)=>`<tr>
-      <td class="mono muted">${i+1}</td>
-      <td><b>${r.product}</b></td>
-      <td class="mono muted">${r.ctr||'–'}</td>
-      <td class="text-right mono ${mode==='qty'?'t-blue':''}">${fmtNum(r.qty)}</td>
-      <td class="text-right mono ${mode==='amount'?'t-green':''}">${fmtMoney(r.amount)}</td>
-    </tr>`).join('')}</tbody>`;
+    <tbody>${rows.map((r,i)=>{
+      const pct = r.total>0 ? Math.round(r.camp/r.total*100) : 0;
+      return `<tr>
+        <td class="mono muted">${i+1}</td>
+        <td><b>${r.product}</b>${r.ctr?` <span class="mono muted" style="font-size:10px">${r.ctr}</span>`:''}</td>
+        <td class="text-right mono">${fmtMoney(r.total)}</td>
+        <td class="text-right mono t-red">${fmtMoney(r.camp)}</td>
+        <td class="text-right mono ${pct>=100?'t-green':(pct>0?'':'t-muted')}">${pct}%</td>
+      </tr>`;
+    }).join('')}
+    <tr style="border-top:2px solid var(--border);font-weight:700">
+      <td></td><td>합계</td>
+      <td class="text-right mono">${fmtMoney(_tT)}</td>
+      <td class="text-right mono t-red">${fmtMoney(_tC)}</td>
+      <td class="text-right mono">${_tT>0?Math.round(_tC/_tT*100):0}%</td>
+    </tr></tbody>`;
 }
 
 /* Top chart — when dim is 'model/product/ctr' (default) render simple horizontal bar,
