@@ -10662,7 +10662,9 @@ function renderSkuAggregate(fOrders) {
       // 핵심 요약: 대상/전환 SKU · 총 오더/금액 · 베스트셀러 SKU(차종) · 최다 판매 지역(차종) · TOP3
       const _cvtPct = _tgtSkuList.length>0 ? Math.round(_orderedTgt.size/_tgtSkuList.length*100) : 0;
       const _totAmt = perSku.reduce((s,x)=>s+(x.total.amt||0),0);
-      const _modelOf = sx => (typeof resolveModel==='function' ? (resolveModel(sx)||'') : '');
+      // 차종: 오더의 make_model 데이터 우선 (resolveModel 매핑이 비어도 나오도록)
+      const _skuMM = {}; useOrders.forEach(o=>{ const sx=(o.sku||'').trim().toUpperCase(); if(sx&&!_skuMM[sx]){ const mm=(o.make_model||'').trim(); if(mm)_skuMM[sx]=mm; } });
+      const _modelOf = sx => _skuMM[(sx||'').trim().toUpperCase()] || (typeof resolveModel==='function' ? (resolveModel(sx)||'') : '') || '';
       const _bySkuRank = perSku.slice().sort((a,b)=>(b.total.amt||0)-(a.total.amt||0));
       const _best = _bySkuRank[0];
       const _byReg = {};
@@ -10712,7 +10714,7 @@ function renderSkuAggregate(fOrders) {
       // ── 📊 캠페인 효과: 집행 전(전년 동기간) vs 집행 후(올해) — SKU/지역/차종별 증감 ──
       const _effEl = document.getElementById('skuAggEffect');
       if (_effEl) {
-        const _md = sku => (typeof resolveModel==='function' ? (resolveModel(sku)||'') : '');
+        const _md = sku => _modelOf(sku);
         const _escE = t => String(t||'').replace(/</g,'&lt;');
         // SKU별 주 지역(집행 후 오더 기준)
         const _skuReg = {};
