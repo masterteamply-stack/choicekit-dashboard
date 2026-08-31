@@ -6538,19 +6538,26 @@ function renderRegionExecSummary(fOrders, fMkt) {
     }
     // Country-level Order Target — same dedup as deriveOrderTargets but grouped by
     // (region, campaign, country); Σ over countries equals the campaign target.
-    const _seenT = new Set(), _tgtByRPC = {};
+    const _seenT = new Set(), _tgtByRPC = {}, _tgtByRPCU = {}, _soByRPC = {}, _soByRPCU = {};
     (fMkt || []).forEach(m => {
-      const t = Number(m.order_target_usd || 0); if (!t) return;
+      const t = Number(m.order_target_usd || 0), so = Number(m.sellout_target_note || 0); if (!t && !so) return;
       const r = m.region || '', p = m.promotion_category || '', d = m.date || m.execution_date || '', c = m.country || '', cust = m.target_customer || m.customer || '';
-      const dk = `${r}|||${p}|||${d}|||${c}|||${cust}|||${t}`;
+      const dk = `${r}|||${p}|||${d}|||${c}|||${cust}|||${t}|||${so}`;
       if (_seenT.has(dk)) return; _seenT.add(dk);
-      const rk = `${r}|||${p}|||${_ctryKey(c, r)}`;
-      _tgtByRPC[rk] = (_tgtByRPC[rk] || 0) + t;
+      const rk = `${r}|||${p}|||${_ctryKey(c, r)}`, rku = `${rk}|||${cust}`;
+      if (t) { _tgtByRPC[rk] = (_tgtByRPC[rk] || 0) + t; _tgtByRPCU[rku] = (_tgtByRPCU[rku] || 0) + t; }
+      if (so) { _soByRPC[rk] = (_soByRPC[rk] || 0) + so; _soByRPCU[rku] = (_soByRPCU[rku] || 0) + so; }
     });
     Object.keys(agg).forEach(r => Object.keys(agg[r]).forEach(p => {
       const node = agg[r][p];
       Object.keys(node.countries).forEach(ctry => {
-        node.countries[ctry].target = (_tgtByRPC[`${r}|||${p}|||${ctry}`] || 0) * usdToDisp;
+        const cd = node.countries[ctry];
+        cd.target = (_tgtByRPC[`${r}|||${p}|||${ctry}`] || 0) * usdToDisp;
+        cd.soTarget = (_soByRPC[`${r}|||${p}|||${ctry}`] || 0) * usdToDisp;
+        Object.keys(cd.customers).forEach(cust => {
+          cd.customers[cust].target = (_tgtByRPCU[`${r}|||${p}|||${ctry}|||${cust}`] || 0) * usdToDisp;
+          cd.customers[cust].soTarget = (_soByRPCU[`${r}|||${p}|||${ctry}|||${cust}`] || 0) * usdToDisp;
+        });
       });
     }));
     window._execCache = { fO: fOrders, fM: fMkt, cur: state.currency, base: baselineOn, agg };
@@ -6711,29 +6718,29 @@ function renderRegionExecSummary(fOrders, fMkt) {
         const nCust = Object.keys(cd.customers || {}).length;
         body += `<tr data-exec-key="${kKey}" style="cursor:pointer;background:var(--surface)">
           <td style="padding-left:40px">${caret(kOpen)}🌐 ${cd.country} <span class="muted" style="font-size:10px">· ${nCust} cust</span></td>
-          <td class="text-right mono t-purple">${(c.sell !== 'SELL-OUT' && cd.target > 0) ? fmtMoney(cd.target) : '–'}</td>
+          <td class="text-right mono t-purple">${cd.target > 0 ? fmtMoney(cd.target) : '–'}</td>
           <td class="text-right mono t-green">${fmtMoney(cd.order)}</td>
           <td class="text-right mono muted">${baselineOn && cd.prev > 0 ? fmtMoney(cd.prev) : '–'}</td>
           <td class="text-right mono">${yoyCell(cd.order, cd.prev)}</td>
           <td class="text-right">${_skuCell((cd.skus&&cd.skus.size)||0, _tgtSkuN(c.camp))}</td>
           <td>${progCell(cd.order, cd.target)}</td>
-          <td class="text-right mono" style="color:var(--accent)">${(c.sell === 'SELL-OUT' && cd.target > 0) ? fmtMoney(cd.target) : '–'}</td>
+          <td class="text-right mono" style="color:var(--accent)">${(c.sell === 'SELL-OUT' && cd.soTarget > 0) ? fmtMoney(cd.soTarget) : '–'}</td>
           <td class="text-right mono">${romiCell(cd.order, cd.cost)}</td>
         </tr>`;
         if (!kOpen) return;
         const custs = Object.entries(cd.customers || {}).map(([k, v]) => ({ cust:k, ...v })).sort((a, b) => b.order - a.order);
         custs.forEach(u => {
           const _sh = cd.order > 0 ? u.order / cd.order : 0;  // customer target/cost allocated from country by order share
-          const _ut = cd.target * _sh, _uc = cd.cost * _sh;
+          const _ut = u.target > 0 ? u.target : cd.target * _sh, _uso = u.soTarget > 0 ? u.soTarget : cd.soTarget * _sh, _uc = cd.cost * _sh;
           body += `<tr style="background:var(--surface)">
             <td style="padding-left:64px" class="muted"><span style="margin-right:5px">•</span>${u.cust}</td>
-            <td class="text-right mono t-purple">${(c.sell !== 'SELL-OUT' && _ut > 0) ? fmtMoney(_ut) : '–'}</td>
+            <td class="text-right mono t-purple">${_ut > 0 ? fmtMoney(_ut) : '–'}</td>
             <td class="text-right mono t-green">${fmtMoney(u.order)}</td>
             <td class="text-right mono muted">${baselineOn && u.prev > 0 ? fmtMoney(u.prev) : '–'}</td>
             <td class="text-right mono">${yoyCell(u.order, u.prev)}</td>
             <td class="text-right">${_skuCell((u.skus&&u.skus.size)||0, _tgtSkuN(c.camp))}</td>
             <td>${progCell(u.order, _ut)}</td>
-            <td class="text-right mono" style="color:var(--accent)">${(c.sell === 'SELL-OUT' && _ut > 0) ? fmtMoney(_ut) : '–'}</td>
+            <td class="text-right mono" style="color:var(--accent)">${(c.sell === 'SELL-OUT' && _uso > 0) ? fmtMoney(_uso) : '–'}</td>
             <td class="text-right mono">${romiCell(u.order, _uc)}</td>
           </tr>`;
         });
