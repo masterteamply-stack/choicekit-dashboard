@@ -7863,8 +7863,13 @@ async function renderPromoChart(fOrders, fMkt) {
         const ctr=(o.ctr_code||o['CTR Code']||'').trim();
         const oidCtr=((o.order_id||'').match(PAT_OID)||[])[1]||'';
         const key=ctr||oidCtr;
-        if(key && _targetSkusFull.has(key)) _curSkuSet.add(key);
-        else if(!_isSkuBased && (o.customer||'').trim()) _curSkuSet.add((o.customer||'').trim());
+        // exec(요약표) SKU 전환과 동일 기준: 이 오더가 태그된 캠페인의 target SKU + region 게이트만 카운트.
+        // (기존엔 target SKU 코드면 캠페인 지역 밖·타 캠페인 오더까지 무조건 카운트해 exec보다 많았음)
+        const _tsC = promoTargetSkus[p];
+        if (_tsC && _tsC.size && key && _tsC.has(key)) {
+          const _rgC = _promoRegionForBA[p];
+          if (!_rgC || !_rgC.length || _rgC.includes(normalizeRegion(o.region||''))) _curSkuSet.add(key);
+        } else if(!_isSkuBased && (o.customer||'').trim()) _curSkuSet.add((o.customer||'').trim());
       });
       const _curSkuN = _curSkuSet.size;
       // 전년: summary의 baSkuCount(활성화된 SKU 수)
