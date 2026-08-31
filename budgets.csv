@@ -10,8 +10,6 @@ region_target,CIS,1000000,
 region_target,MENA,420000,
 region_target,NA,0,
 region_target,LATAM,15451.36,
-region_target,OCEANIA,344282,
-region_target,RUS,0,
 region_target,ASIA,4734520,
 promo_budget,CHOICE_KIT,118027.2109,173500000
 promo_budget,NEW_SEGMENT,0,

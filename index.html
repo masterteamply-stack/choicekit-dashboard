@@ -4385,8 +4385,8 @@ function renderAll() {
 
   // ── Phase 2a: PlanExec, CustomerTrend ──
   _deferRender(() => {
-    renderPlanExec(fOrders, fMkt);
-    renderCustomerTrend(fOrdersPP, fMkt);
+    try { renderPlanExec(fOrders, fMkt); } catch (e) { console.warn('renderPlanExec failed:', e); }
+    try { renderCustomerTrend(fOrders, fMkt); } catch (e) { console.warn('renderCustomerTrend failed:', e); }
     try { renderQuarterly(fOrdersPP); } catch (e) { console.warn('renderQuarterly failed:', e); }
   }, 80);
 
@@ -5543,7 +5543,13 @@ function renderCustomerTrend(fOrders, fMkt) {
 
   const _rg = state.custTrendRegion || '__all__';
   const camp = state.custTrendCampaign || '__all__';
-  const scoped = fOrders.filter(o => (_rg==='__all__' || (o.region||'')===_rg) && (camp==='__all__' || (o.promotion_category||'')===camp));
+  // 캠페인 참여 고객 오더만 추림 — 유효 캠페인 태그(campaignTargetSkus)만 (fOrdersPP 타이밍 의존 제거).
+  const _validPromos = new Set(Object.keys(state.campaignTargetSkus||{}));
+  const scoped = fOrders.filter(o => {
+    const _pp = (o.promotion_category||'').trim();
+    if (!_validPromos.has(_pp)) return false;
+    return (_rg==='__all__' || (o.region||'')===_rg) && (camp==='__all__' || _pp===camp);
+  });
 
   // 고객별 집계: qty, amount, marketing cost (해당 캠페인 region/country 기준 추정)
   const mktScoped = fMkt.filter(m => (_rg==='__all__' || _canonRegion(m.region)===_rg) && (camp==='__all__' || (m.promotion_category||'')===camp));
