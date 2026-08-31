@@ -4287,8 +4287,10 @@ function renderAll() {
   document.getElementById('kpiBudget').textContent = fmtMoney(mktCost);
   const planUseEl = `<span class="${planUse>100?'t-red':'t-yellow'}">${planForBurn>0?planUse.toFixed(0)+'%':'–'}</span>`;
   document.getElementById('kpiBudgetSub').innerHTML = `${fMkt.length} activities · ${planUseEl} budget used`;
-  document.getElementById('kpiOrder').textContent = fmtMoney(orderAmt);
-  document.getElementById('kpiOrderSub').textContent = `${fmtNum(totalOrders)} orders · ${fmtNum(totalQty)} pcs · after campaign start`;
+  document.getElementById('kpiOrder').textContent = fmtMoney(window._execOrderTotal != null ? window._execOrderTotal : orderAmt);
+  document.getElementById('kpiOrderSub').textContent = (window._execOrderTotal != null)
+    ? `${fmtNum(window._execOrderCount||0)} orders · ${fmtNum(window._execOrderQty||0)} pcs · campaign summary`
+    : `${fmtNum(totalOrders)} orders · ${fmtNum(totalQty)} pcs · after campaign start`;
   // Achievement = overall order-target attainment Σorder ÷ Σtarget (set authoritatively
   // by renderRegionExecSummary, matching the summary Grand-Total Progress); show the
   // last known value here for an instant paint.
@@ -4381,6 +4383,14 @@ function renderAll() {
     renderRegionChart(fOrdersPP, fMkt);
     renderTopInsights(fOrdersPP);
     try { renderRegionExecSummary(fOrders, fMkt); } catch (e) { console.warn('renderRegionExecSummary failed:', e); }
+    // KPI Order Amount = exec Campaign Period Order (단일 출처) — 여기서 확정해 값 안정화 + 요약표와 일치.
+    if (window._execOrderTotal != null) {
+      document.getElementById('kpiOrder').textContent = fmtMoney(window._execOrderTotal);
+      document.getElementById('kpiOrderSub').textContent = `${fmtNum(window._execOrderCount||0)} orders · ${fmtNum(window._execOrderQty||0)} pcs · campaign summary`;
+      const _roiE = mktCost > 0 ? ((window._execOrderTotal - mktCost) / mktCost) * 100 : 0;
+      document.getElementById('kpiRoi').textContent = mktCost > 0 ? fmtPct(_roiE) : '–';
+      const _rcE = document.getElementById('kpiRoiCard'); if (_rcE) _rcE.classList.toggle('neg', _roiE < 0);
+    }
   }, 16);
 
   // ── Phase 2a: PlanExec, CustomerTrend ──
@@ -4402,13 +4412,8 @@ function renderAll() {
     // _promoAfterTotal은 Promotion Performance 위젯의 권역 셀렉터(state.promoFilterRegion)로
     // 스코프될 수 있음. 최상단 헤더 KPI(Order Amount / Achievement / ROI)는 항상 전역이어야 하므로,
     // 위젯 권역이 특정 권역으로 선택돼 있으면 헤더를 덮어쓰지 않고 동기 단계의 전역 값을 유지한다.
-    if (_promoAfterTotal !== null && (state.promoFilterRegion || '__all__') === '__all__') {
-      document.getElementById('kpiOrder').textContent = fmtMoney(_promoAfterTotal);
-      document.getElementById('kpiOrderSub').textContent = `after campaign start · post-campaign total`;
-      const roiUpd = mktCost > 0 ? ((_promoAfterTotal - mktCost) / mktCost) * 100 : 0;
-      document.getElementById('kpiRoi').textContent = mktCost > 0 ? fmtPct(roiUpd) : '–';
-      document.getElementById('kpiRoiCard').classList.toggle('neg', roiUpd < 0);
-    }
+    // KPI Order Amount/ROI는 exec Campaign Period Order 기준으로 Phase 1b에서 확정됨 — 여기서 덮어쓰지 않음
+    // (이전엔 _promoAfterTotal로 덮어써 값이 요약표와 달라지고 렌더마다 바뀌는 문제가 있었음)
     renderPromoOrderTrend(fOrders, fMkt);
   }, 260);
 
@@ -6364,6 +6369,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
     agg = window._execCache.agg;
   } else {
     agg = {};
+    let _execOrdN = 0, _execOrdQty = 0;
     const ensure = (r, p) => {
       agg[r] = agg[r] || {};
       if (!agg[r][p]) agg[r][p] = { order:0, cost:0, target:0, otIn:0, otOut:0, soResult:0, prev:0, start:startFor(r, p), end:promoEnd[p] || '', sell:sellTypeOf(p), soNote:_soNote[p] || '', countries:{}, skus:new Set() };
@@ -6418,7 +6424,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
       if (sellTypeOf(p) === 'SELL-OUT' && String(o.sell_type || '').toUpperCase().replace(/_/g, '-') !== 'SELL-IN') return;
       const amt = convOrder(o);
       const node = ensure(r, p);
-      node.order += amt;
+      node.order += amt; _execOrdN++; _execOrdQty += Number(o.qty) || 0;
       let _hitSku = '';
       const _tset = _tgtSets[p];
       if (_tset) { const _sk = (o.sku || o.ctr_code || '').trim().toUpperCase(); if (_tset.has(_sk)) { _hitSku = _sk; node.skus.add(_sk); } }
@@ -6560,7 +6566,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
         });
       });
     }));
-    window._execCache = { fO: fOrders, fM: fMkt, cur: state.currency, base: baselineOn, agg };
+    window._execCache = { fO: fOrders, fM: fMkt, cur: state.currency, base: baselineOn, agg, ordN: _execOrdN, ordQty: _execOrdQty };
   }
 
   // ── Cell renderers ──
@@ -6747,6 +6753,10 @@ function renderRegionExecSummary(fOrders, fMkt) {
       });
     });
   });
+  // KPI Order Amount 단일 출처 — Campaign Period Order 총액(모든 필터: campMatch/carve-out/SELL-IN-only 반영)
+  window._execOrderTotal = G.order;
+  window._execOrderCount = (window._execCache && window._execCache.ordN) || 0;
+  window._execOrderQty = (window._execCache && window._execCache.ordQty) || 0;
   body += `<tr style="border-top:2px solid var(--border);font-weight:800">
     <td>TOTAL <span class="muted" style="font-size:11px;font-weight:500">· ${regionList.length} regions</span></td>
     <td class="text-right mono t-purple">${G.otIn > 0 ? fmtMoney(G.otIn) : '–'}</td>
