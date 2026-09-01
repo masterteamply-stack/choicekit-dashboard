@@ -9595,7 +9595,7 @@ const _SPLIT_ONLY_CAMPS = new Set(['SELL-OUT Promotion', 'Sell-Out Promotion', '
 const _SELLOUT_CAMP_NAMES = new Set(['Trade promotion', 'Sell-Out Promotion', 'SELL-OUT Promotion']);
 const _LATAM_CARVEOUT = { 'REFATRIX':['2026-02-11','2026-11-30'], 'PLUSCAR S.A':['2026-08-01','2026-10-31'], 'SUPER REPUESTOS':['2026-08-01','2026-10-31'] };
 // 캠페인 명시적(공식) 시작일 — marketing STARTED 날짜보다 우선. 전역이라 exec·SKU Explorer·Promotion Performance 모두 동일 적용.
-const _CAMPAIGN_EXPLICIT_START = { 'CTR MarketFit Campaign':'2026-03-01', 'Asian vehicle':'2026-03-01', 'European vehicle':'2026-03-01', 'Korean & Japanese vehicles':'2026-08-01' };
+const _CAMPAIGN_EXPLICIT_START = {};  // (비움) 모든 캠페인은 marketing STARTED 날짜부터 카운팅 — 특정 날짜 강제 override 안 함
 const campSellType = p => _SELLOUT_CAMP_NAMES.has(String(p||'').split('\u241f')[0].trim()) ? 'SELL-OUT' : 'SELL-IN';
 function _promoRegionOptsFromOrders(ppO, cur, allLabel, allowCamps){
   const pairs = {};
