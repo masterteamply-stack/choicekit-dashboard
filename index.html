@@ -8900,7 +8900,7 @@ function renderPromoTable() {
   { const _sel=document.getElementById('promoFilterSel');
     const _selVal=_sel?_sel.value:'(none)', _selTxt=_sel&&_sel.selectedOptions&&_sel.selectedOptions[0]?_sel.selectedOptions[0].text:'(none)';
     const _opts=_sel?Array.from(_sel.options).map(o=>o.value+'>'+o.text).join(' ; '):'(none)';
-    const _dbg='VER=DBG3 | state='+state.promoFilter+' | dropVal='+_selVal+' | dropTxt='+_selTxt+' | _promoFilter='+_promoFilter+' | _ppRgn='+_ppRgn+' | shown=['+summary.map(x=>x.promotion||x.key).join(', ')+']';
+    const _dbg='VER=DBG4 | state='+state.promoFilter+' | dropVal='+_selVal+' | dropTxt='+_selTxt+' | _promoFilter='+_promoFilter+' | _ppRgn='+_ppRgn+' | summ=['+(_allSummary||[]).map(x=>x.promotion||x.key).join(', ')+'] | shown=['+summary.map(x=>x.promotion||x.key).join(', ')+']';
     console.log('[TABLE-DBG]',_dbg,'| OPTIONS:',_opts);
     const _el=document.getElementById('tblPromo'); _el.innerHTML=head+body;
     try{ let _d=document.getElementById('_promoDbg'); if(!_d){_d=document.createElement('div');_d.id='_promoDbg';_d.style.cssText='font-size:9px;color:#c00;padding:6px;white-space:normal;word-break:break-all;font-family:monospace;background:#fff8f8;border:1px solid #f0c0c0';_el.parentNode.insertBefore(_d,_el);} _d.textContent='🔧'+_dbg; }catch(_){} }
@@ -11929,6 +11929,7 @@ document.addEventListener('change', e => {
     persist(); renderAll(); return;
   }
   if (e.target.id === 'promoFilterSel') {
+    console.log('[ONCHANGE] promoFilterSel selected value=', e.target.value, '| text=', e.target.selectedOptions&&e.target.selectedOptions[0]?e.target.selectedOptions[0].text:'?');
     state.promoFilter = e.target.value;
     try { localStorage.setItem('ck_promo_filter', state.promoFilter); } catch(_){}
     _quickRenderPromo(); return;
