@@ -2348,6 +2348,12 @@ header .mono b.t-orange {
             </div>
           </div>
           <div style="overflow:auto;margin-top:12px"><table id="tblBudgetStatus"></table></div>
+          <div style="margin-top:26px;border-top:1px solid var(--border);padding-top:16px">
+            <h3 class="h-section" style="font-size:15px">고객사별 RoMI — 전년('25) vs 올해('26)</h3>
+            <p class="label-mono" style="margin-top:4px">고객사별 마케팅 서포트 비용 · 전체 오더 · RoMI 변화 · 100% 집행 시 기대 RoMI · 캠페인 수행률</p>
+            <div style="overflow:auto;margin-top:10px"><table id="tblCustomerRomi" style="width:100%"></table></div>
+            <p class="label-mono muted" style="font-size:9px;margin-top:6px">RoMI = (오더−마케팅비)/마케팅비 · 현재 RoMI=집행비 기준 · 100%집행 RoMI=예상비 전액 집행 가정 · RoMI YoY=100%집행 기준 전년 대비 증감(pp) · 오더=해당 고객 연간 전체 거래</p>
+          </div>
         </div>
 
         <!-- Customer Order Trend by Campaign -->
@@ -4377,6 +4383,7 @@ function renderAll() {
   // ── Phase 1a: 즉시 — 가장 가벼운 위젯 (KPI 카드 이미 위에서 렌더됨) ──
   renderActivityChart(fMkt);
   renderBudgetStatus(fMkt);
+  try { renderCustomerRomi(); } catch(e){ console.error('[renderCustomerRomi]',e); }
   renderActivitiesTable(fMkt);
 
   // ── Phase 1b: Region, TopInsights ──
@@ -5019,6 +5026,68 @@ function renderActivityChart(fMkt) {
 /* ===== Marketing Budget — Allocation & Status by Region =====
    Region budget allocation vs executed cost — horizontal bars + progress table
    Click on Allocation slice → filter Execution chart to that region only */
+function renderCustomerRomi() {
+  const el = document.getElementById('tblCustomerRomi');
+  if (!el) return;
+  const disp = usdToDisplay();
+  const _normC = x => String(x||'').trim().toLowerCase().replace(/[^a-z0-9\uac00-\ud7a3]/g,'');
+  // 2026 / 2025 고객별 전체 오더(전체 거래 — 마케팅이 견인한 고객 전체 매출)
+  const curOrd={}, prevOrd={};
+  (state.orders||[]).forEach(o=>{ const k=_normC(o.customer); if(!k)return; if((o.order_date||'')>='2026-01-01') curOrd[k]=(curOrd[k]||0)+convOrder(o); });
+  (state.preOrders||[]).forEach(o=>{ const k=_normC(o.customer); if(!k)return; const d=(o.order_date||''); if(d>='2025-01-01'&&d<'2026-01-01') prevOrd[k]=(prevOrd[k]||0)+(Number(o.amount_usd||0)*disp); });
+  // 2026 고객별 마케팅 예상/집행
+  const curExp={}, curAct={}, custName={}, custRegion={}, custCamp={};
+  (state.marketing||[]).forEach(m=>{ const nm=(m.customer||'').trim(); if(!nm||nm.toUpperCase()==='ALL')return; const k=_normC(nm); if(!k)return;
+    curExp[k]=(curExp[k]||0)+convMktExpected(m); curAct[k]=(curAct[k]||0)+convMktActual(m);
+    if(!custName[k])custName[k]=nm; if(!custRegion[k])custRegion[k]=normalizeRegion(m.region||'')||(m.region||''); if(!custCamp[k]&&m.promotion_category)custCamp[k]=m.promotion_category; });
+  // 2025 고객별 마케팅 서포트(USD) — marketing_2025_customer_support.csv
+  const prevMkt={};
+  (state.mkt2025support||[]).forEach(r=>{ const nm=(r.customer||'').trim(); if(!nm)return; const k=_normC(nm); if(!k)return;
+    prevMkt[k]=(prevMkt[k]||0)+((parseFloat(String(r.spend_usd_2025||'0').replace(/,/g,''))||0)*disp);
+    if(!custName[k])custName[k]=nm; if(!custRegion[k])custRegion[k]=normalizeRegion(r.region||'')||(r.region||''); if(!custCamp[k]&&r.campaign_2026)custCamp[k]=r.campaign_2026; });
+  const keys=Array.from(new Set([...Object.keys(curExp),...Object.keys(prevMkt)])).filter(k=>isRegionVisible(custRegion[k]));
+  const romi=(ord,cost)=>cost>0?((ord-cost)/cost*100):null;
+  const rows=keys.map(k=>{ const pm=prevMkt[k]||0, po=prevOrd[k]||0, ce=curExp[k]||0, ca=curAct[k]||0, co=curOrd[k]||0;
+    return { name:custName[k]||k, region:custRegion[k]||'', camp:custCamp[k]||'',
+      prevMkt:pm, prevOrd:po, prevRoMI:romi(po,pm), curExp:ce, curAct:ca,
+      execRate: ce>0?(ca/ce*100):(ca>0?100:null), curOrd:co, curRoMI:romi(co,ca), exp100RoMI:romi(co,ce) };
+  }).filter(r=>r.curExp>0||r.curAct>0||r.prevMkt>0).sort((a,b)=>(b.curOrd+b.prevOrd)-(a.curOrd+a.prevOrd));
+
+  const rc={CIS:'#5856D6',MENA:'#FF9500',LATAM:'#34C759',ASIA:'#0A84FF',EUROPE:'#FF375F',NA:'#BF5AF2',KOREA:'#30B0C7'};
+  const rbadge=r=>{ if(!r)return''; const k=String(r).toUpperCase(),c=rc[k]||'#86868B'; return `<span style="display:inline-block;background:${c}18;color:${c};border:1px solid ${c}40;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;margin-left:5px;vertical-align:middle">${r}</span>`; };
+  const pctTag=v=>v==null?'<span class="muted">–</span>':(v>=0?`<span class="t-green">${v.toFixed(0)}%</span>`:`<span class="t-red">${v.toFixed(0)}%</span>`);
+  const romiTag=v=>v==null?'<span class="muted">n/a</span>':`<b>${v.toFixed(0)}%</b>`;
+  const yoyTag=(cur,prv)=>{ if(cur==null&&prv==null)return '<span class="muted">–</span>'; if(prv==null)return '<span class="t-green" style="font-size:10px">NEW</span>'; if(cur==null)return '<span class="muted">–</span>'; const d=cur-prv; return d>=0?`<span class="t-green">▲${Math.abs(d).toFixed(0)}pp</span>`:`<span class="t-red">▼${Math.abs(d).toFixed(0)}pp</span>`; };
+  const execTag=(v,ca,ce)=>{ if(v==null)return '<span class="muted">–</span>'; const col=v>=99?'t-green':(v>=50?'t-yellow':'t-red'); const note=(ca===0&&ce>0)?' <span class="muted" style="font-size:9px">(미집행)</span>':''; return `<span class="${col}">${v.toFixed(0)}%</span>${note}`; };
+
+  const th=(t,al='right')=>`<th class="text-${al}" style="font-size:10px;letter-spacing:.03em;white-space:nowrap;padding:6px 8px">${t}</th>`;
+  let head=`<thead><tr style="border-bottom:2px solid var(--border)">${th('고객사','left')}${th("전년('25) 마케팅비")}${th('전년 오더')}${th('전년 RoMI')}${th("올해('26) 예상비")}${th('집행비')}${th('수행률')}${th('올해 오더')}${th('현재 RoMI')}${th('100%집행 RoMI')}${th('RoMI YoY')}</tr></thead>`;
+
+  const money=v=>v>0?fmtMoney(v):'<span class="muted">–</span>';
+  const cell=(t,extra='')=>`<td class="text-right mono" style="font-size:11px;padding:5px 8px;${extra}">${t}</td>`;
+  let body='<tbody>';
+  rows.forEach(r=>{
+    body+=`<tr style="border-bottom:1px solid var(--border)">`+
+      `<td style="font-size:12px;padding:5px 8px"><b>${r.name}</b>${rbadge(r.region)}${r.camp?`<div class="muted" style="font-size:9px;margin-top:2px">${r.camp}</div>`:''}</td>`+
+      cell(money(r.prevMkt))+cell(money(r.prevOrd))+cell(romiTag(r.prevRoMI))+
+      cell(money(r.curExp),'border-left:1px solid var(--border)')+cell(money(r.curAct))+cell(execTag(r.execRate,r.curAct,r.curExp))+
+      cell(money(r.curOrd),'border-left:1px solid var(--border)')+cell(romiTag(r.curRoMI))+cell(romiTag(r.exp100RoMI))+
+      cell(yoyTag(r.exp100RoMI,r.prevRoMI),'border-left:1px solid var(--border)')+
+      `</tr>`;
+  });
+  // 합계행
+  const T={prevMkt:0,prevOrd:0,curExp:0,curAct:0,curOrd:0}; rows.forEach(r=>{T.prevMkt+=r.prevMkt;T.prevOrd+=r.prevOrd;T.curExp+=r.curExp;T.curAct+=r.curAct;T.curOrd+=r.curOrd;});
+  const Tprv=romi(T.prevOrd,T.prevMkt), Tcur=romi(T.curOrd,T.curAct), Texp=romi(T.curOrd,T.curExp), Texec=T.curExp>0?(T.curAct/T.curExp*100):null;
+  body+=`<tr style="background:rgba(0,0,0,0.05);font-weight:700;border-top:2px solid var(--border)">`+
+    `<td style="font-size:12px;padding:6px 8px"><b>합계 · ${rows.length}개 고객사</b></td>`+
+    cell(`<b>${money(T.prevMkt)}</b>`)+cell(`<b>${money(T.prevOrd)}</b>`)+cell(romiTag(Tprv))+
+    cell(`<b>${money(T.curExp)}</b>`,'border-left:1px solid var(--border)')+cell(`<b>${money(T.curAct)}</b>`)+cell(execTag(Texec,T.curAct,T.curExp))+
+    cell(`<b>${money(T.curOrd)}</b>`,'border-left:1px solid var(--border)')+cell(romiTag(Tcur))+cell(romiTag(Texp))+
+    cell(yoyTag(Texp,Tprv),'border-left:1px solid var(--border)')+`</tr>`;
+  body+='</tbody>';
+  el.innerHTML=head+body;
+}
+
 function renderBudgetStatus(fMkt) {
   const usdToDisp = usdToDisplay();
   // region 키 정규화 통일 — budgets.csv "Korea" vs marketing "KOREA"(정규화됨) 중복 방지
@@ -11708,6 +11777,12 @@ async function processBulkFiles(files, { replace = false } = {}) {
         if (_cr.ok) { state.costCustomer = parseCSV(await _cr.text()); }
         else state.costCustomer = [];
       } catch(e) { state.costCustomer = []; }
+      // marketing_2025_customer_support.csv — 전년(2025) 고객별 마케팅 서포트 비용(USD)
+      try {
+        const _sr = await fetch(_resolveGhRepoBase() + '/marketing_2025_customer_support.csv');
+        if (_sr.ok) { state.mkt2025support = parseCSV(await _sr.text()); }
+        else state.mkt2025support = [];
+      } catch(e) { state.mkt2025support = []; }
       // pre_orders_summary.json — YoY 스냅샷 (전년 동기 bar/line 차트용)
       try {
         const _ps = await fetch(_resolveGhRepoBase() + '/pre_orders_summary.json');
