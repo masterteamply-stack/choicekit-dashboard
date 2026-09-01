@@ -7945,7 +7945,7 @@ async function renderPromoChart(fOrders, fMkt) {
       // 현재: 오더에서 활성화된 target SKU (CTR code 기준)
       const _curSkuSet = new Set();
       const PAT_OID = /^PO-([^-]+)-/;
-      fOrders.forEach(o=>{
+      ((promoFilter === '__all__') ? fOrders : fOrdersScoped).forEach(o=>{
         const p=(o.promotion_category||'').trim();
         const start=promoStart[p];
         if(start&&o.order_date<start)return;
@@ -7963,7 +7963,8 @@ async function renderPromoChart(fOrders, fMkt) {
       });
       const _curSkuN = _curSkuSet.size;
       // 전년: summary의 baSkuCount(활성화된 SKU 수)
-      const _prvSkuN = summary.reduce((s,p)=>s+(p.baSkuCount||0),0);
+      const _selCampSku = (typeof _promoSel==='function' ? _promoSel(promoFilter||'__all__').camp : promoFilter) || '__all__';
+      const _prvSkuN = summary.filter(p=>_selCampSku==='__all__'||((p.promotion||p.key||'').split(_RSPLIT)[0])===_selCampSku).reduce((s,p)=>s+(p.baSkuCount||0),0);
       const _skuSub = cur => `${fmtMoney(cur)} · ${_curSkuN.toLocaleString()} SKUs`;
       const _prvSkuSub = cur => `${fmtMoney(cur)} · ${_prvSkuN.toLocaleString()} SKUs`;
       const _dSkuN = _curSkuN - _prvSkuN;
