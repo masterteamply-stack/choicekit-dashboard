@@ -8353,6 +8353,17 @@ async function renderPromoChart(fOrders, fMkt) {
   function buildEntitySummary(dim) {
     const out = {};
     const _dispMul = usdToDisplay();
+    // target_countries 게이트 — #promo BEFORE 스캔과 동일(config는 영문, baseline은 한글 → normalizeCountry로 매칭).
+    // CIS 캠페인(European/Asian vehicle)의 비-target 국가(우크라이나·중국·아르메니아 등)를 모든 집계 경로에서 제외.
+    const _ccOK = (o, promo) => {
+      const _aC = ((state.campaignTargetSkus||{})[promo]||{}).target_countries;
+      if (_aC && _aC.length) {
+        const _rC = normalizeCountry(o.country||'') || String(o.country||'').trim().toUpperCase();
+        const _aCN = _aC.map(x => normalizeCountry(x) || String(x).trim().toUpperCase());
+        if (_rC && !_aCN.includes(_rC)) return false;
+      }
+      return true;
+    };
     const ensureE = k => out[k] = out[k] || {
       key: k, orders:0, orderAmt:0, qty:0, ownerPromo:null,
       model:'', region:'', country:'',
@@ -8363,6 +8374,7 @@ async function renderPromoChart(fOrders, fMkt) {
       if (!key) return;
       const owner = dim === 'sku' ? skuToPromo[key] : custToPromo[key];
       if (!owner) return; // skip entities not in any campaign target
+      if (!_ccOK(o, owner)) return; // 비-target 국가 제외
       const e = ensureE(key);
       e.ownerPromo = owner;
       e.orders++;
@@ -8383,6 +8395,7 @@ async function renderPromoChart(fOrders, fMkt) {
         if (!key) return;
         const owner = dim === 'sku' ? skuToPromo[key] : custToPromo[key];
         if (!owner) return;
+        if (!_ccOK(o, owner)) return; // 비-target 국가 제외
         ensureE(key);
         if (!out[key].ownerPromo) out[key].ownerPromo = owner;
         out[key].prevAmt = (out[key].prevAmt || 0) + Number(o.amount_usd || 0) * _dispMul;
@@ -8404,6 +8417,7 @@ async function renderPromoChart(fOrders, fMkt) {
       if (!key || !out[key]) return;
       const win = baAmt[out[key].ownerPromo];
       if (!win) return;
+      if (!_ccOK(o, out[key].ownerPromo)) return; // 비-target 국가 제외
       const d = o.order_date || '';
       if (!d) return;
       const amt = (o.amount_usd != null && o[PRE_ORDER_MARK])
