@@ -6965,7 +6965,8 @@ async function renderPromoChart(fOrders, fMkt) {
   // 이 기준이 "캠페인 공식 시작일"이며 ORDER AMT 집계 기준일이 됨.
   const promoStart = {};
   const promoStartAll = {};  // execution_date 최솟값 (fallback)
-  (state.marketing || []).forEach(m => {
+  // 지역-스코프(fMkt)에서 시작일 계산 — 지역-split 프로모션(예: [LATAM] SELL-OUT=08-01)이 캠페인 전역 최솟값(05-01) 대신 해당 지역 시작일을 쓰도록.
+  ((_ppRgn !== '__all__') ? fMkt : (state.marketing || [])).forEach(m => {
     const p = (m.promotion_category || m.promotion_id || '').trim();
     const d = (m.execution_date || m.date || '').trim();
     const kpi = (m.kpi_metric || '').trim().toUpperCase();
@@ -7412,7 +7413,7 @@ async function renderPromoChart(fOrders, fMkt) {
   // Scope the current-period order set to the selected promotion (if any).
   const fOrdersScoped = (promoFilter === '__all__')
     ? fOrdersST
-    : fOrders.filter(o => (o.promotion_category || '') === promoFilter);
+    : fOrders.filter(o => (o.promotion_category || '') === _pSel.camp);   // 지역-split은 base camp로 매칭 (fOrders는 이미 _ppRgn으로 스코프됨)
   // For the baseline (used by the comparison overlay), match by the campaign's
   // explicit target_customers or target_skus when filtering to one promotion,
   // so prior-period values come from that campaign's actual targets.
@@ -8477,7 +8478,9 @@ async function renderPromoChart(fOrders, fMkt) {
   }
 }
 function renderPromoTable() {
-  const _ppRgn = state.promoFilterRegion || '__all__';
+  // 지역-split 프로모션(camp\u241fREGION) 선택 시 그 region으로 스코프 — 안 그러면 전 지역(다른 캠페인)이 섞여 나옴.
+  const _pSelT = (typeof _promoSel==='function') ? _promoSel(state.promoFilter||'__all__') : { region:'' };
+  const _ppRgn = _pSelT.region || state.promoFilterRegion || '__all__';
   const _ppO = _ppRgn === '__all__' ? (state.orders||[]) : (state.orders||[]).filter(o => (o.region||'') === _ppRgn);
   const _ppP = _ppRgn === '__all__' ? (state.preOrders||[]) : (state.preOrders||[]).filter(o => (o.region||'') === _ppRgn);
   try {
