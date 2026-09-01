@@ -5031,11 +5031,10 @@ function renderBudgetStatus(fMkt) {
   ])).filter(r => isRegionVisible(r)).sort();
 
   const rows = regions.map(r => {
-    const manualBud = Number(_normBud[r]||0) * usdToDisp;
     const budFromCsv = fMkt.filter(m=>_rk(m.region)===r).reduce((s,m)=>s+convMktBudget(m),0);
     const expFromCsv = fMkt.filter(m=>_rk(m.region)===r).reduce((s,m)=>s+convMktExpected(m),0);
-    // Priority: manual override > CSV `budget` column > CSV `expected_cost` (fallback)
-    const budget = manualBud > 0 ? manualBud : (budFromCsv > 0 ? budFromCsv : expFromCsv);
+    // budget = marketing 비용(convMktBudget → budget 컬럼 또는 expected+bizreward). region_budget 우선 적용 안 함.
+    const budget = budFromCsv > 0 ? budFromCsv : expFromCsv;
     const actual = fMkt.filter(m=>_rk(m.region)===r).reduce((s,m)=>s+convMktActual(m),0);
     const pct = budget>0 ? (actual/budget)*100 : 0;
     return { region:r, budget, expected: expFromCsv, actual, pct };
