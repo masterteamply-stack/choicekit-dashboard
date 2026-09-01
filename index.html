@@ -5101,7 +5101,8 @@ function renderCustomerRomi() {
     const T={prevMkt:0,prevOrd:0,curExp:0,curAct:0,otherAct:0,curOrd:0}; dataRows.forEach(r=>{T.prevMkt+=r.prevMkt;T.prevOrd+=r.prevOrd;T.curExp+=r.curExp;T.curAct+=r.curAct;T.otherAct+=(r.otherAct||0);T.curOrd+=r.curOrd;});
     const Tprv=romi(T.prevOrd,T.prevMkt), Tcur=romi(T.curOrd,T.curAct), Texp=romi(T.curOrd,T.curExp), Texec=T.curExp>0?(T.curAct/T.curExp*100):null;
     const ckTot=dataRows.reduce((sm,r)=>sm+(r.ckCusts!=null?r.ckCusts:(r.ckJoin?1:0)),0);
-    body+=`<tr style="background:rgba(0,0,0,0.05);font-weight:700;border-top:2px solid var(--border)">`+totalCell(dataRows.length,ckTot)+
+    const pmTot=dataRows.reduce((sm,r)=>sm+(r.pmCusts!=null?r.pmCusts:(r.prevMkt>0?1:0)),0);
+    body+=`<tr style="background:rgba(0,0,0,0.05);font-weight:700;border-top:2px solid var(--border)">`+totalCell(dataRows.length,ckTot,pmTot)+
       cell(`<b>${money(T.prevMkt)}</b>`)+cell(`<b>${money(T.prevOrd)}</b>`)+cell(romiTag(Tprv))+
       cell(`<b>${money(T.curExp)}</b>`,'border-left:1px solid var(--border)')+cell(`<b>${money(T.curAct)}</b>`)+cell(`<b>${money(T.otherAct)}</b>`)+cell((T.curAct+T.otherAct)>0?`<b>${fmtMoney(T.curAct+T.otherAct)}</b>`:'<span class="muted">–</span>')+cell(execTag(Texec,T.curAct,T.curExp))+
       cell(`<b>${money(T.curOrd)}</b>`,'border-left:1px solid var(--border)')+cell(romiTag(Tcur))+cell(romiTag(Texp))+
@@ -5111,15 +5112,15 @@ function renderCustomerRomi() {
 
   // ── 지역 롤업(상위 레벨 통합 뷰) ──
   const _byReg={};
-  rows.forEach(r=>{ const rg=r.region||'기타'; const b=_byReg[rg]||(_byReg[rg]={region:rg,prevMkt:0,prevOrd:0,curExp:0,curAct:0,otherAct:0,curOrd:0,custs:0,ckCusts:0}); b.prevMkt+=r.prevMkt;b.prevOrd+=r.prevOrd;b.curExp+=r.curExp;b.curAct+=r.curAct;b.otherAct+=(r.otherAct||0);b.curOrd+=r.curOrd;b.custs++; if(r.ckJoin)b.ckCusts++; });
+  rows.forEach(r=>{ const rg=r.region||'기타'; const b=_byReg[rg]||(_byReg[rg]={region:rg,prevMkt:0,prevOrd:0,curExp:0,curAct:0,otherAct:0,curOrd:0,custs:0,ckCusts:0}); b.prevMkt+=r.prevMkt;b.prevOrd+=r.prevOrd;b.curExp+=r.curExp;b.curAct+=r.curAct;b.otherAct+=(r.otherAct||0);b.curOrd+=r.curOrd;b.custs++; if(r.ckJoin)b.ckCusts++; if(r.prevMkt>0)b.pmCusts=(b.pmCusts||0)+1; });
   const regionRows=Object.values(_byReg).map(b=>Object.assign({},b,{ totalExec:b.curAct+b.otherAct, prevRoMI:romi(b.prevOrd,b.prevMkt), execRate:b.curExp>0?(b.curAct/b.curExp*100):(b.curAct>0?100:null), curRoMI:romi(b.curOrd,b.curAct), exp100RoMI:romi(b.curOrd,b.curExp) })).sort((a,b)=>(b.curOrd+b.prevOrd)-(a.curOrd+a.prevOrd));
 
   _renderRomi('tblRegionRomi', regionRows, '지역',
-    r=>`<td style="font-size:12px;padding:5px 8px"><b>${r.region||'기타'}</b>${rbadge(r.region)}<span class="muted" style="font-size:9px;margin-left:6px">올해 CK 참여 <b style="color:var(--blue)">${r.ckCusts||0}</b>곳 · 전체 ${r.custs}곳</span></td>`,
-    (n,ck)=>`<td style="font-size:12px;padding:6px 8px"><b>전체 · ${n}개 지역</b><span class="muted" style="font-size:9px;margin-left:6px">올해 CK 참여 <b style="color:var(--blue)">${ck}</b>곳</span></td>`);
+    r=>`<td style="font-size:12px;padding:5px 8px"><b>${r.region||'기타'}</b>${rbadge(r.region)}<span class="muted" style="font-size:9px;margin-left:6px">전년 마케팅 <b>${r.pmCusts||0}</b>곳 · 올해 CK 참여 <b style="color:var(--blue)">${r.ckCusts||0}</b>곳 · 전체 ${r.custs}곳</span></td>`,
+    (n,ck,pm)=>`<td style="font-size:12px;padding:6px 8px"><b>전체 · ${n}개 지역</b><span class="muted" style="font-size:9px;margin-left:6px">전년 마케팅 <b>${pm}</b>곳 · 올해 CK 참여 <b style="color:var(--blue)">${ck}</b>곳</span></td>`);
   _renderRomi('tblCustomerRomi', rows, '고객사',
     r=>`<td style="font-size:12px;padding:5px 8px"><b>${r.name}</b>${rbadge(r.region)}${r.ckJoin?'<span style="display:inline-block;background:#0A84FF;color:#fff;font-size:8px;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:5px;vertical-align:middle">CK 참여</span>':''}${r.camp?`<div class="muted" style="font-size:9px;margin-top:2px">${r.camp}</div>`:''}</td>`,
-    (n,ck)=>`<td style="font-size:12px;padding:6px 8px"><b>합계 · ${n}개 고객사</b><span class="muted" style="font-size:9px;margin-left:6px">올해 CK 참여 <b style="color:var(--blue)">${ck}</b>곳</span></td>`);
+    (n,ck,pm)=>`<td style="font-size:12px;padding:6px 8px"><b>합계 · ${n}개 고객사</b><span class="muted" style="font-size:9px;margin-left:6px">전년 마케팅 <b>${pm}</b>곳 · 올해 CK 참여 <b style="color:var(--blue)">${ck}</b>곳</span></td>`);
 }
 
 function renderBudgetStatus(fMkt) {
