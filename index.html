@@ -7323,6 +7323,8 @@ async function renderPromoChart(fOrders, fMkt) {
             if (_ctr) { ba._skuSet = ba._skuSet || new Set(); ba._skuSet.add(_ctr); }
           } else {
             if (oCust) { ba._custSet = ba._custSet || new Set(); ba._custSet.add(oCust); }
+            // 고객 기반 캠페인도 distinct SKU 수를 함께 집계 (SKU 카드/전년 SKU가 고객수로 나오던 버그 수정)
+            const _ctr2 = ctrCode || oSku; if (_ctr2) { ba._skuSet = ba._skuSet || new Set(); ba._skuSet.add(_ctr2); }
           }
         }
       }
@@ -7957,11 +7959,11 @@ async function renderPromoChart(fOrders, fMkt) {
         if (_tsC && _tsC.size && key && _tsC.has(key)) {
           const _rgC = _promoRegionForBA[p];
           if (!_rgC || !_rgC.length || _rgC.includes(normalizeRegion(o.region||''))) _curSkuSet.add(key);
-        } else if(!_isSkuBased && (o.customer||'').trim()) _curSkuSet.add((o.customer||'').trim());
+        } else { const _mbP=((_cfgAll[p]||{}).match_by||'sku').toLowerCase(); if(_mbP==='customer' && key) _curSkuSet.add(key); }
       });
       const _curSkuN = _curSkuSet.size;
       // 전년: summary의 baSkuCount(활성화된 SKU 수)
-      const _prvSkuN = summary.reduce((s,p)=>s+(p.baSkuCount||p.baCustCount||0),0);
+      const _prvSkuN = summary.reduce((s,p)=>s+(p.baSkuCount||0),0);
       const _skuSub = cur => `${fmtMoney(cur)} · ${_curSkuN.toLocaleString()} SKUs`;
       const _prvSkuSub = cur => `${fmtMoney(cur)} · ${_prvSkuN.toLocaleString()} SKUs`;
       const _dSkuN = _curSkuN - _prvSkuN;
@@ -7992,7 +7994,7 @@ async function renderPromoChart(fOrders, fMkt) {
         const _skuK = _ctrK || _oidK;
         (_bkSku[_bk] = _bkSku[_bk] || new Set());
         if (_skuK && _targetSkusFull.has(_skuK)) _bkSku[_bk].add(_skuK);
-        else if (!_isSkuBased && (o.customer||'').trim()) _bkSku[_bk].add((o.customer||'').trim());
+        else { const _mbP2=((_cfgAll[_p]||{}).match_by||'sku').toLowerCase(); if(_mbP2==='customer' && _skuK) _bkSku[_bk].add(_skuK); }
       });
       const _curBkTotal = _bkSum[_curBk] || 0;
       const _prvBkTotal = _bkSum[_prvBk] || 0;
@@ -8454,7 +8456,7 @@ async function renderPromoChart(fOrders, fMkt) {
         if(_beforeCountryStart(o,p))return;   // 국가별 시작일 이전 제외
         const pk=periodKey(o.order_date,period);if(!pk)return;
         const c=(o['CTR Code']||o.sku||'').trim();
-        if(_ts2.size>0&&_ts2.has(c)){_sm[pk]=_sm[pk]||new Set();_sm[pk].add(c);}
+        if(c){ const _cb=((_cfgAll[p]||{}).match_by||'sku').toLowerCase()==='customer'; if((_ts2.size>0&&_ts2.has(c))||_cb){ _sm[pk]=_sm[pk]||new Set(); _sm[pk].add(c); } }
       });
       const _cd=_bk2.map(pk=>(_sm[pk]||new Set()).size);
       if(_cd.some(v=>v>0)){
