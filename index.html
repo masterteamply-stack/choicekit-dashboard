@@ -6355,6 +6355,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
     if (kpi === 'STARTED') { if (!_rcStarted[k] || d < _rcStarted[k]) _rcStarted[k] = d; }
   });
   const startFor = (rg, p) => {
+    if (_CAMPAIGN_EXPLICIT_START[p]) return _CAMPAIGN_EXPLICIT_START[p];   // 명시적 공식 시작일 우선
     const k = rg + '|||' + p;
     return _rcStarted[k] || _rcAll[k] || _gStarted[p] || _gAll[p] || '';
   };
@@ -6989,13 +6990,7 @@ async function renderPromoChart(fOrders, fMkt) {
     if (promoStart[p] < '2026-01-02') promoStart[p] = '2026-01-02';
   });
   // 명시적 캠페인 시작일 (사용자 지정 — STARTED kpi보다 우선)
-  const _explicitStart = {
-    'CTR MarketFit Campaign': '2026-03-01',
-    'Asian vehicle': '2026-03-01',
-    'European vehicle': '2026-03-01',
-    'Korean & Japanese vehicles': '2026-08-01',
-  };
-  Object.keys(_explicitStart).forEach(p => { promoStart[p] = _explicitStart[p]; });
+  Object.keys(_CAMPAIGN_EXPLICIT_START).forEach(p => { promoStart[p] = _CAMPAIGN_EXPLICIT_START[p]; });
 
   // Build campaign target maps so ORDER AMT can attribute orders via
   // (tag) OR (target SKU) OR (target customer) — broader than tag-only.
@@ -9599,6 +9594,8 @@ const _SPLIT_ONLY_CAMPS = new Set(['SELL-OUT Promotion', 'Sell-Out Promotion', '
 // Region x Campaign summary's rule). Strips any 'camp␟REGION' region-split suffix.
 const _SELLOUT_CAMP_NAMES = new Set(['Trade promotion', 'Sell-Out Promotion', 'SELL-OUT Promotion']);
 const _LATAM_CARVEOUT = { 'REFATRIX':['2026-02-11','2026-11-30'], 'PLUSCAR S.A':['2026-08-01','2026-10-31'], 'SUPER REPUESTOS':['2026-08-01','2026-10-31'] };
+// 캠페인 명시적(공식) 시작일 — marketing STARTED 날짜보다 우선. 전역이라 exec·SKU Explorer·Promotion Performance 모두 동일 적용.
+const _CAMPAIGN_EXPLICIT_START = { 'CTR MarketFit Campaign':'2026-03-01', 'Asian vehicle':'2026-03-01', 'European vehicle':'2026-03-01', 'Korean & Japanese vehicles':'2026-08-01' };
 const campSellType = p => _SELLOUT_CAMP_NAMES.has(String(p||'').split('\u241f')[0].trim()) ? 'SELL-OUT' : 'SELL-IN';
 function _promoRegionOptsFromOrders(ppO, cur, allLabel, allowCamps){
   const pairs = {};
@@ -10567,6 +10564,8 @@ function renderSkuAggregate(fOrders) {
     Object.keys(byPromo).filter(k => k.endsWith('__hasStarted')).forEach(k => delete byPromo[k]);
     // 2026-01-02 이전 날짜 보정 (Portfolio Expansion 등)
     Object.keys(byPromo).forEach(k => { if (byPromo[k] < '2026-01-02') byPromo[k] = '2026-01-02'; });
+    // 명시적 공식 시작일 우선 (CTR MarketFit 03-01 등 — STARTED 02-11 대신)
+    Object.keys(_CAMPAIGN_EXPLICIT_START).forEach(k => { if (byPromo[k] !== undefined) byPromo[k] = _CAMPAIGN_EXPLICIT_START[k]; });
 
     // 고객별 시작일 빌드 (Trade promotion 등 고객별 시작일이 다른 경우)
     const byCust = {};
@@ -10597,6 +10596,7 @@ function renderSkuAggregate(fOrders) {
       s = sorted[Math.floor(sorted.length / 2)] || sorted[0];
     }
     if (s && s < '2026-01-02') s = '2026-01-02';
+    if (_CAMPAIGN_EXPLICIT_START[promo]) s = _CAMPAIGN_EXPLICIT_START[promo];   // 명시적 공식 시작일 우선
     baStartDate = s;
     displayStartDate = s;
   }
