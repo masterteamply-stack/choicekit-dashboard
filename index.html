@@ -10437,6 +10437,7 @@ function renderSkuIndividual(fOrders) {
 
   // ── Period Comparison KPIs (scoped to this SKU; current range starts at promotion launch) ──
   renderSkuCompareKpis(allSkuOrders, (o) => (o && (o.sku||'').toUpperCase()) === sku, startDate);
+  { const _ck=document.getElementById('skuCompareKpis'); if(_ck){ _ck.style.display='none'; _ck.innerHTML=''; } }  // MoM 비교 카드 숨김
 
   // ── Promotion-total card (sum across all SKUs in the same promotion) ──
   if (promo) {
@@ -10901,6 +10902,7 @@ function renderSkuAggregate(fOrders) {
     ? cmpOrders.filter(o => { const _st = _cmpStartBP[promoKeyOfOrder(o)]; return !_st || (o.order_date||'') >= _st; })
     : cmpOrders;
   renderSkuCompareKpis(_cmpOrdersAligned, cmpScope, startDate);
+  { const _ck=document.getElementById('skuCompareKpis'); if(_ck){ _ck.style.display='none'; _ck.innerHTML=''; } }  // MoM 비교 카드 숨김 — 캠페인 효과(집행 전/후)로 일원화
   renderSkuCustomerConversion(promo, _cmpCfg, _cmpAllowR, allOrd, startDate);
 }
 
