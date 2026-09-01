@@ -7488,6 +7488,10 @@ async function renderPromoChart(fOrders, fMkt) {
     const start = promoStart[p];
     if (start && (o.order_date || '') < start) return;  // 시작일 전 제외
     if (_beforeCountryStart(o, p)) return;              // 국가별 시작일 이전 제외
+    // campMatch + SELL-IN-only(SELL-OUT) + carve-out — 카드/exec/SKU Explorer와 동일 기준(비-target 오더 제외)
+    if (typeof promoKeyOfOrder==='function' && promoKeyOfOrder(o) === 'OTHER') return;
+    if (campSellType(p) === 'SELL-OUT' && String(o.sell_type||'').toUpperCase().replace(/_/g,'-') !== 'SELL-IN') return;
+    if (p === 'CTR MarketFit Campaign') { const _co = _LATAM_CARVEOUT[(o.customer||'').trim()]; if (_co && (o.order_date||'') >= _co[0] && (o.order_date||'') <= _co[1]) return; }
     const pk = periodKey(o.order_date, period);
     const amt = convOrder(o);
     if (dim === 'promotion') add(p, pk, amt);
