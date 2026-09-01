@@ -10538,13 +10538,19 @@ function renderSkuAggregate(fOrders) {
   // before/after(캠페인 효과)를 위해 target SKU 중 2025·2026 어느 해든 오더된 것을 모두 포함.
   // (기존엔 useOrders=2026 오더만이라, 전년에만 오더된 target SKU의 전년 값이 누락돼 #promo와 전년이 어긋났음)
   const _effCfg = (state.campaignTargetSkus||{})[promo] || {};
-  const _effTgt = (promo !== '__all__' && (_effCfg.match_by||'sku').toLowerCase() !== 'customer')
+  const _effMb = (_effCfg.match_by||'sku').toLowerCase();
+  const _effTgt = (promo !== '__all__' && _effMb !== 'customer')
     ? new Set((_effCfg.target_skus||[]).map(x => String(x).trim().toUpperCase())) : null;
-  const _effAllowR = (_effTgt && _effCfg.region)
+  const _effCust = (promo !== '__all__' && _effMb === 'customer')
+    ? new Set((_effCfg.target_customers||[]).map(x => String(x).trim())) : null;
+  const _effAllowR = (promo !== '__all__' && _effCfg.region)
     ? new Set((Array.isArray(_effCfg.region)?_effCfg.region:[_effCfg.region]).map(x=>normalizeRegion(x)).filter(Boolean)) : null;
   const _effRgnOK = o => { if(!_effAllowR||!_effAllowR.size) return true; const r=normalizeRegion(o.region||''); return r ? _effAllowR.has(r) : true; };
+  // SKU 기반: target SKU / 고객 기반: target 고객이 2025·2026 어느 해든 오더한 SKU 전부 → 전년 값(전년만 오더된 SKU) 누락 방지
   const skus = (_effTgt && _effTgt.size)
     ? Array.from(new Set(allOrd.filter(o => _effTgt.has((o.sku||'').trim().toUpperCase()) && _effRgnOK(o)).map(o => o.sku).filter(Boolean)))
+    : (_effCust && _effCust.size)
+    ? Array.from(new Set(allOrd.filter(o => _effCust.has((o.customer||'').trim()) && _effRgnOK(o)).map(o => o.sku).filter(Boolean)))
     : Array.from(new Set(useOrders.map(o => o.sku).filter(Boolean)));
   if (!skus.length) {
     if (meta) meta.textContent = 'No SKUs found — load orders data first';
