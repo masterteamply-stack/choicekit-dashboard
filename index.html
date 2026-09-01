@@ -5064,7 +5064,9 @@ function renderCustomerRomi() {
     if(!custRegion[k])custRegion[k]=normalizeRegion(r.region||'')||(r.region||''); if(!nmMap[k]&&r.customer)nmMap[k]=String(r.customer).trim(); });
   const keys=Array.from(new Set([...Object.keys(curExp),...Object.keys(prevMkt),...Object.keys(otherMkt)])).filter(k=>isRegionVisible(custRegion[k]));
   const romi=(ord,cost)=>cost>0?((ord-cost)/cost*100):null;
-  const rows=keys.map(k=>{ const pm=prevMkt[k]||0, po=prevOrd[k]||0, ce=curExp[k]||0, ca=curAct[k]||0, oa=otherMkt[k]||0, co=curOrd[k]||0; const tex=ca+oa;
+  // 전년 오더: 실제 SAP 오더(prior_orders_2025.json, CTR+NA export 기준)가 있으면 우선(baseline 서브셋보다 풍부·정확). Customer_No 키.
+  const _po2025=state.priorOrders2025||{};
+  const rows=keys.map(k=>{ const pm=prevMkt[k]||0, po=(_po2025[k]&&_po2025[k].amt>0)?(_po2025[k].amt*disp):(prevOrd[k]||0), ce=curExp[k]||0, ca=curAct[k]||0, oa=otherMkt[k]||0, co=curOrd[k]||0; const tex=ca+oa;
     return { name:nmMap[k]||('#'+k), region:custRegion[k]||'', camp:custCamp[k]||'',
       prevMkt:pm, prevOrd:po, prevRoMI:romi(po,pm), curExp:ce, curAct:ca, otherAct:oa, totalExec:tex,
       execRate: ce>0?(ca/ce*100):(ca>0?100:null), curOrd:co, curRoMI:romi(co,ca), exp100RoMI:romi(co,ce),
@@ -11810,6 +11812,12 @@ async function processBulkFiles(files, { replace = false } = {}) {
         if (_sr.ok) { state.mkt2025support = parseCSV(await _sr.text()); }
         else state.mkt2025support = [];
       } catch(e) { state.mkt2025support = []; }
+      // prior_orders_2025.json — 전년(2025) 고객별 실제 오더(SAP CTR+NA export 추출, USD). Customer_No 키.
+      try {
+        const _pr = await fetch(_resolveGhRepoBase() + '/prior_orders_2025.json');
+        if (_pr.ok) { state.priorOrders2025 = await _pr.json(); }
+        else state.priorOrders2025 = {};
+      } catch(e) { state.priorOrders2025 = {}; }
       // pre_orders_summary.json — YoY 스냅샷 (전년 동기 bar/line 차트용)
       try {
         const _ps = await fetch(_resolveGhRepoBase() + '/pre_orders_summary.json');
