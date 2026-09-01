@@ -9574,7 +9574,7 @@ function _promoOptsHTML(keys, curValue, allLabel){
 // Campaigns whose per-region legs are DISTINCT promotions that merely share a name
 // (e.g. SELL-OUT Promotion: ASIA and LATAM are different promotions). These get NO
 // combined "all regions" option — only per-region entries.
-const _SPLIT_ONLY_CAMPS = new Set(['SELL-OUT Promotion', 'Sell-Out Promotion', 'Trade promotion']);
+const _SPLIT_ONLY_CAMPS = new Set(['SELL-OUT Promotion', 'Sell-Out Promotion', 'Trade promotion', 'Strategic Partner Program']);
 // Canonical SELL-IN / SELL-OUT classification used across the WHOLE dashboard: a
 // campaign is SELL-OUT iff its Program name is a Sell-Out Promotion (matches the
 // Region x Campaign summary's rule). Strips any 'camp␟REGION' region-split suffix.
