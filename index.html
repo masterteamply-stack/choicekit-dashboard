@@ -8875,7 +8875,10 @@ function renderPromoTable() {
   if(siS.length){body+=`<tr style="background:rgba(200,16,46,0.04)"><td colspan="${_cmpMode!=='off'?10:9}" style="padding:6px 10px;font-size:11px;font-weight:700;color:#C8102E;letter-spacing:0.05em">📦 SELL-IN · ${_grpKinds(siS)}</td></tr>`;body+=siS.map(buildRow).join('');body+=subRow('📦 SELL-IN Subtotal',siS,'rgba(200,16,46,0.06)',(_promoFilter==='__all__'&&window._baBeforeDedup?window._baBeforeDedup.SELL_IN:undefined));}
   if(soS.length){body+=`<tr style="background:rgba(10,132,255,0.04)"><td colspan="${_cmpMode!=='off'?10:9}" style="padding:6px 10px;font-size:11px;font-weight:700;color:#0A84FF;letter-spacing:0.05em">🤝 SELL-OUT · ${_grpKinds(soS)}</td></tr>`;body+=soS.map(buildRow).join('');body+=subRow('🤝 SELL-OUT Subtotal',soS,'rgba(10,132,255,0.06)',(_promoFilter==='__all__'&&window._baBeforeDedup?window._baBeforeDedup.SELL_OUT:undefined));}
   body+=`<tr style="background:rgba(0,0,0,0.06);font-weight:800;border-top:2px solid var(--border)"><td style="font-size:13px"><b>🏆 CHOICE KIT Total</b></td><td class="text-right mono">${fmtNum(allS.reduce((s,p)=>s+(p.orders||0),0))}</td><td class="text-right mono t-green" style="font-size:14px;font-weight:900">${fmtMoney(gT)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted" style="font-size:13px">${gP>0?fmtMoney(gP):'–'}</td>`:''}<td class="text-right mono" style="font-size:12px">${gdTag}</td>${(()=>{const t=_txSum(allS);return `<td class="text-right mono" style="border-left:1px solid var(--border);font-size:11px;white-space:nowrap">${_txCell(t.cur,t.prev)}</td><td class="text-right mono">${_txYoY(t.cur,t.prev)}</td>`;})()}<td class="text-right mono t-yellow" style="border-left:1px solid var(--border)">${fmtMoney(gE)}</td><td class="text-right mono t-orange">${fmtMoney(gA)}</td><td class="text-right mono">${gA>0?fmtPct(((gT-gA)/gA)*100):'–'}</td></tr></tbody>`;
-  document.getElementById('tblPromo').innerHTML=head+body;
+  { const _el=document.getElementById('tblPromo'); _el.innerHTML=head+body;
+    try{ const _dbg='promoFilter='+state.promoFilter+' | _promoFilter='+_promoFilter+' | _ppRgn='+_ppRgn+' | summ=['+(_allSummary||[]).map(x=>x.promotion||x.key).join(', ')+'] | shown=['+summary.map(x=>x.promotion||x.key).join(', ')+']';
+      console.log('[PROMO-DBG]',_dbg);
+      let _d=document.getElementById('_promoDbg'); if(!_d){_d=document.createElement('div');_d.id='_promoDbg';_d.style.cssText='font-size:10px;color:#c00;padding:6px;white-space:normal;word-break:break-all;font-family:monospace;background:#fff8f8;border:1px solid #f0c0c0';_el.parentNode.insertBefore(_d,_el);} _d.textContent='🔧DBG: '+_dbg; }catch(_){} }
   } catch(e){console.error('[renderPromoTable]',e);}
 }
 // ── Promotion Performance 드릴다운 토글 함수 ──
@@ -10663,7 +10666,15 @@ function renderSkuAggregate(fOrders) {
   const _baAllowR = (_baIsSku && _baCfg.region)
     ? new Set((Array.isArray(_baCfg.region)?_baCfg.region:[_baCfg.region]).map(x=>normalizeRegion(x)).filter(Boolean))
     : null;
-  const _baRegionOK = (o) => { if(!_baAllowR||!_baAllowR.size) return true; const _r=normalizeRegion(o.region||''); return _r ? _baAllowR.has(_r) : true; };
+  // target_countries 게이트 — CIS 캠페인의 비-target 국가(우크라이나·중국 등) 제외. #promo와 동일 기준.
+  const _baAllowC = (_baIsSku && _baCfg.target_countries && _baCfg.target_countries.length)
+    ? new Set(_baCfg.target_countries.map(x=>normalizeCountry(x)||String(x).trim().toUpperCase()))
+    : null;
+  const _baRegionOK = (o) => {
+    if(_baAllowR && _baAllowR.size){ const _r=normalizeRegion(o.region||''); if(_r && !_baAllowR.has(_r)) return false; }
+    if(_baAllowC && _baAllowC.size){ const _c=normalizeCountry(o.country||'')||String(o.country||'').trim().toUpperCase(); if(_c && !_baAllowC.has(_c)) return false; }
+    return true;
+  };
   const perSku = skus.map(sku => {
     const skuOrdsAll_raw = allOrd.filter(o => o.sku === sku && _baRegionOK(o));      // + preOrders (for before), region 제한
     // anchor 계산을 먼저 (total.amt 필터에도 사용)
