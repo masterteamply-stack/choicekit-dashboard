@@ -6888,13 +6888,11 @@ async function renderPromoChart(fOrders, fMkt) {
   // Partner인데 표=European 등). summary 빌드 전에 드롭다운의 유효 옵션 값으로 state를 맞춰 카드·차트·표를 일치시킨다.
   try {
     const _sel = document.getElementById('promoFilterSel');
-    const _before=state.promoFilter;
     if (_sel && typeof _sel.value === 'string' && _sel.value && _sel.value !== state.promoFilter
         && Array.from(_sel.options||[]).some(o => o.value === _sel.value)) {
       state.promoFilter = _sel.value;
     }
-    console.log('[CHART-SYNC] entry_state=',_before,'| dropdown.value=',_sel?_sel.value:'(no sel)','| dropdown.text=',_sel&&_sel.selectedOptions&&_sel.selectedOptions[0]?_sel.selectedOptions[0].text:'(none)','| after=',state.promoFilter);
-  } catch(e){console.warn('[CHART-SYNC]err',e);}
+  } catch(_){}
   // stale 방어: split-only 캠페인의 합산(plain, region 없는) 값은 옵션에서 제거됨 → __all__로 리셋
   if (state.promoFilter && state.promoFilter !== '__all__' && state.promoFilter.indexOf(_RSPLIT) < 0 && _SPLIT_ONLY_CAMPS.has(state.promoFilter)) {
     state.promoFilter = '__all__';
@@ -8767,8 +8765,8 @@ function renderPromoTable() {
   //    campaign's summary entry + drill maps are partitioned by each country's region
   //    into 'camp\u241fREGION' keys; buildRow/buildDrill then render '[REGION] camp'
   //    with a region-scoped drill, both under the SELL-OUT subtotal. ──
+  const _ctryReg = {};   // ← 함수 스코프로 hoist (아래 _txForCamp에서 참조하므로 블록 밖에 있어야 함)
   {
-    const _ctryReg = {};
     // Build country → region from BOTH orders AND marketing: a country may appear in
     // a split campaign only via marketing/prior-year (0 current orders) — e.g. SELL-OUT
     // Promotion Vietnam/Malaysia — so an orders-only map would leave it region-less and
@@ -8897,21 +8895,8 @@ function renderPromoTable() {
   if(siS.length){body+=`<tr style="background:rgba(200,16,46,0.04)"><td colspan="${_cmpMode!=='off'?10:9}" style="padding:6px 10px;font-size:11px;font-weight:700;color:#C8102E;letter-spacing:0.05em">📦 SELL-IN · ${_grpKinds(siS)}</td></tr>`;body+=siS.map(buildRow).join('');body+=subRow('📦 SELL-IN Subtotal',siS,'rgba(200,16,46,0.06)',(_promoFilter==='__all__'&&window._baBeforeDedup?window._baBeforeDedup.SELL_IN:undefined));}
   if(soS.length){body+=`<tr style="background:rgba(10,132,255,0.04)"><td colspan="${_cmpMode!=='off'?10:9}" style="padding:6px 10px;font-size:11px;font-weight:700;color:#0A84FF;letter-spacing:0.05em">🤝 SELL-OUT · ${_grpKinds(soS)}</td></tr>`;body+=soS.map(buildRow).join('');body+=subRow('🤝 SELL-OUT Subtotal',soS,'rgba(10,132,255,0.06)',(_promoFilter==='__all__'&&window._baBeforeDedup?window._baBeforeDedup.SELL_OUT:undefined));}
   body+=`<tr style="background:rgba(0,0,0,0.06);font-weight:800;border-top:2px solid var(--border)"><td style="font-size:13px"><b>🏆 CHOICE KIT Total</b></td><td class="text-right mono">${fmtNum(allS.reduce((s,p)=>s+(p.orders||0),0))}</td><td class="text-right mono t-green" style="font-size:14px;font-weight:900">${fmtMoney(gT)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted" style="font-size:13px">${gP>0?fmtMoney(gP):'–'}</td>`:''}<td class="text-right mono" style="font-size:12px">${gdTag}</td>${(()=>{const t=_txSum(allS);return `<td class="text-right mono" style="border-left:1px solid var(--border);font-size:11px;white-space:nowrap">${_txCell(t.cur,t.prev)}</td><td class="text-right mono">${_txYoY(t.cur,t.prev)}</td>`;})()}<td class="text-right mono t-yellow" style="border-left:1px solid var(--border)">${fmtMoney(gE)}</td><td class="text-right mono t-orange">${fmtMoney(gA)}</td><td class="text-right mono">${gA>0?fmtPct(((gT-gA)/gA)*100):'–'}</td></tr></tbody>`;
-  { const _sel=document.getElementById('promoFilterSel');
-    const _selVal=_sel?_sel.value:'(none)', _selTxt=_sel&&_sel.selectedOptions&&_sel.selectedOptions[0]?_sel.selectedOptions[0].text:'(none)';
-    const _opts=_sel?Array.from(_sel.options).map(o=>o.value+'>'+o.text).join(' ; '):'(none)';
-    const _dbg='VER=DBG4 | state='+state.promoFilter+' | dropVal='+_selVal+' | dropTxt='+_selTxt+' | _promoFilter='+_promoFilter+' | _ppRgn='+_ppRgn+' | summ=['+(_allSummary||[]).map(x=>x.promotion||x.key).join(', ')+'] | shown=['+summary.map(x=>x.promotion||x.key).join(', ')+']';
-    console.log('[TABLE-DBG]',_dbg,'| OPTIONS:',_opts);
-    const _el=document.getElementById('tblPromo'); _el.innerHTML=head+body;
-    try{ let _d=document.getElementById('_promoDbg'); if(!_d){_d=document.createElement('div');_d.id='_promoDbg';_d.style.cssText='font-size:9px;color:#c00;padding:6px;white-space:normal;word-break:break-all;font-family:monospace;background:#fff8f8;border:1px solid #f0c0c0';_el.parentNode.insertBefore(_d,_el);} _d.textContent='🔧'+_dbg; }catch(_){} }
-  } catch(e){
-    console.error('[renderPromoTable]',e);
-    try{ const _el=document.getElementById('tblPromo'); let _d=document.getElementById('_promoDbg');
-      if(!_d){_d=document.createElement('div');_d.id='_promoDbg';_d.style.cssText='font-size:9px;color:#fff;padding:6px;white-space:normal;word-break:break-all;font-family:monospace;background:#c00;border:1px solid #900';_el.parentNode.insertBefore(_d,_el);}
-      _d.style.background='#c00'; _d.style.color='#fff';
-      _d.textContent='🔧ERROR(renderPromoTable): '+(e&&e.message||e)+' @ '+(e&&e.stack?e.stack.split(String.fromCharCode(10)).slice(0,3).join(' <<< '):'')+' | state='+state.promoFilter+' | drop='+((document.getElementById('promoFilterSel')||{}).value||'?');
-    }catch(_){}
-  }
+  document.getElementById('tblPromo').innerHTML=head+body;
+  } catch(e){console.error('[renderPromoTable]',e);}
 }
 // ── Promotion Performance 드릴다운 토글 함수 ──
 function togglePromoDrill(row, promo) {
@@ -11936,7 +11921,6 @@ document.addEventListener('change', e => {
     persist(); renderAll(); return;
   }
   if (e.target.id === 'promoFilterSel') {
-    console.log('[ONCHANGE] promoFilterSel selected value=', e.target.value, '| text=', e.target.selectedOptions&&e.target.selectedOptions[0]?e.target.selectedOptions[0].text:'?');
     state.promoFilter = e.target.value;
     try { localStorage.setItem('ck_promo_filter', state.promoFilter); } catch(_){}
     _quickRenderPromo(); return;
