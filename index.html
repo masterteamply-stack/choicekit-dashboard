@@ -4296,7 +4296,7 @@ function renderAll() {
   // by renderRegionExecSummary, matching the summary Grand-Total Progress); show the
   // last known value here for an instant paint.
   document.getElementById('kpiAchv').textContent = (window._execMeanProgress != null) ? fmtPct(window._execMeanProgress) : '–';
-  document.getElementById('kpiAchvSub').textContent = 'order ÷ target';
+  document.getElementById('kpiAchvSub').textContent = '(order+sell-out) ÷ target';
   document.getElementById('kpiRoi').textContent = mktCost>0 ? fmtPct(roi) : '–';
   document.getElementById('kpiRoiCard').classList.toggle('neg', roi<0);
 
@@ -6701,19 +6701,23 @@ function renderRegionExecSummary(fOrders, fMkt) {
 
   // Always sorted by Progress (Period Order ÷ Order Target), lowest first — the
   // least-advanced regions surface at the top. (No user-facing sort selector.)
-  regionList.sort((a, b) => {
-    const pa = a.target > 0 ? a.order / a.target : Infinity;
-    const pb = b.target > 0 ? b.order / b.target : Infinity;
-    return pa - pb;
-  });
+  const _progNum = R => {
+    const hasSO = R.camps.some(c=>c.sell==='SELL-OUT'), hasSI = R.camps.some(c=>c.sell!=='SELL-OUT');
+    let num, den;
+    if (hasSO && hasSI) { num=(R.order||0)+(R.soResult||0); den=(R.target||0)+(R.otOut||0); }
+    else if (hasSO) { num=R.soResult||0; den=R.otOut||0; }
+    else { num=R.order||0; den=R.target||0; }
+    return den>0 ? num/den : Infinity;
+  };
+  regionList.sort((a, b) => _progNum(a) - _progNum(b));
 
   // ── Header Achievement = simple mean of each campaign's progress (order ÷ target),
   // aggregating a campaign's regions first, then averaging across campaigns. ──
   const _campAgg = {};
   Object.keys(agg).forEach(r => Object.keys(agg[r]).forEach(p => {
     const x = agg[r][p]; if (!(x.order > 0 || x.cost > 0 || x.target > 0)) return;
-    const t = _campAgg[p] || (_campAgg[p] = { order:0, target:0 });
-    t.order += x.order; t.target += x.target;
+    const t = _campAgg[p] || (_campAgg[p] = { order:0, target:0, soResult:0, otOut:0 });
+    t.order += x.order; t.target += x.target; t.soResult += (x.soResult||0); t.otOut += (x.otOut||0);
   }));
   // WEIGHTED overall = Σ(order) ÷ Σ(order target) across campaigns that have a target.
   // This equals the summary Grand-Total Progress row (G.order ÷ G.target); a simple
@@ -6721,13 +6725,17 @@ function renderRegionExecSummary(fOrders, fMkt) {
   // Sum over the SAME campaign set as the summary Grand-Total row (order>0||cost>0||
   // target>0), so achievement === Grand-Total Progress (G.order ÷ G.target) exactly.
   const _campVals = Object.values(_campAgg);
-  const _totOrder = _campVals.reduce((s, t) => s + t.order, 0);   // = G.order
-  const _totTarget = _campVals.reduce((s, t) => s + t.target, 0); // = G.target
-  const _overallProg = _totTarget > 0 ? _totOrder / _totTarget * 100 : null;
-  const _nTgt = _campVals.filter(t => t.target > 0).length;
+  const _totOrder = _campVals.reduce((s, t) => s + t.order, 0);       // = G.order
+  const _totTarget = _campVals.reduce((s, t) => s + t.target, 0);     // = G.target
+  const _totSoRes = _campVals.reduce((s, t) => s + (t.soResult||0), 0); // = G.soResult
+  const _totOtOut = _campVals.reduce((s, t) => s + (t.otOut||0), 0);    // = G.otOut
+  // 새 Grand-Total Progress: (Order + SELL-OUT 실적) ÷ (Order Target + SELL-OUT Target) — exec 총계행과 일치
+  const _combDen = _totTarget + _totOtOut;
+  const _overallProg = _combDen > 0 ? (_totOrder + _totSoRes) / _combDen * 100 : null;
+  const _nTgt = _campVals.filter(t => t.target > 0 || (t.otOut||0) > 0).length;
   window._execMeanProgress = _overallProg;
   { const el = document.getElementById('kpiAchv'); if (el) el.textContent = _overallProg != null ? fmtPct(_overallProg) : '–';
-    const sub = document.getElementById('kpiAchvSub'); if (sub) sub.textContent = _nTgt ? `order ÷ target · ${_nTgt} campaigns` : 'order ÷ target'; }
+    const sub = document.getElementById('kpiAchvSub'); if (sub) sub.textContent = _nTgt ? `(order+sell-out) ÷ target · ${_nTgt} campaigns` : 'order ÷ target'; }
 
   // ── Note (minimal) ──
   const noteEl = document.getElementById('execSummaryNote');
