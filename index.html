@@ -2357,7 +2357,7 @@ header .mono b.t-orange {
             <h3 class="h-section" style="font-size:15px">고객사별 RoMI — 전년('25) vs 올해('26)</h3>
             <p class="label-mono" style="margin-top:4px">고객사별 마케팅 서포트 비용 · 전체 오더 · RoMI 변화 · 100% 집행 시 기대 RoMI · 캠페인 수행률</p>
             <div style="overflow:auto;margin-top:10px"><table id="tblCustomerRomi" style="width:100%"></table></div>
-            <p class="label-mono muted" style="font-size:9px;margin-top:6px">RoMI = (오더−마케팅비)/마케팅비 · 현재 RoMI=집행비 기준 · 100%집행 RoMI=예상비 전액 집행 가정 · RoMI YoY=100%집행 기준 전년 대비 증감(pp) · 오더=해당 고객/지역 연간 전체 거래</p>
+            <p class="label-mono muted" style="font-size:9px;margin-top:6px">RoMI = (오더−마케팅비)/마케팅비 · 현재 RoMI=CK 집행비 기준 · 100%집행 RoMI=CK 예상비 전액 집행 가정 · RoMI YoY=100%집행 기준 전년 대비 증감(pp) · CK 집행=CK 캠페인(marketing) · 기타 집행=기타 마케팅(Cost_customer, Choice Kit 제외) · 전체 집행=CK+기타 · 오더=해당 고객/지역 연간 전체 거래</p>
           </div>
         </div>
 
@@ -5050,13 +5050,24 @@ function renderCustomerRomi() {
   (state.mkt2025support||[]).forEach(r=>{ const nm=(r.customer||'').trim(); if(!nm)return; const k=_normC(nm); if(!k)return;
     prevMkt[k]=(prevMkt[k]||0)+((parseFloat(String(r.spend_usd_2025||'0').replace(/,/g,''))||0)*disp);
     if(!custName[k])custName[k]=nm; if(!custRegion[k])custRegion[k]=normalizeRegion(r.region||'')||(r.region||''); if(!custCamp[k]&&r.campaign_2026)custCamp[k]=r.campaign_2026; });
-  const keys=Array.from(new Set([...Object.keys(curExp),...Object.keys(prevMkt)])).filter(k=>isRegionVisible(custRegion[k]));
+  // 2026 고객별 기타(비-CK) 마케팅 집행 — Cost_customer.csv 전체 원장 중 "Choice Kit" 캠페인 제외
+  // (CK는 marketing.csv에서 별도 집계하므로 중복 방지). Total Spend는 행별 값(KRW→USD).
+  const otherMkt={};
+  (state.costCustomer||[]).forEach(r=>{
+    const d=String(r['Date']||r[Object.keys(r)[0]]||'').trim(); if(d.slice(0,4)!=='2026')return;
+    const cname=String(r['Campaign Name']||'').trim(); if(/choice\s*kit/i.test(cname))return;
+    const nm=String(r['Buyer']||'').trim(); if(!nm)return; const k=_normC(nm); if(!k)return;
+    const sp=parseFloat(String(r['Total Spend']||'0').replace(/,/g,''))||0;
+    otherMkt[k]=(otherMkt[k]||0)+sp*krwToUsd()*disp;
+    if(!custName[k])custName[k]=nm; if(!custRegion[k])custRegion[k]=normalizeRegion(r['Region']||'')||(r['Region']||'');
+  });
+  const keys=Array.from(new Set([...Object.keys(curExp),...Object.keys(prevMkt),...Object.keys(otherMkt)])).filter(k=>isRegionVisible(custRegion[k]));
   const romi=(ord,cost)=>cost>0?((ord-cost)/cost*100):null;
-  const rows=keys.map(k=>{ const pm=prevMkt[k]||0, po=prevOrd[k]||0, ce=curExp[k]||0, ca=curAct[k]||0, co=curOrd[k]||0;
+  const rows=keys.map(k=>{ const pm=prevMkt[k]||0, po=prevOrd[k]||0, ce=curExp[k]||0, ca=curAct[k]||0, oa=otherMkt[k]||0, co=curOrd[k]||0; const tex=ca+oa;
     return { name:custName[k]||k, region:custRegion[k]||'', camp:custCamp[k]||'',
-      prevMkt:pm, prevOrd:po, prevRoMI:romi(po,pm), curExp:ce, curAct:ca,
+      prevMkt:pm, prevOrd:po, prevRoMI:romi(po,pm), curExp:ce, curAct:ca, otherAct:oa, totalExec:tex,
       execRate: ce>0?(ca/ce*100):(ca>0?100:null), curOrd:co, curRoMI:romi(co,ca), exp100RoMI:romi(co,ce) };
-  }).filter(r=>r.curExp>0||r.curAct>0||r.prevMkt>0).sort((a,b)=>(b.curOrd+b.prevOrd)-(a.curOrd+a.prevOrd));
+  }).filter(r=>r.curExp>0||r.curAct>0||r.prevMkt>0||r.otherAct>0).sort((a,b)=>(b.curOrd+b.prevOrd)-(a.curOrd+a.prevOrd));
 
   const rc={CIS:'#5856D6',MENA:'#FF9500',LATAM:'#34C759',ASIA:'#0A84FF',EUROPE:'#FF375F',NA:'#BF5AF2',KOREA:'#30B0C7'};
   const rbadge=r=>{ if(!r)return''; const k=String(r).toUpperCase(),c=rc[k]||'#86868B'; return `<span style="display:inline-block;background:${c}18;color:${c};border:1px solid ${c}40;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;margin-left:5px;vertical-align:middle">${r}</span>`; };
@@ -5070,18 +5081,18 @@ function renderCustomerRomi() {
   // 공통 렌더 — 첫 컬럼만 다르고 지표 컬럼(전년/올해 마케팅·오더·RoMI·수행률·YoY)은 동일
   const _renderRomi=(elId, dataRows, firstHead, firstCell, totalCell)=>{
     const _el=document.getElementById(elId); if(!_el)return;
-    const head=`<thead><tr style="border-bottom:2px solid var(--border)">${th(firstHead,'left')}${th("전년('25) 마케팅비")}${th('전년 오더')}${th('전년 RoMI')}${th("올해('26) 예상비")}${th('집행비')}${th('수행률')}${th('올해 오더')}${th('현재 RoMI')}${th('100%집행 RoMI')}${th('RoMI YoY')}</tr></thead>`;
+    const head=`<thead><tr style="border-bottom:2px solid var(--border)">${th(firstHead,'left')}${th("전년('25) 마케팅비")}${th('전년 오더')}${th('전년 RoMI')}${th("올해('26) 예상비")}${th('CK 집행')}${th('기타 집행')}${th('전체 집행')}${th('수행률')}${th('올해 오더')}${th('현재 RoMI')}${th('100%집행 RoMI')}${th('RoMI YoY')}</tr></thead>`;
     let body='<tbody>';
     dataRows.forEach(r=>{ body+=`<tr style="border-bottom:1px solid var(--border)">`+firstCell(r)+
       cell(money(r.prevMkt))+cell(money(r.prevOrd))+cell(romiTag(r.prevRoMI))+
-      cell(money(r.curExp),'border-left:1px solid var(--border)')+cell(money(r.curAct))+cell(execTag(r.execRate,r.curAct,r.curExp))+
+      cell(money(r.curExp),'border-left:1px solid var(--border)')+cell(money(r.curAct))+cell(money(r.otherAct))+cell(r.totalExec>0?`<b>${fmtMoney(r.totalExec)}</b>`:'<span class="muted">–</span>')+cell(execTag(r.execRate,r.curAct,r.curExp))+
       cell(money(r.curOrd),'border-left:1px solid var(--border)')+cell(romiTag(r.curRoMI))+cell(romiTag(r.exp100RoMI))+
       cell(yoyTag(r.exp100RoMI,r.prevRoMI),'border-left:1px solid var(--border)')+`</tr>`; });
-    const T={prevMkt:0,prevOrd:0,curExp:0,curAct:0,curOrd:0}; dataRows.forEach(r=>{T.prevMkt+=r.prevMkt;T.prevOrd+=r.prevOrd;T.curExp+=r.curExp;T.curAct+=r.curAct;T.curOrd+=r.curOrd;});
+    const T={prevMkt:0,prevOrd:0,curExp:0,curAct:0,otherAct:0,curOrd:0}; dataRows.forEach(r=>{T.prevMkt+=r.prevMkt;T.prevOrd+=r.prevOrd;T.curExp+=r.curExp;T.curAct+=r.curAct;T.otherAct+=(r.otherAct||0);T.curOrd+=r.curOrd;});
     const Tprv=romi(T.prevOrd,T.prevMkt), Tcur=romi(T.curOrd,T.curAct), Texp=romi(T.curOrd,T.curExp), Texec=T.curExp>0?(T.curAct/T.curExp*100):null;
     body+=`<tr style="background:rgba(0,0,0,0.05);font-weight:700;border-top:2px solid var(--border)">`+totalCell(dataRows.length)+
       cell(`<b>${money(T.prevMkt)}</b>`)+cell(`<b>${money(T.prevOrd)}</b>`)+cell(romiTag(Tprv))+
-      cell(`<b>${money(T.curExp)}</b>`,'border-left:1px solid var(--border)')+cell(`<b>${money(T.curAct)}</b>`)+cell(execTag(Texec,T.curAct,T.curExp))+
+      cell(`<b>${money(T.curExp)}</b>`,'border-left:1px solid var(--border)')+cell(`<b>${money(T.curAct)}</b>`)+cell(`<b>${money(T.otherAct)}</b>`)+cell((T.curAct+T.otherAct)>0?`<b>${fmtMoney(T.curAct+T.otherAct)}</b>`:'<span class="muted">–</span>')+cell(execTag(Texec,T.curAct,T.curExp))+
       cell(`<b>${money(T.curOrd)}</b>`,'border-left:1px solid var(--border)')+cell(romiTag(Tcur))+cell(romiTag(Texp))+
       cell(yoyTag(Texp,Tprv),'border-left:1px solid var(--border)')+`</tr>`;
     _el.innerHTML=head+body+'</tbody>';
@@ -5089,8 +5100,8 @@ function renderCustomerRomi() {
 
   // ── 지역 롤업(상위 레벨 통합 뷰) ──
   const _byReg={};
-  rows.forEach(r=>{ const rg=r.region||'기타'; const b=_byReg[rg]||(_byReg[rg]={region:rg,prevMkt:0,prevOrd:0,curExp:0,curAct:0,curOrd:0,custs:0}); b.prevMkt+=r.prevMkt;b.prevOrd+=r.prevOrd;b.curExp+=r.curExp;b.curAct+=r.curAct;b.curOrd+=r.curOrd;b.custs++; });
-  const regionRows=Object.values(_byReg).map(b=>Object.assign({},b,{ prevRoMI:romi(b.prevOrd,b.prevMkt), execRate:b.curExp>0?(b.curAct/b.curExp*100):(b.curAct>0?100:null), curRoMI:romi(b.curOrd,b.curAct), exp100RoMI:romi(b.curOrd,b.curExp) })).sort((a,b)=>(b.curOrd+b.prevOrd)-(a.curOrd+a.prevOrd));
+  rows.forEach(r=>{ const rg=r.region||'기타'; const b=_byReg[rg]||(_byReg[rg]={region:rg,prevMkt:0,prevOrd:0,curExp:0,curAct:0,otherAct:0,curOrd:0,custs:0}); b.prevMkt+=r.prevMkt;b.prevOrd+=r.prevOrd;b.curExp+=r.curExp;b.curAct+=r.curAct;b.otherAct+=(r.otherAct||0);b.curOrd+=r.curOrd;b.custs++; });
+  const regionRows=Object.values(_byReg).map(b=>Object.assign({},b,{ totalExec:b.curAct+b.otherAct, prevRoMI:romi(b.prevOrd,b.prevMkt), execRate:b.curExp>0?(b.curAct/b.curExp*100):(b.curAct>0?100:null), curRoMI:romi(b.curOrd,b.curAct), exp100RoMI:romi(b.curOrd,b.curExp) })).sort((a,b)=>(b.curOrd+b.prevOrd)-(a.curOrd+a.prevOrd));
 
   _renderRomi('tblRegionRomi', regionRows, '지역',
     r=>`<td style="font-size:12px;padding:5px 8px"><b>${r.region||'기타'}</b>${rbadge(r.region)}<span class="muted" style="font-size:9px;margin-left:6px">${r.custs}개 고객사</span></td>`,
