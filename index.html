@@ -6883,6 +6883,16 @@ function periodLabelOf(period) {
   return period === 'year' ? 'Year' : (period === 'quarter' ? 'Quarter' : 'Month');
 }
 async function renderPromoChart(fOrders, fMkt) {
+  // 진실의 원천 = 드롭다운(사용자가 실제로 선택/표시된 값). state.promoFilter가 다른 렌더/이벤트로 이전 선택값에
+  // drift하면 summary는 drift된 값으로 빌드되고 카드는 동기화된 값으로 그려져 서로 어긋난다(카드=Strategic
+  // Partner인데 표=European 등). summary 빌드 전에 드롭다운의 유효 옵션 값으로 state를 맞춰 카드·차트·표를 일치시킨다.
+  try {
+    const _sel = document.getElementById('promoFilterSel');
+    if (_sel && typeof _sel.value === 'string' && _sel.value && _sel.value !== state.promoFilter
+        && Array.from(_sel.options||[]).some(o => o.value === _sel.value)) {
+      state.promoFilter = _sel.value;
+    }
+  } catch(_){}
   // stale 방어: split-only 캠페인의 합산(plain, region 없는) 값은 옵션에서 제거됨 → __all__로 리셋
   if (state.promoFilter && state.promoFilter !== '__all__' && state.promoFilter.indexOf(_RSPLIT) < 0 && _SPLIT_ONLY_CAMPS.has(state.promoFilter)) {
     state.promoFilter = '__all__';
