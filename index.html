@@ -5021,18 +5021,22 @@ function renderActivityChart(fMkt) {
    Click on Allocation slice → filter Execution chart to that region only */
 function renderBudgetStatus(fMkt) {
   const usdToDisp = usdToDisplay();
+  // region 키 정규화 통일 — budgets.csv "Korea" vs marketing "KOREA"(정규화됨) 중복 방지
+  const _rk = r => normalizeRegion(r) || String(r||'').trim().toUpperCase();
+  const _normBud = {};
+  Object.entries(state.regionBudgets||{}).forEach(([k,v]) => { const nk=_rk(k); _normBud[nk]=(_normBud[nk]||0)+Number(v||0); });
   const regions = Array.from(new Set([
-    ...fMkt.map(m=>m.region).filter(Boolean),
-    ...Object.keys(state.regionBudgets||{}),
+    ...fMkt.map(m=>_rk(m.region)).filter(Boolean),
+    ...Object.keys(_normBud),
   ])).filter(r => isRegionVisible(r)).sort();
 
   const rows = regions.map(r => {
-    const manualBud = Number(state.regionBudgets[r]||0) * usdToDisp;
-    const budFromCsv = fMkt.filter(m=>m.region===r).reduce((s,m)=>s+convMktBudget(m),0);
-    const expFromCsv = fMkt.filter(m=>m.region===r).reduce((s,m)=>s+convMktExpected(m),0);
+    const manualBud = Number(_normBud[r]||0) * usdToDisp;
+    const budFromCsv = fMkt.filter(m=>_rk(m.region)===r).reduce((s,m)=>s+convMktBudget(m),0);
+    const expFromCsv = fMkt.filter(m=>_rk(m.region)===r).reduce((s,m)=>s+convMktExpected(m),0);
     // Priority: manual override > CSV `budget` column > CSV `expected_cost` (fallback)
     const budget = manualBud > 0 ? manualBud : (budFromCsv > 0 ? budFromCsv : expFromCsv);
-    const actual = fMkt.filter(m=>m.region===r).reduce((s,m)=>s+convMktActual(m),0);
+    const actual = fMkt.filter(m=>_rk(m.region)===r).reduce((s,m)=>s+convMktActual(m),0);
     const pct = budget>0 ? (actual/budget)*100 : 0;
     return { region:r, budget, expected: expFromCsv, actual, pct };
   }).filter(d => d.budget>0 || d.actual>0)
