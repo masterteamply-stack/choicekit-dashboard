@@ -2357,7 +2357,7 @@ header .mono b.t-orange {
             <h3 class="h-section" style="font-size:15px">고객사별 RoMI — 전년('25) vs 올해('26)</h3>
             <p class="label-mono" style="margin-top:4px">고객사별 마케팅 서포트 비용 · 전체 오더 · RoMI 변화 · 100% 집행 시 기대 RoMI · 캠페인 수행률</p>
             <div style="overflow:auto;margin-top:10px"><table id="tblCustomerRomi" style="width:100%"></table></div>
-            <p class="label-mono muted" style="font-size:9px;margin-top:6px">RoMI = (오더−마케팅비)/마케팅비 · 현재 RoMI=CK 집행비 기준 · 100%집행 RoMI=CK 예상비 전액 집행 가정 · RoMI YoY=100%집행 기준 전년 대비 증감(pp) · CK 집행=CK 캠페인(marketing) · 기타 집행=기타 마케팅(Cost_customer, Choice Kit 제외) · 전체 집행=CK+기타 · 오더=해당 고객/지역 연간 전체 거래</p>
+            <p class="label-mono muted" style="font-size:9px;margin-top:6px">RoMI = (오더−마케팅비)/마케팅비 · 현재 RoMI=CK 집행비 기준 · 100%집행 RoMI=CK 예상비 전액 집행 가정 · RoMI YoY=100%집행 기준 전년 대비 증감(pp) · 전년 마케팅비=Cost_customer 2025 전체(모든 유형·지역 매칭·합산) · CK 집행=CK 캠페인(marketing) · 기타 집행=기타 마케팅(Cost_customer, Choice Kit 제외) · 전체 집행=CK+기타 · 오더=해당 고객/지역 연간 전체 거래</p>
           </div>
         </div>
 
@@ -5045,11 +5045,20 @@ function renderCustomerRomi() {
   (state.marketing||[]).forEach(m=>{ const nm=(m.target_customer||m.customer||'').trim(); if(!nm||nm.toUpperCase()==='ALL')return; const k=_normC(nm); if(!k)return;
     curExp[k]=(curExp[k]||0)+convMktExpected(m); curAct[k]=(curAct[k]||0)+convMktActual(m);
     if(!custName[k])custName[k]=nm; if(!custRegion[k])custRegion[k]=normalizeRegion(m.region||'')||(m.region||''); if(!custCamp[k]&&m.promotion_category)custCamp[k]=m.promotion_category; });
-  // 2025 고객별 마케팅 서포트(USD) — marketing_2025_customer_support.csv
+  // 전년(2025) 고객별 마케팅비 — Cost_customer.csv 2025 전체 원장(모든 유형) 합산(KRW→USD).
+  // support CSV(9곳)은 이 값의 정확한 부분집합이므로 Cost_customer 2025로 전부 커버(중복 없음, 지역별 매칭).
   const prevMkt={};
+  (state.costCustomer||[]).forEach(r=>{
+    const d=String(r['Date']||r[Object.keys(r)[0]]||'').trim(); if(d.slice(0,4)!=='2025')return;
+    const nm=String(r['Buyer']||'').trim(); if(!nm)return; const k=_normC(nm); if(!k)return;
+    const sp=parseFloat(String(r['Total Spend']||'0').replace(/,/g,''))||0;
+    prevMkt[k]=(prevMkt[k]||0)+sp*krwToUsd()*disp;
+    if(!custName[k])custName[k]=nm; if(!custRegion[k])custRegion[k]=normalizeRegion(r['Region']||'')||(r['Region']||'');
+  });
+  // 캠페인(2026) 라벨 보강 + Cost_customer에 없는 경우 support 값 폴백
   (state.mkt2025support||[]).forEach(r=>{ const nm=(r.customer||'').trim(); if(!nm)return; const k=_normC(nm); if(!k)return;
-    prevMkt[k]=(prevMkt[k]||0)+((parseFloat(String(r.spend_usd_2025||'0').replace(/,/g,''))||0)*disp);
-    if(!custName[k])custName[k]=nm; if(!custRegion[k])custRegion[k]=normalizeRegion(r.region||'')||(r.region||''); if(!custCamp[k]&&r.campaign_2026)custCamp[k]=r.campaign_2026; });
+    if(!custName[k])custName[k]=nm; if(!custRegion[k])custRegion[k]=normalizeRegion(r.region||'')||(r.region||''); if(!custCamp[k]&&r.campaign_2026)custCamp[k]=r.campaign_2026;
+    if(!prevMkt[k])prevMkt[k]=((parseFloat(String(r.spend_usd_2025||'0').replace(/,/g,''))||0)*disp); });
   // 2026 고객별 기타(비-CK) 마케팅 집행 — Cost_customer.csv 전체 원장 중 "Choice Kit" 캠페인 제외
   // (CK는 marketing.csv에서 별도 집계하므로 중복 방지). Total Spend는 행별 값(KRW→USD).
   const otherMkt={};
