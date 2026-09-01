@@ -5042,7 +5042,7 @@ function renderCustomerRomi() {
   (state.preOrders||[]).forEach(o=>{ const k=_normC(o.customer); if(!k)return; const d=(o.order_date||''); if(d>='2025-01-01'&&d<'2026-01-01') prevOrd[k]=(prevOrd[k]||0)+(Number(o.amount_usd||0)*disp); });
   // 2026 고객별 마케팅 예상/집행
   const curExp={}, curAct={}, custName={}, custRegion={}, custCamp={};
-  (state.marketing||[]).forEach(m=>{ const nm=(m.customer||'').trim(); if(!nm||nm.toUpperCase()==='ALL')return; const k=_normC(nm); if(!k)return;
+  (state.marketing||[]).forEach(m=>{ const nm=(m.target_customer||m.customer||'').trim(); if(!nm||nm.toUpperCase()==='ALL')return; const k=_normC(nm); if(!k)return;
     curExp[k]=(curExp[k]||0)+convMktExpected(m); curAct[k]=(curAct[k]||0)+convMktActual(m);
     if(!custName[k])custName[k]=nm; if(!custRegion[k])custRegion[k]=normalizeRegion(m.region||'')||(m.region||''); if(!custCamp[k]&&m.promotion_category)custCamp[k]=m.promotion_category; });
   // 2025 고객별 마케팅 서포트(USD) — marketing_2025_customer_support.csv
