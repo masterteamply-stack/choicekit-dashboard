@@ -8882,8 +8882,11 @@ function renderPromoTable() {
     const exp=rows.reduce((s,p)=>s+(p.expected||0),0),act=rows.reduce((s,p)=>s+(p.actual||0),0);
     return`<tr style="background:${color};font-weight:700;border-top:1px solid var(--border)"><td style="padding-left:8px;font-size:12px"><b>${label}</b><span class="muted" style="font-size:10px;margin-left:6px">${rows.length}개 캠페인</span></td><td class="text-right mono">${fmtNum(rows.reduce((s,p)=>s+(p.orders||0),0))}</td><td class="text-right mono t-green" style="font-weight:800">${fmtMoney(tot)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted">${prv>0?fmtMoney(prv):'–'}</td>`:''}<td class="text-right mono">${dt}</td><td class="text-right mono" style="border-left:1px solid var(--border);font-size:11px;white-space:nowrap">${_txCell(_tx.cur,_tx.prev)}</td><td class="text-right mono">${_txYoY(_tx.cur,_tx.prev)}</td><td class="text-right mono t-yellow" style="border-left:1px solid var(--border)">${fmtMoney(exp)}</td><td class="text-right mono t-orange">${fmtMoney(act)}</td><td class="text-right mono">${act>0?fmtPct(((tot-act)/act)*100):'–'}</td></tr>`;
   };
-  const siS=summary.filter(p=>campSellType(p.promotion||p.key||'')==='SELL-IN');
-  const soS=summary.filter(p=>campSellType(p.promotion||p.key||'')==='SELL-OUT');
+  // region-split 캠페인(SELL-OUT/Strategic Partner)을 특정 지역([ASIA] SELL-OUT 등)으로 선택하면
+  // 그 지역 leg만 표시 — 안 그러면 split이 만든 ∟ASIA·∟LATAM 두 leg가 다 나온다. (__all__/무지역은 전부)
+  const _regLegOK=(p)=>(!_ppRgn||_ppRgn==='__all__'||!p._region||normalizeRegion(p._region)===_ppRgn);
+  const siS=summary.filter(p=>campSellType(p.promotion||p.key||'')==='SELL-IN'&&_regLegOK(p));
+  const soS=summary.filter(p=>campSellType(p.promotion||p.key||'')==='SELL-OUT'&&_regLegOK(p));
   const allS=[...siS,...soS];
   const gT=allS.reduce((s,p)=>s+(p.afterAmt||p.orderAmt||0),0),gP=(_promoFilter==='__all__'&&window._baBeforeDedup&&typeof window._baBeforeDedup.grand==='number')?window._baBeforeDedup.grand:allS.reduce((s,p)=>s+(p.beforeAmt||0),0);
   const gd=gP>0?((gT-gP)/gP*100):null,gdTag=gd==null?'–':gd>=0?`<span class="t-green">▲${gd.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(gd).toFixed(1)}%</span>`;
