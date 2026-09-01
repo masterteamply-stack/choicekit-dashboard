@@ -6882,6 +6882,11 @@ function periodLabelOf(period) {
   return period === 'year' ? 'Year' : (period === 'quarter' ? 'Quarter' : 'Month');
 }
 async function renderPromoChart(fOrders, fMkt) {
+  // stale 방어: split-only 캠페인의 합산(plain, region 없는) 값은 옵션에서 제거됨 → __all__로 리셋
+  if (state.promoFilter && state.promoFilter !== '__all__' && state.promoFilter.indexOf(_RSPLIT) < 0 && _SPLIT_ONLY_CAMPS.has(state.promoFilter)) {
+    state.promoFilter = '__all__';
+    try { localStorage.setItem('ck_promo_filter','__all__'); } catch(_){}
+  }
   // ── widget-scoped region (Promotion Performance) ──
   const _regSel = state.promoFilterRegion || '__all__';
   const _pSel = _promoSel(state.promoFilter || '__all__');        // region-split promo selection {camp, region}
@@ -8502,6 +8507,14 @@ function renderPromoTable() {
   // ('camp␟REGION') decodes to its base campaign, and '__all__' shows every campaign.
   // (Using the raw state.promoFilter here let the table diverge from the chart, so
   // 'All promotions' could still leave the table pinned to one campaign.)
+  // stale 방어: split-only 캠페인(SELL-OUT·Strategic Partner 등)의 '합산'(region 접미어 없는 plain) 값은
+  // 옵션에서 제거됐으므로 더 이상 유효한 선택이 아님 → __all__로 리셋. 이게 없으면 localStorage에 남은
+  // 옛 합산 값 때문에 다른 캠페인을 골라도 테이블이 그 캠페인에 계속 고정됨.
+  if (state.promoFilter && state.promoFilter !== '__all__' && state.promoFilter.indexOf(_RSPLIT) < 0 && _SPLIT_ONLY_CAMPS.has(state.promoFilter)) {
+    state.promoFilter = '__all__';
+    try { localStorage.setItem('ck_promo_filter','__all__'); } catch(_){}
+    const _fs = document.getElementById('promoFilterSel'); if (_fs) _fs.value = '__all__';
+  }
   const _promoFilter=(typeof _promoSel==='function' ? (_promoSel(state.promoFilter||'__all__').camp) : (state.promoFilter||'__all__')) || '__all__';
   // Classify by Program name (campSellType), NOT the marketing sell_type column
   // (which no longer exists and defaulted every row to SELL_IN, so customer-based
