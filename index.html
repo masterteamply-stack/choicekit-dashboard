@@ -6892,10 +6892,10 @@ async function renderPromoChart(fOrders, fMkt) {
   const _regSel = state.promoFilterRegion || '__all__';
   const _pSel = _promoSel(state.promoFilter || '__all__');        // region-split promo selection {camp, region}
   const _ppRgn = _pSel.region || _regSel;                          // effective DATA region (promo-split region wins)
-  const _optScope = _regSel === '__all__' ? (state.orders||[]) : (state.orders||[]).filter(o => (o.region||'') === _regSel);
-  const _ppO = _ppRgn === '__all__' ? (state.orders||[]) : (state.orders||[]).filter(o => (o.region||'') === _ppRgn);
-  const _ppP = _ppRgn === '__all__' ? (state.preOrders||[]) : (state.preOrders||[]).filter(o => (o.region||'') === _ppRgn);
-  if (_ppRgn !== '__all__') { fOrders = fOrders.filter(o => (o.region||'') === _ppRgn); fMkt = fMkt.filter(m => _canonRegion(m.region) === _ppRgn); }
+  const _optScope = _regSel === '__all__' ? (state.orders||[]) : (state.orders||[]).filter(o => normalizeRegion(o.region||'') === _regSel);
+  const _ppO = _ppRgn === '__all__' ? (state.orders||[]) : (state.orders||[]).filter(o => normalizeRegion(o.region||'') === _ppRgn);
+  const _ppP = _ppRgn === '__all__' ? (state.preOrders||[]) : (state.preOrders||[]).filter(o => normalizeRegion(o.region||'') === _ppRgn);
+  if (_ppRgn !== '__all__') { fOrders = fOrders.filter(o => normalizeRegion(o.region||'') === _ppRgn); fMkt = fMkt.filter(m => _canonRegion(m.region) === _ppRgn); }
   try {
   // The comparison chart's bucket granularity must match the comparison UNIT:
   // QoQ = quarter-vs-quarter (quarter buckets), MoM = month-vs-month (month buckets).
@@ -8476,8 +8476,8 @@ function renderPromoTable() {
   // 지역-split 프로모션(camp\u241fREGION) 선택 시 그 region으로 스코프 — 안 그러면 전 지역(다른 캠페인)이 섞여 나옴.
   const _pSelT = (typeof _promoSel==='function') ? _promoSel(state.promoFilter||'__all__') : { region:'' };
   const _ppRgn = _pSelT.region || state.promoFilterRegion || '__all__';
-  const _ppO = _ppRgn === '__all__' ? (state.orders||[]) : (state.orders||[]).filter(o => (o.region||'') === _ppRgn);
-  const _ppP = _ppRgn === '__all__' ? (state.preOrders||[]) : (state.preOrders||[]).filter(o => (o.region||'') === _ppRgn);
+  const _ppO = _ppRgn === '__all__' ? (state.orders||[]) : (state.orders||[]).filter(o => normalizeRegion(o.region||'') === _ppRgn);
+  const _ppP = _ppRgn === '__all__' ? (state.preOrders||[]) : (state.preOrders||[]).filter(o => normalizeRegion(o.region||'') === _ppRgn);
   try {
   const period=state.promoPerfPeriod||'month',_cmpMode=state.promoCmp||'yoy';
   // 전년 MKT COST (Cost_customer.csv 기반, KRW→USD 환산)
