@@ -270,7 +270,7 @@ tfoot td.num{text-align:right}
       <div class="tile"><div class="lab">DiD (대조군 대비)</div><div class="val" id="k3">–</div><div class="sub2" id="k3s"></div></div>
       <div class="tile"><div class="lab">순증 오더</div><div class="val" id="k4">–</div><div class="sub2" id="k4s"></div></div>
       <div class="tile"><div class="lab">집행 캠페인</div><div class="val" id="k5">–</div><div class="sub2" id="k5s"></div></div>
-      <div class="tile"><div class="lab">관측 진행률</div><div class="val" id="k6">–</div><div class="sub2" id="k6s"></div>
+      <div class="tile"><div class="lab">달성률</div><div class="val" id="k6">–</div><div class="sub2" id="k6s"></div>
         <div class="meter"><i id="k6m" style="width:0%"></i></div></div>
     </div>
 
@@ -503,7 +503,7 @@ function kpis(){
   const wait=T.n-T.run;
   $('#w1').style.display=wait?'block':'none';
   if(wait)$('#w1').innerHTML=`<b>시작 전 · 원장 미도달 ${wait}건</b>은 모든 집계에서 제외됩니다. `
-    +`원장이 기준일(${D.today})보다 앞서 마감되어 캠페인 뒷부분은 미측정이며, 평균 관측 진행률은 <b>${T.prog.toFixed(0)}%</b>입니다.`;
+    +`원장이 기준일(${D.today})보다 앞서 마감되어 캠페인 뒷부분은 미측정이며, 평균 달성률은 <b>${T.prog.toFixed(0)}%</b>입니다.`;
   $('#w3').innerHTML=T.cost?`실집행 ${fmtC(costUsd)} (${fmtW(T.cost)}) · 예상 대비 <b>${(T.cost/T.exp*100).toFixed(0)}%</b>. `
       +`전체 회수 배수 ${mult==null?'–':`<b>${mult.toFixed(2)}배</b>`} — 순증 오더 ${fmtC(T.incr)} ÷ 실집행 ${fmtC(costUsd)}. `
       +`환율은 ${D.fx_note||'고정'} 입니다.`
@@ -516,7 +516,7 @@ function kpis(){
 function tblReg(){
   const rows=regRows(), T=agg(camps());
   const th='<tr><th class="nos">권역</th><th class="nos">캠페인</th><th class="nos">고객</th><th class="nos">Sell 구분</th>'
-   +'<th class="nos">진행률</th><th class="nos">전년 동기</th><th class="nos">당해</th><th class="nos">YoY</th>'
+   +'<th class="nos">달성률</th><th class="nos">전년 동기</th><th class="nos">당해</th><th class="nos">YoY</th>'
    +'<th class="nos">대조군 YoY</th><th class="nos">DiD</th><th class="nos">순증 오더</th></tr>';
   const tr=r=>`<tr>
     <td class="b0">${r.k}</td>
@@ -540,7 +540,7 @@ function tblReg(){
       <td class="num"><span class="${cls(T.incr)}">${fmtC(T.incr)}</span></td></tr></tfoot></table>`;
   $('#regHint').innerHTML='* DiD는 집행군·대조군이 모두 관측된 공통 구간에서 계산합니다 — 그 행의 DiD 집행군 수치는 왼쪽 YoY와 다를 수 있습니다.';
   $('#btnCsvR').onclick=()=>csv('campaign_by_region.csv',
-    [['권역','집행','전체','고객','진행률%','전년동기USD','당해USD','YoY%','대조군YoY%','DiD%p','순증USD']]
+    [['권역','집행','전체','고객','달성률%','전년동기USD','당해USD','YoY%','대조군YoY%','DiD%p','순증USD']]
     .concat(rows.map(r=>[r.k,r.run,r.n,r.cust.size,r.prog.toFixed(1),r.a25.toFixed(0),r.a26.toFixed(0),
       r.yoy==null?'':r.yoy.toFixed(1),r.cyoy==null?'':r.cyoy.toFixed(1),r.did==null?'':r.did.toFixed(1),r.incr.toFixed(0)])));
 }
@@ -771,13 +771,13 @@ function tblCamp(){
       ${did==null?(c.n_ctrl===0?'<span class="sub3">대조군 없음</span>':'–')
         :`<span class="${cls(did)}">${fmtPP(did)}</span>${(((c.ctrl_top||[])[0]||{}).sh>=30)?'<span class="sub3">†</span>':''}`}</td></tr>`;}).join('');
   $('#tCamp').innerHTML='<table><thead><tr><th class="nos">권역</th><th class="nos">고객</th><th class="nos">프로그램</th><th class="nos">대상</th>'
-   +'<th class="nos">기간</th><th class="nos">진행률</th><th class="nos">전년</th><th class="nos">당해</th><th class="nos">YoY</th><th class="nos">DiD</th></tr></thead><tbody>'
+   +'<th class="nos">기간</th><th class="nos">달성률</th><th class="nos">전년</th><th class="nos">당해</th><th class="nos">YoY</th><th class="nos">DiD</th></tr></thead><tbody>'
    +(body||'<tr><td colspan="10" class="empty">시작된 캠페인이 없습니다.</td></tr>')
    +(wait.length?`<tr><td colspan="10" class="small sub3" style="text-align:left"><b>시작 전 · 원장 미도달 ${wait.length}건</b> — ${
        wait.map(c=>`${c.region} ${esc(c.program)} (${c.start}~)`).join(', ')}</td></tr>`:'')
    +'</tbody></table>';
   $('#btnCsvC').onclick=()=>csv('campaigns.csv',
-    [['권역','프로그램','대상','고객수','시작','종료','관측일','계획일','진행률%','전년USD','당해USD','YoY%','대조군YoY%','순증USD']]
+    [['권역','프로그램','대상','고객수','시작','종료','관측일','계획일','달성률%','전년USD','당해USD','YoY%','대조군YoY%','순증USD']]
     .concat(C.map(c=>[c.region,c.program,(SCM[c.scope]||{}).label||c.scope,c.n_cust,c.start,c.end,
       c.obs_days,c.days,c.progress,c.a25,c.a26,c.yoy??'',c.cyoy??'',c.incr??''])));
 }
