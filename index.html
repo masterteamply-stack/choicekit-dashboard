@@ -4564,7 +4564,12 @@ function buildPlanExecNodes(fOrders, fMkt) {
     if (mktCountryIsRegion) {
       // Region-wide activity: spread cost to all existing countries in this region
       const reg = normalizeRegion(m.region || '');
-      const existingCountries = tree[reg] ? Object.keys(tree[reg]).filter(c => c !== '–') : [];
+      let existingCountries = tree[reg] ? Object.keys(tree[reg]).filter(c => c !== '–') : [];
+      // 광역 마케팅비는 실제 오더가 있는 국가/고객에만 분산한다 — 안 그러면 KOREA처럼 country가
+      // 고객명으로 폴백된 지역에서 대상 아닌 고객사(오더 0)에까지 예산이 붙어 유령 노드가 생긴다.
+      // 오더 있는 국가가 하나도 없으면 종전대로 전체에 분산(폴백).
+      const _withOrders = existingCountries.filter(c => Object.values(tree[reg][c]||{}).some(pm => Object.values(pm).some(l => (l.orderAmt||0) > 0)));
+      if (_withOrders.length > 0) existingCountries = _withOrders;
       if (existingCountries.length > 0) {
         const n = existingCountries.length;
         existingCountries.forEach(c => {
