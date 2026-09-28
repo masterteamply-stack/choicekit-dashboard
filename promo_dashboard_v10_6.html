@@ -246,10 +246,9 @@ tfoot td.num{text-align:right}
 </header>
 
 <div class="nav" id="nav">
-  <button data-pg="p1" class="on">캠페인 효과</button>
-  <button data-pg="p2">대상 SKU · 고객</button>
-  <button data-pg="p3">비용 · 회수</button>
+  <button data-pg="p1" class="on">캠페인 효과 · SKU·고객</button>
   <button data-pg="p5">고객 Sell-out 연계</button>
+  <button data-pg="p3">비용 · 회수</button>
   <button data-pg="p6">SteerStar</button>
 </div>
 <main>
@@ -274,18 +273,10 @@ tfoot td.num{text-align:right}
     </div>
 
     <div class="card">
-      <div class="chead"><div><h3>권역별 캠페인 효과</h3>
-        <p class="note">캠페인 기간과 <b>전년 동일 날짜 구간</b>을 대상 SKU 기준으로 비교합니다. 대조군은 같은 권역의 미집행 고객이며, 그 차이(DiD)가 프로모션에 귀속할 수 있는 몫입니다. <b>DiD·순증은 집행군과 대조군이 모두 관측된 공통 구간</b>에서만 계산하므로, 왼쪽 전년·당해 금액(전체 관측 구간)과는 기간이 다를 수 있습니다.</p></div>
-        <button class="btn" id="btnCsvR">CSV</button></div>
-      <div class="scroll" id="tReg"></div>
-      <p class="hint" id="regHint"></p>
-    </div>
-
-    <div class="card">
-      <div class="chead"><div><h3>캠페인 단건 상세</h3>
-        </div>
-        <button class="btn" id="btnCsvC">CSV</button></div>
-      <div class="scroll" id="tCamp"></div>
+      <div class="chead"><div><h3>권역별 · 캠페인 효과</h3>
+        <p class="note">캠페인 기간과 <b>전년 동일 날짜 구간</b>을 대상 SKU 기준으로 비교합니다. 대조군은 같은 권역의 미집행 고객이며, 그 차이(DiD)가 프로모션에 귀속할 수 있는 몫입니다. <b>DiD·순증은 집행군과 대조군이 모두 관측된 공통 구간</b>에서만 계산하므로, 전년·당해 금액(전체 관측 구간)과는 기간이 다를 수 있습니다. 권역에 캠페인이 둘 이상이면 <b>소계</b> 행으로 권역 합계를 함께 표기합니다.</p></div>
+        <button class="btn" id="btnCsvM">CSV</button></div>
+      <div class="scroll" id="tMerged"></div>
       <p class="hint">* DiD는 집행군·대조군이 모두 관측된 공통 구간에서 계산합니다. † 대조군 1곳이 30% 이상을 차지해 대조군 증감률이 소수 고객에 좌우되는 캠페인입니다.</p>
     </div>
 
@@ -309,39 +300,9 @@ tfoot td.num{text-align:right}
     </div>
 
     <div class="card">
-      <div class="chead"><div><h3>활동 원장 — marketing.xlsx 전체 활동</h3>
-        </div>
-        <button class="btn" id="btnCsvA">CSV</button></div>
-      <div class="ltbar">
-        <select id="fAct"></select><select id="fStatus"></select><select id="fOwner"></select>
-        <input type="text" id="fQ" placeholder="제목·고객 검색">
-      </div>
-      <div class="scroll" id="tDetail"></div>
-    </div>
-    <div class="card" id="reconCard" style="display:none">
-      <div class="chead"><div><h3>원장 정합성 — AM Sales Dashboard 대조</h3>
-        <p class="note">이 대시보드의 오더 원장을 공식 <b>고객별 USD 실적표</b>와 고객 단위로 맞대어 본 결과입니다.
-          AM 실적표가 1~8월 누계이므로 원장도 같은 1~8월로 잘라 비교했습니다. 비율 1.00이면 두 자료가 같은 규모입니다.</p></div></div>
-      <div class="scroll" id="tRecon"></div>
-      <p class="hint" id="reconHint"></p>
-    </div>
-  </div>
-
-  <!-- ══════════ P2 대상 SKU · 고객 ══════════ -->
-  <div class="page" id="p2">
-    <div class="card">
       <div class="chead"><div><h3>대상 SKU 정의와 기저</h3>
         <p class="note">대상 SKU가 그 고객 발주에서 차지하는 비중이 작으면 몇 백 달러 움직임이 몇 백 %로 보입니다. <b>기저 미미</b>가 붙은 행의 증감률은 방향만 참고하십시오.</p></div></div>
       <div class="scroll" id="tScope"></div>
-    </div>
-
-    <div class="grid2">
-      <div class="card"><h3>증가 상위 고객</h3>
-        <p class="note">캠페인 기간·대상 SKU 기준 <b>고객사 단위</b>. 막대는 증감률, 오른쪽 숫자는 금액 증감입니다.</p>
-        <div id="custUp"></div></div>
-      <div class="card"><h3>감소 상위 고객</h3>
-        <p class="note">같은 기준. 한 고객이 여러 캠페인 대상이면 합쳐서 한 줄로 봅니다.</p>
-        <div id="custDn"></div></div>
     </div>
 
     <div class="grid2">
@@ -351,6 +312,15 @@ tfoot td.num{text-align:right}
       <div class="card"><h3>감소 상위 SKU</h3>
         <p class="note">같은 기준. 대상 SKU 안에서 금액이 가장 많이 줄어든 품목입니다.</p>
         <div id="skuDn"></div></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card"><h3>증가 상위 고객</h3>
+        <p class="note">캠페인 기간·대상 SKU 기준 <b>고객사 단위</b>. 막대는 증감률, 오른쪽 숫자는 금액 증감입니다.</p>
+        <div id="custUp"></div></div>
+      <div class="card"><h3>감소 상위 고객</h3>
+        <p class="note">같은 기준. 한 고객이 여러 캠페인 대상이면 합쳐서 한 줄로 봅니다.</p>
+        <div id="custDn"></div></div>
     </div>
   </div>
 
@@ -746,6 +716,65 @@ function costRomi(){
       <td class="num">${TT.so_t?`${fmtC(TT.so_t)} → ${fmtC(TT.so_r)}`:'–'}</td></tr></tfoot></table>`;
 }
 
+/* ══════════ 3+9. 권역별 · 캠페인 효과 (통합) ══════════ */
+function tblMerged(){
+  const C=camps(), run=C.filter(c=>c.started), wait=C.filter(c=>!c.started);
+  const who=c=>c.customer&&c.customer!=='ALL'?esc(c.customer)
+    :(c.cust_scoped?`<b>${(c.countries||[]).length}개국 · 고객 ${c.n_cust}곳</b><div class="sub3">${esc((c.countries||[]).join(' · '))}</div>`
+                   :`권역 전체<div class="sub3">고객 ${c.n_cust}곳</div>`);
+  const didOf=c=>(c.dyoy!=null&&c.cyoy!=null)?c.dyoy-c.cyoy:null;
+  const campRow=c=>{const did=didOf(c);
+    return `<tr>
+    <td style="text-align:left;white-space:normal;max-width:230px"><b>${esc(c.program)}</b>
+      <div class="sub3">${who(c)}</div>
+      <div class="sub3">활동 ${c.acts}건${c.subs&&c.subs.length?' · '+esc(c.subs.join(' · ')):''}</div>
+      ${c.note?`<div class="sub3">${esc(c.note)}</div>`:''}</td>
+    <td class="small" style="text-align:left;white-space:normal;max-width:220px">${esc(SCM[c.scope]?SCM[c.scope].label:c.scope)}
+      <div class="sub3">${c.start} ~ ${c.end}</div>
+      <div class="sub3">관측 ${(c.wins||[]).map(w=>w[0].slice(5)+'~'+w[1].slice(5)).join(' + ')}${c.gaps?` <span class="pill wn">${c.gaps}곳 공백</span>`:''}</div></td>
+    <td><div class="mrow"><div class="meter2"><i style="width:${Math.min(c.progress,100)}%"></i></div><span class="mlab">${c.progress.toFixed(0)}%</span></div></td>
+    <td class="num">${c.a25?fmtC(c.a25):'–'}</td><td class="num">${c.a26?fmtC(c.a26):'–'}</td>
+    <td class="num"><span class="${cls(c.yoy)}">${c.yoy==null?(c.a26>0?'<span class="pill na">신규</span>':'–'):fmtPC(c.yoy)}</span></td>
+    <td class="num sub3">${c.cyoy==null?'–':fmtPC(c.cyoy)}</td>
+    <td class="num" title="${did==null?(c.n_ctrl===0?'권역 전체가 대상이라 비교할 미집행 고객이 없습니다':'대조군 전년 실적이 없어 계산 불가'):('집행군 '+(c.dyoy==null?'–':c.dyoy+'%')+' · 대조군 '+c.n_ctrl+'곳')}">
+      ${did==null?(c.n_ctrl===0?'<span class="sub3">대조군 없음</span>':'–'):`<span class="${cls(did)}">${fmtPP(did)}</span>${(((c.ctrl_top||[])[0]||{}).sh>=30)?'<span class="sub3">†</span>':''}`}</td>
+    <td class="num"><span class="${cls(c.incr)}">${c.incr!=null?fmtC(c.incr):'–'}</span></td></tr>`;};
+  const subRow=R=>`<tr style="border-top:1px solid var(--ring);background:var(--head-soft,rgba(127,127,127,.06))">
+    <td style="text-align:left"><b>${esc(R.k)} 소계</b> <span class="sub3">캠페인 ${R.run}개 · 고객 ${R.cust.size}곳</span></td>
+    <td></td><td><span class="mlab">${R.prog.toFixed(0)}%</span></td>
+    <td class="num"><b>${fmtC(R.a25)}</b></td><td class="num"><b>${fmtC(R.a26)}</b></td>
+    <td class="num"><span class="${cls(R.yoy)}"><b>${R.yoy==null?'–':fmtPC(R.yoy)}</b></span></td>
+    <td class="num sub3">${R.cyoy==null?'–':fmtPC(R.cyoy)}</td>
+    <td class="num">${R.did==null?'–':`<span class="${cls(R.did)}"><b>${fmtPP(R.did)}</b></span>`}</td>
+    <td class="num"><span class="${cls(R.incr)}"><b>${R.run?fmtC(R.incr):'–'}</b></span></td></tr>`;
+  let body='';
+  regRows().forEach(R=>{
+    const cs=run.filter(c=>c.region===R.k).sort((a,b)=>(b.a26||0)-(a.a26||0));
+    if(!cs.length) return;
+    body+=`<tr class="rgrp"><td colspan="9" style="text-align:left;background:var(--head);color:#fff;font-weight:700">${esc(R.k)}</td></tr>`;
+    body+=cs.map(campRow).join('');
+    if(cs.length>1) body+=subRow(R);
+  });
+  const T=agg(camps());
+  const foot=`<tr><td style="text-align:left"><b>전체 합계</b> <span class="sub3">캠페인 ${T.run}/${T.n} · 고객 ${T.cust.size}곳</span></td>
+    <td></td><td><span class="mlab">${T.prog.toFixed(0)}%</span></td>
+    <td class="num"><b>${fmtC(T.a25)}</b></td><td class="num"><b>${fmtC(T.a26)}</b></td>
+    <td class="num"><span class="${cls(T.yoy)}"><b>${T.yoy==null?'–':fmtPC(T.yoy)}</b></span></td>
+    <td class="num sub3">${T.cyoy==null?'–':fmtPC(T.cyoy)}</td>
+    <td class="num">${T.did==null?'–':`<span class="${cls(T.did)}"><b>${fmtPP(T.did)}</b></span>`}</td>
+    <td class="num"><span class="${cls(T.incr)}"><b>${fmtC(T.incr)}</b></span></td></tr>`;
+  $('#tMerged').innerHTML='<table><thead><tr>'
+    +'<th class="nos">캠페인 · 고객</th><th class="nos">대상 · 기간</th><th class="nos">달성률</th>'
+    +'<th class="nos">전년</th><th class="nos">당해</th><th class="nos">YoY</th><th class="nos">대조군 YoY</th><th class="nos">DiD</th><th class="nos">순증 오더</th>'
+    +'</tr></thead><tbody>'
+    +(body||'<tr><td colspan="9" class="empty">시작된 캠페인이 없습니다.</td></tr>')
+    +(wait.length?`<tr><td colspan="9" class="small sub3" style="text-align:left"><b>시작 전 · 원장 미도달 ${wait.length}건</b> — ${wait.map(c=>`${c.region} ${esc(c.program)} (${c.start}~)`).join(', ')}</td></tr>`:'')
+    +'</tbody><tfoot>'+foot+'</tfoot></table>';
+  $('#btnCsvM').onclick=()=>csv('campaign_effect.csv',
+    [['권역','프로그램','대상','고객수','시작','종료','달성률%','전년USD','당해USD','YoY%','대조군YoY%','DiD%p','순증USD']]
+    .concat(C.map(c=>{const d=(c.dyoy!=null&&c.cyoy!=null)?(c.dyoy-c.cyoy):'';return [c.region,c.program,(SCM[c.scope]||{}).label||c.scope,c.n_cust,c.start,c.end,c.progress,c.a25,c.a26,c.yoy??'',c.cyoy??'',d,c.incr??''];})));
+}
+
 /* ══════════ 9. 상세 ══════════ */
 function tblCamp(){
   const C=camps(), run=C.filter(c=>c.started), wait=C.filter(c=>!c.started);
@@ -1089,7 +1118,7 @@ function ssSvg(MS,W){
 function fill(id,vals,label){$('#'+id).innerHTML=`<option value="ALL">${label}</option>`
   +[...new Set(vals)].filter(Boolean).sort().map(v=>`<option>${esc(v)}</option>`).join('');}
 function draw(){
-  kpis(); tblReg(); chartDid(); persist(); tblScope(); custBars(); skuBars(); costRomi(); tblCamp(); tblDetail(); soPage(); ssPage();
+  kpis(); tblMerged(); chartDid(); persist(); tblScope(); custBars(); skuBars(); costRomi(); soPage(); ssPage();
 }
 
 /* ══════════ 11. 원장 정합성 대조 ══════════ */
@@ -1113,9 +1142,6 @@ function tblRecon(){
    +`출처 ${esc(R.src)} · 고객 매칭 ${R.matched}/${R.of}곳.`;
 }
 fill('fRegion',(D.campaigns||[]).map(c=>c.region).concat((SS.rows||[]).map(r=>r.region)).filter(r=>r!=='OCEANIA'),'전체 권역');
-fill('fAct',A.map(a=>a.activity),'전체 활동');
-fill('fStatus',A.map(a=>a.status),'전체 상태');
-fill('fOwner',A.map(a=>a.owner),'전체 담당');
 /* 프로그램 목록은 선택한 권역에서 실제로 도는 것만 남긴다 — 빈 화면이 나오는
    조합(예: MENA × Mexico Worldcup)을 애초에 고를 수 없게 한다. */
 function syncProg(){
@@ -1124,8 +1150,7 @@ function syncProg(){
   $('#fProgram').value=[...$('#fProgram').options].some(o=>o.value===keep)?keep:'ALL';}
 syncProg();
 $('#fRegion').addEventListener('change',()=>{syncProg();draw();});
-['fProgram','fAct','fStatus','fOwner'].forEach(id=>$('#'+id).addEventListener('change',draw));
-$('#fQ').addEventListener('input',tblDetail);
+$('#fProgram').addEventListener('change',draw);
 $('#nav').addEventListener('click',e=>{const b=e.target.closest('button[data-pg]');if(!b)return;
   $$('#nav button').forEach(x=>x.classList.toggle('on',x===b));
   $$('.page').forEach(p=>p.classList.toggle('on',p.id===b.dataset.pg));
@@ -1137,10 +1162,9 @@ document.addEventListener('click',e=>{const b=e.target.closest('button[data-tv]'
 $('#btnTheme').onclick=()=>{const dk=document.documentElement.getAttribute('data-theme')==='dark';
   document.documentElement.setAttribute('data-theme',dk?'light':'dark');
   $('#btnTheme').textContent=dk?'다크 모드':'라이트 모드'; draw();};
-$('#btnReset').onclick=()=>{$('#fRegion').value='ALL';syncProg();$('#fProgram').value='ALL';
-  $('#fAct').value='ALL';$('#fStatus').value='ALL';$('#fOwner').value='ALL';$('#fQ').value='';draw();};
+$('#btnReset').onclick=()=>{$('#fRegion').value='ALL';syncProg();$('#fProgram').value='ALL';draw();};
 addEventListener('resize',()=>{chartDid();persist();soPage();ssPage();});
-draw(); tblRecon(); soFilterUI($('#nav button.on').dataset.pg);
+draw(); soFilterUI($('#nav button.on').dataset.pg);
 $('#foot').innerHTML=`모든 수치는 <b>캠페인 기간 vs 전년 동일 기간 · 대상 SKU 기준</b>입니다. 영업 Order Target 은 표시하지 않습니다(SteerStar 화면의 목표는 파트너별 미션 목표입니다).<br>
   캠페인 단위는 marketing.xlsx의 <b>Program × 권역</b>이며, 집행 기간은 그 캠페인 활동들의 전체 구간입니다.
   원장 추출 구간이 비어 있는 날짜는 당해·전년 양쪽에서 함께 제외합니다.<br>
