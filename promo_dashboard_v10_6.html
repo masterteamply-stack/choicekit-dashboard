@@ -727,10 +727,19 @@ function tblMerged(){
     const rows=(D.cust_delta||[]).filter(r=>r.region===c.region&&r.program===c.program&&((r.a26||0)>0||(r.a25||0)>0))
       .sort((a,b)=>(b.a26||0)-(a.a26||0));
     if(!rows.length) return `<div class="sub3">${c.customer&&c.customer!=='ALL'?esc(c.customer):'권역 전체'}</div>`;
-    const N=8, shown=rows.slice(0,N);
-    const items=shown.map(r=>`<div class="sub3" style="white-space:normal">• ${esc(r.name)} <span style="opacity:.72">${r.country?esc(r.country)+' · ':''}${fmtC(r.a26||0)}</span></div>`).join('');
-    const more=rows.length>N?`<div class="sub3" style="opacity:.7">외 ${rows.length-N}곳</div>`:'';
-    return `<div class="sub3">대상 고객 ${rows.length}곳</div>${items}${more}`;
+    const countries=[...new Set(rows.map(r=>r.country).filter(Boolean))];
+    const nC=countries.length, nCust=rows.length;
+    // 고객사가 적으면(≤4) 고객사명·국가·당해오더를 개별 표기
+    if(nCust<=4){
+      return `<div class="sub3">대상 고객 ${nCust}곳</div>`
+        +rows.map(r=>`<div class="sub3" style="white-space:normal">• ${esc(r.name)} <span style="opacity:.72">${r.country?esc(r.country)+' · ':''}${fmtC(r.a26||0)}</span></div>`).join('');
+    }
+    // 고객사가 많고 국가가 적으면(≤4) 국가명을 모두 나열 + 참여 고객사 수
+    if(nC<=4){
+      return `<div class="sub3">${esc(countries.join(' · '))} <b>(${nC}개국)</b></div><div class="sub3">참여 고객사 ${nCust}곳</div>`;
+    }
+    // 국가가 많으면 국가 수 · 참여 고객사 수만
+    return `<div class="sub3"><b>${nC}개국</b> · 참여 고객사 ${nCust}곳</div>`;
   };
   const campRow=c=>{const did=didOf(c);
     return `<tr>
