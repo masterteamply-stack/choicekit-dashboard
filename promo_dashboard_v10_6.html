@@ -723,10 +723,19 @@ function tblMerged(){
     :(c.cust_scoped?`<b>${(c.countries||[]).length}개국 · 고객 ${c.n_cust}곳</b><div class="sub3">${esc((c.countries||[]).join(' · '))}</div>`
                    :`권역 전체<div class="sub3">고객 ${c.n_cust}곳</div>`);
   const didOf=c=>(c.dyoy!=null&&c.cyoy!=null)?c.dyoy-c.cyoy:null;
+  const custList=c=>{
+    const rows=(D.cust_delta||[]).filter(r=>r.region===c.region&&r.program===c.program&&((r.a26||0)>0||(r.a25||0)>0))
+      .sort((a,b)=>(b.a26||0)-(a.a26||0));
+    if(!rows.length) return `<div class="sub3">${c.customer&&c.customer!=='ALL'?esc(c.customer):'권역 전체'}</div>`;
+    const N=8, shown=rows.slice(0,N);
+    const items=shown.map(r=>`<div class="sub3" style="white-space:normal">• ${esc(r.name)} <span style="opacity:.72">${r.country?esc(r.country)+' · ':''}${fmtC(r.a26||0)}</span></div>`).join('');
+    const more=rows.length>N?`<div class="sub3" style="opacity:.7">외 ${rows.length-N}곳</div>`:'';
+    return `<div class="sub3">대상 고객 ${rows.length}곳</div>${items}${more}`;
+  };
   const campRow=c=>{const did=didOf(c);
     return `<tr>
-    <td style="text-align:left;white-space:normal;max-width:230px"><b>${esc(c.program)}</b>
-      <div class="sub3">${who(c)}</div>
+    <td style="text-align:left;white-space:normal;max-width:260px"><b>${esc(c.program)}</b>
+      ${custList(c)}
       <div class="sub3">활동 ${c.acts}건${c.subs&&c.subs.length?' · '+esc(c.subs.join(' · ')):''}</div>
       ${c.note?`<div class="sub3">${esc(c.note)}</div>`:''}</td>
     <td class="small" style="text-align:left;white-space:normal;max-width:220px">${esc(SCM[c.scope]?SCM[c.scope].label:c.scope)}
