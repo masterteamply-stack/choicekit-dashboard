@@ -478,6 +478,7 @@ function agg(rows){
   return o;}
 const regRows=()=>{const by={};camps().forEach(c=>{(by[c.region]=by[c.region]||[]).push(c);});
   return Object.entries(by).map(([k,v])=>({k,...agg(v),
+    programs:[...new Set(v.filter(x=>x.started).map(x=>x.program))],
     streams:[...new Set(v.flatMap(x=>x.streams||[]))]})).sort((a,b)=>b.a26-a.a26);};
 
 /* ══════════ 2. KPI ══════════ */
@@ -520,7 +521,7 @@ function tblReg(){
    +'<th class="nos">대조군 YoY</th><th class="nos">DiD</th><th class="nos">순증 오더</th></tr>';
   const tr=r=>`<tr>
     <td class="b0">${r.k}</td>
-    <td class="num">${r.run} <span class="sub3">/ ${r.n}</span></td>
+    <td><div class="num">${r.run} <span class="sub3">/ ${r.n}</span></div><div class="sub3" style="text-align:left;font-weight:400;margin-top:3px;line-height:1.4">${(r.programs||[]).map(esc).join('<br>')||'–'}</div></td>
     <td class="num">${r.cust.size||'<span class="sub3">권역</span>'}</td>
     <td class="small" style="text-align:left">${r.streams.map(s=>s==='SELL_IN'?'Sell-in':'Sell-out').join(', ')||'–'}</td>
     <td><div class="mrow"><div class="meter2"><i style="width:${Math.min(r.prog,100)}%"></i></div><span class="mlab">${r.prog.toFixed(0)}%</span></div></td>
