@@ -10964,6 +10964,31 @@ function renderSkuAggregate(fOrders) {
         // 차종별 집계
         const _bm={}; _eff.forEach(e=>{const m=e.model||'(미매핑)'; const g=(_bm[m]=_bm[m]||{before:0,after:0,n:new Set()}); g.before+=e.before; g.after+=e.after; g.n.add(e.sku);});
         const _ml=Object.entries(_bm).map(([m,g])=>({model:m,before:g.before,after:g.after,inc:g.after-g.before,n:g.n.size})).sort((a,b)=>b.inc-a.inc);
+        const _down = _eff.filter(e=>e.inc<0).sort((a,b)=>a.inc-b.inc);
+        // 고객별 증감 (권역이 아닌 고객 단위) — buildBaStats와 동일 기준으로 고객별 before/after 집계
+        const _skuSet2 = new Set(skus);
+        const _shift1yC = ss => ss ? `${parseInt(ss.slice(0,4),10)-1}${ss.slice(4)}` : '';
+        const _todC = _todayStr();
+        const _custBA = {};
+        allOrd.forEach(o=>{
+          if(!_skuSet2.has(o.sku) || !_baRegionOK(o)) return;
+          const cust=(o.customer||'').trim(); if(!cust) return;
+          let anc = baStartDate;
+          if (baStartDate && typeof baStartDate==='object' && baStartDate.byPromo){
+            const owner = skuToPromo[o.sku] || custToPromo[cust] || o.promotion_category || null;
+            anc = (baStartDate.byCust && baStartDate.byCust[cust]) || (owner ? baStartDate.byPromo[owner] : null);
+          }
+          if(!anc) return;
+          const d=o.order_date||''; if(!d) return;
+          const isBase=!!o[PRE_ORDER_MARK];
+          const amt=isBase?Number(o.amount_usd||0)*usdToDisplay():convOrder(o);
+          const g=_custBA[cust]=_custBA[cust]||{before:0,after:0,region:(o.region||'').trim()};
+          if(!isBase && d>=anc && d<=_todC) g.after+=amt;
+          else if(d>=_shift1yC(anc) && d<=_shift1yC(_todC)) g.before+=amt;
+        });
+        const _custEff = Object.entries(_custBA).map(([c,g])=>({cust:c,region:g.region,before:g.before,after:g.after,inc:g.after-g.before})).filter(e=>e.before>0||e.after>0);
+        const _custUp = _custEff.filter(e=>e.inc>0).sort((a,b)=>b.inc-a.inc);
+        const _custDn = _custEff.filter(e=>e.inc<0).sort((a,b)=>a.inc-b.inc);
         const _tB=total.beforeAmt,_tA=total.afterAmt,_tInc=_tA-_tB,_tPct=_tB>0?(_tA/_tB-1)*100:(_tA>0?100:0);
         const _nUp=_eff.filter(e=>e.inc>0).length, _nDn=_eff.filter(e=>e.inc<0).length;
         const _verdict = _tInc>0 ? '<span class="t-green" style="font-weight:800">효과 있음 ▲</span>' : (_tInc<0 ? '<span class="t-red" style="font-weight:800">전년比 감소 ▼</span>' : '<span class="muted">변화 미미</span>');
@@ -10983,11 +11008,29 @@ function renderSkuAggregate(fOrders) {
             <thead><tr><th style="text-align:left">SKU</th><th style="text-align:left">차종</th><th style="text-align:left">지역</th><th class="text-right">집행 전</th><th class="text-right">집행 후</th><th class="text-right">증감</th></tr></thead>
             <tbody>${_up.length? _up.slice(0,15).map(e=>`<tr><td style="text-align:left"><b>${e.sku}</b></td><td style="text-align:left">${_escE(e.model)}</td><td style="text-align:left">${e.region}</td><td class="text-right mono muted">${fmtMoney(e.before)}</td><td class="text-right mono">${fmtMoney(e.after)}</td><td class="text-right mono">${_incC(e.inc)}</td></tr>`).join('') : '<tr><td colspan="6" class="muted" style="text-align:center;padding:14px">전년 동기간 대비 늘어난 SKU가 없습니다</td></tr>'}</tbody>
           </table></div>
+          <div class="label-mono muted" style="font-size:11px;margin:18px 0 6px">🔽 가장 많이 줄어든 SKU</div>
+          <div style="overflow:auto;max-height:300px"><table style="font-size:12px;width:100%">
+            <thead><tr><th style="text-align:left">SKU</th><th style="text-align:left">차종</th><th style="text-align:left">지역</th><th class="text-right">집행 전</th><th class="text-right">집행 후</th><th class="text-right">증감</th></tr></thead>
+            <tbody>${_down.length? _down.slice(0,15).map(e=>`<tr><td style="text-align:left"><b>${e.sku}</b></td><td style="text-align:left">${_escE(e.model)}</td><td style="text-align:left">${e.region}</td><td class="text-right mono muted">${fmtMoney(e.before)}</td><td class="text-right mono">${fmtMoney(e.after)}</td><td class="text-right mono">${_incC(e.inc)}</td></tr>`).join('') : '<tr><td colspan="6" class="muted" style="text-align:center;padding:14px">전년 동기간 대비 줄어든 SKU가 없습니다</td></tr>'}</tbody>
+          </table></div>
           <div class="label-mono muted" style="font-size:11px;margin:18px 0 6px">🚗 차종별 증감 <span style="font-weight:400">(어떤 차종 오더가 늘었나)</span></div>
           <div style="overflow:auto;max-height:260px"><table style="font-size:12px;width:100%">
             <thead><tr><th style="text-align:left">차종</th><th class="text-right">SKU 수</th><th class="text-right">집행 전</th><th class="text-right">집행 후</th><th class="text-right">증감</th><th class="text-right">%</th></tr></thead>
             <tbody>${_ml.slice(0,12).map(e=>`<tr><td style="text-align:left"><b>${_escE(e.model)}</b></td><td class="text-right mono muted">${fmtNum(e.n)}</td><td class="text-right mono muted">${fmtMoney(e.before)}</td><td class="text-right mono">${fmtMoney(e.after)}</td><td class="text-right mono">${_incC(e.inc)}</td><td class="text-right mono">${_pct(e.before>0?(e.after/e.before-1)*100:(e.after>0?100:0))}</td></tr>`).join('')}</tbody>
-          </table></div>`;
+          </table></div>
+          <div class="label-mono muted" style="font-size:11px;margin:18px 0 6px">🏢 고객별 증감 <span style="font-weight:400">(고객 단위 · 상위 10개사)</span></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div><div class="muted" style="font-size:11px;margin-bottom:4px">🔼 증가 상위 10개사</div>
+            <div style="overflow:auto;max-height:260px"><table style="font-size:12px;width:100%">
+              <thead><tr><th style="text-align:left">고객사</th><th class="text-right">집행 전</th><th class="text-right">집행 후</th><th class="text-right">증감</th></tr></thead>
+              <tbody>${_custUp.length? _custUp.slice(0,10).map(e=>`<tr><td style="text-align:left"><b>${_escE(e.cust)}</b></td><td class="text-right mono muted">${fmtMoney(e.before)}</td><td class="text-right mono">${fmtMoney(e.after)}</td><td class="text-right mono">${_incC(e.inc)}</td></tr>`).join('') : '<tr><td colspan="4" class="muted" style="text-align:center;padding:14px">증가 고객 없음</td></tr>'}</tbody>
+            </table></div></div>
+            <div><div class="muted" style="font-size:11px;margin-bottom:4px">🔽 감소 상위 10개사</div>
+            <div style="overflow:auto;max-height:260px"><table style="font-size:12px;width:100%">
+              <thead><tr><th style="text-align:left">고객사</th><th class="text-right">집행 전</th><th class="text-right">집행 후</th><th class="text-right">증감</th></tr></thead>
+              <tbody>${_custDn.length? _custDn.slice(0,10).map(e=>`<tr><td style="text-align:left"><b>${_escE(e.cust)}</b></td><td class="text-right mono muted">${fmtMoney(e.before)}</td><td class="text-right mono">${fmtMoney(e.after)}</td><td class="text-right mono">${_incC(e.inc)}</td></tr>`).join('') : '<tr><td colspan="4" class="muted" style="text-align:center;padding:14px">감소 고객 없음</td></tr>'}</tbody>
+            </table></div></div>
+          </div>`;
       }
     }
     // Show TOTALS (sum across all SKUs) — not averages.
