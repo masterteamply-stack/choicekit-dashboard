@@ -251,7 +251,6 @@ tfoot td.num{text-align:right}
   <button data-pg="p3">비용 · 회수</button>
   <button data-pg="p5">고객 Sell-out 연계</button>
   <button data-pg="p6">SteerStar</button>
-  <button data-pg="p4">상세</button>
 </div>
 <main>
   <div class="filters">
@@ -283,6 +282,14 @@ tfoot td.num{text-align:right}
     </div>
 
     <div class="card">
+      <div class="chead"><div><h3>캠페인 단건 상세</h3>
+        </div>
+        <button class="btn" id="btnCsvC">CSV</button></div>
+      <div class="scroll" id="tCamp"></div>
+      <p class="hint">* DiD는 집행군·대조군이 모두 관측된 공통 구간에서 계산합니다. † 대조군 1곳이 30% 이상을 차지해 대조군 증감률이 소수 고객에 좌우되는 캠페인입니다.</p>
+    </div>
+
+    <div class="card">
       <div class="chead"><div><h3>집행군 vs 대조군 증감률</h3>
         <p class="note">막대가 오른쪽으로 길수록 증가입니다. 집행군이 대조군보다 왼쪽이면 프로모션 기여가 확인되지 않은 권역입니다. 두 막대 모두 <b>양쪽이 함께 관측된 공통 구간</b> 기준이라 그 차이가 곧 위 표의 DiD입니다.</p></div>
         <button class="btn" data-tv="c12">표</button></div>
@@ -299,6 +306,24 @@ tfoot td.num{text-align:right}
         <span><i class="sw" style="background:var(--s1)"></i>당해</span>
         <span class="sub3">막대 위 % = 그 달의 YoY · 아래 n/n일 = 그 달 관측 일수</span></div>
       <div id="persist"></div>
+    </div>
+
+    <div class="card">
+      <div class="chead"><div><h3>활동 원장 — marketing.xlsx 전체 활동</h3>
+        </div>
+        <button class="btn" id="btnCsvA">CSV</button></div>
+      <div class="ltbar">
+        <select id="fAct"></select><select id="fStatus"></select><select id="fOwner"></select>
+        <input type="text" id="fQ" placeholder="제목·고객 검색">
+      </div>
+      <div class="scroll" id="tDetail"></div>
+    </div>
+    <div class="card" id="reconCard" style="display:none">
+      <div class="chead"><div><h3>원장 정합성 — AM Sales Dashboard 대조</h3>
+        <p class="note">이 대시보드의 오더 원장을 공식 <b>고객별 USD 실적표</b>와 고객 단위로 맞대어 본 결과입니다.
+          AM 실적표가 1~8월 누계이므로 원장도 같은 1~8월로 잘라 비교했습니다. 비율 1.00이면 두 자료가 같은 규모입니다.</p></div></div>
+      <div class="scroll" id="tRecon"></div>
+      <p class="hint" id="reconHint"></p>
     </div>
   </div>
 
@@ -354,34 +379,6 @@ tfoot td.num{text-align:right}
     <div class="warnbox" id="w6"></div>
     <div class="kpis k6" id="ssKpi"></div>
     <div id="ssBody"></div>
-  </div>
-
-  <!-- ══════════ P4 상세 ══════════ -->
-  <div class="page" id="p4">
-    <div class="card">
-      <div class="chead"><div><h3>캠페인 단건 상세</h3>
-        </div>
-        <button class="btn" id="btnCsvC">CSV</button></div>
-      <div class="scroll" id="tCamp"></div>
-      <p class="hint">* DiD는 집행군·대조군이 모두 관측된 공통 구간에서 계산합니다. † 대조군 1곳이 30% 이상을 차지해 대조군 증감률이 소수 고객에 좌우되는 캠페인입니다.</p>
-    </div>
-    <div class="card">
-      <div class="chead"><div><h3>활동 원장 — marketing.xlsx 전체 활동</h3>
-        </div>
-        <button class="btn" id="btnCsvA">CSV</button></div>
-      <div class="ltbar">
-        <select id="fAct"></select><select id="fStatus"></select><select id="fOwner"></select>
-        <input type="text" id="fQ" placeholder="제목·고객 검색">
-      </div>
-      <div class="scroll" id="tDetail"></div>
-    </div>
-    <div class="card" id="reconCard" style="display:none">
-      <div class="chead"><div><h3>원장 정합성 — AM Sales Dashboard 대조</h3>
-        <p class="note">이 대시보드의 오더 원장을 공식 <b>고객별 USD 실적표</b>와 고객 단위로 맞대어 본 결과입니다.
-          AM 실적표가 1~8월 누계이므로 원장도 같은 1~8월로 잘라 비교했습니다. 비율 1.00이면 두 자료가 같은 규모입니다.</p></div></div>
-      <div class="scroll" id="tRecon"></div>
-      <p class="hint" id="reconHint"></p>
-    </div>
   </div>
 
   <div class="foot" id="foot"></div>
