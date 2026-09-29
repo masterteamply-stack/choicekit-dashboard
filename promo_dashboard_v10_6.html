@@ -444,9 +444,13 @@ function agg(rows){
   o.prog=o.tot?o.obs/o.tot*100:0;
   return o;}
 const regRows=()=>{const by={};camps().forEach(c=>{(by[c.region]=by[c.region]||[]).push(c);});
-  return Object.entries(by).map(([k,v])=>({k,...agg(v),
-    programs:[...new Set(v.filter(x=>x.started).map(x=>x.program))],
-    streams:[...new Set(v.flatMap(x=>x.streams||[]))]})).sort((a,b)=>b.a26-a.a26);};
+  return Object.entries(by).map(([k,v])=>{
+    const _ct={};let _c26=0;
+    v.forEach(c=>{if(c.started){(c.ctrl_top||[]).forEach(t=>{_ct[t.n]=(_ct[t.n]||0)+t.a;});_c26+=(c.c26||0);}});
+    const ctrl_top=Object.entries(_ct).map(([n,a])=>({n,a,sh:_c26>0?Math.round(a/_c26*100):0})).sort((x,y)=>y.a-x.a).slice(0,3);
+    return {k,...agg(v),ctrl_top,c26all:_c26,
+      programs:[...new Set(v.filter(x=>x.started).map(x=>x.program))],
+      streams:[...new Set(v.flatMap(x=>x.streams||[]))]};}).sort((a,b)=>b.a26-a.a26);};
 
 /* ══════════ 2. KPI ══════════ */
 function kpis(){
@@ -547,8 +551,9 @@ function chartDid(){
         <div class="r"><span>이중차분</span><b>${fmtPP(r.did)}</b></div>
         <div class="r"><span>순증 오더</span><b>${fmtC(r.incr)}</b></div>`);});
     h.addEventListener('mouseleave',tipOff);});
-  $('#c12tv').innerHTML='<table><thead><tr><th class="nos">권역</th><th class="nos">집행군 YoY</th><th class="nos">대조군 YoY</th><th class="nos">이중차분</th></tr></thead><tbody>'
-    +rows.map(r=>`<tr><td class="b0">${r.k}</td><td class="num">${fmtPC(r.yoy)}</td><td class="num">${fmtPC(r.cyoy)}</td><td class="num">${fmtPP(r.did)}</td></tr>`).join('')
+  $('#c12tv').innerHTML='<table><thead><tr><th class="nos">권역</th><th class="nos">집행군 YoY</th><th class="nos">대조군 YoY</th><th class="nos">이중차분</th><th class="nos" style="text-align:left">상위 미집행 대조군 (당해 · 대조군 내 비중)</th></tr></thead><tbody>'
+    +rows.map(r=>`<tr><td class="b0">${r.k}</td><td class="num">${fmtPC(r.yoy)}</td><td class="num">${fmtPC(r.cyoy)}</td><td class="num">${fmtPP(r.did)}</td>
+      <td class="small" style="text-align:left;white-space:normal;max-width:320px">${(r.ctrl_top&&r.ctrl_top.length)?r.ctrl_top.map(t=>`${esc(t.n)} <span class="sub3">${fmtC(t.a)} · ${t.sh}%</span>`).join('<br>'):'<span class="sub3">대조군 없음</span>'}</td></tr>`).join('')
     +'</tbody></table>';
 }
 
