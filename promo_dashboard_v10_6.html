@@ -1047,8 +1047,6 @@ function ssPage(){
      sub:`중간값 달성률 ${med==null?'–':med.toFixed(1)+'%'} — 합계는 상위 소수가 끌어올립니다`},
     {lab:'설문 참여 수',val:fmtQ(lead),val2:`/ ${fmtQ(ltgt)}`,
      sub:`달성률 <b class="${lrate>=100?'up':'dn'}">${lrate==null?'–':lrate.toFixed(1)+'%'}</b> · 목표 달성 ${lhit}곳`,meter:lrate},
-    {lab:'미착수 파트너',val:`${live.filter(r=>!r.leads&&!(r.got>0)).length}`,val2:`/ ${live.length}`,
-     sub:'설문 참여 수·오더 실적이 모두 0인 곳'},
     {lab:'예산 집행 (실적)',val:fmtW(BD('실적 (직접사용)')+BD('실적 (판촉물비용대체)')),
      sub:`총 예산 ${fmtW(SS.btot)} 대비 <b>${((BD('실적 (직접사용)')+BD('실적 (판촉물비용대체)'))/SS.btot*100).toFixed(0)}%</b>`},
     {lab:'미전환 잔액',val:fmtW(BD('아직 전환안한 비용')),
