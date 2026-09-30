@@ -1071,7 +1071,7 @@ function ssPage(){
           c2('rate','달성률','r','p100'),c2('pre_sum','기간 외 참고','r','c')],
     rows:ord.concat(live.filter(r=>!r.tgt)),
     foot:{region:'합계',country:'',name:`${scored.length}곳`,sub:'',tgt:tgt,got:got,rate:rate,pre_sum:null}};
-  const T2={title:'파트너별 리드(설문) 미션',csv:'steerstar_lead_mission.csv',
+  const T2={title:'파트너별 설문 진행 미션',csv:'steerstar_lead_mission.csv',
     cols:[c2('country','국가','l','t'),c2('name','파트너','l','t',190),
           c2('act','활동','l','t'),c2('when','시기','l','t'),
           c2('leads','리드','r','n'),c2('lead_tgt','목표','r','n'),c2('lead_rate','달성률','r','p100')],
