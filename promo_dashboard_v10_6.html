@@ -1012,7 +1012,7 @@ function soFilterUI(pg){const on=(pg==='p5'||pg==='p6');
   $('#fProgWrap').style.display=on?'none':'';
   if(on&&$('#fProgram').value!=='ALL'){$('#fProgram').value='ALL';draw();}}
 
-/* ══════════ 13. SteerStar — 오더 미션 / 리드 미션 ══════════ */
+/* ══════════ 13. SteerStar — 오더 미션 / 설문 미션 ══════════ */
 function ssRows(){const f=F();
   return (SS.rows||[]).filter(r=>f.region==='ALL'||r.region===f.region);}
 function ssPage(){
@@ -1038,17 +1038,17 @@ function ssPage(){
   $('#w6').innerHTML=`<b>SteerStar 2026</b> · 파트너 ${rows.length}곳`
     +(drop.length?` (올해 제외 ${drop.length}곳 — ${drop.map(r=>esc(r.name.split(' ')[0])).join(' · ')})`:'')
     +` · 오더 미션은 파트너별로 약속한 목표이며 영업 Order Target 과는 별개입니다.`
-    +` 리드 목표는 전사 공통 ${SS.lead_target}건입니다.`;
+    +` 설문 참여 수 목표는 전사 공통 ${SS.lead_target}건입니다.`;
 
   const K=[
     {lab:'오더 미션 목표 → 실적',hero:1,val:`${fmtC(tgt)} <span style="color:var(--muted);font-weight:400">→</span> ${fmtC(got)}`,
      sub:`미션 진행 ${scored.length}곳 합계`,sub2:`합계 달성률 <b class="${rate>=100?'up':'dn'}">${rate==null?'–':rate.toFixed(1)+'%'}</b>`},
     {lab:'목표를 넘긴 파트너',val:`${hit}`,val2:`/ ${scored.length}`,
      sub:`중간값 달성률 ${med==null?'–':med.toFixed(1)+'%'} — 합계는 상위 소수가 끌어올립니다`},
-    {lab:'리드(설문) 수집',val:fmtQ(lead),val2:`/ ${fmtQ(ltgt)}`,
+    {lab:'설문 참여 수',val:fmtQ(lead),val2:`/ ${fmtQ(ltgt)}`,
      sub:`달성률 <b class="${lrate>=100?'up':'dn'}">${lrate==null?'–':lrate.toFixed(1)+'%'}</b> · 목표 달성 ${lhit}곳`,meter:lrate},
     {lab:'미착수 파트너',val:`${live.filter(r=>!r.leads&&!(r.got>0)).length}`,val2:`/ ${live.length}`,
-     sub:'리드·오더 실적이 모두 0인 곳'},
+     sub:'설문 참여 수·오더 실적이 모두 0인 곳'},
     {lab:'예산 집행 (실적)',val:fmtW(BD('실적 (직접사용)')+BD('실적 (판촉물비용대체)')),
      sub:`총 예산 ${fmtW(SS.btot)} 대비 <b>${((BD('실적 (직접사용)')+BD('실적 (판촉물비용대체)'))/SS.btot*100).toFixed(0)}%</b>`},
     {lab:'미전환 잔액',val:fmtW(BD('아직 전환안한 비용')),
@@ -1074,7 +1074,7 @@ function ssPage(){
   const T2={title:'파트너별 설문 진행 미션',csv:'steerstar_lead_mission.csv',
     cols:[c2('country','국가','l','t'),c2('name','파트너','l','t',190),
           c2('act','활동','l','t'),c2('when','시기','l','t'),
-          c2('leads','리드','r','n'),c2('lead_tgt','목표','r','n'),c2('lead_rate','달성률','r','p100')],
+          c2('leads','설문 참여 수','r','n'),c2('lead_tgt','목표','r','n'),c2('lead_rate','달성률','r','p100')],
     rows:live,foot:{country:'합계',name:'',act:'',when:'',leads:lead,lead_tgt:ltgt,lead_rate:lrate}};
   const T3={title:'활동 계획과 진행 메모',csv:'steerstar_plan.csv',
     cols:[c2('country','국가','l','t'),c2('name','파트너','l','t',170),
@@ -1095,7 +1095,7 @@ function ssPage(){
         ${missBars||'<div class="empty">해당 파트너가 없습니다.</div>'}</div>
       <div class="card"><h3>월별 오더 실적</h3>
         <div class="legend"><span><i class="sw" style="background:var(--o3)"></i>오더 (USD)</span>
-          <span><i class="sw" style="background:var(--brand)"></i>리드 (건)</span></div>
+          <span><i class="sw" style="background:var(--brand)"></i>설문 참여 수 (건)</span></div>
         <div class="svgbox">${ssSvg(MS,460)}</div></div>
     </div>
     ${card(T1,'t1')}
@@ -1111,7 +1111,7 @@ function ssPage(){
     h.addEventListener('mousemove',e=>{const x=MS[+h.dataset.j];
       tipOn(e,`<div class="tt">${x.m}</div>
         <div class="r"><span><i class="sw" style="background:var(--o3)"></i>오더</span><b>${fmtC(x.v)}</b></div>
-        <div class="r"><span><i class="sw" style="background:var(--brand)"></i>리드</span><b>${fmtQ(x.l)}건</b></div>`);});
+        <div class="r"><span><i class="sw" style="background:var(--brand)"></i>설문 참여 수</span><b>${fmtQ(x.l)}건</b></div>`);});
     h.addEventListener('mouseleave',tipOff);});
 }
 const BD=k=>((SS.budget||[]).find(b=>b.k===k)||{}).v||0;
