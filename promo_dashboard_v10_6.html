@@ -356,6 +356,7 @@ tfoot td.num{text-align:right}
     <div class="warnbox" id="w6"></div>
     <div class="kpis k6" id="ssKpi"></div>
     <div id="ssBody"></div>
+    <div id="ssExtra"></div>
   </div>
 
     <!-- P7 September Report -->
@@ -1039,7 +1040,53 @@ function soFilterUI(pg){const on=(pg==='p5'||pg==='p6');
 /* ══════════ 13. SteerStar — 오더 미션 / 설문 미션 ══════════ */
 function ssRows(){const f=F();
   return (SS.rows||[]).filter(r=>f.region==='ALL'||r.region===f.region);}
+function steerStarExtra(){
+ const A=(typeof SEPTEMBER_ACTIVITY!=="undefined")?SEPTEMBER_ACTIVITY:null;
+ if(!A||!A.latam||!A.latam.steerstar) return "";
+ const st=A.latam.steerstar, rf=st.refatrix, bb=st.brabham;
+ const C1="var(--o4)",C26="var(--brand)";
+ const pc=v=>(v>=0?"+":"")+(v*100).toFixed(1)+"%";
+ const kgrid=(cards,cls)=>`<div class="kpis ${cls||"k6"}">`+cards.map(k=>`<div class="tile${k.hero?" hero":""}"><div class="lab">${k.lab}</div><div class="val">${k.val}</div>${k.sub?`<div class="sub2">${k.sub}</div>`:""}</div>`).join("")+`</div>`;
+ const badge=(t,tone)=>`<span class="sbadge ${tone||""}">${esc(t)}</span>`;
+ let h=`<div style="margin:4px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:18px;font-weight:800">SteerStar · 앰배서더/전략 고객 월간 추이</span></div>`;
+ h+=`<div class="card"><h3>LATAM SteerStar · REFATRIX &amp; BRABHAM</h3>
+    <p class="note">REFATRIX는 전년 대비 오더 ${pc(rf.yoy)}와 RUJAC Survey ${rf.survey_count}건 확보 · BRABHAM은 INMETRO 인증 이슈로 판매 확산 제한.</p>`
+   +kgrid([{lab:'REFATRIX 2026 Order',val:'$'+Math.round(rf.order_2026).toLocaleString(),sub:`2025 $${Math.round(rf.order_2025).toLocaleString()} · YoY ${pc(rf.yoy)}`,hero:true},
+     {lab:'REFATRIX Survey',val:rf.survey_count+'건',sub:esc(rf.survey_note)},
+     {lab:'BRABHAM 2026 Order',val:'$'+Math.round(bb.order_2026).toLocaleString(),sub:`2025 $${Math.round(bb.order_2025).toLocaleString()} · YoY ${pc(bb.yoy)}`}],'k3')
+   +`<div class="grid2"><div><div class="sub3" style="margin:4px 0 2px">고객별 Order YoY (USD)</div>`
+   +gbar(['REFATRIX','BRABHAM'],[{name:'2025',color:C1,vals:[rf.order_2025,bb.order_2025]},{name:'2026',color:C26,vals:[rf.order_2026,bb.order_2026]}],{W:340,H:190,delta:1,fmtV:v=>'$'+Math.round(v/1000)+'K'})
+   +`</div><div style="align-self:center"><div class="sub3" style="margin-bottom:4px">BRABHAM INMETRO 인증</div>${badge('인증 진행 중','wn')}<p class="note" style="margin-top:6px">${esc(bb.issue)} · ${esc(bb.status)}</p></div></div></div>`;
+ if(st.lordco){const lo=st.lordco;const C25='var(--s1)',C26b='var(--brand)';
+   const yoy=(lo.cum26-lo.cum25)/lo.cum25*100;
+   const ML=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  h+=`<div class="card"><h3>NA · Lordco (캐나다) 월별 오더 추이</h3>
+    <p class="note">전 품목 오더(USD) · 2025 연간 $${lo.annual25.toLocaleString()} · 2026 YTD(1~${lo.last26}월) $${lo.ytd26.toLocaleString()}. Lordco는 소수 대형 단건 중심이라 월별·품목별로 무엇이 줄었는지 함께 봅니다.</p>`
+   +kgrid([{lab:'2025 연간 오더',val:'$'+lo.annual25.toLocaleString()},
+     {lab:'2026 YTD 오더',val:'$'+lo.ytd26.toLocaleString(),sub:`1~${lo.last26}월`},
+     {lab:`동기(1~${lo.last26}월) 전년 대비`,val:fmtPC(yoy),cls:yoy>=0?'up':'dn',sub:`${fmtC(lo.cum25)} → ${fmtC(lo.cum26)}`,hero:true}],'k3')
+   +`<div class="grid2"><div><div class="sub3" style="margin:6px 0 2px">월별 오더 · 전년 대비 (USD)</div>`
+   +`<div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr><th>월</th><th>2025</th><th>2026</th><th>증감</th></tr></thead><tbody>`
+   +ML.map((mm,i)=>{const a=lo.y25[i]||0,b=lo.y26[i]||0; if(!a&&!b)return ''; const within=(i+1)<=lo.last26; const dd=b-a;
+      return `<tr><td style="text-align:left">${mm}</td><td class="num sub3">${a?fmtC(a):'–'}</td><td class="num">${within?(b?fmtC(b):'$0'):'<span class="sub3">미도래</span>'}</td><td class="num">${within?`<span class="${cls(dd)}">${(dd>=0?'+':'')+fmtC(dd)}</span>`:'<span class="sub3">–</span>'}</td></tr>`;}).join('')
+   +`<tr style="border-top:2px solid var(--ring)"><td><b>1~${lo.last26}월 동기</b></td><td class="num sub3"><b>${fmtC(lo.cum25)}</b></td><td class="num"><b>${fmtC(lo.cum26)}</b></td><td class="num"><span class="${cls(yoy)}"><b>${fmtPC(yoy)}</b></span></td></tr>`
+   +`</tbody></table></div></div><div><div class="sub3" style="margin:6px 0 2px">월별 오더 막대 (2025 vs 2026)</div>`
+   +gbar(ML,[{name:'2025',color:C25,vals:lo.y25},{name:'2026',color:C26b,vals:lo.y26}],{W:500,H:220,delta:1,fmtV:v=>v?'$'+Math.round(v/1000)+'K':''})
+   +`</div></div>`
+   +`<h4 class="soh">무엇이 줄었나 · 제품군별 2025 vs 2026</h4><div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr><th>제품군</th><th>2025</th><th>2026</th><th>증감</th></tr></thead><tbody>`
+   +(lo.prod||[]).map(p=>`<tr><td style="text-align:left">${esc(p.k)}</td><td class="num sub3">${fmtC(p.y25)}</td><td class="num">${fmtC(p.y26)}</td><td class="num"><span class="${cls(p.d)}">${(p.d>=0?'+':'')+fmtC(p.d)}</span></td></tr>`).join('')
+   +`</tbody></table></div>`
+   +`<p class="note" style="font-size:12.5px;margin-top:4px"><b>판단:</b> 특정 품목의 일시 급감이 아니라 컨트롤암·스태빌라이저링크·타이로드·볼조인트 등 <b>전 핵심 어셈블리의 재주문이 동반 축소</b>됐습니다. 2025년 3월 대형 단건($502K)이 2026년에 미발생한 영향이 크며, 2026년은 월 오더가 더 고르지만 규모 자체가 낮습니다 → 일시 공백이 아니라 <b>재주문 볼륨 저하</b>로 관리해야 합니다.</p>`
+   +`<h4 class="soh">차달 캠페인 계획</h4>`
+   +`<div class="tblwrap"><table class="lts" style="font-size:12px;table-layout:fixed;width:100%"><colgroup><col style="width:22%"><col style="width:78%"></colgroup><tbody>`
+   +`<tr><td style="text-align:left;font-weight:700;background:var(--panel)">진행 (마컴)</td><td style="text-align:left">SteerStar Ambassador Program 운영 (Lordco Welcome·Main·Order 미션) · 한국 인센티브 트립 초청 연계</td></tr>`
+   +`<tr><td style="text-align:left;font-weight:700;background:var(--panel)">계획 (10~11월)</td><td style="text-align:left">하반기 재주문 전환 유도 · 감소 폭 큰 핵심 어셈블리(컨트롤암·타이로드·링크·볼조인트) Follow-up Order 협의 · 2027 프로그램 논의</td></tr>`
+   +`</tbody></table></div>`
+   +`</div>`;}
+ return h;
+}
 function ssPage(){
+  {const _x=$("#ssExtra"); if(_x)_x.innerHTML=steerStarExtra();}
   const rows=ssRows(), live=rows.filter(r=>!r.dropped), drop=rows.filter(r=>r.dropped);
   const scored=live.filter(r=>r.tgt);
   const sum=(a,k)=>a.reduce((s,r)=>s+(r[k]||0),0);
@@ -1664,45 +1711,7 @@ function sepMonth(A){
    +`</div>`;}
 
   h+=custOrderBlock('LATAM','LATAM · 올해 vs 전년 오더 추이 (참여 고객사)',A);
-  // ── LATAM SteerStar ──
-  const rf=st.refatrix, bb=st.brabham;
-  h+=`<div class="card"><h3>LATAM SteerStar · REFATRIX &amp; BRABHAM</h3>
-    <p class="note">REFATRIX는 전년 대비 오더 ${pc(rf.yoy)}와 RUJAC Survey ${rf.survey_count}건 확보 · BRABHAM은 INMETRO 인증 이슈로 판매 확산 제한.</p>`
-   +kgrid([{lab:'REFATRIX 2026 Order',val:'$'+Math.round(rf.order_2026).toLocaleString(),sub:`2025 $${Math.round(rf.order_2025).toLocaleString()} · YoY ${pc(rf.yoy)}`,hero:true},
-     {lab:'REFATRIX Survey',val:rf.survey_count+'건',sub:esc(rf.survey_note)},
-     {lab:'BRABHAM 2026 Order',val:'$'+Math.round(bb.order_2026).toLocaleString(),sub:`2025 $${Math.round(bb.order_2025).toLocaleString()} · YoY ${pc(bb.yoy)}`}],'k3')
-   +`<div class="grid2"><div><div class="sub3" style="margin:4px 0 2px">고객별 Order YoY (USD)</div>`
-   +gbar(['REFATRIX','BRABHAM'],[{name:'2025',color:C1,vals:[rf.order_2025,bb.order_2025]},{name:'2026',color:C26,vals:[rf.order_2026,bb.order_2026]}],{W:340,H:190,delta:1,fmtV:v=>'$'+Math.round(v/1000)+'K'})
-   +`</div><div style="align-self:center"><div class="sub3" style="margin-bottom:4px">BRABHAM INMETRO 인증</div>${badge('인증 진행 중','wn')}<p class="note" style="margin-top:6px">${esc(bb.issue)} · ${esc(bb.status)}</p></div></div></div>`;
-
-  // ── SteerStar Lordco ──
-  if(st.lordco){const lo=st.lordco;const C25='var(--s1)',C26b='var(--brand)';
-   const yoy=(lo.cum26-lo.cum25)/lo.cum25*100;
-   const ML=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-  h+=`<div class="card"><h3>SteerStar · Lordco (캐나다) 월별 오더 추이</h3>
-    <p class="note">전 품목 오더(USD) · 2025 연간 $${lo.annual25.toLocaleString()} · 2026 YTD(1~${lo.last26}월) $${lo.ytd26.toLocaleString()}. Lordco는 소수 대형 단건 중심이라 월별·품목별로 무엇이 줄었는지 함께 봅니다.</p>`
-   +kgrid([{lab:'2025 연간 오더',val:'$'+lo.annual25.toLocaleString()},
-     {lab:'2026 YTD 오더',val:'$'+lo.ytd26.toLocaleString(),sub:`1~${lo.last26}월`},
-     {lab:`동기(1~${lo.last26}월) 전년 대비`,val:fmtPC(yoy),cls:yoy>=0?'up':'dn',sub:`${fmtC(lo.cum25)} → ${fmtC(lo.cum26)}`,hero:true}],'k3')
-   +`<div class="grid2"><div><div class="sub3" style="margin:6px 0 2px">월별 오더 · 전년 대비 (USD)</div>`
-   +`<div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr><th>월</th><th>2025</th><th>2026</th><th>증감</th></tr></thead><tbody>`
-   +ML.map((mm,i)=>{const a=lo.y25[i]||0,b=lo.y26[i]||0; if(!a&&!b)return ''; const within=(i+1)<=lo.last26; const dd=b-a;
-      return `<tr><td style="text-align:left">${mm}</td><td class="num sub3">${a?fmtC(a):'–'}</td><td class="num">${within?(b?fmtC(b):'$0'):'<span class="sub3">미도래</span>'}</td><td class="num">${within?`<span class="${cls(dd)}">${(dd>=0?'+':'')+fmtC(dd)}</span>`:'<span class="sub3">–</span>'}</td></tr>`;}).join('')
-   +`<tr style="border-top:2px solid var(--ring)"><td><b>1~${lo.last26}월 동기</b></td><td class="num sub3"><b>${fmtC(lo.cum25)}</b></td><td class="num"><b>${fmtC(lo.cum26)}</b></td><td class="num"><span class="${cls(yoy)}"><b>${fmtPC(yoy)}</b></span></td></tr>`
-   +`</tbody></table></div></div><div><div class="sub3" style="margin:6px 0 2px">월별 오더 막대 (2025 vs 2026)</div>`
-   +gbar(ML,[{name:'2025',color:C25,vals:lo.y25},{name:'2026',color:C26b,vals:lo.y26}],{W:500,H:220,delta:1,fmtV:v=>v?'$'+Math.round(v/1000)+'K':''})
-   +`</div></div>`
-   +`<h4 class="soh">무엇이 줄었나 · 제품군별 2025 vs 2026</h4><div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr><th>제품군</th><th>2025</th><th>2026</th><th>증감</th></tr></thead><tbody>`
-   +(lo.prod||[]).map(p=>`<tr><td style="text-align:left">${esc(p.k)}</td><td class="num sub3">${fmtC(p.y25)}</td><td class="num">${fmtC(p.y26)}</td><td class="num"><span class="${cls(p.d)}">${(p.d>=0?'+':'')+fmtC(p.d)}</span></td></tr>`).join('')
-   +`</tbody></table></div>`
-   +`<p class="note" style="font-size:12.5px;margin-top:4px"><b>판단:</b> 특정 품목의 일시 급감이 아니라 컨트롤암·스태빌라이저링크·타이로드·볼조인트 등 <b>전 핵심 어셈블리의 재주문이 동반 축소</b>됐습니다. 2025년 3월 대형 단건($502K)이 2026년에 미발생한 영향이 크며, 2026년은 월 오더가 더 고르지만 규모 자체가 낮습니다 → 일시 공백이 아니라 <b>재주문 볼륨 저하</b>로 관리해야 합니다.</p>`
-   +`<h4 class="soh">차달 캠페인 계획</h4>`
-   +`<div class="tblwrap"><table class="lts" style="font-size:12px;table-layout:fixed;width:100%"><colgroup><col style="width:22%"><col style="width:78%"></colgroup><tbody>`
-   +`<tr><td style="text-align:left;font-weight:700;background:var(--panel)">진행 (마컴)</td><td style="text-align:left">SteerStar Ambassador Program 운영 (Lordco Welcome·Main·Order 미션) · 한국 인센티브 트립 초청 연계</td></tr>`
-   +`<tr><td style="text-align:left;font-weight:700;background:var(--panel)">계획 (10~11월)</td><td style="text-align:left">하반기 재주문 전환 유도 · 감소 폭 큰 핵심 어셈블리(컨트롤암·타이로드·링크·볼조인트) Follow-up Order 협의 · 2027 프로그램 논의</td></tr>`
-   +`</tbody></table></div>`
-   +`</div>`;}
-
+  const rf=st.refatrix;
   // ── RUJAC Survey Insight ──
   if(rf.rujac){const rj=rf.rujac;
   h+=`<div class="card"><h3>RUJAC Survey Insight · REFATRIX (멕시코)</h3>
