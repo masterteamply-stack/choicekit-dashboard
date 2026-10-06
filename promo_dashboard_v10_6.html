@@ -1382,15 +1382,6 @@ function sepMonth(A){
     return `<td style="text-align:center;background:${col};color:#fff;font-weight:700">${p.toFixed(0)}%</td>`;};
   const cis=A.cis, sea=A.sea, mena=A.mena, lat=A.latam, pl=lat.pluscar, sr=lat.super_repuestos, st=lat.steerstar;
   let h=`<div class="warnbox" style="border-left-color:var(--s1)"><b>${A._m}월 활동 리포트 · Activity Layer</b> · 데이터 기준 ${A.generated_at} · 활동 성과 지표(오더 금액과 합산하지 않음)</div>`;
-  if(A.sales){const sa=A.sales;
-   h+=`<div class="card" style="border-left:3px solid var(--brand)"><h3>전사 영업 실적 (${A._m}월 · 오더 원장 기준)</h3>
-    <p class="note">전사 오더(수주) 기준 · KV_Orders 원장(2026-10-06, K+V) · ChoiceKit 캠페인과 별개(합산 아님). 매출(shipment)과는 이월·백오더만큼 차이가 있습니다.</p>`
-    +kgrid([{lab:A._m+'월 매출',val:sa.month,sub:'사업계획 '+sa.plan+' · YoY '+sa.yoy,hero:true},
-      {lab:'1~'+A._m+'월 누적',val:sa.cum,sub:'계획 '+sa.cum_plan+' · YoY '+sa.cum_yoy,hero:true},
-      {lab:'연간 전망',val:'$180~184M',sub:'Base '+sa.annual_base+' · Best '+sa.annual_best}],'k3')
-    +`<h4 class="soh">지역별 실적 (전사)</h4><div class="tblwrap"><table class="lts"><thead><tr><th>지역</th><th>${A._m}월</th><th>1~${A._m}월 누적</th><th>YoY</th><th>비고</th></tr></thead><tbody>`
-    +sa.regions.map(r=>`<tr><td><b>${r.r}</b></td><td>${r.sep}</td><td>${r.cum}</td><td style="text-align:center;font-weight:700;color:${r.yoy.startsWith('-')?'var(--serious)':r.yoy==='–'?'var(--muted)':'var(--good)'}">${r.yoy}</td><td style="text-align:left;font-size:11.5px">${r.note}</td></tr>`).join('')
-    +`</tbody></table></div><p class="note" style="margin-top:6px"><b>이월 물량:</b> ${sa.carryover}</p></div>`;}
 
   // ── Summary ──
   h+=`<div class="card"><h3>September Report Summary</h3><p class="note" style="font-size:15px;line-height:1.6">${esc(A.summary)}</p>`
@@ -1402,6 +1393,17 @@ function sepMonth(A){
      {lab:'LATAM PLUSCAR Clicks',val:pl.fb_link_clicks.toLocaleString(),sub:`Survey ${pl.survey_before} → ${pl.survey_after}`},
      {lab:'Super Repuestos Survey',val:sr.survey_responses+'건',sub:`보증 선호 ${(sr.warranty_rate*100).toFixed(0)}%`},
      {lab:'REFATRIX 2026 Order',val:'$'+Math.round(st.refatrix.order_2026).toLocaleString(),sub:`YoY ${pc(st.refatrix.yoy)} · Survey ${st.refatrix.survey_count}건`}])
+   +`<div class="sub3" style="color:var(--ink2);font-size:12px;margin:12px 0 3px"><b>권역 × 캠페인 오더 종합</b> <span style="font-weight:400">· 캠페인 기간 오더 vs 전년 동기 · ChoiceKit 대상 기준 (index 대시보드 정합)</span></div>`
+   +(()=>{const SO=new Set(['SELL-OUT Promotion','Sell-Out Promotion','Trade promotion']);
+     const cs=(D.campaigns||[]).slice().sort((a,b)=>(a.region+'').localeCompare(b.region+'')||(b.a26||0)-(a.a26||0));
+     const fx=D.fx||1470;
+     let t=`<div class="tblwrap"><table class="lts"><thead><tr><th>권역</th><th>캠페인</th><th>Sell</th><th>기간 오더</th><th>전년 동기</th><th>YoY</th><th>Sell-out 목표→실적</th><th>집행비용</th><th>회수배수</th></tr></thead><tbody>`;
+     cs.forEach(c=>{const so=SO.has(c.program);const cu=c.cost>0?c.cost/fx:0;
+       const yoy=c.yoy==null?(c.a26>0?'<span class="pill na">신규</span>':'–'):`<span class="${cls(c.yoy)}">${fmtPC(c.yoy)}</span>`;
+       const sell=c.so_t>0?`${fmtC(c.so_t)} → <b>${fmtC(c.so_r)}</b> (${(c.so_r/c.so_t*100).toFixed(0)}%)`:'–';
+       const mult=cu>0?'<b>'+(c.a26/cu).toFixed(1)+'배</b>':'–';
+       t+=`<tr><td style="white-space:nowrap">${esc(c.region)}</td><td style="font-size:12px">${esc(c.program)}</td><td style="font-size:11px">${so?'<span class="pill">OUT</span>':'IN'}</td><td class="num">${c.a26?fmtC(c.a26):'–'}</td><td class="num sub3">${c.a25?fmtC(c.a25):'–'}</td><td class="num">${yoy}</td><td class="num" style="font-size:11.5px">${sell}</td><td class="num sub3">${cu>0?fmtC(cu):'–'}</td><td class="num">${mult}</td></tr>`;});
+     return t+`</tbody></table></div><p class="note" style="font-size:11px;padding-left:0;margin:4px 0 0">회수배수 = 기간 오더 ÷ 집행비용(매출 기준, 마진 미반영) · Sell-out 목표→실적은 marketing.csv SELL-OUT Target/Result 기준 · 집행비용 환율 KRW/USD ${(D.fx||1470).toLocaleString()}</p>`;})()
    +`<div class="sub3" style="color:var(--ink2);font-size:12px;margin:12px 0 3px"><b>권역별 핵심 성과 · 다음 단계</b></div>`
    +`<div class="tblwrap"><table class="lts"><thead><tr><th>권역 · 프로그램</th><th>핵심 성과 (9월)</th><th>상태</th><th>다음 단계</th></tr></thead><tbody>`
    +[
