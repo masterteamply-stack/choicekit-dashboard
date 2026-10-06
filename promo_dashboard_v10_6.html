@@ -630,24 +630,31 @@ function persist(){
 
 /* ══════════ 6. 대상 SKU 정의 ══════════ */
 function tblScope(){
-  const rows={};
-  camps().forEach(c=>{const k=c.scope;const o=rows[k]=rows[k]||{n:0,run:0,a25:0,A25:0,regs:new Set()};
-    o.n++;o.regs.add(c.region);if(c.started){o.run++;o.a25+=c.a25;o.A25+=c.all25;}});
-  const list=Object.entries(rows).sort((a,b)=>b[1].n-a[1].n);
+  const byReg={};
+  camps().forEach(c=>{const rg=c.region,k=c.scope;
+    const r=byReg[rg]=byReg[rg]||{};
+    const o=r[k]=r[k]||{n:0,run:0,a25:0,A25:0};
+    o.n++;if(c.started){o.run++;o.a25+=c.a25;o.A25+=c.all25;}});
   const SRC={'카탈로그':'up','품목명':'na','규칙':'wn','실적':'wn','복합':'na','—':'na'};
-  $('#tScope').innerHTML='<table><thead><tr><th class="nos">대상 정의</th><th class="nos">출처</th><th class="nos">권역</th>'
-   +'<th class="nos">캠페인</th><th class="nos">대상 SKU</th><th class="nos">전년 대상 / 전 품목</th><th class="nos">기저 비중</th><th class="nos">스코프 규칙</th></tr></thead><tbody>'
-   +(list.map(([k,v])=>{const m=SCM[k]||{label:k,rule:'',src:'—',n_sku:0};
+  const RO=['CIS','LATAM','NA','KR','MENA','ASIA'];
+  const regs=Object.keys(byReg).sort((a,b)=>{const ia=RO.indexOf(a),ib=RO.indexOf(b);return (ia<0?99:ia)-(ib<0?99:ib);});
+  let body='';
+  regs.forEach(rg=>{
+    const scopes=Object.entries(byReg[rg]).sort((a,b)=>b[1].n-a[1].n);
+    body+=`<tr class="rgrp"><td colspan="7" style="text-align:left;background:var(--head);color:#fff;font-weight:700">${esc(rg)}</td></tr>`;
+    body+=scopes.map(([k,v])=>{const m=SCM[k]||{label:k,rule:'',src:'—',n_sku:0};
       const sh=v.A25>0?v.a25/v.A25*100:null, warn=sh!=null&&sh<3&&k!=='ALL';
       return `<tr><td class="b0">${esc(m.label)}</td>
         <td style="text-align:center"><span class="pill ${SRC[m.src]||'na'}">${esc(m.src)}</span></td>
-        <td class="small" style="text-align:left">${[...v.regs].join(', ')}</td>
         <td class="num">${v.run} <span class="sub3">/ ${v.n}</span></td>
         <td class="num">${(m.n_sku||0).toLocaleString()}${m.n_list?`<div class="sub3">리스트 ${m.n_list.toLocaleString()}개 중</div>`:''}</td>
         <td class="num">${fmtC(v.a25)} <span class="sub3">/ ${fmtC(v.A25)}</span></td>
         <td class="num">${sh==null?'–':sh.toFixed(1)+'%'} ${warn?'<span class="pill wn">기저 미미</span>':''}</td>
-        <td class="small sub3" style="text-align:left;white-space:normal;max-width:420px">${esc(m.rule)}</td></tr>`;}).join('')
-     ||'<tr><td colspan="8" class="empty">해당 캠페인이 없습니다.</td></tr>')+'</tbody></table>';
+        <td class="small sub3" style="text-align:left;white-space:normal;max-width:420px">${esc(m.rule)}</td></tr>`;}).join('');
+  });
+  $('#tScope').innerHTML='<table><thead><tr><th class="nos">대상 정의</th><th class="nos">출처</th>'
+   +'<th class="nos">캠페인</th><th class="nos">대상 SKU</th><th class="nos">전년 대상 / 전 품목</th><th class="nos">기저 비중</th><th class="nos">스코프 규칙</th></tr></thead><tbody>'
+   +(body||'<tr><td colspan="7" class="empty">해당 캠페인이 없습니다.</td></tr>')+'</tbody></table>';
 }
 
 /* ══════════ 7. 고객 · SKU ══════════ */
