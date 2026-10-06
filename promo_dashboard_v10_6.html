@@ -263,11 +263,11 @@ tfoot td.num{text-align:right}
 </header>
 
 <div class="nav" id="nav">
-  <button data-pg="p1" class="on">캠페인 효과 · SKU·고객</button>
+  <button data-pg="p7" class="on">월간 리포트</button>
+  <button data-pg="p6">SteerStar</button>
+  <button data-pg="p1">캠페인 효과 · SKU·고객</button>
   <button data-pg="p5">고객 Sell-out 연계</button>
   <button data-pg="p3">비용 · 회수</button>
-  <button data-pg="p6">SteerStar</button>
-  <button data-pg="p7">월간 리포트</button>
 </div>
 <main>
   <div class="filters">
@@ -277,7 +277,7 @@ tfoot td.num{text-align:right}
   </div>
 
   <!-- ══════════ P1 캠페인 효과 ══════════ -->
-  <div class="page on" id="p1">
+  <div class="page" id="p1">
     <div class="warnbox" id="w1"></div>
     <div class="kpis k4">
       <div class="tile hero"><div class="lab">대상 오더 (전년 → 당해)</div>
@@ -359,7 +359,7 @@ tfoot td.num{text-align:right}
   </div>
 
     <!-- P7 September Report -->
-  <div class="page" id="p7"><div id="sepFilter" class="sepfilter"></div><div id="sepBody"></div></div>
+  <div class="page on" id="p7"><div id="sepFilter" class="sepfilter"></div><div id="sepBody"></div></div>
 
   <div class="foot" id="foot"></div>
 </main>
@@ -1167,7 +1167,7 @@ function ssSvg(MS,W){
 function fill(id,vals,label){$('#'+id).innerHTML=`<option value="ALL">${label}</option>`
   +[...new Set(vals)].filter(Boolean).sort().map(v=>`<option>${esc(v)}</option>`).join('');}
 function draw(){
-  kpis(); campGrow(); tblMerged(); chartDid(); persist(); custBars(); skuBars(); costRomi(); soPage(); ssPage();
+  kpis(); campGrow(); tblMerged(); chartDid(); persist(); custBars(); skuBars(); costRomi(); soPage(); ssPage(); sepReport();
 }
 
 /* ══════════ 11. 원장 정합성 대조 ══════════ */
@@ -1482,10 +1482,28 @@ function sepMonth(A){
     return `<td style="text-align:center;background:${col};color:#fff;font-weight:700">${p.toFixed(0)}%</td>`;};
   const cis=A.cis, sea=A.sea, mena=A.mena, lat=A.latam, pl=lat.pluscar, sr=lat.super_repuestos, st=lat.steerstar;
   let h=`` ;
+  const Tov=agg(camps());
+  const _by={}; camps().forEach(c=>{const r=c.region;_by[r]=_by[r]||{a25:0,a26:0};_by[r].a25+=c.a25||0;_by[r].a26+=c.a26||0;});
+  const _gr=Object.entries(_by).map(([k,v])=>({k,a25:v.a25,a26:v.a26})).filter(r=>r.a25>0||r.a26>0).sort((a,b)=>b.a26-a.a26);
+  const _g25=_gr.reduce((a,r)=>a+r.a25,0),_g26=_gr.reduce((a,r)=>a+r.a26,0),_gy=_g25?(_g26-_g25)/_g25*100:0;
+  const ov=`<div class="kpis k4" style="margin:12px 0 2px">`
+   +`<div class="tile hero"><div class="lab">대상 오더 (전년 → 당해)</div><div class="val">${fmtC(Tov.a25)} <span style="color:var(--muted);font-weight:400">→</span> ${fmtC(Tov.a26)}</div><div class="sub2">캠페인 기간 · 대상 SKU 기준</div></div>`
+   +`<div class="tile"><div class="lab">YoY</div><div class="val"><span class="${cls(Tov.yoy)}">${fmtPC(Tov.yoy)}</span></div></div>`
+   +`<div class="tile"><div class="lab">집행 캠페인</div><div class="val">${Tov.run}<span style="font-size:16px;color:var(--muted)"> / ${Tov.n}</span></div><div class="sub2">대상 고객 ${Tov.cust.size.toLocaleString()}곳</div></div>`
+   +`<div class="tile"><div class="lab">달성률</div><div class="val">${Tov.prog.toFixed(0)}%</div><div class="sub2">관측 ${Tov.obs.toLocaleString()}일 / 계획 ${Tov.tot.toLocaleString()}일</div></div></div>`
+   +`<h4 class="soh">캠페인 대상 오더 증가 · 2025 → 2026</h4>`
+   +`<p class="note" style="margin-top:-2px">ChoiceKit 캠페인 대상 오더(sell-in)의 전년 대비 증감 · 권역별 · USD</p>`
+   +`<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:6px 0 10px">`
+   +`<div class="tile"><div class="lab">2025 대상 오더</div><div class="val">${fmtC(_g25)}</div></div>`
+   +`<div class="tile" style="border-top-color:var(--brand)"><div class="lab">2026 대상 오더</div><div class="val">${fmtC(_g26)}</div><div class="sub2">전년 대비 <span class="${cls(_gy)}">${fmtPC(_gy)}</span></div></div>`
+   +`<div class="tile"><div class="lab">순증액</div><div class="val">${fmtC(_g26-_g25)}</div></div>`
+   +`<div class="tile"><div class="lab">성장 권역</div><div class="val">${_gr.filter(r=>r.a26>r.a25).length}<span style="font-size:16px;color:var(--muted)"> / ${_gr.length}</span></div></div></div>`
+   +`<div class="legend"><span><i class="sw" style="background:var(--s1)"></i>2025</span><span><i class="sw" style="background:var(--brand)"></i>2026</span></div>`
+   +`<div class="svgbox">`+gbar(_gr.map(r=>r.k),[{name:'2025',color:'var(--s1)',vals:_gr.map(r=>r.a25)},{name:'2026',color:'var(--brand)',vals:_gr.map(r=>r.a26)}],{W:1040,H:300,delta:1,fmtV:v=>v>=1e6?'$'+(v/1e6).toFixed(2)+'M':'$'+Math.round(v/1000)+'K'})+`</div>`;
 
   // ── Summary ──
   h+=`<div class="card"><h3>September Report Summary</h3><p class="note" style="font-size:15px;line-height:1.6">${esc(A.summary)}</p>`
-   +`<p class="note" style="font-size:12.5px;margin-top:-4px"><b>전사 맥락:</b> 9월 전사 오더(수주) ${A.sales.month} · 1~9월 누적 ${A.sales.cum} (YoY ${A.sales.cum_yoy}, KV 원장 기준). 본 리포트는 그중 Choice Kit 캠페인의 권역별 활동·오더 전환 현황입니다(전사 매출과 별개).</p>`
+   +ov
    +kgrid([
      {lab:'CIS Catalogue Views',val:cis.views.toLocaleString(),sub:`다운로드 ${cis.downloads_total.toLocaleString()} · 전환 ${(cis.download_rate*100).toFixed(1)}%`,hero:true},
      {lab:'SEA Sell-out 달성',val:(sea.achievement_rate*100).toFixed(1)+'%',sub:`$${Math.round(sea.sellout_actual).toLocaleString()} / 목표 $${Math.round(sea.sellout_target).toLocaleString()}`,hero:true},
