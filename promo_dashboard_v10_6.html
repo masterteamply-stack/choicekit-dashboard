@@ -1372,7 +1372,7 @@ const SEPTEMBER_ACTIVITY = {
     steerstar:{
       refatrix:{ order_2025:33527.07, order_2026:114595.62, yoy:2.418, survey_count:157, survey_note:"RUJAC 전시회 현장 설문 157건 집계 완료", rujac:{"n":157,"aware_none":56,"after_pos":69,"ds":80,"factors":[{"l":"Calidad / Durabilidad","p":64},{"l":"Precio","p":27},{"l":"Disponibilidad","p":17},{"l":"Garantía","p":11},{"l":"Ajuste correcto","p":10}],"motiv":[{"l":"Precio competitivo","p":45},{"l":"Calidad comprobada","p":43},{"l":"Garantía","p":17},{"l":"Recomendación de un mecánico","p":7}],"support":[{"l":"Capacitación técnica","p":38},{"l":"Catálogos","p":25},{"l":"Muestras","p":13},{"l":"Garantía","p":13},{"l":"Videos de instalación","p":10}],"promo":[{"l":"Capacitación","p":27},{"l":"Demostración del producto","p":25},{"l":"Descuento","p":15},{"l":"Promoción por paquete","p":14},{"l":"Incentivo / regalo","p":13},{"l":"Muestra gratis","p":10}],"problem":[{"l":"Baja durabilidad","p":38},{"l":"Ruido / vibración","p":27},{"l":"Calidad inconsistente","p":12}],"exp15":62} },
       brabham:{ order_2025:80488.13, order_2026:70268.22, yoy:-0.127, issue:"INMETRO 인증 미확보로 Survey / 판매 제한",
-        status:"9월 Shock Absorber INMETRO 인증 절차 착수 · 연말까지 진행 상황 확인" } } },
+        status:"9월 Shock Absorber INMETRO 인증 절차 착수 · 연말까지 진행 상황 확인" }, lordco:{"y25":[56940,0,501829,0,27222,87197,0,37993,0,0,92796,169425],"y26":[56634,0,0,55820,61098,0,68472,0,0,0,0,0],"last26":7,"cum25":673188,"cum26":242024,"annual25":973402,"ytd26":242024} } },
   action_plan:[
     {region:"CIS", action:"Free Replacement Event / Tech Seminar 협의", owner:"Phaeton · Complex Auto · Bauten", kpi:"행사 확정 · Catalogue 후속 반응 · 오더 전환", timing:"11월"},
     {region:"CIS", action:"Mechanic Support Kits 입고 및 고객사 컨테이너 발송", owner:"CIS 리테일 고객사", kpi:"발송 고객사 · 도착 일정 · 현장 활용", timing:"10월"},
@@ -1515,6 +1515,20 @@ function sepMonth(A){
    +`<div class="grid2"><div><div class="sub3" style="margin:4px 0 2px">고객별 Order YoY (USD)</div>`
    +gbar(['REFATRIX','BRABHAM'],[{name:'2025',color:C1,vals:[rf.order_2025,bb.order_2025]},{name:'2026',color:C26,vals:[rf.order_2026,bb.order_2026]}],{W:340,H:190,fmtV:v=>'$'+Math.round(v/1000)+'K'})
    +`</div><div style="align-self:center"><div class="sub3" style="margin-bottom:4px">BRABHAM INMETRO 인증</div>${badge('인증 진행 중','wn')}<p class="note" style="margin-top:6px">${esc(bb.issue)} · ${esc(bb.status)}</p></div></div></div>`;
+
+  // ── SteerStar Lordco ──
+  if(st.lordco){const lo=st.lordco;const C25='var(--s1)',C26b='var(--brand)';
+   const yoy=(lo.cum26-lo.cum25)/lo.cum25*100;
+   const ML=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  h+=`<div class="card"><h3>SteerStar · Lordco (캐나다) 월별 오더 추이</h3>
+    <p class="note">전 품목 오더(USD) · 2025 연간 $${lo.annual25.toLocaleString()} · 2026 YTD(1~${lo.last26}월) $${lo.ytd26.toLocaleString()} · <b>동기(1~${lo.last26}월) 비교 ${fmtC(lo.cum25)} → ${fmtC(lo.cum26)} (<span class="${cls(yoy)}">${fmtPC(yoy)}</span>)</b>. 오더가 간헐적 대형 단건 중심이라 월별로 비교합니다.</p>`
+   +kgrid([{lab:'2025 연간 오더',val:'$'+lo.annual25.toLocaleString()},
+     {lab:'2026 YTD 오더',val:'$'+lo.ytd26.toLocaleString(),sub:`1~${lo.last26}월`},
+     {lab:`동기(1~${lo.last26}월) YoY`,val:fmtPC(yoy),cls:yoy>=0?'up':'dn',sub:`${fmtC(lo.cum25)} → ${fmtC(lo.cum26)}`,hero:true}],'k3')
+   +`<div class="sub3" style="margin:6px 0 2px">월별 오더 2025 vs 2026 (USD)</div>`
+   +gbar(ML,[{name:'2025',color:C25,vals:lo.y25},{name:'2026',color:C26b,vals:lo.y26}],{W:720,H:210,fmtV:v=>v?'$'+Math.round(v/1000)+'K':''})
+   +`<p class="note" style="font-size:11.5px;padding-left:0;margin-top:6px">2026 7월까지 반영 · 2025년 3월 대형 오더($502K)가 2026년 미발생하며 동기 ${fmtPC(yoy)} 감소. 하반기 재주문 여부가 연간 실적을 좌우.</p>`
+   +`</div>`;}
 
   // ── RUJAC Survey Insight ──
   if(rf.rujac){const rj=rf.rujac;
