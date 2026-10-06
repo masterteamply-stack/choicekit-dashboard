@@ -283,18 +283,8 @@ tfoot td.num{text-align:right}
         <p class="note">캠페인 기간과 <b>전년 동일 날짜 구간</b>을 대상 SKU 기준으로 비교합니다. 대조군은 같은 권역의 미집행 고객이며, 그 차이(이중차분, DiD)가 프로모션에 귀속할 수 있는 몫입니다. <b>DiD·순증은 집행군과 대조군이 모두 관측된 공통 구간</b>에서만 계산하므로, 전년·당해 금액(전체 관측 구간)과는 기간이 다를 수 있습니다. 권역에 캠페인이 둘 이상이면 <b>소계</b> 행으로 권역 합계를 함께 표기합니다.</p></div>
         <button class="btn" id="btnCsvM">CSV</button></div>
       <div class="scroll" id="tMerged"></div>
-      <p class="hint">* 이중차분(DiD)은 집행군 증감률에서 대조군(같은 권역 미집행 고객) 증감률을 뺀 값(%p)으로, 시장 흐름을 걷어낸 프로모션 순효과입니다. 집행군·대조군이 모두 관측된 공통 구간에서 계산합니다. † 대조군 1곳이 30% 이상을 차지해 대조군 증감률이 소수 고객에 좌우되는 캠페인입니다.<br><b>기준 시점:</b> 전년·당해 <b>대상 오더</b>는 orders.csv 기준(오늘까지)이고, <b>대조군 YoY·이중차분·순증·관측 구간</b>은 전체 B2B 원장(대조군 포함)을 재구성해 권역별로 최신 도달일(대부분 ~09-2x)까지 산출했습니다. 대조군은 전년 실적이 있는 같은 권역 미집행 고객입니다. 내부 분류 기준에 따라 러시아는 별도 권역, 우크라이나는 EUROPE로 분리했고, LATAM은 전 고객사가 ChoiceKit 대상이라 별도 미집행 대조군이 없습니다(대조군 없음). 발주가 드문 구간(예: 7월 일부)도 실제 무발주로 보고 관측 구간에 포함해 연속으로 집계합니다.</p>
     </div>
 
-    <div class="card">
-      <div class="chead"><div><h3>집행군 vs 대조군 증감률</h3>
-        <p class="note">막대가 오른쪽으로 길수록 증가입니다. 집행군이 대조군보다 왼쪽이면 프로모션 기여가 확인되지 않은 권역입니다. 두 막대 모두 <b>양쪽이 함께 관측된 공통 구간</b> 기준이라 그 차이가 곧 위 표의 이중차분입니다.</p></div>
-        <button class="btn" data-tv="c12">표</button></div>
-      <div class="legend"><span><i class="sw" style="background:var(--s1)"></i>집행 고객</span>
-        <span><i class="sw" style="background:var(--brand)"></i>미집행 대조군</span></div>
-      <div class="svgbox" id="c12box"><svg id="c12" height="240"></svg></div>
-      <div class="tv" id="c12tv"></div>
-    </div>
 
     <div class="card">
       <div class="chead"><div><h3>월별 지속성 — 초반에만 튀었나, 이어지나</h3>
@@ -522,6 +512,7 @@ function tblReg(){
 
 /* ══════════ 4. 집행군 vs 대조군 차트 ══════════ */
 function chartDid(){
+  if(!$('#c12')) return;
   /* 막대는 DiD 와 같은 공통 구간(dyoy) 기준 — 표의 DiD 와 눈으로 맞아떨어지게 한다. */
   const rows=regRows().filter(r=>r.run&&(r.dyoy!=null||r.cyoy!=null))
     .map(r=>({...r,yoy:r.dyoy!=null?r.dyoy:r.yoy}));
@@ -760,24 +751,17 @@ function tblMerged(){
       <div class="sub3">관측 ${(c.wins||[]).map(w=>w[0].slice(5)+'~'+w[1].slice(5)).join(' + ')}${c.gaps?` <span class="pill wn">${c.gaps}곳 공백</span>`:''}</div></td>
     <td><div class="mrow"><div class="meter2"><i style="width:${Math.min(c.progress,100)}%"></i></div><span class="mlab">${c.progress.toFixed(0)}%</span></div></td>
     <td class="num">${c.a25?fmtC(c.a25):'–'}</td><td class="num">${c.a26?fmtC(c.a26):'–'}</td>
-    <td class="num"><span class="${cls(c.yoy)}">${c.yoy==null?(c.a26>0?'<span class="pill na">신규</span>':'–'):fmtPC(c.yoy)}</span></td>
-    <td class="num sub3">${c.cyoy==null?'–':fmtPC(c.cyoy)}</td>
-    <td class="num" title="${did==null?(c.n_ctrl===0?'권역 전체가 대상이라 비교할 미집행 고객이 없습니다':'대조군 전년 실적이 없어 계산 불가'):('집행군 '+(c.dyoy==null?'–':c.dyoy+'%')+' · 대조군 '+c.n_ctrl+'곳')}">
-      ${did==null?(c.n_ctrl===0?'<span class="sub3">대조군 없음</span>':'–'):`<span class="${cls(did)}">${fmtPP(did)}</span>${(((c.ctrl_top||[])[0]||{}).sh>=30)?'<span class="sub3">†</span>':''}`}</td>
-    <td class="num"><span class="${cls(c.incr)}">${c.incr!=null?fmtC(c.incr):'–'}</span></td></tr>`;};
+    <td class="num"><span class="${cls(c.yoy)}">${c.yoy==null?(c.a26>0?'<span class="pill na">신규</span>':'–'):fmtPC(c.yoy)}</span></td></tr>`;};
   const subRow=R=>`<tr style="border-top:1px solid var(--ring);background:var(--head-soft,rgba(127,127,127,.06))">
     <td style="text-align:left"><b>${esc(R.k)} 소계</b> <span class="sub3">캠페인 ${R.run}개 · 고객 ${R.cust.size}곳</span></td>
     <td></td><td><span class="mlab">${R.prog.toFixed(0)}%</span></td>
     <td class="num"><b>${fmtC(R.a25)}</b></td><td class="num"><b>${fmtC(R.a26)}</b></td>
-    <td class="num"><span class="${cls(R.yoy)}"><b>${R.yoy==null?'–':fmtPC(R.yoy)}</b></span></td>
-    <td class="num sub3">${R.cyoy==null?'–':fmtPC(R.cyoy)}</td>
-    <td class="num">${R.did==null?'–':`<span class="${cls(R.did)}"><b>${fmtPP(R.did)}</b></span>`}</td>
-    <td class="num"><span class="${cls(R.incr)}"><b>${R.run?fmtC(R.incr):'–'}</b></span></td></tr>`;
+    <td class="num"><span class="${cls(R.yoy)}"><b>${R.yoy==null?'–':fmtPC(R.yoy)}</b></span></td></tr>`;
   let body='';
   regRows().forEach(R=>{
     const cs=run.filter(c=>c.region===R.k).sort((a,b)=>(b.a26||0)-(a.a26||0));
     if(!cs.length) return;
-    body+=`<tr class="rgrp"><td colspan="9" style="text-align:left;background:var(--head);color:#fff;font-weight:700">${esc(R.k)}</td></tr>`;
+    body+=`<tr class="rgrp"><td colspan="6" style="text-align:left;background:var(--head);color:#fff;font-weight:700">${esc(R.k)}</td></tr>`;
     body+=cs.map(campRow).join('');
     if(cs.length>1) body+=subRow(R);
   });
@@ -785,16 +769,13 @@ function tblMerged(){
   const foot=`<tr><td style="text-align:left"><b>전체 합계</b> <span class="sub3">캠페인 ${T.run}/${T.n} · 고객 ${T.cust.size}곳</span></td>
     <td></td><td><span class="mlab">${T.prog.toFixed(0)}%</span></td>
     <td class="num"><b>${fmtC(T.a25)}</b></td><td class="num"><b>${fmtC(T.a26)}</b></td>
-    <td class="num"><span class="${cls(T.yoy)}"><b>${T.yoy==null?'–':fmtPC(T.yoy)}</b></span></td>
-    <td class="num sub3">${T.cyoy==null?'–':fmtPC(T.cyoy)}</td>
-    <td class="num">${T.did==null?'–':`<span class="${cls(T.did)}"><b>${fmtPP(T.did)}</b></span>`}</td>
-    <td class="num"><span class="${cls(T.incr)}"><b>${fmtC(T.incr)}</b></span></td></tr>`;
+    <td class="num"><span class="${cls(T.yoy)}"><b>${T.yoy==null?'–':fmtPC(T.yoy)}</b></span></td></tr>`;
   $('#tMerged').innerHTML='<table><thead><tr>'
     +'<th class="nos">캠페인 · 고객</th><th class="nos">대상 · 기간</th><th class="nos">달성률</th>'
-    +'<th class="nos">전년</th><th class="nos">당해</th><th class="nos">YoY</th><th class="nos">대조군 YoY</th><th class="nos">이중차분</th><th class="nos">순증 오더</th>'
+    +'<th class="nos">전년</th><th class="nos">당해</th><th class="nos">YoY</th>'
     +'</tr></thead><tbody>'
-    +(body||'<tr><td colspan="9" class="empty">시작된 캠페인이 없습니다.</td></tr>')
-    +(wait.length?`<tr><td colspan="9" class="small sub3" style="text-align:left"><b>시작 전 · 원장 미도달 ${wait.length}건</b> — ${wait.map(c=>`${c.region} ${esc(c.program)} (${c.start}~)`).join(', ')}</td></tr>`:'')
+    +(body||'<tr><td colspan="6" class="empty">시작된 캠페인이 없습니다.</td></tr>')
+    +(wait.length?`<tr><td colspan="6" class="small sub3" style="text-align:left"><b>시작 전 · 원장 미도달 ${wait.length}건</b> — ${wait.map(c=>`${c.region} ${esc(c.program)} (${c.start}~)`).join(', ')}</td></tr>`:'')
     +'</tbody><tfoot>'+foot+'</tfoot></table>';
   $('#btnCsvM').onclick=()=>csv('campaign_effect.csv',
     [['권역','프로그램','대상','고객수','시작','종료','달성률%','전년USD','당해USD','YoY%','대조군YoY%','이중차분%p','순증USD']]
