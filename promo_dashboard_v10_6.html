@@ -1048,15 +1048,20 @@ function steerStarExtra(){
  const pc=v=>(v>=0?"+":"")+(v*100).toFixed(1)+"%";
  const kgrid=(cards,cls)=>`<div class="kpis ${cls||"k6"}">`+cards.map(k=>`<div class="tile${k.hero?" hero":""}"><div class="lab">${k.lab}</div><div class="val">${k.val}</div>${k.sub?`<div class="sub2">${k.sub}</div>`:""}</div>`).join("")+`</div>`;
  const badge=(t,tone)=>`<span class="sbadge ${tone||""}">${esc(t)}</span>`;
- let h=`<div style="margin:4px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:18px;font-weight:800">SteerStar · 앰배서더/전략 고객 월간 추이</span></div>`;
- h+=`<div class="card"><h3>LATAM SteerStar · REFATRIX &amp; BRABHAM</h3>
-    <p class="note">REFATRIX는 전년 대비 오더 ${pc(rf.yoy)}와 RUJAC Survey ${rf.survey_count}건 확보 · BRABHAM은 INMETRO 인증 이슈로 판매 확산 제한.</p>`
-   +kgrid([{lab:'REFATRIX 2026 Order',val:'$'+Math.round(rf.order_2026).toLocaleString(),sub:`2025 $${Math.round(rf.order_2025).toLocaleString()} · YoY ${pc(rf.yoy)}`,hero:true},
-     {lab:'REFATRIX Survey',val:rf.survey_count+'건',sub:esc(rf.survey_note)},
-     {lab:'BRABHAM 2026 Order',val:'$'+Math.round(bb.order_2026).toLocaleString(),sub:`2025 $${Math.round(bb.order_2025).toLocaleString()} · YoY ${pc(bb.yoy)}`}],'k3')
-   +`<div class="grid2"><div><div class="sub3" style="margin:4px 0 2px">고객별 Order YoY (USD)</div>`
-   +gbar(['REFATRIX','BRABHAM'],[{name:'2025',color:C1,vals:[rf.order_2025,bb.order_2025]},{name:'2026',color:C26,vals:[rf.order_2026,bb.order_2026]}],{W:340,H:190,delta:1,fmtV:v=>'$'+Math.round(v/1000)+'K'})
-   +`</div><div style="align-self:center"><div class="sub3" style="margin-bottom:4px">BRABHAM INMETRO 인증</div>${badge('인증 진행 중','wn')}<p class="note" style="margin-top:6px">${esc(bb.issue)} · ${esc(bb.status)}</p></div></div></div>`;
+ let h=`<div style="margin:4px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:18px;font-weight:800">SteerStar · 심층 분석 (파트너 미션 테이블 보완)</span></div>`;
+ if(rf.rujac){const rj=rf.rujac;
+  h+=`<div class="card"><h3>REFATRIX (멕시코) · RUJAC Survey Insight</h3>
+   <p class="note">REFATRIX 2026 오더 전년 대비 <b>${pc(rf.yoy)}</b> 성장 · BRABHAM INMETRO 인증 이슈로 판매 확산 제한(오더 실적은 상단 파트너 미션 테이블 참조). ${esc(bb.issue)} · ${esc(bb.status)}</p>
+   <p class="note">RUJAC 전시회 현장 설문 <b>${rj.n}건</b> · 경력 15년 이상 ${rj.exp15}% · 조향·현가(Dirección y suspensión) 취급 <b>${rj.ds}%</b>로 CTR 주력 카테고리와 정확히 일치.</p>`
+   +kgrid([
+     {lab:'설문 응답',val:rj.n+'건',sub:'RUJAC 전시회 현장',hero:true},
+     {lab:'CTR 사전 인지 ‘모름’',val:rj.aware_none+'%',sub:'행사 전 브랜드 미인지',cls:'dn'},
+     {lab:'접촉 후 구매·추천 의향',val:rj.after_pos+'%',sub:'Muy probable + Probable',cls:'up',hero:true},
+     {lab:'조향·현가 취급',val:rj.ds+'%',sub:'CTR 주력 카테고리'}],'k4')
+   +`<div class="grid2"><div>${pctBars('브랜드 선택 시 중요 요인',rj.factors,'var(--s1)')}${pctBars('신규 브랜드 시도 동기',rj.motiv,'var(--good)')}</div>`
+   +`<div>${pctBars('추천에 필요한 지원',rj.support,'var(--o5)')}${pctBars('선호하는 프로모션',rj.promo,'var(--brand)')}</div></div>`
+   +`<p class="note" style="font-size:12.5px;margin-top:8px"><b>시사점:</b> 응답자 ${rj.aware_none}%가 CTR를 처음 접했으나 설명 후 ${rj.after_pos}%가 구매·추천 의향을 보여 상단 인지 전환이 강함. 선택 기준은 가격보다 <b>품질·내구성(${rj.factors[0].p}%)</b>이며, 신규 브랜드 전환 동기도 가격경쟁력(${rj.motiv[0].p}%)과 검증된 품질(${rj.motiv[1].p}%)이 양대 축. 현장 니즈는 <b>기술 교육·카탈로그·제품 시연</b> 중심이라 할인보다 교육·시연형 프로모션이 효과적.</p>`+`</div>`;}
+ else{h+=`<div class="card"><h3>REFATRIX &amp; BRABHAM</h3><p class="note">REFATRIX 2026 오더 전년 대비 <b>${pc(rf.yoy)}</b> 성장 · BRABHAM INMETRO 인증 이슈로 판매 확산 제한. ${esc(bb.issue)} · ${esc(bb.status)}</p></div>`;}
  if(st.lordco){const lo=st.lordco;const C25='var(--s1)',C26b='var(--brand)';
    const yoy=(lo.cum26-lo.cum25)/lo.cum25*100;
    const ML=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
@@ -1690,17 +1695,7 @@ function sepMonth(A){
      {lab:'Sell-out 데이터',val:'제공 완료',sub:'품목·집계 범위 세분화 필요'}],'k3')
    +`<h4 class="soh">핵심 니즈</h4><div class="grid2" style="gap:8px">`+sr.key_needs.map(n=>`<div class="card" style="margin:0;padding:10px 12px"><b>${esc(n)}</b></div>`).join('')+`</div>`
    +`<h4 class="soh">다음 단계</h4><ul class="slist"><li>${esc(sr.next)}</li><li>${esc(sr.followup)}</li></ul>`;
-  if(rf.rujac){const rj=rf.rujac;
-  h+=`<h4 class="soh" style="margin-top:16px;border-top:2px solid var(--ring);padding-top:12px">RUJAC 전시회 현장 설문 · REFATRIX (멕시코)</h4>
-    <p class="note">RUJAC 전시회 현장 설문 <b>${rj.n}건</b> · 경력 15년 이상 ${rj.exp15}% · 조향·현가(Dirección y suspensión) 취급 <b>${rj.ds}%</b>로 CTR 주력 카테고리와 정확히 일치.</p>`
-   +kgrid([
-     {lab:'설문 응답',val:rj.n+'건',sub:'RUJAC 전시회 현장',hero:true},
-     {lab:'CTR 사전 인지 ‘모름’',val:rj.aware_none+'%',sub:'행사 전 브랜드 미인지',cls:'dn'},
-     {lab:'접촉 후 구매·추천 의향',val:rj.after_pos+'%',sub:'Muy probable + Probable',cls:'up',hero:true},
-     {lab:'조향·현가 취급',val:rj.ds+'%',sub:'CTR 주력 카테고리'}],'k4')
-   +`<div class="grid2"><div>${pctBars('브랜드 선택 시 중요 요인',rj.factors,'var(--s1)')}${pctBars('신규 브랜드 시도 동기',rj.motiv,'var(--good)')}</div>`
-   +`<div>${pctBars('추천에 필요한 지원',rj.support,'var(--o5)')}${pctBars('선호하는 프로모션',rj.promo,'var(--brand)')}</div></div>`
-   +`<p class="note" style="font-size:12.5px;margin-top:8px"><b>시사점:</b> 응답자 ${rj.aware_none}%가 CTR를 처음 접했으나 설명 후 ${rj.after_pos}%가 구매·추천 의향을 보여 상단 인지 전환이 강함. 선택 기준은 가격보다 <b>품질·내구성(${rj.factors[0].p}%)</b>이며, 신규 브랜드 전환 동기도 가격경쟁력(${rj.motiv[0].p}%)과 검증된 품질(${rj.motiv[1].p}%)이 양대 축. 현장 니즈는 <b>기술 교육·카탈로그·제품 시연</b> 중심이라 할인보다 교육·시연형 프로모션이 효과적.</p>`;}
+  
   h+=`</div>`;
 
   // ── LATAM 중국 차종 프로모션 준비 ──
