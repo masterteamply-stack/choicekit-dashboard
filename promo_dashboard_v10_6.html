@@ -1532,23 +1532,24 @@ function sepMonth(A){
    +`<h4 class="soh">핵심 니즈</h4><div class="grid2" style="gap:8px">`+sr.key_needs.map(n=>`<div class="card" style="margin:0;padding:10px 12px"><b>${esc(n)}</b></div>`).join('')+`</div>`
    +`<h4 class="soh">다음 단계</h4><ul class="slist"><li>${esc(sr.next)}</li><li>${esc(sr.followup)}</li></ul></div>`;
 
-  // ── LATAM 중국 차종 프로모션 ──
-  if(A.latam.chinese_vehicle){const cv=A.latam.chinese_vehicle;const C26b='var(--brand)',CB='var(--s1)';
-   const ML=['1월','2월','3월','4월','5월','6월','7월','8월','9월'];
-  h+=`<div class="card"><h3>LATAM 중국 차종(Chinese Vehicle) 프로모션 · 9월 오더</h3>
-    <p class="note">중남미 중국차종 SKU 수주(CTR Choice Kit) · 기준일 ${esc(cv.asof)} · 9월 ${cv.countries}개국 ${cv.buyers}개사 ${cv.skus} SKU.</p>`
-   +kgrid([{lab:'9월 오더',val:'$'+cv.sep_amt.toLocaleString(),sub:`전년 9월 $${cv.sep_prev.toLocaleString()} · YoY <span class="${cls(cv.yoy)}">${fmtPC(cv.yoy)}</span>`,hero:true},
-     {lab:'9월 수량',val:cv.sep_qty.toLocaleString()+' pcs',sub:cv.sep_rows+'개 오더행'},
-     {lab:'누적 1~9월',val:'$'+cv.cum26.toLocaleString(),sub:`2025 $${cv.cum25.toLocaleString()} · ${fmtPC((cv.cum26-cv.cum25)/cv.cum25*100)}`},
-     {lab:'참여 범위',val:cv.countries+'개국',sub:`${cv.buyers}개사 · ${cv.skus} SKU · 중국 브랜드 ${cv.nMake}종`}],'k4')
-   +`<div class="sub3" style="margin:8px 0 2px">2026 월별 오더 추이 (USD)</div>`
-   +gbar(ML,[{name:'2026',color:C26b,vals:cv.months}],{W:1040,H:200,fmtV:v=>'$'+Math.round(v/1000)+'K'})
-   +`<div class="grid2" style="margin-top:8px"><div><div class="sub3" style="margin:2px 0 2px">9월 브랜드별 오더 (USD)</div>`
-   +gbar(cv.byMake.map(x=>x.k),[{name:'9월',color:CB,vals:cv.byMake.map(x=>x.v)}],{W:500,H:200,fmtV:v=>'$'+Math.round(v/1000)+'K'})
-   +`</div><div><div class="sub3" style="margin:2px 0 2px">9월 국가별 오더 (USD)</div>`
-   +gbar(cv.byCtry.map(x=>x.k),[{name:'9월',color:'var(--o5)',vals:cv.byCtry.map(x=>x.v)}],{W:500,H:200,fmtV:v=>'$'+Math.round(v/1000)+'K'})
-   +`</div></div>`
-   +`<p class="note" style="font-size:11.5px;padding-left:0;margin-top:6px">9월 ${fmtPC(cv.yoy)} 성장 · 브랜드는 JAC·MG 주도, 국가는 파라과이 중심. 중국 신차 보급 확대에 따른 보수용 부품 수요 증가 흐름.</p>`
+  // ── LATAM 중국 차종 프로모션 준비 ──
+  if(A.latam.chinese_vehicle){const cv=A.latam.chinese_vehicle;
+   const rows=[
+     ['Purpose','CTR에서도 LATAM 주요 중국 차종에 Fit한 부품을 판매하고 있다는 점을 알리는 Awareness 콘텐츠'],
+     ['Promotion Type','Awareness / Content Activation'],
+     ['Publish Channels','LATAM Facebook · Instagram · WhatsApp · LinkedIn'],
+     ['Paid Media','META only'],
+     ['Schedule','2026년 10월 중 3개 콘텐츠 발행'],
+     ['Target Vehicle Scope','엑셀 기준 총 5종'],
+     ['Content Structure','콘텐츠① CHERY 2종 · 콘텐츠② CHERY 2종 · 콘텐츠③ MG 1종 (총 3개)'],
+     ['Order Tracking','실제 오더 데이터는 10월 발행 이후부터 취합']];
+  h+=`<div class="card"><h3>Chinese Vehicle Promotion Preparation</h3>
+    <p class="note">${badge('10월 실행 예정','wn')} &nbsp;9월 오더 성과로 집계하지 않는 준비 활동입니다. 실제 오더 데이터는 10월 콘텐츠 발행 이후부터 취합합니다.</p>
+    <p class="note" style="font-size:13.5px;line-height:1.55;background:var(--hoverwash);border-left:3px solid var(--brand);padding:9px 12px;margin:0 0 10px;border-radius:0 6px 6px 0">LATAM Chinese Vehicle Promotion은 9월 오더 성과가 아니라 <b>10월 신규 수요 개발을 위한 준비 활동</b>으로 관리합니다. 콘텐츠는 프로모션 직접 홍보보다 <b>CTR의 중국 차종 Fit 품목 보유 사실을 알리는 Awareness 중심</b>으로 운영합니다.</p>`
+   +`<div class="tblwrap"><table class="lts" style="table-layout:fixed;width:100%"><colgroup><col style="width:22%"><col style="width:78%"></colgroup><tbody>`
+   +rows.map(r=>`<tr><td style="text-align:left;font-weight:700;background:var(--panel)">${esc(r[0])}</td><td style="text-align:left;font-size:12.5px">${esc(r[1])}</td></tr>`).join('')
+   +`</tbody></table></div>`
+   +`<p class="note" style="font-size:11.5px;padding-left:0;margin-top:7px"><b>참고 · Baseline(콘텐츠 발행 전):</b> 9월 중국차종 오더 $${cv.sep_amt.toLocaleString()} · ${cv.countries}개국 ${cv.buyers}개사 ${cv.skus} SKU — 10월 전환 추적의 비교 기준선으로만 사용하며 프로모션 성과로 집계하지 않습니다.</p>`
    +`</div>`;}
 
   h+=custOrderBlock('LATAM','LATAM · 올해 vs 전년 오더 추이 (참여 고객사)');
