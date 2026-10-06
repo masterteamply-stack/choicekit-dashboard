@@ -1195,6 +1195,11 @@ function invCard(v){
  h+=`</div>`;
  if(v.note)h+=`<p class="note" style="font-size:11.5px;padding-left:0;margin-top:7px">${v.note}</p>`;
  return h+`</div>`;}
+function pctBars(title,arr,color){
+ color=color||'var(--s1)';
+ let h=`<div class="sub3" style="color:var(--ink2);font-size:12px;margin:8px 0 4px;font-weight:700">${title}</div>`;
+ arr.forEach(d=>{h+=`<div style="display:flex;align-items:center;gap:8px;margin:3px 0"><div style="flex:0 0 150px;font-size:11.5px;color:var(--ink2);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(d.l)}</div><div style="flex:1;background:var(--track);border-radius:4px;height:14px;position:relative"><div style="width:${d.p}%;background:${color};height:100%;border-radius:4px"></div></div><div style="flex:0 0 34px;font-size:11.5px;font-weight:700;color:var(--ink)">${d.p}%</div></div>`;});
+ return h;}
 function sellinOrderTbl(a){if(!a)return '';
  const f=v=>'$'+Math.round(v).toLocaleString(),fp=v=>v.toFixed(1)+'%';
  return `<div class="sub3" style="color:var(--ink2);margin:8px 0 2px;font-size:12px">Sell-in 오더 · 프로모션 대상 vs 전체 (USD)</div>`
@@ -1347,7 +1352,7 @@ const SEPTEMBER_ACTIVITY = {
       next:"정비사 초청 기술 세미나 결합 · 칠레 지사 인력 활용 현장 제품 교육",
       followup:"11월 Super Repuestos 마케팅 담당자와 2027년 계획 논의" },
     steerstar:{
-      refatrix:{ order_2025:33527.07, order_2026:114595.62, yoy:2.418, survey_count:157, survey_note:"RUJAC 전시회 · 수기 응답 추후 정리" },
+      refatrix:{ order_2025:33527.07, order_2026:114595.62, yoy:2.418, survey_count:157, survey_note:"RUJAC 전시회 현장 설문 157건 집계 완료", rujac:{"n":157,"aware_none":56,"after_pos":69,"ds":80,"factors":[{"l":"Calidad / Durabilidad","p":64},{"l":"Precio","p":27},{"l":"Disponibilidad","p":17},{"l":"Garantía","p":11},{"l":"Ajuste correcto","p":10}],"motiv":[{"l":"Precio competitivo","p":45},{"l":"Calidad comprobada","p":43},{"l":"Garantía","p":17},{"l":"Recomendación de un mecánico","p":7}],"support":[{"l":"Capacitación técnica","p":38},{"l":"Catálogos","p":25},{"l":"Muestras","p":13},{"l":"Garantía","p":13},{"l":"Videos de instalación","p":10}],"promo":[{"l":"Capacitación","p":27},{"l":"Demostración del producto","p":25},{"l":"Descuento","p":15},{"l":"Promoción por paquete","p":14},{"l":"Incentivo / regalo","p":13},{"l":"Muestra gratis","p":10}],"problem":[{"l":"Baja durabilidad","p":38},{"l":"Ruido / vibración","p":27},{"l":"Calidad inconsistente","p":12}],"exp15":62} },
       brabham:{ order_2025:80488.13, order_2026:70268.22, yoy:-0.127, issue:"INMETRO 인증 미확보로 Survey / 판매 제한",
         status:"9월 Shock Absorber INMETRO 인증 절차 착수 · 연말까지 진행 상황 확인" } } },
   action_plan:[
@@ -1486,6 +1491,20 @@ function sepMonth(A){
    +`<div class="grid2"><div><div class="sub3" style="margin:4px 0 2px">고객별 Order YoY (USD)</div>`
    +gbar(['REFATRIX','BRABHAM'],[{name:'2025',color:C1,vals:[rf.order_2025,bb.order_2025]},{name:'2026',color:C26,vals:[rf.order_2026,bb.order_2026]}],{W:340,H:190,fmtV:v=>'$'+Math.round(v/1000)+'K'})
    +`</div><div style="align-self:center"><div class="sub3" style="margin-bottom:4px">BRABHAM INMETRO 인증</div>${badge('인증 진행 중','wn')}<p class="note" style="margin-top:6px">${esc(bb.issue)} · ${esc(bb.status)}</p></div></div></div>`;
+
+  // ── RUJAC Survey Insight ──
+  if(rf.rujac){const rj=rf.rujac;
+  h+=`<div class="card"><h3>RUJAC Survey Insight · REFATRIX (멕시코)</h3>
+    <p class="note">RUJAC 전시회 현장 설문 <b>${rj.n}건</b> · 경력 15년 이상 ${rj.exp15}% · 조향·현가(Dirección y suspensión) 취급 <b>${rj.ds}%</b>로 CTR 주력 카테고리와 정확히 일치.</p>`
+   +kgrid([
+     {lab:'설문 응답',val:rj.n+'건',sub:'RUJAC 전시회 현장',hero:true},
+     {lab:'CTR 사전 인지 ‘모름’',val:rj.aware_none+'%',sub:'행사 전 브랜드 미인지',cls:'dn'},
+     {lab:'접촉 후 구매·추천 의향',val:rj.after_pos+'%',sub:'Muy probable + Probable',cls:'up',hero:true},
+     {lab:'조향·현가 취급',val:rj.ds+'%',sub:'CTR 주력 카테고리'}],'k4')
+   +`<div class="grid2"><div>${pctBars('브랜드 선택 시 중요 요인',rj.factors,'var(--s1)')}${pctBars('신규 브랜드 시도 동기',rj.motiv,'var(--good)')}</div>`
+   +`<div>${pctBars('추천에 필요한 지원',rj.support,'var(--o5)')}${pctBars('선호하는 프로모션',rj.promo,'var(--brand)')}</div></div>`
+   +`<p class="note" style="font-size:12.5px;margin-top:8px"><b>시사점:</b> 응답자 ${rj.aware_none}%가 CTR를 처음 접했으나 설명 후 ${rj.after_pos}%가 구매·추천 의향을 보여 상단 인지 전환이 강함. 선택 기준은 가격보다 <b>품질·내구성(${rj.factors[0].p}%)</b>이며, 신규 브랜드 전환 동기도 가격경쟁력(${rj.motiv[0].p}%)과 검증된 품질(${rj.motiv[1].p}%)이 양대 축. 현장 니즈는 <b>기술 교육·카탈로그·제품 시연</b> 중심이라 할인보다 교육·시연형 프로모션이 효과적.</p>`
+   +`</div>`;}
 
   // ── Action Plan ──
   h+=`<div class="card"><h3>October–November Action Plan</h3><div class="tblwrap"><table class="lts"><thead><tr><th>Region</th><th>Action</th><th>Owner / Customer</th><th>KPI / Output</th><th>Timing</th></tr></thead><tbody>`
