@@ -1248,34 +1248,52 @@ function pctBars(title,arr,color){
  arr.forEach(d=>{h+=`<div style="display:flex;align-items:center;gap:8px;margin:3px 0"><div style="flex:0 0 150px;font-size:11.5px;color:var(--ink2);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(d.l)}</div><div style="flex:1;background:var(--track);border-radius:4px;height:14px;position:relative"><div style="width:${d.p}%;background:${color};height:100%;border-radius:4px"></div></div><div style="flex:0 0 34px;font-size:11.5px;font-weight:700;color:var(--ink)">${d.p}%</div></div>`;});
  return h;}
 function custOrderBlock(region,title,A){
- const rows=(D.cust_delta||[]).filter(r=>r.region===region&&((r.a26||0)>0||(r.a25||0)>0)).sort((a,b)=>(b.a26||0)-(a.a26||0));
- if(!rows.length) return '';
- const t25=rows.reduce((a,r)=>a+(r.a25||0),0), t26=rows.reduce((a,r)=>a+(r.a26||0),0);
+ const raw=(D.cust_delta||[]).filter(r=>r.region===region&&((r.a26||0)>0||(r.a25||0)>0));
+ if(!raw.length) return '';
  const C25='var(--s1)', C26b='var(--brand)';
  const yoyC=(a,b)=>a>0?`<span class="${cls((b-a)/a*100)}">${fmtPC((b-a)/a*100)}</span>`:(b>0?'<span class="pill na">신규</span>':'–');
- const top=rows.slice(0,6);
- let h=`<div class="card"><h3>${esc(title)}</h3><p class="note">참여 고객사의 ChoiceKit 대상 오더(sell-in) 2025 vs 2026 비교 · USD · 권역 합계 ${fmtC(t25)} → <b>${fmtC(t26)}</b> (${yoyC(t25,t26)})</p>`;
- h+=`<div><div class="sub3" style="margin:2px 0 6px">상위 고객사 2025 vs 2026 (USD)</div>`
-  +gbar(top.map(r=>(r.name||'').length>13?(r.name.slice(0,12)+'…'):r.name),[{name:'2025',color:C25,vals:top.map(r=>r.a25||0)},{name:'2026',color:C26b,vals:top.map(r=>r.a26||0)}],{W:1040,H:360,delta:1,fmtV:v=>'$'+Math.round(v/1000)+'K'})
-  +`</div><div style="margin-top:12px"><div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr><th>고객사</th><th>2025</th><th>2026</th><th>YoY</th></tr></thead><tbody>`
-  +rows.map(r=>`<tr><td style="font-size:11.5px;word-break:keep-all">${esc(r.name||'')}${r.country?`<span class="sub3"> · ${esc(r.country)}</span>`:''}</td><td class="num sub3">${r.a25?fmtC(r.a25):'–'}</td><td class="num">${r.a26?fmtC(r.a26):'–'}</td><td class="num">${yoyC(r.a25||0,r.a26||0)}</td></tr>`).join('')
-  +`<tr style="border-top:2px solid var(--ring)"><td><b>합계 (${rows.length}곳)</b></td><td class="num sub3"><b>${fmtC(t25)}</b></td><td class="num"><b>${fmtC(t26)}</b></td><td class="num"><b>${yoyC(t25,t26)}</b></td></tr>`
-  +`</tbody></table></div></div>`;
- const RMAP={ASIA:'ASIA'};
- const ap=((A&&A.action_plan)||[]).filter(p=>p.region===(RMAP[region]||region));
+ const progList=[...new Set(raw.map(r=>r.program))];
+ const plab=p=>(p||'').replace('Asian vehicle','Asian 차종').replace('European vehicle','European 차종').replace('SELL-OUT Promotion','Sell-out').replace('Strategic Partner Program','Strategic');
+ const multi=progList.length>1;
+ // 고객사(code) 기준 중복 병합 + 프로그램별 분리
+ const byCode={};
+ raw.forEach(r=>{const key=r.code||r.name; const o=byCode[key]||(byCode[key]={name:r.name,country:r.country||'',a25:0,a26:0,pg:{}});
+   o.a25+=r.a25||0; o.a26+=r.a26||0; if(!o.country&&r.country)o.country=r.country;
+   const pp=o.pg[r.program]||(o.pg[r.program]={a25:0,a26:0}); pp.a25+=r.a25||0; pp.a26+=r.a26||0;});
+ const uniq=Object.values(byCode);
+ const t25=uniq.reduce((a,r)=>a+r.a25,0), t26=uniq.reduce((a,r)=>a+r.a26,0);
+ const top=uniq.slice().sort((a,b)=>b.a26-a.a26).slice(0,6);
+ const trows=uniq.slice().sort((a,b)=>(a.country||'zz').localeCompare(b.country||'zz')||(b.a26-a.a26));
+ // ── 차달 캠페인 계획 (상단으로 이동) ──
+ const ap=((A&&A.action_plan)||[]).filter(p=>p.region===region);
  const content={
    CIS: (A&&A.cis)?`Catalogue 확산(조회 ${A.cis.views.toLocaleString()} · 다운로드 ${A.cis.downloads_total}) · Meta 콘텐츠 ${(A.cis.meta_posts||[]).length}건 집행`:'',
    ASIA: (A&&A.sea)?`Sell-out 5개 프로그램 운영 · 공식 집계 $${Math.round(A.sea.sellout_actual).toLocaleString()} (달성 ${(A.sea.achievement_rate*100).toFixed(1)}%)`:'',
    MENA: 'Shock Absorber · Brake Pad Portfolio Expansion 프로모션',
    LATAM: (A&&A.latam)?`PLUSCAR O2O 광고(FB 클릭 ${A.latam.pluscar.fb_link_clicks.toLocaleString()}) · Super Repuestos Survey ${A.latam.super_repuestos.survey_responses}건 · 중국차종 Awareness 콘텐츠 10월 발행 예정`:''
  }[region]||'';
+ let plan='';
  if(content||ap.length){
-   h+=`<div class="sub3" style="color:var(--ink2);font-size:12px;margin:12px 0 3px"><b>차달 캠페인 계획 (10~11월)</b></div>`;
-   if(content) h+=`<p class="note" style="font-size:12px;padding-left:0;margin:0 0 6px"><b>진행 콘텐츠·활동:</b> ${content}</p>`;
-   if(ap.length) h+=`<div class="tblwrap"><table class="lts" style="font-size:12px;table-layout:fixed;width:100%"><colgroup><col style="width:38%"><col style="width:26%"><col style="width:24%"><col style="width:12%"></colgroup><thead><tr><th>실행 과제</th><th>Owner</th><th>KPI/산출물</th><th>시점</th></tr></thead><tbody>`
+   plan+=`<div class="sub3" style="color:var(--ink2);font-size:12px;margin:2px 0 3px"><b>차달 캠페인 계획 (10~11월)</b></div>`;
+   if(content) plan+=`<p class="note" style="font-size:12px;padding-left:0;margin:0 0 6px"><b>진행 콘텐츠·활동:</b> ${content}</p>`;
+   if(ap.length) plan+=`<div class="tblwrap"><table class="lts" style="font-size:12px;table-layout:fixed;width:100%"><colgroup><col style="width:38%"><col style="width:26%"><col style="width:24%"><col style="width:12%"></colgroup><thead><tr><th>실행 과제</th><th>Owner</th><th>KPI/산출물</th><th>시점</th></tr></thead><tbody>`
      +ap.map(p=>`<tr><td style="text-align:left">${esc(p.action)}</td><td style="text-align:left;font-size:11px">${esc(p.owner)}</td><td style="text-align:left;font-size:11px" class="sub3">${esc(p.kpi)}</td><td style="text-align:center">${esc(p.timing)}</td></tr>`).join('')
      +`</tbody></table></div>`;
  }
+ let h=`<div class="card"><h3>${esc(title)}</h3><p class="note">참여 고객사의 ChoiceKit 대상 오더(sell-in) 2025 vs 2026 비교 · USD · 권역 합계 ${fmtC(t25)} → <b>${fmtC(t26)}</b> (${yoyC(t25,t26)}) · 고객사 ${uniq.length}곳</p>`;
+ if(plan) h+=`<div style="margin:4px 0 14px;padding:10px 12px;background:var(--head-soft,rgba(127,127,127,.06));border-radius:8px">`+plan+`</div>`;
+ h+=`<div><div class="sub3" style="margin:2px 0 6px">상위 고객사 2025 vs 2026 (USD)</div>`
+  +gbar(top.map(r=>(r.name||'').length>13?(r.name.slice(0,12)+'…'):r.name),[{name:'2025',color:C25,vals:top.map(r=>r.a25)},{name:'2026',color:C26b,vals:top.map(r=>r.a26)}],{W:1040,H:360,delta:1,fmtV:v=>'$'+Math.round(v/1000)+'K'})
+  +`</div>`;
+ h+=`<div style="margin-top:12px"><div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr><th>나라</th><th>고객사</th><th>2025 종합</th><th>2026 종합</th><th>YoY</th>`
+   +(multi?progList.map(p=>`<th>${esc(plab(p))} 25→26</th>`).join(''):'')
+   +`</tr></thead><tbody>`
+  +trows.map(r=>`<tr><td class="sub3" style="font-size:10.5px;white-space:nowrap">${esc(r.country||'–')}</td><td style="font-size:11.5px;word-break:keep-all">${esc(r.name||'')}</td><td class="num sub3">${r.a25?fmtC(r.a25):'–'}</td><td class="num">${r.a26?fmtC(r.a26):'–'}</td><td class="num">${yoyC(r.a25,r.a26)}</td>`
+     +(multi?progList.map(p=>{const x=r.pg[p];return `<td class="num sub3" style="font-size:10px">${x&&(x.a25||x.a26)?`${x.a25?fmtC(x.a25):'$0'}→${x.a26?fmtC(x.a26):'$0'}`:'–'}</td>`;}).join(''):'')
+     +`</tr>`).join('')
+  +`<tr style="border-top:2px solid var(--ring)"><td></td><td><b>합계 (${uniq.length}곳)</b></td><td class="num sub3"><b>${fmtC(t25)}</b></td><td class="num"><b>${fmtC(t26)}</b></td><td class="num"><b>${yoyC(t25,t26)}</b></td>`
+    +(multi?progList.map(p=>{const pa=uniq.reduce((s,r)=>s+((r.pg[p]||{}).a25||0),0),pb=uniq.reduce((s,r)=>s+((r.pg[p]||{}).a26||0),0);return `<td class="num sub3" style="font-size:10px"><b>${fmtC(pa)}→${fmtC(pb)}</b></td>`;}).join(''):'')
+    +`</tr></tbody></table></div></div>`;
  h+=`</div>`;
  return h;}
 function sellinOrderTbl(a){if(!a)return '';
@@ -1527,7 +1545,7 @@ function sepMonth(A){
    +`<div class="sub3" style="color:var(--ink2);font-size:12px;margin:12px 0 3px"><b>권역별 핵심 성과 · 다음 단계</b></div>`
    +`<div class="tblwrap"><table class="lts" style="table-layout:fixed;width:100%"><colgroup><col style="width:15%"><col style="width:42%"><col style="width:13%"><col style="width:30%"></colgroup><thead><tr><th>권역 · 프로그램</th><th style="background:var(--brand);color:#fff">핵심 성과 (9월)</th><th>상태</th><th>다음 단계</th></tr></thead><tbody>`
    +[
-     {rg:'CIS · Catalogue/Retail',perf:`Catalogue 조회 ${cis.views.toLocaleString()} · 다운로드 ${cis.downloads_total} (전환 ${(cis.download_rate*100).toFixed(1)}%) · Asian ${cis.downloads_asian}/European ${cis.downloads_european} · Meta 광고 집행`,st:`콘텐츠 ${cis.content_done}/${cis.content_total}`,next:'11월 현지 협업 활동 · Free Replacement Event · Tech Seminar 대상 협의·선정 후 진행 (Complex·Bauten·Alliance Motors[키르기스스탄] 진행 예정 · 아제르바이잔 Drive Motors 협의 중)'},
+     {rg:'CIS · Catalogue/Retail',perf:`Catalogue 조회 ${cis.views.toLocaleString()} · 다운로드 ${cis.downloads_total} (전환 ${(cis.download_rate*100).toFixed(1)}%) · Asian ${cis.downloads_asian}/European ${cis.downloads_european} · Meta 광고 집행`,st:`콘텐츠 ${cis.content_done}/${cis.content_total}`,next:'하단 CIS 차달 캠페인 계획 표 참조'},
      {rg:'ASIA · Sell-out',perf:`Sell-out $${Math.round(sea.sellout_actual).toLocaleString()} / 목표 대비 <b>${(sea.achievement_rate*100).toFixed(1)}%</b> · Sales Champion ${(sea.programs[0].achievement*100).toFixed(0)}% 견인 · Loyalty ${(sea.programs[1].achievement*100).toFixed(0)}% · POSM ${(sea.programs[2].achievement*100).toFixed(0)}%`,st:`목표 초과 · 미제출 ${sea.pending_badges.length}건`,next:'Chuan Lam·Young Auto sell-out 데이터 <b>미제출 → 지속 독촉</b> · Mast/Nam Bac POSM(오더 실적 연동 매장 진열·전시물 지원 프로그램) 추가 Push · ATC·New Product·Display 증빙 회수'},
      {rg:'LATAM · O2O (PLUSCAR)',perf:`O2O 광고 ${pl.ad_date} · FB 클릭 ${pl.fb_link_clicks.toLocaleString()} · Survey ${pl.survey_before}→${pl.survey_after} · 대상 품목 비중 ${(pl.share_2025*100).toFixed(1)}%→<b>${(pl.share_2026*100).toFixed(1)}%</b> (전체 ${pc(pl.total_yoy)}에도 대상 ${pc(pl.promo_yoy)} 방어)`,st:'현장 반응 확인',next:'2026 9~10월 Sell-out·SKU별 데이터 수령 (협의 중)'},
      {rg:'LATAM · Survey (S.Repuestos)',perf:`Survey ${sr.survey_responses}건 · 보증 선호 <b>${(sr.warranty_rate*100).toFixed(0)}%</b> · 니즈: ${sr.key_needs.slice(0,3).map(k=>k.split(' ')[0]).join('·')}`,st:'Sell-out 데이터 수령(세분화 필요)',next:'정비사 기술 세미나 결합 · 11월 2027 계획 논의'},
@@ -1572,7 +1590,7 @@ function sepMonth(A){
    +`<h4 class="soh">프로그램별 성과</h4><div class="tblwrap"><table class="lts"><thead><tr><th>프로그램</th><th>참여</th><th>Target</th><th>실적 (USD)</th><th>달성률</th><th>해석</th></tr></thead><tbody>`
    +sea.programs.map(p=>`<tr><td style="text-align:left">${esc(p.program)}</td><td style="text-align:center">${p.customers}</td><td class="num sub3">${p.target==null?'–':'$'+p.target.toLocaleString()}</td><td>${p.actual==null?'<span style="color:var(--muted)">미제공</span>':'$'+Math.round(p.actual).toLocaleString()}</td><td style="text-align:center;font-weight:700;color:${p.achievement==null?'var(--muted)':p.achievement>=1?'var(--good)':p.achievement>=.5?'var(--warn)':'var(--serious)'}">${p.achievement==null?'–':(p.achievement*100).toFixed(0)+'%'}</td><td style="text-align:left;font-size:12.5px">${esc(p.note)}</td></tr>`).join('')
    +`</tbody></table></div>`
-   +`<p class="note" style="margin:4px 0 0;font-size:12px"><b>Sales Champion Award 참여 8개사:</b> Mast·Nam Bac·GTA (VN) · GP·CSH·ATC (TH) · Chuan Lam·Young Auto (PH, 집계 대기) — 실적 $531,154는 데이터 수령분 기준</p>`
+   +`<p class="note" style="margin:4px 0 0;font-size:12px"><b>Sales Champion Award 참여 8개사:</b> Mast·Nam Bac·GTA (VN)·GP (TH) 수령(4개사) · CSH·ATC (TH)·Chuan Lam·Young Auto (PH) 집계 대기(4개사) — 실적 $531,154는 수령분 기준</p>`
    +`<h4 class="soh">프로그램별 달성률</h4>`+sea.programs.filter(p=>p.achievement!=null).map(p=>achBar(p.achievement,p.program,`실적 $${Math.round(p.actual).toLocaleString()} · ${p.customers}개사`)).join('')
    +`<h4 class="soh">고객사별 성과 (Target → Result)</h4><div class="tblwrap"><table class="lts" style="table-layout:fixed;width:100%"><colgroup><col style="width:13%"><col style="width:18%"><col style="width:16%"><col style="width:16%"><col style="width:11%"><col style="width:26%"></colgroup><thead><tr><th>국가</th><th>고객사</th><th>Target</th><th>Result</th><th>달성률</th><th>상태</th></tr></thead><tbody>`
    +sea.cust_perf.map(c=>{const col=c.st==='Achieved'?'var(--good)':c.st==='Near Target'?'var(--warn)':c.st.indexOf('Pending')>=0?'var(--muted)':'var(--serious)';
