@@ -1229,7 +1229,7 @@ function pctBars(title,arr,color){
  let h=`<div class="sub3" style="color:var(--ink2);font-size:12px;margin:8px 0 4px;font-weight:700">${title}</div>`;
  arr.forEach(d=>{h+=`<div style="display:flex;align-items:center;gap:8px;margin:3px 0"><div style="flex:0 0 150px;font-size:11.5px;color:var(--ink2);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(d.l)}</div><div style="flex:1;background:var(--track);border-radius:4px;height:14px;position:relative"><div style="width:${d.p}%;background:${color};height:100%;border-radius:4px"></div></div><div style="flex:0 0 34px;font-size:11.5px;font-weight:700;color:var(--ink)">${d.p}%</div></div>`;});
  return h;}
-function custOrderBlock(region,title){
+function custOrderBlock(region,title,A){
  const rows=(D.cust_delta||[]).filter(r=>r.region===region&&((r.a26||0)>0||(r.a25||0)>0)).sort((a,b)=>(b.a26||0)-(a.a26||0));
  if(!rows.length) return '';
  const t25=rows.reduce((a,r)=>a+(r.a25||0),0), t26=rows.reduce((a,r)=>a+(r.a26||0),0);
@@ -1242,7 +1242,23 @@ function custOrderBlock(region,title){
   +`</div><div><div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr><th>고객사</th><th>2025</th><th>2026</th><th>YoY</th></tr></thead><tbody>`
   +rows.map(r=>`<tr><td style="font-size:11.5px;word-break:keep-all">${esc(r.name||'')}${r.country?`<span class="sub3"> · ${esc(r.country)}</span>`:''}</td><td class="num sub3">${r.a25?fmtC(r.a25):'–'}</td><td class="num">${r.a26?fmtC(r.a26):'–'}</td><td class="num">${yoyC(r.a25||0,r.a26||0)}</td></tr>`).join('')
   +`<tr style="border-top:2px solid var(--ring)"><td><b>합계 (${rows.length}곳)</b></td><td class="num sub3"><b>${fmtC(t25)}</b></td><td class="num"><b>${fmtC(t26)}</b></td><td class="num"><b>${yoyC(t25,t26)}</b></td></tr>`
-  +`</tbody></table></div></div></div></div>`;
+  +`</tbody></table></div></div></div>`;
+ const RMAP={ASIA:'SEA'};
+ const ap=((A&&A.action_plan)||[]).filter(p=>p.region===(RMAP[region]||region));
+ const content={
+   CIS: (A&&A.cis)?`Catalogue 확산(조회 ${A.cis.views.toLocaleString()} · 다운로드 ${A.cis.downloads_total}) · Meta 콘텐츠 ${(A.cis.meta_posts||[]).length}건 집행`:'',
+   ASIA: (A&&A.sea)?`Sell-out 5개 프로그램 운영 · 공식 집계 $${Math.round(A.sea.sellout_actual).toLocaleString()} (달성 ${(A.sea.achievement_rate*100).toFixed(1)}%)`:'',
+   MENA: 'Shock Absorber · Brake Pad Portfolio Expansion 프로모션',
+   LATAM: (A&&A.latam)?`PLUSCAR O2O 광고(FB 클릭 ${A.latam.pluscar.fb_link_clicks.toLocaleString()}) · Super Repuestos Survey ${A.latam.super_repuestos.survey_responses}건 · 중국차종 Awareness 콘텐츠 10월 발행 예정`:''
+ }[region]||'';
+ if(content||ap.length){
+   h+=`<div class="sub3" style="color:var(--ink2);font-size:12px;margin:12px 0 3px"><b>차달 캠페인 계획 (10~11월)</b></div>`;
+   if(content) h+=`<p class="note" style="font-size:12px;padding-left:0;margin:0 0 6px"><b>진행 콘텐츠·활동:</b> ${content}</p>`;
+   if(ap.length) h+=`<div class="tblwrap"><table class="lts" style="font-size:12px;table-layout:fixed;width:100%"><colgroup><col style="width:38%"><col style="width:26%"><col style="width:24%"><col style="width:12%"></colgroup><thead><tr><th>실행 과제</th><th>Owner</th><th>KPI/산출물</th><th>시점</th></tr></thead><tbody>`
+     +ap.map(p=>`<tr><td style="text-align:left">${esc(p.action)}</td><td style="text-align:left;font-size:11px">${esc(p.owner)}</td><td style="text-align:left;font-size:11px" class="sub3">${esc(p.kpi)}</td><td style="text-align:center">${esc(p.timing)}</td></tr>`).join('')
+     +`</tbody></table></div>`;
+ }
+ h+=`</div>`;
  return h;}
 function sellinOrderTbl(a){if(!a)return '';
  const f=v=>'$'+Math.round(v).toLocaleString(),fp=v=>v.toFixed(1)+'%';
@@ -1495,7 +1511,7 @@ function sepMonth(A){
    +`<tr><td>Asian/European</td><td style="text-align:left">잔여 소재</td><td>예정</td><td>${badge('준비 중','wn')}</td></tr></tbody></table></div>`
    +`<h4 class="soh">후속 실행</h4><ul class="slist">`+cis.followup.map(x=>`<li>${esc(x)}</li>`).join('')+`</ul></div>`;
 
-  h+=custOrderBlock('CIS','CIS · 올해 vs 전년 오더 추이 (참여 고객사)');
+  h+=custOrderBlock('CIS','CIS · 올해 vs 전년 오더 추이 (참여 고객사)',A);
   // ── SEA ──
   h+=`<div class="card"><h3>SEA · Sell-out Promotion Performance</h3>
     <p class="note">공식 Sell-out 집계 <b>$${Math.round(sea.sellout_actual).toLocaleString()}</b>(목표 $${Math.round(sea.sellout_target).toLocaleString()} · 달성 ${(sea.achievement_rate*100).toFixed(1)}%) · 5개국 12개사. 성과는 Sales Champion Award(8개사)와 Long-Term Loyalty에 집중. 아래 프로그램·고객사 상세는 수령분 기준.</p>`
@@ -1517,7 +1533,7 @@ function sepMonth(A){
    +`</tbody></table></div><p class="note" style="margin-top:6px"><b>9월 데이터 반영 상태:</b> ${esc(sea.sep_reflect)}</p>`
    +`<div style="margin-top:8px"><span class="sub3">미제출: </span>`+sea.pending_badges.map(b=>badge(b,'wn')).join('')+`</div></div>`;
 
-  h+=custOrderBlock('ASIA','SEA(ASIA) · 올해 vs 전년 오더 추이 (참여 고객사)');
+  h+=custOrderBlock('ASIA','SEA(ASIA) · 올해 vs 전년 오더 추이 (참여 고객사)',A);
   // ── MENA ──
   h+=`<div class="card"><h3>MENA · Shock Absorber &amp; Brake Pad Promotion</h3>
     <p class="note">Dynatrade와 MESK에서 9월 추가 오더 발생 · 누적 오더 USD ${mena.cumulative_order.toLocaleString()}로 제한적이나 실질 전환 확인.</p>`
@@ -1528,7 +1544,7 @@ function sepMonth(A){
    +gbar(mena.september_orders.map(o=>o.customer),[{name:'9월 오더',color:C2,vals:mena.september_orders.map(o=>o.amount_usd)}],{W:320,H:180,fmtV:v=>'$'+Math.round(v).toLocaleString(),groupColors:[C1,C2]})
    +`</div><div style="align-self:center">`+mena.products.map(p=>badge(p,'ok')).join(' ')+`<p class="note" style="margin-top:8px">11월 마감 전까지 오더 발생 고객의 품목별 재주문 가능성 관리.</p></div></div></div>`;
 
-  h+=custOrderBlock('MENA','MENA · 올해 vs 전년 오더 추이 (참여 고객사)');
+  h+=custOrderBlock('MENA','MENA · 올해 vs 전년 오더 추이 (참여 고객사)',A);
   // ── LATAM Sell-out Activation ──
   h+=`<div class="card"><h3>LATAM · Sell-out Activation Progress</h3>
     <p class="note">PLUSCAR는 전체 판매 감소 속에서도 프로모션 대상 품목 판매량을 유지하고 판매 비중을 확대. O2O 광고 게재 ${pl.ad_date}.</p>
@@ -1569,7 +1585,7 @@ function sepMonth(A){
    +`<p class="note" style="font-size:11.5px;padding-left:0;margin-top:7px"><b>참고 · Baseline(콘텐츠 발행 전):</b> 9월 중국차종 오더 $${cv.sep_amt.toLocaleString()} · ${cv.countries}개국 ${cv.buyers}개사 ${cv.skus} SKU — 10월 전환 추적의 비교 기준선으로만 사용하며 프로모션 성과로 집계하지 않습니다.</p>`
    +`</div>`;}
 
-  h+=custOrderBlock('LATAM','LATAM · 올해 vs 전년 오더 추이 (참여 고객사)');
+  h+=custOrderBlock('LATAM','LATAM · 올해 vs 전년 오더 추이 (참여 고객사)',A);
   // ── LATAM SteerStar ──
   const rf=st.refatrix, bb=st.brabham;
   h+=`<div class="card"><h3>LATAM SteerStar · REFATRIX &amp; BRABHAM</h3>
