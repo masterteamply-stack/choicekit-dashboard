@@ -1255,12 +1255,12 @@ function custOrderBlock(region,title,A){
  const yoyC=(a,b)=>a>0?`<span class="${cls((b-a)/a*100)}">${fmtPC((b-a)/a*100)}</span>`:(b>0?'<span class="pill na">신규</span>':'–');
  const top=rows.slice(0,6);
  let h=`<div class="card"><h3>${esc(title)}</h3><p class="note">참여 고객사의 ChoiceKit 대상 오더(sell-in) 2025 vs 2026 비교 · USD · 권역 합계 ${fmtC(t25)} → <b>${fmtC(t26)}</b> (${yoyC(t25,t26)})</p>`;
- h+=`<div class="grid2"><div><div class="sub3" style="margin:2px 0 4px">상위 고객사 2025 vs 2026 (USD)</div>`
-  +gbar(top.map(r=>(r.name||'').length>13?(r.name.slice(0,12)+'…'):r.name),[{name:'2025',color:C25,vals:top.map(r=>r.a25||0)},{name:'2026',color:C26b,vals:top.map(r=>r.a26||0)}],{W:360,H:200,delta:1,fmtV:v=>'$'+Math.round(v/1000)+'K'})
-  +`</div><div><div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr><th>고객사</th><th>2025</th><th>2026</th><th>YoY</th></tr></thead><tbody>`
+ h+=`<div><div class="sub3" style="margin:2px 0 6px">상위 고객사 2025 vs 2026 (USD)</div>`
+  +gbar(top.map(r=>(r.name||'').length>13?(r.name.slice(0,12)+'…'):r.name),[{name:'2025',color:C25,vals:top.map(r=>r.a25||0)},{name:'2026',color:C26b,vals:top.map(r=>r.a26||0)}],{W:1040,H:360,delta:1,fmtV:v=>'$'+Math.round(v/1000)+'K'})
+  +`</div><div style="margin-top:12px"><div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr><th>고객사</th><th>2025</th><th>2026</th><th>YoY</th></tr></thead><tbody>`
   +rows.map(r=>`<tr><td style="font-size:11.5px;word-break:keep-all">${esc(r.name||'')}${r.country?`<span class="sub3"> · ${esc(r.country)}</span>`:''}</td><td class="num sub3">${r.a25?fmtC(r.a25):'–'}</td><td class="num">${r.a26?fmtC(r.a26):'–'}</td><td class="num">${yoyC(r.a25||0,r.a26||0)}</td></tr>`).join('')
   +`<tr style="border-top:2px solid var(--ring)"><td><b>합계 (${rows.length}곳)</b></td><td class="num sub3"><b>${fmtC(t25)}</b></td><td class="num"><b>${fmtC(t26)}</b></td><td class="num"><b>${yoyC(t25,t26)}</b></td></tr>`
-  +`</tbody></table></div></div></div>`;
+  +`</tbody></table></div></div>`;
  const RMAP={ASIA:'SEA'};
  const ap=((A&&A.action_plan)||[]).filter(p=>p.region===(RMAP[region]||region));
  const content={
