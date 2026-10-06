@@ -1264,24 +1264,7 @@ function custOrderBlock(region,title,A,extra){
  const t25=uniq.reduce((a,r)=>a+r.a25,0), t26=uniq.reduce((a,r)=>a+r.a26,0);
  const top=uniq.slice().sort((a,b)=>b.a26-a.a26).slice(0,6);
  const trows=uniq.slice().sort((a,b)=>(a.country||'zz').localeCompare(b.country||'zz')||(b.a26-a.a26));
- // ── 차달 캠페인 계획 (상단으로 이동) ──
- const ap=((A&&A.action_plan)||[]).filter(p=>p.region===region);
- const content={
-   CIS: (A&&A.cis)?`Catalogue 확산(조회 ${A.cis.views.toLocaleString()} · 다운로드 ${A.cis.downloads_total}) · Meta 콘텐츠 ${(A.cis.meta_posts||[]).length}건 집행`:'',
-   ASIA: (A&&A.sea)?`Sell-out 5개 프로그램 운영 · 공식 집계 $${Math.round(A.sea.sellout_actual).toLocaleString()} (달성 ${(A.sea.achievement_rate*100).toFixed(1)}%)`:'',
-   MENA: 'Shock Absorber · Brake Pad Portfolio Expansion 프로모션',
-   LATAM: (A&&A.latam)?`PLUSCAR O2O 광고(FB 클릭 ${A.latam.pluscar.fb_link_clicks.toLocaleString()}) · Super Repuestos Survey ${A.latam.super_repuestos.survey_responses}건 · 중국차종 Awareness 콘텐츠 10월 발행 예정`:''
- }[region]||'';
- let plan='';
- if(content||ap.length){
-   plan+=`<div class="sub3" style="color:var(--ink2);font-size:12px;margin:2px 0 3px"><b>차달 캠페인 계획 (10~11월)</b></div>`;
-   if(content) plan+=`<p class="note" style="font-size:12px;padding-left:0;margin:0 0 6px"><b>진행 콘텐츠·활동:</b> ${content}</p>`;
-   if(ap.length) plan+=`<div class="tblwrap"><table class="lts" style="font-size:12px;table-layout:fixed;width:100%"><colgroup><col style="width:38%"><col style="width:26%"><col style="width:24%"><col style="width:12%"></colgroup><thead><tr><th>실행 과제</th><th>Owner</th><th>KPI/산출물</th><th>시점</th></tr></thead><tbody>`
-     +ap.map(p=>`<tr><td style="text-align:left">${esc(p.action)}</td><td style="text-align:left;font-size:11px">${esc(p.owner)}</td><td style="text-align:left;font-size:11px" class="sub3">${esc(p.kpi)}</td><td style="text-align:center">${esc(p.timing)}</td></tr>`).join('')
-     +`</tbody></table></div>`;
- }
- let h=`<div class="card"><h3>${esc(title)}</h3><p class="note">참여 고객사의 ChoiceKit 연관 오더(sell-in) 2025 vs 2026 비교 · USD · 권역 합계 ${fmtC(t25)} → <b>${fmtC(t26)}</b> (${yoyC(t25,t26)}) · 고객사 ${uniq.length}곳</p>`;
- if(plan) h+=`<div style="margin:4px 0 14px;padding:10px 12px;background:var(--head-soft,rgba(127,127,127,.06));border-radius:8px">`+plan+`</div>`;
+  let h=`<div class="card"><h3>${esc(title)}</h3><p class="note">참여 고객사의 ChoiceKit 연관 오더(sell-in) 2025 vs 2026 비교 · USD · 권역 합계 ${fmtC(t25)} → <b>${fmtC(t26)}</b> (${yoyC(t25,t26)}) · 고객사 ${uniq.length}곳</p>`;
  h+=`<div><div class="sub3" style="margin:2px 0 6px">상위 고객사 2025 vs 2026 (USD)</div>`
   +gbar(top.map(r=>(r.name||'').length>13?(r.name.slice(0,12)+'…'):r.name),[{name:'2025',color:C25,vals:top.map(r=>r.a25)},{name:'2026',color:C26b,vals:top.map(r=>r.a26)}],{W:1040,H:360,delta:1,fmtV:v=>'$'+Math.round(v/1000)+'K'})
   +`</div>`;
@@ -1548,18 +1531,19 @@ function sepMonth(A){
    +`<div class="sub3" style="color:var(--ink2);font-size:12px;margin:12px 0 3px"><b>권역별 핵심 성과 · 다음 단계</b></div>`
    +`<div class="tblwrap"><table class="lts" style="table-layout:fixed;width:100%"><colgroup><col style="width:15%"><col style="width:42%"><col style="width:13%"><col style="width:30%"></colgroup><thead><tr><th>권역 · 프로그램</th><th style="background:var(--brand);color:#fff">핵심 성과 (9월)</th><th>상태</th><th>다음 단계</th></tr></thead><tbody>`
    +[
-     {rg:'CIS · Catalogue/Retail',perf:`Catalogue 조회 ${cis.views.toLocaleString()} · 다운로드 ${cis.downloads_total} (전환 ${(cis.download_rate*100).toFixed(1)}%) · Asian ${cis.downloads_asian}/European ${cis.downloads_european} · Meta 광고 집행`,st:`콘텐츠 ${cis.content_done}/${cis.content_total}`,next:'하단 CIS 차달 캠페인 계획 표 참조'},
+     {rg:'CIS · Catalogue/Retail',perf:`Catalogue 조회 ${cis.views.toLocaleString()} · 다운로드 ${cis.downloads_total} (전환 ${(cis.download_rate*100).toFixed(1)}%) · Asian ${cis.downloads_asian}/European ${cis.downloads_european} · Meta 광고 집행`,st:`콘텐츠 ${cis.content_done}/${cis.content_total}`,next:'하단 October–November Action Plan 참조 (Free Replacement Event · Mechanic Support Kits)'},
      {rg:'ASIA · Sell-out',perf:`Sell-out $${Math.round(sea.sellout_actual).toLocaleString()} / 목표 대비 <b>${(sea.achievement_rate*100).toFixed(1)}%</b> · Sales Champion ${(sea.programs[0].achievement*100).toFixed(0)}% 견인 · Loyalty ${(sea.programs[1].achievement*100).toFixed(0)}% · POSM ${(sea.programs[2].achievement*100).toFixed(0)}%`,st:`목표 초과 · 미제출 ${sea.pending_badges.length}건`,next:'Chuan Lam·Young Auto sell-out 데이터 <b>미제출 → 지속 독촉</b> · Mast/Nam Bac POSM(오더 실적 연동 매장 진열·전시물 지원 프로그램) 추가 Push · ATC·New Product·Display 증빙 회수'},
      {rg:'LATAM · O2O (PLUSCAR)',perf:`O2O 광고 ${pl.ad_date} · FB 클릭 ${pl.fb_link_clicks.toLocaleString()} · Survey ${pl.survey_before}→${pl.survey_after} · 대상 품목 비중 ${(pl.share_2025*100).toFixed(1)}%→<b>${(pl.share_2026*100).toFixed(1)}%</b> (전체 ${pc(pl.total_yoy)}에도 대상 ${pc(pl.promo_yoy)} 방어)`,st:'현장 반응 확인',next:'2026 9~10월 Sell-out·SKU별 데이터 수령 (협의 중)'},
      {rg:'LATAM · Survey (S.Repuestos)',perf:`Survey ${sr.survey_responses}건 · 보증 선호 <b>${(sr.warranty_rate*100).toFixed(0)}%</b> · 니즈: ${sr.key_needs.slice(0,3).map(k=>k.split(' ')[0]).join('·')}`,st:'Sell-out 데이터 수령(세분화 필요)',next:'정비사 기술 세미나 결합 · 11월 2027 계획 논의'},
-     {rg:'MENA · Portfolio Expansion',perf:`9월 추가 오더 $${mena.september_total.toLocaleString()} (${mena.september_orders.map(o=>o.customer).join('·')}) · 누적 $${mena.cumulative_order.toLocaleString()} · ${mena.products.join('·')}`,st:'제한적 추가 오더',next:'Portfolio Expansion 지속 (타깃 $30,000)'}
+     {rg:'MENA · Portfolio Expansion',perf:`9월 추가 오더 $${mena.september_total.toLocaleString()} (${mena.september_orders.map(o=>o.customer).join('·')}) · 누적 $${mena.cumulative_order.toLocaleString()} · ${mena.products.join('·')}`,st:'제한적 추가 오더',next:'Portfolio Expansion 지속 (타깃 $30,000)'},
+     {rg:'NA · Strategic Partner (Lordco)',perf:`Sell-out 프로모션 미션 · SteerStar 미션 <b>달성 완료</b> · 한국 인센티브 트립 준비 중`,st:'미션 달성 · 트립 준비',next:'전략 고객으로 분류 · 전년 대비 <b>120% 오더 성장</b> 미션(법인장 협의)을 추가 달성하도록 지속 독려'}
    ].map(r=>`<tr><td style="font-size:13.5px;word-break:keep-all;overflow-wrap:anywhere"><b>${r.rg}</b></td><td style="font-size:14px;line-height:1.5;word-break:keep-all;overflow-wrap:anywhere;background:var(--hoverwash);border-left:3px solid var(--brand);font-weight:500;color:var(--ink)">${r.perf}</td><td style="font-size:13px;word-break:keep-all">${r.st}</td><td class="sub3" style="font-size:12.5px;word-break:keep-all;overflow-wrap:anywhere">${r.next}</td></tr>`).join('')
    +`</tbody></table></div>`
    +(A.outlook?`<div style="margin-top:13px;background:var(--hoverwash);border:1px solid var(--brand);border-left:4px solid var(--brand);border-radius:8px;padding:12px 15px"><div style="font-size:13px;font-weight:800;color:var(--brand);letter-spacing:.02em;margin-bottom:3px">10~11월 집중 관리</div><div style="font-size:14px;line-height:1.55;color:var(--ink)">${esc(A.outlook.replace(/^10~11월에는\s*/,''))}</div></div>`:'')
    +`</div>`;
 
   // ── CIS ──
-  h+=`<div class="card"><h3>CIS · Catalogue Awareness &amp; Retail Activation</h3>
+  h+=`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">CIS</span> <span style="font-size:12.5px;color:var(--ink2)">· 중앙아시아 · Catalogue Awareness &amp; Retail · 참여 고객사 오더</span></div><div class="card"><h3>CIS · Catalogue Awareness &amp; Retail Activation</h3>
     <p class="note">Asian / European 차종 Catalogue 확산으로 End User 인지와 리테일 채널 활용 기반을 동시에 확대. 대상: ${cis.target_countries.join(' · ')} · 게시 ${cis.posted_at}</p>`
    +kgrid([
      {lab:'게시물 조회수',val:cis.views.toLocaleString()},
@@ -1581,7 +1565,7 @@ function sepMonth(A){
 
   h+=custOrderBlock('CIS','CIS · 올해 vs 전년 오더 추이 (참여 고객사)',A);
   // ── ASIA ──
-  h+=`<div class="card"><h3>ASIA · Sell-out Promotion Performance</h3>
+  h+=`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">ASIA</span> <span style="font-size:12.5px;color:var(--ink2)">· 동남아 5개국 · Sell-out Promotion · 참여 고객사 오더</span></div><div class="card"><h3>ASIA · Sell-out Promotion Performance</h3>
     <p class="note">공식 Sell-out 집계 <b>$${Math.round(sea.sellout_actual).toLocaleString()}</b>(목표 $${Math.round(sea.sellout_target).toLocaleString()} · 달성 ${(sea.achievement_rate*100).toFixed(1)}%) · 5개국 12개사. 성과는 Sales Champion Award(8개사)와 Long-Term Loyalty에 집중. 아래 프로그램·고객사 상세는 수령분 기준.</p>`
    +kgrid([
      {lab:'Sell-out 실적 (공식)',val:'$'+Math.round(sea.sellout_actual).toLocaleString(),sub:`목표 $${Math.round(sea.sellout_target).toLocaleString()} · 달성 ${(sea.achievement_rate*100).toFixed(1)}% · ASIA Choice Kit 공식 집계(12개사)`,hero:true},
@@ -1605,7 +1589,7 @@ function sepMonth(A){
   h+=custOrderBlock('ASIA','ASIA · 올해 vs 전년 오더 추이 (참여 고객사)',A,_asiaExtra);
   
   // ── MENA ──
-  h+=`<div class="card"><h3>MENA · Shock Absorber &amp; Brake Pad Promotion</h3>
+  h+=`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">MENA</span> <span style="font-size:12.5px;color:var(--ink2)">· 중동 · Portfolio Expansion (Shock Absorber · Brake Pad)</span></div><div class="card"><h3>MENA · Shock Absorber &amp; Brake Pad Promotion</h3>
     <p class="note">Dynatrade와 MESK에서 9월 추가 오더 발생 · 누적 오더 USD ${mena.cumulative_order.toLocaleString()}로 제한적이나 실질 전환 확인.</p>`
    +kgrid([{lab:'9월 추가 오더',val:'$'+mena.september_total.toLocaleString(),hero:true,sub:'Dynatrade + MESK'},
      {lab:'누적 오더',val:'$'+mena.cumulative_order.toLocaleString()},
@@ -1616,7 +1600,7 @@ function sepMonth(A){
 
   h+=custOrderBlock('MENA','MENA · 올해 vs 전년 오더 추이 (참여 고객사)',A);
   // ── LATAM Sell-out Activation ──
-  h+=`<div class="card"><h3>LATAM · Sell-out Activation Progress</h3>
+  h+=`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">LATAM</span> <span style="font-size:12.5px;color:var(--ink2)">· 중남미 · Sell-out Activation · Survey · 중국차종 · SteerStar</span></div><div class="card"><h3>LATAM · Sell-out Activation Progress</h3>
     <p class="note">PLUSCAR는 전체 판매 감소 속에서도 프로모션 대상 품목 판매량을 유지하고 판매 비중을 확대. O2O 광고 게재 ${pl.ad_date}.</p>`
    +kgrid([{lab:'Facebook Link Clicks',val:pl.fb_link_clicks.toLocaleString()},
      {lab:'Survey 응답',val:pl.survey_before+' → '+pl.survey_after,sub:'+'+(pl.survey_after-pl.survey_before)+'건'},
@@ -1716,12 +1700,12 @@ function sepMonth(A){
    +`<p class="note" style="font-size:12.5px;margin-top:8px"><b>시사점:</b> 응답자 ${rj.aware_none}%가 CTR를 처음 접했으나 설명 후 ${rj.after_pos}%가 구매·추천 의향을 보여 상단 인지 전환이 강함. 선택 기준은 가격보다 <b>품질·내구성(${rj.factors[0].p}%)</b>이며, 신규 브랜드 전환 동기도 가격경쟁력(${rj.motiv[0].p}%)과 검증된 품질(${rj.motiv[1].p}%)이 양대 축. 현장 니즈는 <b>기술 교육·카탈로그·제품 시연</b> 중심이라 할인보다 교육·시연형 프로모션이 효과적.</p>`
    +`</div>`;}
 
+h+=`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">KR</span> <span style="font-size:12.5px;color:var(--ink2)">· 한국 · 전략 고객사(세종파츠플러스) Sell-in</span></div><div class="card"><h3>KR · 세종파츠플러스 Sell-in 오더</h3><p class="note">세종파츠플러스 유한회사(114621) · Strategic Partner Program · 단위 USD · ChoiceKit 전 품목 대상</p><div class="kpis k4" style="margin:8px 0"><div class="tile"><div class="lab">2025 → 2026 당해</div><div class="val" style="font-size:20px">$121.8K → $91.6K</div><div class="sub2">YoY -24.8%</div></div><div class="tile" style="border-top-color:var(--brand)"><div class="lab">9월 오더</div><div class="val">$31,599</div><div class="sub2">8월 $34,233 · 7월 $111</div></div><div class="tile"><div class="lab">7~9월 합계</div><div class="val">$65,943</div></div><div class="tile"><div class="lab">오더 SKU</div><div class="val">143종</div></div></div><p class="note" style="font-size:11.5px">Sell-in 오더 원장 기준(2026-07-30~09-23, 9.28 수신). ASIA 판매구역이나 KR 전략 고객사로 별도 관리.</p></div>`;
+
   // ── Action Plan ──
   h+=`<div class="card"><h3>October–November Action Plan</h3><div class="tblwrap"><table class="lts"><thead><tr><th>Region</th><th>Action</th><th>Owner / Customer</th><th>KPI / Output</th><th>Timing</th></tr></thead><tbody>`
    +A.action_plan.map(r=>`<tr><td><b>${r.region}</b></td><td style="text-align:left">${esc(r.action)}</td><td style="text-align:left;font-size:12.5px">${esc(r.owner)}</td><td style="text-align:left;font-size:12.5px">${esc(r.kpi)}</td><td style="text-align:center">${esc(r.timing)}</td></tr>`).join('')
    +`</tbody></table></div></div>`;
-
-  h+=`<div class="card"><h3>KR · 세종파츠플러스 Sell-in 오더</h3><p class="note">세종파츠플러스 유한회사(114621) · Strategic Partner Program · 단위 USD · ChoiceKit 전 품목 대상</p><div class="kpis k4" style="margin:8px 0"><div class="tile"><div class="lab">2025 → 2026 당해</div><div class="val" style="font-size:20px">$121.8K → $91.6K</div><div class="sub2">YoY -24.8%</div></div><div class="tile" style="border-top-color:var(--brand)"><div class="lab">9월 오더</div><div class="val">$31,599</div><div class="sub2">8월 $34,233 · 7월 $111</div></div><div class="tile"><div class="lab">7~9월 합계</div><div class="val">$65,943</div></div><div class="tile"><div class="lab">오더 SKU</div><div class="val">143종</div></div></div><p class="note" style="font-size:11.5px">Sell-in 오더 원장 기준(2026-07-30~09-23, 9.28 수신). ASIA 판매구역이나 KR 전략 고객사로 별도 관리.</p></div>`;
 
   return h;
 }
