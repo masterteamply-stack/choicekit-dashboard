@@ -784,7 +784,7 @@ function tblMerged(){
     <td class="num"><b>${fmtC(R.a25)}</b></td><td class="num"><b>${fmtC(R.a26)}</b></td>
     <td class="num"><span class="${cls(R.yoy)}"><b>${R.yoy==null?'–':fmtPC(R.yoy)}</b></span></td></tr>`;
   let body='';
-  regRows().forEach(R=>{
+  regRows().slice().sort((a,b)=>(a.k==='ASIA'?1:0)-(b.k==='ASIA'?1:0)).forEach(R=>{
     const cs=run.filter(c=>c.region===R.k).sort((a,b)=>(b.a26||0)-(a.a26||0));
     if(!cs.length) return;
     body+=`<tr class="rgrp"><td colspan="6" style="text-align:left;background:var(--head);color:#fff;font-weight:700">${esc(R.k)}</td></tr>`;
