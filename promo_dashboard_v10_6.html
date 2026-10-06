@@ -1285,6 +1285,18 @@ function selloutBox(so){if(!so)return '';
 
 const SEPTEMBER_ACTIVITY = {
   _m: 9,
+  sales: {
+    month:"약 $14.7M", plan:"92%", yoy:"+7%", cum:"약 $147M", cum_plan:"103%", cum_yoy:"+23%",
+    annual_base:"약 $180M", annual_best:"약 $184M",
+    regions:[
+      {r:"북미 (NA)", sep:"약 $0.8M", cum:"약 $6.0M", yoy:"+43%", note:"연간 목표 $8M 달성 가능성 높음"},
+      {r:"유럽", sep:"약 $0.8M", cum:"약 $9.0M", yoy:"+56%", note:"계획 84% · 우크라이나 선수금 €30만 10월 이월"},
+      {r:"LATAM", sep:"약 $0.7M", cum:"YoY +20%", yoy:"+20%", note:"$50~60만 10월 이월 · 신규 Autonoma·Rural Santa Fe"},
+      {r:"MENA·중동", sep:"약 $1.15~1.4M", cum:"수주 약 $12.5M", yoy:"-15%", note:"이집트 $32만·카타르 $30~40만 이월 · 점진 회복"},
+      {r:"CIS", sep:"약 $2.0M", cum:"backorder $10M", yoy:"–", note:"$40~80만 10월 이월 · 10월 $3M+ 전망(원자료 확인)"},
+      {r:"러시아", sep:"–", cum:"YoY +30%", yoy:"+30%", note:"계획 대비 ~125% 추정(원자료 확인)"},
+      {r:"아시아", sep:"약 $0.4M", cum:"약 $4.2M", yoy:"+32%", note:"계획 70% · 9월 신규오더 $1.03M(Anawa·베트남·태국)"}],
+    carryover:"유럽 €30만 · LATAM $50~60만 · 이집트 $32만 · 카타르 $30~40만 · CIS $40~80만 (10~11월 이월)" },
   generated_at: "2026-10-06",
   summary: "9월 Choice Kit은 지역별로 오더 전환 단계가 다르게 나타났습니다. SEA는 Sell-out 목표를 초과했고, CIS는 Catalogue 다운로드와 Meta 광고로 리테일 채널 활용 기반을 확대했습니다. LATAM은 O2O 광고와 Survey로 현장 반응을 확인했으며, MENA는 제한적이지만 추가 오더가 발생했습니다.",
   cis: { views:18228, downloads_total:832, downloads_asian:368, downloads_european:464, download_rate:0.0456,
@@ -1360,6 +1372,15 @@ function sepMonth(A){
     return `<td style="text-align:center;background:${col};color:#fff;font-weight:700">${p.toFixed(0)}%</td>`;};
   const cis=A.cis, sea=A.sea, mena=A.mena, lat=A.latam, pl=lat.pluscar, sr=lat.super_repuestos, st=lat.steerstar;
   let h=`<div class="warnbox" style="border-left-color:var(--s1)"><b>${A._m}월 활동 리포트 · Activity Layer</b> · 데이터 기준 ${A.generated_at} · 활동 성과 지표(오더 금액과 합산하지 않음)</div>`;
+  if(A.sales){const sa=A.sales;
+   h+=`<div class="card" style="border-left:3px solid var(--brand)"><h3>전사 영업 실적 (${A._m}월 · 영업 리포트)</h3>
+    <p class="note">전사 매출 기준 — 본 대시보드의 ChoiceKit 캠페인 오더와는 범위가 다릅니다(합산 아님). 일부 수치는 원자료 확인 필요.</p>`
+    +kgrid([{lab:A._m+'월 매출',val:sa.month,sub:'사업계획 '+sa.plan+' · YoY '+sa.yoy,hero:true},
+      {lab:'1~'+A._m+'월 누적',val:sa.cum,sub:'계획 '+sa.cum_plan+' · YoY '+sa.cum_yoy,hero:true},
+      {lab:'연간 전망',val:'$180~184M',sub:'Base '+sa.annual_base+' · Best '+sa.annual_best}],'k3')
+    +`<h4 class="soh">지역별 실적 (전사)</h4><div class="tblwrap"><table class="lts"><thead><tr><th>지역</th><th>${A._m}월</th><th>1~${A._m}월 누적</th><th>YoY</th><th>비고</th></tr></thead><tbody>`
+    +sa.regions.map(r=>`<tr><td><b>${r.r}</b></td><td>${r.sep}</td><td>${r.cum}</td><td style="text-align:center;font-weight:700;color:${r.yoy.startsWith('-')?'var(--serious)':r.yoy==='–'?'var(--muted)':'var(--good)'}">${r.yoy}</td><td style="text-align:left;font-size:11.5px">${r.note}</td></tr>`).join('')
+    +`</tbody></table></div><p class="note" style="margin-top:6px"><b>이월 물량:</b> ${sa.carryover}</p></div>`;}
 
   // ── Summary ──
   h+=`<div class="card"><h3>September Report Summary</h3><p class="note" style="font-size:15px;line-height:1.6">${esc(A.summary)}</p>`
@@ -1499,7 +1520,7 @@ draw(); soFilterUI($('#nav button.on').dataset.pg);
 $('#foot').innerHTML=`모든 수치는 <b>캠페인 기간 vs 전년 동일 기간 · 대상 SKU 기준</b>입니다. 영업 Order Target 은 표시하지 않습니다(SteerStar 화면의 목표는 파트너별 미션 목표입니다).<br>
   캠페인 단위는 marketing.xlsx의 <b>Program × 권역</b>이며, 집행 기간은 그 캠페인 활동들의 전체 구간입니다.
   원장 추출 구간이 비어 있는 날짜는 당해·전년 양쪽에서 함께 제외합니다.<br>
-  Sell-out·SteerStar 반영 ${C.added||''} · 생성 ${D.generated_at} · 기준일 ${D.today} · 오더 원장 ${D.n_fact.toLocaleString()}행 / ${fmtC(D.total_amt)} · 캠페인 ${(D.campaigns||[]).length}건`;
+  Sell-out·SteerStar 반영 ${C.added||''} · 생성 ${D.generated_at} · 기준일 ${D.today} · 오더 원장 ${D.n_fact.toLocaleString()}행 / ${fmtC(D.total_amt)} · 캠페인 ${(D.campaigns||[]).length}건<br><b>본 대시보드는 ChoiceKit 캠페인 오더 기준</b>이며 전사 매출(9월 영업 리포트)과는 범위가 다릅니다.`;
 </script>
 </body>
 </html>
