@@ -1347,7 +1347,7 @@ const SEPTEMBER_ACTIVITY = {
       {r:"국내", sep:"$93K", cum:"$1.7M", yoy:"-67.0%", note:"국내"}],
     carryover:"유럽 €30만 · LATAM $50~60만 · 이집트 $32만 · 카타르 $30~40만 · CIS $40~80만 (10~11월 이월)" },
   generated_at: "2026-10-06",
-  summary: "9월 Choice Kit은 지역별로 오더 전환 단계가 다르게 나타났습니다. SEA는 Sell-out 목표를 초과했고, CIS는 Catalogue 다운로드와 Meta 광고로 리테일 채널 활용 기반을 확대했습니다. LATAM은 O2O 광고와 Survey로 현장 반응을 확인했으며, MENA는 제한적이지만 추가 오더가 발생했습니다.",
+  summary: "9월 Choice Kit은 지역별로 다른 전환 단계를 보였다. SEA는 Sell-out 목표를 초과하며 판매 검증 성과를 확인했고, LATAM은 O2O 광고와 Survey를 통해 현장 반응과 구매 전환 가능성을 확인했다. CIS는 Catalogue 확산과 고객별 재고·Backorder 데이터를 연결해 11월 현장 활동의 우선순위를 정리하고 있으며, MENA는 제한적이지만 Dynatrade와 MESK에서 추가 오더가 발생했다.", outlook: "10~11월에는 Sell-out 데이터 회수, 재고 기반 현장 지원, Survey 분석, Follow-up Order 전환을 집중 관리한다.",
   cis: { views:18228, downloads_total:832, downloads_asian:368, downloads_european:464, download_rate:0.0456,
     posted_at:"2026-09-03", target_countries:["카자흐스탄","키르기스스탄","타지키스탄","투르크메니스탄"],
     meta_posts:[
@@ -1424,6 +1424,7 @@ function sepMonth(A){
 
   // ── Summary ──
   h+=`<div class="card"><h3>September Report Summary</h3><p class="note" style="font-size:15px;line-height:1.6">${esc(A.summary)}</p>`
+   +(A.outlook?`<p class="note" style="font-size:13.5px;line-height:1.55;background:var(--hoverwash);border-left:3px solid var(--brand);padding:8px 12px;margin:0 0 10px;border-radius:0 6px 6px 0"><b>10~11월 집중 관리</b> · ${esc(A.outlook.replace(/^10~11월에는\s*/,''))}</p>`:'')
    +`<p class="note" style="font-size:12.5px;margin-top:-4px"><b>전사 맥락:</b> 9월 전사 오더(수주) ${A.sales.month} · 1~9월 누적 ${A.sales.cum} (YoY ${A.sales.cum_yoy}, KV 원장 기준). 본 리포트는 그중 Choice Kit 캠페인의 권역별 활동·오더 전환 현황입니다(전사 매출과 별개).</p>`
    +kgrid([
      {lab:'CIS Catalogue Views',val:cis.views.toLocaleString(),sub:`다운로드 ${cis.downloads_total.toLocaleString()} · 전환 ${(cis.download_rate*100).toFixed(1)}%`,hero:true},
