@@ -1505,6 +1505,7 @@ function sepMonth(A){
   h+=`<div class="card"><h3>September Report Summary</h3>`
    +`<ul style="list-style:none;padding:0;margin:8px 0 2px">`+A.summary.split('. ').map(x=>x.replace(/\.\s*$/,'').trim()).filter(Boolean).map(x=>`<li class="note" style="margin:6px 0;padding-left:18px;position:relative;font-size:15px;line-height:1.55"><span style="position:absolute;left:0;top:0;color:var(--brand);font-weight:700">▪</span>${esc(x)}.</li>`).join('')+`</ul>`
    +ov
+   +`<div style="margin:22px 0 8px;display:flex;align-items:center;gap:10px"><span style="width:6px;height:26px;background:var(--brand);border-radius:2px;display:inline-block"></span><h3 style="margin:0;font-size:22px;font-weight:800;letter-spacing:-0.5px">이달 주요 성과</h3></div>`
    +kgrid([
      {lab:'CIS Catalogue Views',val:cis.views.toLocaleString(),sub:`다운로드 ${cis.downloads_total.toLocaleString()} · 전환 ${(cis.download_rate*100).toFixed(1)}%`,hero:true},
      {lab:'ASIA Sell-out 달성',val:(sea.achievement_rate*100).toFixed(1)+'%',sub:`$${Math.round(sea.sellout_actual).toLocaleString()} / 목표 $${Math.round(sea.sellout_target).toLocaleString()}`,hero:true},
