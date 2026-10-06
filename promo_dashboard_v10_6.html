@@ -1617,14 +1617,14 @@ function sepMonth(A){
   h+=custOrderBlock('MENA','MENA · 올해 vs 전년 오더 추이 (참여 고객사)',A);
   // ── LATAM Sell-out Activation ──
   h+=`<div class="card"><h3>LATAM · Sell-out Activation Progress</h3>
-    <p class="note">PLUSCAR는 전체 판매 감소 속에서도 프로모션 대상 품목 판매량을 유지하고 판매 비중을 확대. O2O 광고 게재 ${pl.ad_date}.</p>
-    <figure style="margin:10px 0 12px"><img src="images/latam_o2o_activity.png" alt="LATAM O2O Sell-out 활동 샘플: 홍보 영상 광고 → Instagram 품목검색 HTML 페이지 → End-User WhatsApp 연결 → 설문" loading="lazy" style="width:100%;max-width:840px;display:block;border:1px solid var(--ring);border-radius:8px"><figcaption class="note" style="padding-left:0;margin:7px 0 0;font-size:12px">O2O 활동 샘플 · ① 9/15 CTR×PLUSCAR 홍보 영상 광고 게시 → ② Instagram 링크에 대상 품목 검색 HTML 페이지 삽입 → ③ End-User 고객사 WhatsApp 연결 → ④ PLUSCAR 직원 설문 34건 · 현지 End-User 설문 13건(8월 5건 → +8건) 진행</figcaption></figure>`
+    <p class="note">PLUSCAR는 전체 판매 감소 속에서도 프로모션 대상 품목 판매량을 유지하고 판매 비중을 확대. O2O 광고 게재 ${pl.ad_date}.</p>`
    +kgrid([{lab:'Facebook Link Clicks',val:pl.fb_link_clicks.toLocaleString()},
      {lab:'Survey 응답',val:pl.survey_before+' → '+pl.survey_after,sub:'+'+(pl.survey_after-pl.survey_before)+'건'},
      {lab:'대상 품목 판매 비중',val:(pl.share_2026*100).toFixed(1)+'%',sub:`${(pl.share_2025*100).toFixed(1)}% → ${(pl.share_2026*100).toFixed(1)}% (+${pl.share_change_pp}%p)`,hero:true}],'k3')
    +`<div class="grid2"><div><div class="sub3" style="margin:4px 0 2px">8월 판매량: 전체 vs 프로모션 대상 (pcs)</div>`
    +gbar(['전체 판매량','프로모션 대상'],[{name:'2025.8',color:C1,vals:[pl.total_2025,pl.promo_2025]},{name:'2026.8',color:C26,vals:[pl.total_2026,pl.promo_2026]}],{W:340,H:190,fmtV:v=>v.toLocaleString()})
-   +`</div><div style="align-self:center"><p class="note">전체 판매량 ${pc(pl.total_yoy)} 감소에도 프로모션 대상 품목은 ${pc(pl.promo_yoy)} 유지 · 대상 품목 비중 +${pl.share_change_pp}%p 확대 · O2O 광고 이후 Survey 응답 증가 확인.</p></div></div></div>`;
+   +`</div><div style="align-self:center"><p class="note">전체 판매량 ${pc(pl.total_yoy)} 감소에도 프로모션 대상 품목은 ${pc(pl.promo_yoy)} 유지 · 대상 품목 비중 +${pl.share_change_pp}%p 확대 · O2O 광고 이후 Survey 응답 증가 확인.</p></div></div>
+    <figure style="margin:14px 0 2px"><div class="sub3" style="margin:0 0 6px"><b>O2O 활동 샘플</b></div><img src="images/latam_o2o_activity.png" alt="LATAM O2O Sell-out 활동 샘플: 홍보 영상 광고 → Instagram 품목검색 HTML 페이지 → End-User WhatsApp 연결 → 설문" loading="lazy" style="width:100%;max-width:840px;display:block;border:1px solid var(--ring);border-radius:8px"><figcaption class="note" style="padding-left:0;margin:7px 0 0;font-size:12px">① 9/15 CTR×PLUSCAR 홍보 영상 광고 게시 → ② Instagram 링크에 대상 품목 검색 HTML 페이지 삽입 → ③ End-User 고객사 WhatsApp 연결 → ④ PLUSCAR 직원 설문 34건 · 현지 End-User 설문 13건(8월 5건 → +8건) 진행</figcaption></figure></div>`;
 
   // ── LATAM Survey Insight ──
   h+=`<div class="card"><h3>LATAM · Survey Insight &amp; Customer Follow-up</h3>
