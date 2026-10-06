@@ -1393,7 +1393,7 @@ const SEPTEMBER_ACTIVITY = {
       {type:"European", title:"European 5개 차종 소재 1", uploaded_at:"2026-09-23", status:"집행 완료"},
       {type:"Asian", title:"Asian 5개 차종 소재 2", uploaded_at:"2026-09-30", status:"집행 완료"}],
     content_done:3, content_total:6,
-    followup:["11월 현지 출장 연계 Free Replacement Event / Tech Seminar 협의 (Phaeton · Complex Auto · Bauten)",
+    followup:["11월 현지 출장 연계 Free Replacement Event / Tech Seminar 대상 협의·선정 (Complex Auto · Bauten · Alliance Motors[키르기스스탄] 진행 예정 · Drive Motors[아제르바이잔] 협의 중)",
       "Mechanic Support Kits 10월 입고 후 고객사 컨테이너로 순차 발송",
       "Kit 구성: 로고 공구 조끼·모자 세트, Mechanic Handbook, Asian / European 차종 Flyer"] },
   sea: { programs_count:5, countries:5, customers:12, period:"2026년 5~11월",
@@ -1446,7 +1446,7 @@ const SEPTEMBER_ACTIVITY = {
       brabham:{ order_2025:80488.13, order_2026:70268.22, yoy:-0.127, issue:"INMETRO 인증 미확보로 Survey / 판매 제한",
         status:"9월 Shock Absorber INMETRO 인증 절차 착수 · 연말까지 진행 상황 확인" }, lordco:{"y25":[56940,0,501829,0,27222,87197,0,37993,0,0,92796,169425],"y26":[56634,0,0,55820,61098,0,68472,0,0,0,0,0],"last26":7,"cum25":673188,"cum26":242024,"annual25":973402,"ytd26":242024,"prod":[{"k":"CONTROL ARM","y25":330495,"y26":129597,"d":-200898},{"k":"STABILIZER LINK","y25":215567,"y26":60873,"d":-154694},{"k":"OUTER TIE ROD","y25":159047,"y26":22959,"d":-136088},{"k":"BALL JOINT","y25":111658,"y26":21239,"d":-90419},{"k":"INNER TIE ROD","y25":94625,"y26":5053,"d":-89572},{"k":"BUSH","y25":44969,"y26":913,"d":-44056},{"k":"ASSIST ARM","y25":8223,"y26":632,"d":-7591}]} } },
   action_plan:[
-    {region:"CIS", action:"Free Replacement Event / Tech Seminar 협의", owner:"Phaeton · Complex Auto · Bauten", kpi:"행사 확정 · Catalogue 후속 반응 · 오더 전환", timing:"11월"},
+    {region:"CIS", action:"Free Replacement Event / Tech Seminar 대상 협의·선정", owner:"Complex Auto · Bauten · Alliance Motors(키르기스스탄) · Drive Motors(아제르바이잔, 협의)", kpi:"대상 확정 · 행사 확정 · Catalogue 후속 반응 · 오더 전환", timing:"11월"},
     {region:"CIS", action:"Mechanic Support Kits 입고 및 고객사 컨테이너 발송", owner:"CIS 리테일 고객사", kpi:"발송 고객사 · 도착 일정 · 현장 활용", timing:"10월"},
     {region:"SEA", action:"9월 Sell-out 미반영 고객 데이터 회수", owner:"Chuan Lam · Young Auto · ATC · New Product · Display", kpi:"Updated Sell-out Data", timing:"10월"},
     {region:"SEA", action:"Sales Champion 고성과 고객 Follow-up Order 확인", owner:"Mast · Nam Bac · GTA · GP", kpi:"Follow-up Sell-in Order", timing:"10~11월"},
@@ -1497,8 +1497,8 @@ function sepMonth(A){
    +`<div class="sub3" style="color:var(--ink2);font-size:12px;margin:12px 0 3px"><b>권역별 핵심 성과 · 다음 단계</b></div>`
    +`<div class="tblwrap"><table class="lts" style="table-layout:fixed;width:100%"><colgroup><col style="width:15%"><col style="width:42%"><col style="width:13%"><col style="width:30%"></colgroup><thead><tr><th>권역 · 프로그램</th><th style="background:var(--brand);color:#fff">핵심 성과 (9월)</th><th>상태</th><th>다음 단계</th></tr></thead><tbody>`
    +[
-     {rg:'CIS · Catalogue/Retail',perf:`Catalogue 조회 ${cis.views.toLocaleString()} · 다운로드 ${cis.downloads_total} (전환 ${(cis.download_rate*100).toFixed(1)}%) · Asian ${cis.downloads_asian}/European ${cis.downloads_european} · Meta 광고 집행`,st:`콘텐츠 ${cis.content_done}/${cis.content_total}`,next:'11월 현지 출장 Free Replacement Event · Tech Seminar 협의 (Phaeton·Complex·Bauten)'},
-     {rg:'SEA(ASIA) · Sell-out',perf:`Sell-out $${Math.round(sea.sellout_actual).toLocaleString()} / 목표 대비 <b>${(sea.achievement_rate*100).toFixed(1)}%</b> · Sales Champion ${(sea.programs[0].achievement*100).toFixed(0)}% 견인 · Loyalty ${(sea.programs[1].achievement*100).toFixed(0)}% · POSM ${(sea.programs[2].achievement*100).toFixed(0)}%`,st:`목표 초과 · 미제출 ${sea.pending_badges.length}건`,next:'Chuan Lam·Young Auto·ATC·New Product·Display 데이터 취합 · Mast/Nam Bac POSM Push'},
+     {rg:'CIS · Catalogue/Retail',perf:`Catalogue 조회 ${cis.views.toLocaleString()} · 다운로드 ${cis.downloads_total} (전환 ${(cis.download_rate*100).toFixed(1)}%) · Asian ${cis.downloads_asian}/European ${cis.downloads_european} · Meta 광고 집행`,st:`콘텐츠 ${cis.content_done}/${cis.content_total}`,next:'11월 현지 협업 활동 · Free Replacement Event · Tech Seminar 대상 협의·선정 후 진행 (Complex·Bauten·Alliance Motors[키르기스스탄] 진행 예정 · 아제르바이잔 Drive Motors 협의 중)'},
+     {rg:'SEA(ASIA) · Sell-out',perf:`Sell-out $${Math.round(sea.sellout_actual).toLocaleString()} / 목표 대비 <b>${(sea.achievement_rate*100).toFixed(1)}%</b> · Sales Champion ${(sea.programs[0].achievement*100).toFixed(0)}% 견인 · Loyalty ${(sea.programs[1].achievement*100).toFixed(0)}% · POSM ${(sea.programs[2].achievement*100).toFixed(0)}%`,st:`목표 초과 · 미제출 ${sea.pending_badges.length}건`,next:'Chuan Lam·Young Auto sell-out 데이터 <b>미제출 → 지속 독촉</b> · Mast/Nam Bac POSM(오더 실적 연동 매장 진열·전시물 지원 프로그램) 추가 Push · ATC·New Product·Display 증빙 회수'},
      {rg:'LATAM · O2O (PLUSCAR)',perf:`O2O 광고 ${pl.ad_date} · FB 클릭 ${pl.fb_link_clicks.toLocaleString()} · Survey ${pl.survey_before}→${pl.survey_after} · 대상 품목 비중 ${(pl.share_2025*100).toFixed(1)}%→<b>${(pl.share_2026*100).toFixed(1)}%</b> (전체 ${pc(pl.total_yoy)}에도 대상 ${pc(pl.promo_yoy)} 방어)`,st:'현장 반응 확인',next:'2026 9~10월 Sell-out·SKU별 데이터 수령 (협의 중)'},
      {rg:'LATAM · Survey (S.Repuestos)',perf:`Survey ${sr.survey_responses}건 · 보증 선호 <b>${(sr.warranty_rate*100).toFixed(0)}%</b> · 니즈: ${sr.key_needs.slice(0,3).map(k=>k.split(' ')[0]).join('·')}`,st:'Sell-out 데이터 수령(세분화 필요)',next:'정비사 기술 세미나 결합 · 11월 2027 계획 논의'},
      {rg:'LATAM · SteerStar',perf:`REFATRIX 2026 오더 $${Math.round(st.refatrix.order_2026).toLocaleString()} (YoY <b>${pc(st.refatrix.yoy)}</b>) · RUJAC Survey ${st.refatrix.survey_count}건 · BRABHAM $${Math.round(st.brabham.order_2026).toLocaleString()} (YoY ${pc(st.brabham.yoy)})`,st:'BRABHAM INMETRO 인증 미확보',next:'Shock Absorber INMETRO 인증 완료 후 Survey·판매 재개 (연말 확인)'},
