@@ -1502,7 +1502,8 @@ function sepMonth(A){
    +`<div class="svgbox">`+gbar(_gr.map(r=>r.k),[{name:'2025',color:'var(--s1)',vals:_gr.map(r=>r.a25)},{name:'2026',color:'var(--brand)',vals:_gr.map(r=>r.a26)}],{W:1040,H:300,delta:1,fmtV:v=>v>=1e6?'$'+(v/1e6).toFixed(2)+'M':'$'+Math.round(v/1000)+'K'})+`</div>`;
 
   // ── Summary ──
-  h+=`<div class="card"><h3>September Report Summary</h3><p class="note" style="font-size:15px;line-height:1.6">${esc(A.summary)}</p>`
+  h+=`<div class="card"><h3>September Report Summary</h3>`
+   +`<ul style="list-style:none;padding:0;margin:8px 0 2px">`+A.summary.split('. ').map(x=>x.replace(/\.\s*$/,'').trim()).filter(Boolean).map(x=>`<li class="note" style="margin:6px 0;padding-left:18px;position:relative;font-size:15px;line-height:1.55"><span style="position:absolute;left:0;top:0;color:var(--brand);font-weight:700">▪</span>${esc(x)}.</li>`).join('')+`</ul>`
    +ov
    +kgrid([
      {lab:'CIS Catalogue Views',val:cis.views.toLocaleString(),sub:`다운로드 ${cis.downloads_total.toLocaleString()} · 전환 ${(cis.download_rate*100).toFixed(1)}%`,hero:true},
