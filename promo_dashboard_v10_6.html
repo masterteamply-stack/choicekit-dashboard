@@ -160,7 +160,10 @@ th .up{color:#7be3b8}
   border:1px solid var(--ring);color:var(--ink2)}
 .pill.open{border-color:var(--brand);color:var(--brand);background:transparent}
 .pill.done{border-color:var(--good);color:var(--good)}
-.sotabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.sotabs{margin-bottom:14px}
+.sotabgrp{margin-bottom:9px}
+.sotabreg{font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.04em;margin:0 0 4px}
+.sotabrow{display:flex;gap:8px;flex-wrap:wrap}
 .sotab{display:flex;flex-direction:column;gap:2px;align-items:flex-start;padding:8px 14px;border-radius:7px;
   border:1px solid var(--ring);background:var(--card);color:var(--ink2);font:inherit;font-size:14.5px;
   font-weight:600;cursor:pointer;line-height:1.3;text-align:left}
@@ -970,8 +973,12 @@ function soMatch(){const f=F();
 function soPage(){
   const m=soMatch();
   if(!m.some(o=>o.id===soSel)) soSel=m.length?m[0].id:null;
-  $('#soTabs').innerHTML=m.map(o=>`<button class="sotab${o.id===soSel?' on':''}" data-so="${o.id}">${esc(o.name)}
-      <span class="sub3">${esc(o.region)} · ${esc(o.country)} · ${esc(o.kind)}</span></button>`).join('');
+  {const RO=['CIS','ASIA','LATAM','NA','MENA','KR'];
+   const byReg={}; m.forEach(o=>{(byReg[o.region]=byReg[o.region]||[]).push(o);});
+   const regs=Object.keys(byReg).sort((a,b)=>{const ia=RO.indexOf(a),ib=RO.indexOf(b);return (ia<0?99:ia)-(ib<0?99:ib);});
+   $('#soTabs').innerHTML=regs.map(rg=>`<div class="sotabgrp"><div class="sotabreg">${esc(rg)}</div><div class="sotabrow">`
+     +byReg[rg].map(o=>`<button class="sotab${o.id===soSel?' on':''}" data-so="${o.id}">${esc(o.name)}<span class="sub3">${esc(o.country)} · ${esc(o.kind)}</span></button>`).join('')
+     +`</div></div>`).join('');}
   $('#soEmpty').style.display=m.length?'none':'';
   if(!m.length){const f=F();
     $('#soEmptyTx').innerHTML=`<b>${esc(f.region)}</b> 권역에는 sell-out·재고 원자료를 받은 고객이 없습니다.<br>`
