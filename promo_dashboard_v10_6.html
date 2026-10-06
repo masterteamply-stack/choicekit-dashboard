@@ -284,6 +284,12 @@ tfoot td.num{text-align:right}
     </div>
 
     <div class="card">
+      <div class="chead"><div><h3>캠페인 대상 오더 증가 · 2025 → 2026</h3>
+        <p class="note">ChoiceKit 캠페인 대상 오더(sell-in)의 전년 대비 증감입니다. 권역별 2025 vs 2026 · 당해는 오늘까지 기준.</p></div></div>
+      <div id="campGrow"></div>
+    </div>
+
+    <div class="card">
       <div class="chead"><div><h3>권역별 · 캠페인 효과</h3>
         <p class="note">캠페인 기간과 <b>전년 동일 날짜 구간</b>을 대상 SKU 기준으로 비교합니다. 대조군은 같은 권역의 미집행 고객이며, 그 차이(이중차분, DiD)가 프로모션에 귀속할 수 있는 몫입니다. <b>DiD·순증은 집행군과 대조군이 모두 관측된 공통 구간</b>에서만 계산하므로, 전년·당해 금액(전체 관측 구간)과는 기간이 다를 수 있습니다. 권역에 캠페인이 둘 이상이면 <b>소계</b> 행으로 권역 합계를 함께 표기합니다.</p></div>
         <button class="btn" id="btnCsvM">CSV</button></div>
@@ -516,6 +522,21 @@ function tblReg(){
 }
 
 /* ══════════ 4. 집행군 vs 대조군 차트 ══════════ */
+function campGrow(){
+  const el=$('#campGrow'); if(!el) return;
+  const by={}; camps().forEach(c=>{const r=c.region;by[r]=by[r]||{a25:0,a26:0};by[r].a25+=c.a25||0;by[r].a26+=c.a26||0;});
+  const regs=Object.entries(by).map(([k,v])=>({k,a25:v.a25,a26:v.a26})).filter(r=>r.a25>0||r.a26>0).sort((a,b)=>b.a26-a.a26);
+  const t25=regs.reduce((s,r)=>s+r.a25,0), t26=regs.reduce((s,r)=>s+r.a26,0), yoy=t25?(t26-t25)/t25*100:0;
+  const C25='var(--s1)',C26b='var(--brand)';
+  let h=`<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:10px">`
+   +`<div class="tile"><div class="lab">2025 대상 오더</div><div class="val">${fmtC(t25)}</div></div>`
+   +`<div class="tile" style="border-top-color:var(--brand)"><div class="lab">2026 대상 오더</div><div class="val">${fmtC(t26)}</div><div class="sub2">전년 대비 <span class="${cls(yoy)}">${fmtPC(yoy)}</span></div></div>`
+   +`<div class="tile"><div class="lab">순증액</div><div class="val">${fmtC(t26-t25)}</div></div>`
+   +`<div class="tile"><div class="lab">성장 권역</div><div class="val">${regs.filter(r=>r.a26>r.a25).length}<span style="font-size:16px;color:var(--muted)"> / ${regs.length}</span></div></div></div>`;
+  h+=`<div class="legend"><span><i class="sw" style="background:${C25}"></i>2025</span><span><i class="sw" style="background:${C26b}"></i>2026</span></div>`
+   +`<div class="svgbox">`+gbar(regs.map(r=>r.k),[{name:'2025',color:C25,vals:regs.map(r=>r.a25)},{name:'2026',color:C26b,vals:regs.map(r=>r.a26)}],{W:1040,H:240,fmtV:v=>v>=1e6?'$'+(v/1e6).toFixed(1)+'M':'$'+Math.round(v/1000)+'K'})+`</div>`;
+  el.innerHTML=h;
+}
 function chartDid(){
   if(!$('#c12')) return;
   /* 막대는 DiD 와 같은 공통 구간(dyoy) 기준 — 표의 DiD 와 눈으로 맞아떨어지게 한다. */
@@ -1131,7 +1152,7 @@ function ssSvg(MS,W){
 function fill(id,vals,label){$('#'+id).innerHTML=`<option value="ALL">${label}</option>`
   +[...new Set(vals)].filter(Boolean).sort().map(v=>`<option>${esc(v)}</option>`).join('');}
 function draw(){
-  kpis(); tblMerged(); chartDid(); persist(); tblScope(); custBars(); skuBars(); costRomi(); soPage(); ssPage();
+  kpis(); campGrow(); tblMerged(); chartDid(); persist(); tblScope(); custBars(); skuBars(); costRomi(); soPage(); ssPage();
 }
 
 /* ══════════ 11. 원장 정합성 대조 ══════════ */
@@ -1582,7 +1603,7 @@ $('#nav').addEventListener('click',e=>{const b=e.target.closest('button[data-pg]
   $$('#nav button').forEach(x=>x.classList.toggle('on',x===b));
   $$('.page').forEach(p=>p.classList.toggle('on',p.id===b.dataset.pg));
   soFilterUI(b.dataset.pg);
-  if(b.dataset.pg==='p1'){chartDid();persist();} if(b.dataset.pg==='p5')soPage(); if(b.dataset.pg==='p6')ssPage(); if(b.dataset.pg==='p7')sepReport();});
+  if(b.dataset.pg==='p1'){campGrow();chartDid();persist();} if(b.dataset.pg==='p5')soPage(); if(b.dataset.pg==='p6')ssPage(); if(b.dataset.pg==='p7')sepReport();});
 document.addEventListener('click',e=>{const b=e.target.closest('button[data-tv]');if(!b)return;
   const id=b.dataset.tv, on=$('#'+id+'tv').classList.toggle('on');
   $('#'+id+'box').classList.toggle('off',on); b.classList.toggle('on',on); b.textContent=on?'차트':'표';});
