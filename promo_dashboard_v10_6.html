@@ -280,7 +280,7 @@ tfoot td.num{text-align:right}
   <div class="page" id="p1">
     <div class="warnbox" id="w1"></div>
     <div class="kpis k4">
-      <div class="tile hero"><div class="lab">대상 오더 (전년 → 당해)</div>
+      <div class="tile hero"><div class="lab">연관 오더 (전년 → 당해)</div>
         <div class="val" id="k1">–</div><div class="sub2" id="k1s"></div><div class="sub2" id="k1d"></div></div>
       <div class="tile"><div class="lab">YoY</div><div class="val" id="k2">–</div><div class="sub2" id="k2s"></div></div>
       <div class="tile"><div class="lab">집행 캠페인</div><div class="val" id="k5">–</div><div class="sub2" id="k5s"></div></div>
@@ -290,7 +290,7 @@ tfoot td.num{text-align:right}
 
     <div class="card">
       <div class="chead"><div><h3>2026 CK PROMOTION 연관 오더 현황</h3>
-        <p class="note">ChoiceKit 캠페인 대상 오더(sell-in)의 전년 대비 증감입니다. 권역별 2025 vs 2026 · 당해는 오늘까지 기준.</p></div></div>
+        <p class="note">ChoiceKit 캠페인 연관 오더(sell-in)의 전년 대비 증감입니다. 권역별 2025 vs 2026 · 당해는 오늘까지 기준.</p></div></div>
       <div id="campGrow"></div>
     </div>
 
@@ -485,7 +485,7 @@ function kpis(){
       +`환율은 ${D.fx_note||'고정'} 입니다.`
     :`선택한 조건에 <b>실집행 비용 기록이 없습니다</b> — 회수 배수를 계산할 수 없습니다. 비용 원장 반영이 먼저입니다.`;
   $('#fInfo').innerHTML=`기준일 ${D.today} · 캠페인 ${T.n}건 · 오더 원장 ${D.n_fact.toLocaleString()}행`;
-  $('#hdrSub').textContent=`대상 오더는 오늘까지 · 이중차분·관측은 기준일 ${D.today} 원장 기준 · 캠페인 기간 vs 전년 동일 기간`;
+  $('#hdrSub').textContent=`연관 오더는 오늘까지 · 이중차분·관측은 기준일 ${D.today} 원장 기준 · 캠페인 기간 vs 전년 동일 기간`;
 }
 
 /* ══════════ 3. 권역별 표 ══════════ */
@@ -529,8 +529,8 @@ function campGrow(){
   const t25=regs.reduce((s,r)=>s+r.a25,0), t26=regs.reduce((s,r)=>s+r.a26,0), yoy=t25?(t26-t25)/t25*100:0;
   const C25='var(--s1)',C26b='var(--brand)';
   let h=`<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:10px">`
-   +`<div class="tile"><div class="lab">2025 대상 오더</div><div class="val">${fmtC(t25)}</div></div>`
-   +`<div class="tile" style="border-top-color:var(--brand)"><div class="lab">2026 대상 오더</div><div class="val">${fmtC(t26)}</div><div class="sub2">전년 대비 <span class="${cls(yoy)}">${fmtPC(yoy)}</span></div></div>`
+   +`<div class="tile"><div class="lab">2025 연관 오더</div><div class="val">${fmtC(t25)}</div></div>`
+   +`<div class="tile" style="border-top-color:var(--brand)"><div class="lab">2026 연관 오더</div><div class="val">${fmtC(t26)}</div><div class="sub2">전년 대비 <span class="${cls(yoy)}">${fmtPC(yoy)}</span></div></div>`
    +`<div class="tile"><div class="lab">순증액</div><div class="val">${fmtC(t26-t25)}</div></div>`
    +`<div class="tile"><div class="lab">성장 권역</div><div class="val">${regs.filter(r=>r.a26>r.a25).length}<span style="font-size:16px;color:var(--muted)"> / ${regs.length}</span></div></div></div>`;
   h+=`<div class="legend"><span><i class="sw" style="background:${C25}"></i>2025</span><span><i class="sw" style="background:${C26b}"></i>2026</span></div>`
@@ -1280,7 +1280,7 @@ function custOrderBlock(region,title,A,extra){
      +ap.map(p=>`<tr><td style="text-align:left">${esc(p.action)}</td><td style="text-align:left;font-size:11px">${esc(p.owner)}</td><td style="text-align:left;font-size:11px" class="sub3">${esc(p.kpi)}</td><td style="text-align:center">${esc(p.timing)}</td></tr>`).join('')
      +`</tbody></table></div>`;
  }
- let h=`<div class="card"><h3>${esc(title)}</h3><p class="note">참여 고객사의 ChoiceKit 대상 오더(sell-in) 2025 vs 2026 비교 · USD · 권역 합계 ${fmtC(t25)} → <b>${fmtC(t26)}</b> (${yoyC(t25,t26)}) · 고객사 ${uniq.length}곳</p>`;
+ let h=`<div class="card"><h3>${esc(title)}</h3><p class="note">참여 고객사의 ChoiceKit 연관 오더(sell-in) 2025 vs 2026 비교 · USD · 권역 합계 ${fmtC(t25)} → <b>${fmtC(t26)}</b> (${yoyC(t25,t26)}) · 고객사 ${uniq.length}곳</p>`;
  if(plan) h+=`<div style="margin:4px 0 14px;padding:10px 12px;background:var(--head-soft,rgba(127,127,127,.06));border-radius:8px">`+plan+`</div>`;
  h+=`<div><div class="sub3" style="margin:2px 0 6px">상위 고객사 2025 vs 2026 (USD)</div>`
   +gbar(top.map(r=>(r.name||'').length>13?(r.name.slice(0,12)+'…'):r.name),[{name:'2025',color:C25,vals:top.map(r=>r.a25)},{name:'2026',color:C26b,vals:top.map(r=>r.a26)}],{W:1040,H:360,delta:1,fmtV:v=>'$'+Math.round(v/1000)+'K'})
@@ -1508,15 +1508,15 @@ function sepMonth(A){
   const _gr=Object.entries(_by).map(([k,v])=>({k,a25:v.a25,a26:v.a26})).filter(r=>r.a25>0||r.a26>0).sort((a,b)=>b.a26-a.a26);
   const _g25=_gr.reduce((a,r)=>a+r.a25,0),_g26=_gr.reduce((a,r)=>a+r.a26,0),_gy=_g25?(_g26-_g25)/_g25*100:0;
   const ov=`<div class="kpis k4" style="margin:12px 0 2px">`
-   +`<div class="tile hero"><div class="lab">대상 오더 (전년 → 당해)</div><div class="val">${fmtC(Tov.a25)} <span style="color:var(--muted);font-weight:400">→</span> ${fmtC(Tov.a26)}</div><div class="sub2">캠페인 기간 · 대상 SKU 기준</div></div>`
+   +`<div class="tile hero"><div class="lab">연관 오더 (전년 → 당해)</div><div class="val">${fmtC(Tov.a25)} <span style="color:var(--muted);font-weight:400">→</span> ${fmtC(Tov.a26)}</div><div class="sub2">캠페인 기간 · 대상 SKU 기준</div></div>`
    +`<div class="tile"><div class="lab">YoY</div><div class="val"><span class="${cls(Tov.yoy)}">${fmtPC(Tov.yoy)}</span></div></div>`
    +`<div class="tile"><div class="lab">집행 캠페인</div><div class="val">${Tov.run}<span style="font-size:16px;color:var(--muted)"> / ${Tov.n}</span></div><div class="sub2">대상 고객 ${Tov.cust.size.toLocaleString()}곳</div></div>`
    +`<div class="tile"><div class="lab">달성률</div><div class="val">${Tov.prog.toFixed(0)}%</div><div class="sub2">관측 ${Tov.obs.toLocaleString()}일 / 계획 ${Tov.tot.toLocaleString()}일</div></div></div>`
    +`<h4 class="soh">2026 CK PROMOTION 연관 오더 현황</h4>`
-   +`<p class="note" style="margin-top:-2px">ChoiceKit 캠페인 대상 오더(sell-in)의 전년 대비 증감 · 권역별 · USD</p>`
+   +`<p class="note" style="margin-top:-2px">ChoiceKit 캠페인 연관 오더(sell-in)의 전년 대비 증감 · 권역별 · USD</p>`
    +`<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:6px 0 10px">`
-   +`<div class="tile"><div class="lab">2025 대상 오더</div><div class="val">${fmtC(_g25)}</div></div>`
-   +`<div class="tile" style="border-top-color:var(--brand)"><div class="lab">2026 대상 오더</div><div class="val">${fmtC(_g26)}</div><div class="sub2">전년 대비 <span class="${cls(_gy)}">${fmtPC(_gy)}</span></div></div>`
+   +`<div class="tile"><div class="lab">2025 연관 오더</div><div class="val">${fmtC(_g25)}</div></div>`
+   +`<div class="tile" style="border-top-color:var(--brand)"><div class="lab">2026 연관 오더</div><div class="val">${fmtC(_g26)}</div><div class="sub2">전년 대비 <span class="${cls(_gy)}">${fmtPC(_gy)}</span></div></div>`
    +`<div class="tile"><div class="lab">순증액</div><div class="val">${fmtC(_g26-_g25)}</div></div>`
    +`<div class="tile"><div class="lab">성장 권역</div><div class="val">${_gr.filter(r=>r.a26>r.a25).length}<span style="font-size:16px;color:var(--muted)"> / ${_gr.length}</span></div></div></div>`
    +`<div class="legend"><span><i class="sw" style="background:var(--s1)"></i>2025</span><span><i class="sw" style="background:var(--brand)"></i>2026</span></div>`
