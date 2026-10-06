@@ -164,6 +164,7 @@ th .up{color:#7be3b8}
 .sotabgrp{margin-bottom:9px}
 .sotabreg{font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.04em;margin:0 0 4px}
 .sotabrow{display:flex;gap:8px;flex-wrap:wrap}
+.sepfhdr{font-size:12.5px;color:var(--ink2);padding:6px 0 6px 10px;border-left:3px solid var(--s1);margin-left:4px}
 .sotab{display:flex;flex-direction:column;gap:2px;align-items:flex-start;padding:8px 14px;border-radius:7px;
   border:1px solid var(--ring);background:var(--card);color:var(--ink2);font:inherit;font-size:14.5px;
   font-weight:600;cursor:pointer;line-height:1.3;text-align:left}
@@ -1461,7 +1462,7 @@ function sepMonth(A){
     const p=v*100, col=p>=150?'#0a7a44':p>=100?'#4a9c6d':p>=50?'#C79500':'#c0392b';
     return `<td style="text-align:center;background:${col};color:#fff;font-weight:700">${p.toFixed(0)}%</td>`;};
   const cis=A.cis, sea=A.sea, mena=A.mena, lat=A.latam, pl=lat.pluscar, sr=lat.super_repuestos, st=lat.steerstar;
-  let h=`<div class="warnbox" style="border-left-color:var(--s1)"><b>${A._m}월 활동 리포트 · Activity Layer</b> · 데이터 기준 ${A.generated_at}</div>`;
+  let h=`` ;
 
   // ── Summary ──
   h+=`<div class="card"><h3>September Report Summary</h3><p class="note" style="font-size:15px;line-height:1.6">${esc(A.summary)}</p>`
@@ -1673,7 +1674,9 @@ function sepReport(sel){
   if(sepSel!=='all' && !MONTHLY_ACTIVITY[sepSel]) sepSel=have.length?have[have.length-1]:'all';
   const opts=`<option value="all"${sepSel==='all'?' selected':''}>전체 (월간 종합)</option>`
     +have.map(m=>`<option value="${m}"${sepSel===m?' selected':''}>${m}월 리포트</option>`).join('');
-  $('#sepFilter').innerHTML=`<label class="sepdd">월 선택 <select id="sepSelDd">${opts}</select></label>`;
+  const _Acur=MONTHLY_ACTIVITY[sepSel];
+  const _hdr=_Acur?`<span class="sepfhdr"><b>${_Acur._m}월 활동 리포트 · Activity Layer</b> · 데이터 기준 ${_Acur.generated_at}</span>`:`<span class="sepfhdr"><b>월간 종합</b> · 입력된 월 전체</span>`;
+  $('#sepFilter').innerHTML=`<label class="sepdd">월 선택 <select id="sepSelDd">${opts}</select></label>`+_hdr;
   let body;
   if(sepSel==='all') body=sepAllOverview(have);
   else body=sepMonth(MONTHLY_ACTIVITY[sepSel]);
