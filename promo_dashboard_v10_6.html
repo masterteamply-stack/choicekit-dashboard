@@ -235,6 +235,7 @@ tfoot td.num{text-align:right}
 </style>
 <style>.lts th{background:var(--head);color:#fff;font-weight:700;text-align:right;font-size:12px;padding:4px 8px;border:1px solid var(--headbd);position:static;cursor:default}.lts th:first-child,.lts td:first-child{text-align:left}.lts{margin:2px 0 6px}</style>
 <style>.brc{display:inline-block;background:var(--o1);color:var(--o6);border:1px solid var(--o2);border-radius:3px;padding:0 5px;margin-right:6px;font-size:11px;font-weight:700;vertical-align:1px}</style>
+<style>.sbadge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;margin:2px 4px 2px 0;background:var(--o1);color:var(--o6);border:1px solid var(--o2)}.sbadge.ok{background:#e6f4ec;color:#0a7a44;border-color:#b8e0c8}.sbadge.wn{background:#fdf3d9;color:#8a6d00;border-color:#f0dca0}.slist{margin:5px 0 0;padding-left:18px;font-size:12px;line-height:1.7;color:var(--ink2)}#p7 .kpis{margin-bottom:10px}</style>
 </head>
 <body data-palette="#CE0E2D,#27649E">
 <header>
@@ -252,6 +253,7 @@ tfoot td.num{text-align:right}
   <button data-pg="p5">고객 Sell-out 연계</button>
   <button data-pg="p3">비용 · 회수</button>
   <button data-pg="p6">SteerStar</button>
+  <button data-pg="p7">9월 리포트</button>
 </div>
 <main>
   <div class="filters">
@@ -352,6 +354,9 @@ tfoot td.num{text-align:right}
     <div class="kpis k6" id="ssKpi"></div>
     <div id="ssBody"></div>
   </div>
+
+    <!-- P7 September Report -->
+  <div class="page" id="p7"><div id="sepBody"></div></div>
 
   <div class="foot" id="foot"></div>
 </main>
@@ -1269,11 +1274,184 @@ function selloutBox(so){if(!so)return '';
  return h+`</div>`;}
 
 
+const SEPTEMBER_ACTIVITY = {
+  generated_at: "2026-10-06",
+  summary: "9월 Choice Kit은 지역별로 오더 전환 단계가 다르게 나타났습니다. SEA는 Sell-out 목표를 초과했고, CIS는 Catalogue 다운로드와 Meta 광고로 리테일 채널 활용 기반을 확대했습니다. LATAM은 O2O 광고와 Survey로 현장 반응을 확인했으며, MENA는 제한적이지만 추가 오더가 발생했습니다.",
+  cis: { views:18228, downloads_total:832, downloads_asian:368, downloads_european:464, download_rate:0.0456,
+    posted_at:"2026-09-03", target_countries:["카자흐스탄","키르기스스탄","타지키스탄","투르크메니스탄"],
+    meta_posts:[
+      {type:"Asian", title:"Asian 5개 차종 소재 1", uploaded_at:"2026-09-16", status:"집행 완료"},
+      {type:"European", title:"European 5개 차종 소재 1", uploaded_at:"2026-09-23", status:"집행 완료"},
+      {type:"Asian", title:"Asian 5개 차종 소재 2", uploaded_at:"2026-09-30", status:"집행 완료"}],
+    content_done:3, content_total:6,
+    followup:["11월 현지 출장 연계 Free Replacement Event / Tech Seminar 협의 (Phaeton · Complex Auto · Bauten)",
+      "Mechanic Support Kits 10월 입고 후 고객사 컨테이너로 순차 발송",
+      "Kit 구성: 로고 공구 조끼·모자 세트, Mechanic Handbook, Asian / European 차종 Flyer"] },
+  sea: { programs_count:5, countries:5, customers:12, period:"2026년 5~11월",
+    sellout_target:835538.7473, sellout_actual:864045.5111, achievement_rate:1.0341,
+    programs:[
+      {program:"Sales Champion Award", customers:8, actual:531154.3828, achievement:1.9530, note:"전체 성과 견인"},
+      {program:"Long-Term Loyalty", customers:3, actual:75072.0032, achievement:1.3704, note:"GP·Densocentra·Marboro 중심 안정적 성과"},
+      {program:"Order to Earn POSM", customers:3, actual:257819.1252, achievement:0.5196, note:"GTA 목표 달성 · Mast / Nam Bac 추가 Push 필요"},
+      {program:"New Product Sell-Out", customers:2, actual:0, achievement:0, note:"7월 시작 후 데이터 미제공"},
+      {program:"Display & Visibility", customers:3, actual:null, achievement:null, note:"전시·사진 제출 미제공"}],
+    customer_ach:[
+      {name:"Mast", country:"VN", ach:{"Sales Champion":5.94,"POSM":0.40}},
+      {name:"Nam Bac", country:"VN", ach:{"Sales Champion":2.88,"POSM":0.44}},
+      {name:"GTA", country:"VN", ach:{"Sales Champion":5.58,"POSM":1.02}},
+      {name:"GP", country:"TH", ach:{"Sales Champion":4.42,"Loyalty":2.26}},
+      {name:"CSH", country:"TH", ach:{"Sales Champion":1.74}},
+      {name:"ATC", country:"TH", ach:{"Sales Champion":0.07}, note:"6월 이후 실적 미제공"},
+      {name:"Marboro", country:"MY", ach:{"Loyalty":0.97}},
+      {name:"Densocentra", country:"ID", ach:{"Loyalty":0.81}},
+      {name:"Chuan Lam", country:"PH", pending:true},
+      {name:"Young Auto", country:"PH", pending:true}],
+    pending_badges:["Chuan Lam","Young Auto","ATC","New Product Sell-Out","Display & Visibility"] },
+  mena: { september_orders:[{customer:"Dynatrade", amount_usd:1828.04},{customer:"MESK", amount_usd:1879.58}],
+    september_total:3707.62, cumulative_order:12906.48, products:["Shock Absorber","Brake Pad"] },
+  latam: {
+    pluscar:{ ad_date:"2026-09-15", fb_link_clicks:1465, survey_before:5, survey_after:13,
+      total_2025:8509, total_2026:6144, total_yoy:-0.278, promo_2025:1734, promo_2026:1751, promo_yoy:0.010,
+      share_2025:0.204, share_2026:0.285, share_change_pp:8.1 },
+    super_repuestos:{ incentive:"영업사원 대상 판매 인센티브", survey_responses:62, warranty_rate:0.79,
+      key_needs:["보증 (Warranty)","제품 교육 (Education)","커버리지 (Coverage)","브랜드 인지도 (Brand Awareness)"],
+      data_status:"Sell-out 데이터 고객사 제공 완료 · 품목·집계 범위 세분화 필요",
+      market:"검증된 품질을 합리적 가격에 찾는 시장",
+      next:"정비사 초청 기술 세미나 결합 · 칠레 지사 인력 활용 현장 제품 교육",
+      followup:"11월 Super Repuestos 마케팅 담당자와 2027년 계획 논의" },
+    steerstar:{
+      refatrix:{ order_2025:33527.07, order_2026:114595.62, yoy:2.418, survey_count:157, survey_note:"RUJAC 전시회 · 수기 응답 추후 정리" },
+      brabham:{ order_2025:80488.13, order_2026:70268.22, yoy:-0.127, issue:"INMETRO 인증 미확보로 Survey / 판매 제한",
+        status:"9월 Shock Absorber INMETRO 인증 절차 착수 · 연말까지 진행 상황 확인" } } },
+  action_plan:[
+    {region:"CIS", action:"Free Replacement Event / Tech Seminar 협의", owner:"Phaeton · Complex Auto · Bauten", kpi:"행사 확정 · Catalogue 후속 반응 · 오더 전환", timing:"11월"},
+    {region:"CIS", action:"Mechanic Support Kits 입고 및 고객사 컨테이너 발송", owner:"CIS 리테일 고객사", kpi:"발송 고객사 · 도착 일정 · 현장 활용", timing:"10월"},
+    {region:"SEA", action:"9월 Sell-out 미반영 고객 데이터 회수", owner:"Chuan Lam · Young Auto · ATC · New Product · Display", kpi:"Updated Sell-out Data", timing:"10월"},
+    {region:"SEA", action:"Sales Champion 고성과 고객 Follow-up Order 확인", owner:"Mast · Nam Bac · GTA · GP", kpi:"Follow-up Sell-in Order", timing:"10~11월"},
+    {region:"MENA", action:"Dynatrade / MESK 중심 추가 오더 가능성 확인", owner:"Dynatrade · MESK", kpi:"S/A · Brake Pad 품목별 오더", timing:"11월 마감"},
+    {region:"LATAM", action:"PLUSCAR O2O 광고 후 Survey 및 매장 구매 연결 확인", owner:"PLUSCAR", kpi:"Survey 응답 · 대상 품목 판매 비중", timing:"10월"},
+    {region:"LATAM", action:"Super Repuestos 품목별 Sell-out 데이터 재확인", owner:"Super Repuestos", kpi:"품목별 판매량 · 인센티브 성과", timing:"10월"},
+    {region:"LATAM", action:"RUJAC Survey 수기 응답 정리", owner:"REFATRIX", kpi:"157건 응답 분석 · 니즈 키워드", timing:"10월"},
+    {region:"LATAM", action:"BRABHAM INMETRO 인증 진행 확인", owner:"BRABHAM", kpi:"인증 단계 · 판매 가능 품목 · Survey 재개", timing:"연말"}]
+};
+function sepReport(){
+  const A=SEPTEMBER_ACTIVITY, C1='var(--o4)', C2='var(--s1)', C26='var(--brand)';
+  const pc=v=>(v>=0?'+':'')+(v*100).toFixed(1)+'%';
+  const kgrid=(cards,cls)=>`<div class="kpis ${cls||'k6'}">`+cards.map(k=>`<div class="tile${k.hero?' hero':''}"><div class="lab">${k.lab}</div><div class="val">${k.val}</div>${k.sub?`<div class="sub2">${k.sub}</div>`:''}${k.sub2?`<div class="sub2">${k.sub2}</div>`:''}</div>`).join('')+`</div>`;
+  const badge=(t,tone)=>`<span class="sbadge ${tone||''}">${esc(t)}</span>`;
+  const achBar=(ach,lab,extra)=>{const p=ach==null?null:ach*100;
+    const col=p==null?'var(--muted)':p>=100?'var(--good)':p>=50?'var(--warn)':'var(--serious)';
+    const w=p==null?0:Math.min(p,200)/2;
+    return `<div style="margin:8px 0"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><b>${esc(lab)}</b><span style="color:${col};font-weight:700">${p==null?'미제공':p.toFixed(0)+'%'}</span></div>
+      <div style="height:15px;background:var(--track);border-radius:3px;position:relative;overflow:hidden"><div style="height:100%;width:${w}%;background:${col};border-radius:3px"></div><div style="position:absolute;left:50%;top:-1px;bottom:-1px;border-left:1px dashed var(--axis)"></div></div>
+      ${extra?`<div class="sub3" style="margin-top:2px">${esc(extra)}</div>`:''}</div>`;};
+  const heat=v=>{if(v==null)return '<td style="text-align:center;color:var(--ring)">–</td>';
+    const p=v*100, col=p>=150?'#0a7a44':p>=100?'#4a9c6d':p>=50?'#C79500':'#c0392b';
+    return `<td style="text-align:center;background:${col};color:#fff;font-weight:700">${p.toFixed(0)}%</td>`;};
+  const cis=A.cis, sea=A.sea, mena=A.mena, lat=A.latam, pl=lat.pluscar, sr=lat.super_repuestos, st=lat.steerstar;
+  let h=`<div class="warnbox" style="border-left-color:var(--s1)"><b>September Report · Activity Layer</b> · 데이터 기준 ${A.generated_at} · 활동 성과 지표(오더 금액과 합산하지 않음)</div>`;
+
+  // ── Summary ──
+  h+=`<div class="card"><h3>September Report Summary</h3><p class="note" style="font-size:13px;line-height:1.6">${esc(A.summary)}</p>`
+   +kgrid([
+     {lab:'CIS Catalogue Views',val:cis.views.toLocaleString(),sub:`다운로드 ${cis.downloads_total.toLocaleString()} · 전환 ${(cis.download_rate*100).toFixed(1)}%`,hero:true},
+     {lab:'SEA Sell-out 달성',val:(sea.achievement_rate*100).toFixed(1)+'%',sub:`$${Math.round(sea.sellout_actual).toLocaleString()} / 목표 $${Math.round(sea.sellout_target).toLocaleString()}`,hero:true},
+     {lab:'MENA 9월 추가 오더',val:'$'+mena.september_total.toLocaleString(),sub:`누적 $${mena.cumulative_order.toLocaleString()}`},
+     {lab:'LATAM PLUSCAR Clicks',val:pl.fb_link_clicks.toLocaleString(),sub:`Survey ${pl.survey_before} → ${pl.survey_after}`},
+     {lab:'Super Repuestos Survey',val:sr.survey_responses+'건',sub:`보증 선호 ${(sr.warranty_rate*100).toFixed(0)}%`},
+     {lab:'REFATRIX 2026 Order',val:'$'+Math.round(st.refatrix.order_2026).toLocaleString(),sub:`YoY ${pc(st.refatrix.yoy)} · Survey ${st.refatrix.survey_count}건`}])
+   +`</div>`;
+
+  // ── CIS ──
+  h+=`<div class="card"><h3>CIS · Catalogue Awareness &amp; Retail Activation</h3>
+    <p class="note">Asian / European 차종 Catalogue 확산으로 End User 인지와 리테일 채널 활용 기반을 동시에 확대. 대상: ${cis.target_countries.join(' · ')} · 게시 ${cis.posted_at}</p>`
+   +kgrid([
+     {lab:'게시물 조회수',val:cis.views.toLocaleString()},
+     {lab:'Catalogue 다운로드',val:cis.downloads_total.toLocaleString(),sub:`전환율 ${(cis.download_rate*100).toFixed(1)}%`},
+     {lab:'Asian 다운로드',val:cis.downloads_asian.toLocaleString()},
+     {lab:'European 다운로드',val:cis.downloads_european.toLocaleString()}],'k6')
+   +`<div class="grid2"><div><div class="sub3" style="margin:4px 0 2px">Asian vs European 다운로드</div>`
+   +gbar(['Asian','European'],[{name:'다운로드',color:C2,vals:[cis.downloads_asian,cis.downloads_european]}],{W:320,H:180,groupColors:[C1,C2]})
+   +`</div><div><div class="sub3" style="margin:4px 0 2px">전환 Funnel</div>`
+   +`<div style="padding:6px 4px">`
+   +[['Meta 콘텐츠 집행',cis.content_done+' / '+cis.content_total+'건',100,C1],['웹사이트 조회',cis.views.toLocaleString(),100,C2],['Catalogue 다운로드',cis.downloads_total.toLocaleString()+' ('+(cis.download_rate*100).toFixed(1)+'%)',cis.download_rate*100*3,C26]]
+     .map(([l,v,w,c])=>`<div style="margin:9px 0"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><b>${l}</b><span>${v}</span></div><div style="height:15px;background:var(--track);border-radius:3px;overflow:hidden"><div style="height:100%;width:${Math.max(w,3)}%;background:${c};border-radius:3px"></div></div></div>`).join('')
+   +`</div></div></div>`
+   +`<p class="note" style="margin-top:8px">조회수 대비 다운로드 전환율 ${(cis.download_rate*100).toFixed(1)}% · European Catalogue 다운로드가 Asian보다 높아 European 차종 관심 확인.</p>`
+   +`<h4 class="soh">콘텐츠 집행 현황 (${cis.content_done} / ${cis.content_total}건)</h4><div class="tblwrap"><table class="lts"><thead><tr><th>구분</th><th>소재</th><th>업로드</th><th>상태</th></tr></thead><tbody>`
+   +cis.meta_posts.map(p=>`<tr><td>${p.type}</td><td style="text-align:left">${esc(p.title)}</td><td>${p.uploaded_at}</td><td>${badge(p.status,'ok')}</td></tr>`).join('')
+   +`<tr><td>Asian/European</td><td style="text-align:left">잔여 소재</td><td>예정</td><td>${badge('준비 중','wn')}</td></tr></tbody></table></div>`
+   +`<h4 class="soh">후속 실행</h4><ul class="slist">`+cis.followup.map(x=>`<li>${esc(x)}</li>`).join('')+`</ul></div>`;
+
+  // ── SEA ──
+  h+=`<div class="card"><h3>SEA · Sell-out Promotion Performance</h3>
+    <p class="note">5개국 12개사 기준 Sell-out USD ${Math.round(sea.sellout_actual).toLocaleString()}를 기록하며 목표 대비 ${(sea.achievement_rate*100).toFixed(1)}% 달성. 성과는 Sales Champion Award와 Long-Term Loyalty에 집중.</p>`
+   +kgrid([
+     {lab:'운영 프로그램',val:sea.programs_count+'개'},{lab:'참여 국가',val:sea.countries+'개국'},{lab:'참여 고객사',val:sea.customers+'개사'},
+     {lab:'Sell-out 목표',val:'$'+Math.round(sea.sellout_target).toLocaleString()},{lab:'Sell-out 실적',val:'$'+Math.round(sea.sellout_actual).toLocaleString(),hero:true},{lab:'달성률',val:(sea.achievement_rate*100).toFixed(1)+'%',hero:true}])
+   +`<h4 class="soh">프로그램별 성과</h4><div class="tblwrap"><table class="lts"><thead><tr><th>프로그램</th><th>참여</th><th>실적 (USD)</th><th>달성률</th><th>해석</th></tr></thead><tbody>`
+   +sea.programs.map(p=>`<tr><td style="text-align:left">${esc(p.program)}</td><td style="text-align:center">${p.customers}</td><td>${p.actual==null?'<span style="color:var(--muted)">미제공</span>':'$'+Math.round(p.actual).toLocaleString()}</td><td style="text-align:center;font-weight:700;color:${p.achievement==null?'var(--muted)':p.achievement>=1?'var(--good)':p.achievement>=.5?'var(--warn)':'var(--serious)'}">${p.achievement==null?'–':(p.achievement*100).toFixed(0)+'%'}</td><td style="text-align:left;font-size:11px">${esc(p.note)}</td></tr>`).join('')
+   +`</tbody></table></div>`
+   +`<h4 class="soh">프로그램별 달성률</h4>`+sea.programs.filter(p=>p.achievement!=null).map(p=>achBar(p.achievement,p.program,`실적 $${Math.round(p.actual).toLocaleString()} · ${p.customers}개사`)).join('')
+   +`<h4 class="soh">고객사별 달성률 (Heatmap)</h4><div class="tblwrap"><table class="lts"><thead><tr><th>고객사</th><th>국가</th><th>Sales Champion</th><th>POSM</th><th>Loyalty</th></tr></thead><tbody>`
+   +sea.customer_ach.map(c=>c.pending?`<tr><td>${esc(c.name)}</td><td>${c.country}</td><td colspan="3" style="text-align:center;color:var(--muted)">데이터 미제공</td></tr>`
+      :`<tr><td>${esc(c.name)}${c.note?' <span class="sub3">('+esc(c.note)+')</span>':''}</td><td>${c.country}</td>${heat(c.ach['Sales Champion'])}${heat(c.ach['POSM'])}${heat(c.ach['Loyalty'])}</tr>`).join('')
+   +`</tbody></table></div><p class="note" style="margin-top:6px">9월 데이터는 일부 고객사 미반영 상태 · 미제출 고객은 판매 부진인지 데이터 미제출인지 구분 관리 필요.</p>`
+   +`<div style="margin-top:8px"><span class="sub3">미제출: </span>`+sea.pending_badges.map(b=>badge(b,'wn')).join('')+`</div></div>`;
+
+  // ── MENA ──
+  h+=`<div class="card"><h3>MENA · Shock Absorber &amp; Brake Pad Promotion</h3>
+    <p class="note">Dynatrade와 MESK에서 9월 추가 오더 발생 · 누적 오더 USD ${mena.cumulative_order.toLocaleString()}로 제한적이나 실질 전환 확인.</p>`
+   +kgrid([{lab:'9월 추가 오더',val:'$'+mena.september_total.toLocaleString(),hero:true,sub:'Dynatrade + MESK'},
+     {lab:'누적 오더',val:'$'+mena.cumulative_order.toLocaleString()},
+     {lab:'제품군',val:mena.products.length+'종',sub:mena.products.join(' · ')}],'k3')
+   +`<div class="grid2"><div><div class="sub3" style="margin:4px 0 2px">고객별 9월 오더 (USD)</div>`
+   +gbar(mena.september_orders.map(o=>o.customer),[{name:'9월 오더',color:C2,vals:mena.september_orders.map(o=>o.amount_usd)}],{W:320,H:180,fmtV:v=>'$'+Math.round(v).toLocaleString(),groupColors:[C1,C2]})
+   +`</div><div style="align-self:center">`+mena.products.map(p=>badge(p,'ok')).join(' ')+`<p class="note" style="margin-top:8px">11월 마감 전까지 오더 발생 고객의 품목별 재주문 가능성 관리.</p></div></div></div>`;
+
+  // ── LATAM Sell-out Activation ──
+  h+=`<div class="card"><h3>LATAM · Sell-out Activation Progress</h3>
+    <p class="note">PLUSCAR는 전체 판매 감소 속에서도 프로모션 대상 품목 판매량을 유지하고 판매 비중을 확대. O2O 광고 게재 ${pl.ad_date}.</p>`
+   +kgrid([{lab:'Facebook Link Clicks',val:pl.fb_link_clicks.toLocaleString()},
+     {lab:'Survey 응답',val:pl.survey_before+' → '+pl.survey_after,sub:'+'+(pl.survey_after-pl.survey_before)+'건'},
+     {lab:'대상 품목 판매 비중',val:(pl.share_2026*100).toFixed(1)+'%',sub:`${(pl.share_2025*100).toFixed(1)}% → ${(pl.share_2026*100).toFixed(1)}% (+${pl.share_change_pp}%p)`,hero:true}],'k3')
+   +`<div class="grid2"><div><div class="sub3" style="margin:4px 0 2px">8월 판매량: 전체 vs 프로모션 대상 (pcs)</div>`
+   +gbar(['전체 판매량','프로모션 대상'],[{name:'2025.8',color:C1,vals:[pl.total_2025,pl.promo_2025]},{name:'2026.8',color:C26,vals:[pl.total_2026,pl.promo_2026]}],{W:340,H:190,fmtV:v=>v.toLocaleString()})
+   +`</div><div style="align-self:center"><p class="note">전체 판매량 ${pc(pl.total_yoy)} 감소에도 프로모션 대상 품목은 ${pc(pl.promo_yoy)} 유지 · 대상 품목 비중 +${pl.share_change_pp}%p 확대 · O2O 광고 이후 Survey 응답 증가 확인.</p></div></div></div>`;
+
+  // ── LATAM Survey Insight ──
+  h+=`<div class="card"><h3>LATAM · Survey Insight &amp; Customer Follow-up</h3>
+    <p class="note">현장 니즈는 가격 인하보다 보증·제품 교육·커버리지·브랜드 인지도 강화에 집중. ${esc(sr.market)}.</p>`
+   +kgrid([{lab:'Super Repuestos Survey',val:sr.survey_responses+'건',hero:true,sub:esc(sr.incentive)},
+     {lab:'보증 선호',val:(sr.warranty_rate*100).toFixed(0)+'%',sub:'브랜드 선택 기준 1위'},
+     {lab:'Sell-out 데이터',val:'제공 완료',sub:'품목·집계 범위 세분화 필요'}],'k3')
+   +`<h4 class="soh">핵심 니즈</h4><div class="grid2" style="gap:8px">`+sr.key_needs.map(n=>`<div class="card" style="margin:0;padding:10px 12px"><b>${esc(n)}</b></div>`).join('')+`</div>`
+   +`<h4 class="soh">다음 단계</h4><ul class="slist"><li>${esc(sr.next)}</li><li>${esc(sr.followup)}</li></ul></div>`;
+
+  // ── LATAM SteerStar ──
+  const rf=st.refatrix, bb=st.brabham;
+  h+=`<div class="card"><h3>LATAM SteerStar · REFATRIX &amp; BRABHAM</h3>
+    <p class="note">REFATRIX는 전년 대비 오더 ${pc(rf.yoy)}와 RUJAC Survey ${rf.survey_count}건 확보 · BRABHAM은 INMETRO 인증 이슈로 판매 확산 제한.</p>`
+   +kgrid([{lab:'REFATRIX 2026 Order',val:'$'+Math.round(rf.order_2026).toLocaleString(),sub:`2025 $${Math.round(rf.order_2025).toLocaleString()} · YoY ${pc(rf.yoy)}`,hero:true},
+     {lab:'REFATRIX Survey',val:rf.survey_count+'건',sub:esc(rf.survey_note)},
+     {lab:'BRABHAM 2026 Order',val:'$'+Math.round(bb.order_2026).toLocaleString(),sub:`2025 $${Math.round(bb.order_2025).toLocaleString()} · YoY ${pc(bb.yoy)}`}],'k3')
+   +`<div class="grid2"><div><div class="sub3" style="margin:4px 0 2px">고객별 Order YoY (USD)</div>`
+   +gbar(['REFATRIX','BRABHAM'],[{name:'2025',color:C1,vals:[rf.order_2025,bb.order_2025]},{name:'2026',color:C26,vals:[rf.order_2026,bb.order_2026]}],{W:340,H:190,fmtV:v=>'$'+Math.round(v/1000)+'K'})
+   +`</div><div style="align-self:center"><div class="sub3" style="margin-bottom:4px">BRABHAM INMETRO 인증</div>${badge('인증 진행 중','wn')}<p class="note" style="margin-top:6px">${esc(bb.issue)} · ${esc(bb.status)}</p></div></div></div>`;
+
+  // ── Action Plan ──
+  h+=`<div class="card"><h3>October–November Action Plan</h3><div class="tblwrap"><table class="lts"><thead><tr><th>Region</th><th>Action</th><th>Owner / Customer</th><th>KPI / Output</th><th>Timing</th></tr></thead><tbody>`
+   +A.action_plan.map(r=>`<tr><td><b>${r.region}</b></td><td style="text-align:left">${esc(r.action)}</td><td style="text-align:left;font-size:11px">${esc(r.owner)}</td><td style="text-align:left;font-size:11px">${esc(r.kpi)}</td><td style="text-align:center">${esc(r.timing)}</td></tr>`).join('')
+   +`</tbody></table></div></div>`;
+
+  $('#sepBody').innerHTML=h;
+}
+
 $('#nav').addEventListener('click',e=>{const b=e.target.closest('button[data-pg]');if(!b)return;
   $$('#nav button').forEach(x=>x.classList.toggle('on',x===b));
   $$('.page').forEach(p=>p.classList.toggle('on',p.id===b.dataset.pg));
   soFilterUI(b.dataset.pg);
-  if(b.dataset.pg==='p1'){chartDid();persist();} if(b.dataset.pg==='p5')soPage(); if(b.dataset.pg==='p6')ssPage();});
+  if(b.dataset.pg==='p1'){chartDid();persist();} if(b.dataset.pg==='p5')soPage(); if(b.dataset.pg==='p6')ssPage(); if(b.dataset.pg==='p7')sepReport();});
 document.addEventListener('click',e=>{const b=e.target.closest('button[data-tv]');if(!b)return;
   const id=b.dataset.tv, on=$('#'+id+'tv').classList.toggle('on');
   $('#'+id+'box').classList.toggle('off',on); b.classList.toggle('on',on); b.textContent=on?'차트':'표';});
