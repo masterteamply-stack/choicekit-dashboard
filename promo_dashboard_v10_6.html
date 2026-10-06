@@ -1406,6 +1406,7 @@ function sepMonth(A){
 
   // ── Summary ──
   h+=`<div class="card"><h3>September Report Summary</h3><p class="note" style="font-size:15px;line-height:1.6">${esc(A.summary)}</p>`
+   +`<p class="note" style="font-size:12.5px;margin-top:-4px"><b>전사 맥락:</b> 9월 전사 오더(수주) ${A.sales.month} · 1~9월 누적 ${A.sales.cum} (YoY ${A.sales.cum_yoy}, KV 원장 기준). 본 리포트는 그중 Choice Kit 캠페인의 권역별 활동·오더 전환 현황입니다(전사 매출과 별개).</p>`
    +kgrid([
      {lab:'CIS Catalogue Views',val:cis.views.toLocaleString(),sub:`다운로드 ${cis.downloads_total.toLocaleString()} · 전환 ${(cis.download_rate*100).toFixed(1)}%`,hero:true},
      {lab:'SEA Sell-out 달성',val:(sea.achievement_rate*100).toFixed(1)+'%',sub:`$${Math.round(sea.sellout_actual).toLocaleString()} / 목표 $${Math.round(sea.sellout_target).toLocaleString()}`,hero:true},
@@ -1413,7 +1414,17 @@ function sepMonth(A){
      {lab:'LATAM PLUSCAR Clicks',val:pl.fb_link_clicks.toLocaleString(),sub:`Survey ${pl.survey_before} → ${pl.survey_after}`},
      {lab:'Super Repuestos Survey',val:sr.survey_responses+'건',sub:`보증 선호 ${(sr.warranty_rate*100).toFixed(0)}%`},
      {lab:'REFATRIX 2026 Order',val:'$'+Math.round(st.refatrix.order_2026).toLocaleString(),sub:`YoY ${pc(st.refatrix.yoy)} · Survey ${st.refatrix.survey_count}건`}])
-   +`</div>`;
+   +`<div class="sub3" style="color:var(--ink2);font-size:12px;margin:12px 0 3px"><b>권역별 핵심 성과 · 다음 단계</b></div>`
+   +`<div class="tblwrap"><table class="lts"><thead><tr><th>권역 · 프로그램</th><th>핵심 성과 (9월)</th><th>상태</th><th>다음 단계</th></tr></thead><tbody>`
+   +[
+     {rg:'CIS · Catalogue/Retail',perf:`Catalogue 조회 ${cis.views.toLocaleString()} · 다운로드 ${cis.downloads_total} (전환 ${(cis.download_rate*100).toFixed(1)}%) · Asian ${cis.downloads_asian}/European ${cis.downloads_european} · Meta 광고 집행`,st:`콘텐츠 ${cis.content_done}/${cis.content_total}`,next:'11월 현지 출장 Free Replacement Event · Tech Seminar 협의 (Phaeton·Complex·Bauten)'},
+     {rg:'SEA(ASIA) · Sell-out',perf:`Sell-out $${Math.round(sea.sellout_actual).toLocaleString()} / 목표 대비 <b>${(sea.achievement_rate*100).toFixed(1)}%</b> · Sales Champion ${(sea.programs[0].achievement*100).toFixed(0)}% 견인 · Loyalty ${(sea.programs[1].achievement*100).toFixed(0)}% · POSM ${(sea.programs[2].achievement*100).toFixed(0)}%`,st:`목표 초과 · 미제출 ${sea.pending_badges.length}건`,next:'Chuan Lam·Young Auto·ATC·New Product·Display 데이터 취합 · Mast/Nam Bac POSM Push'},
+     {rg:'LATAM · O2O (PLUSCAR)',perf:`O2O 광고 ${pl.ad_date} · FB 클릭 ${pl.fb_link_clicks.toLocaleString()} · Survey ${pl.survey_before}→${pl.survey_after} · 대상 품목 비중 ${(pl.share_2025*100).toFixed(1)}%→<b>${(pl.share_2026*100).toFixed(1)}%</b> (전체 ${pc(pl.total_yoy)}에도 대상 ${pc(pl.promo_yoy)} 방어)`,st:'현장 반응 확인',next:'2026 9~10월 Sell-out·SKU별 데이터 수령 (협의 중)'},
+     {rg:'LATAM · Survey (S.Repuestos)',perf:`Survey ${sr.survey_responses}건 · 보증 선호 <b>${(sr.warranty_rate*100).toFixed(0)}%</b> · 니즈: ${sr.key_needs.slice(0,3).map(k=>k.split(' ')[0]).join('·')}`,st:'Sell-out 데이터 수령(세분화 필요)',next:'정비사 기술 세미나 결합 · 11월 2027 계획 논의'},
+     {rg:'LATAM · SteerStar',perf:`REFATRIX 2026 오더 $${Math.round(st.refatrix.order_2026).toLocaleString()} (YoY <b>${pc(st.refatrix.yoy)}</b>) · RUJAC Survey ${st.refatrix.survey_count}건 · BRABHAM $${Math.round(st.brabham.order_2026).toLocaleString()} (YoY ${pc(st.brabham.yoy)})`,st:'BRABHAM INMETRO 인증 미확보',next:'Shock Absorber INMETRO 인증 완료 후 Survey·판매 재개 (연말 확인)'},
+     {rg:'MENA · Portfolio Expansion',perf:`9월 추가 오더 $${mena.september_total.toLocaleString()} (${mena.september_orders.map(o=>o.customer).join('·')}) · 누적 $${mena.cumulative_order.toLocaleString()} · ${mena.products.join('·')}`,st:'제한적 추가 오더',next:'Portfolio Expansion 지속 (타깃 $30,000)'}
+   ].map(r=>`<tr><td style="white-space:nowrap"><b>${r.rg}</b></td><td style="font-size:12px">${r.perf}</td><td style="font-size:12px;white-space:nowrap">${r.st}</td><td class="sub3" style="font-size:11.5px">${r.next}</td></tr>`).join('')
+   +`</tbody></table></div></div>`;
 
   // ── CIS ──
   h+=`<div class="card"><h3>CIS · Catalogue Awareness &amp; Retail Activation</h3>
