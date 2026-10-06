@@ -239,7 +239,9 @@ tfoot td.num{text-align:right}
 <style>.lts th{background:var(--head);color:#fff;font-weight:700;text-align:right;font-size:14px;padding:4px 8px;border:1px solid var(--headbd);position:static;cursor:default}.lts th:first-child,.lts td:first-child{text-align:left}.lts{margin:2px 0 6px}</style>
 <style>.brc{display:inline-block;background:var(--o1);color:var(--o6);border:1px solid var(--o2);border-radius:3px;padding:0 5px;margin-right:6px;font-size:12.5px;font-weight:700;vertical-align:1px}</style>
 <style>.sbadge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12.5px;font-weight:700;margin:2px 4px 2px 0;background:var(--o1);color:var(--o6);border:1px solid var(--o2)}.sbadge.ok{background:#e6f4ec;color:#0a7a44;border-color:#b8e0c8}.sbadge.wn{background:#fdf3d9;color:#8a6d00;border-color:#f0dca0}.slist{margin:5px 0 0;padding-left:18px;font-size:14px;line-height:1.7;color:var(--ink2)}#p7 .kpis{margin-bottom:10px}</style>
-<style>.sepfilter{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px}.sfb{padding:6px 13px;border:1px solid var(--ring);background:var(--surface);border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink)}.sfb.on{background:var(--s1);color:#fff;border-color:var(--s1)}.sfb.empty{color:var(--muted);font-weight:400}</style>
+<style>.sepfilter{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px;align-items:center}
+.sepdd{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink2)}
+.sepdd select{padding:8px 12px;border:1px solid var(--ring);border-radius:7px;background:var(--surface);color:var(--ink);font-size:14px;font-weight:600;cursor:pointer}.sfb{padding:6px 13px;border:1px solid var(--ring);background:var(--surface);border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink)}.sfb.on{background:var(--s1);color:#fff;border-color:var(--s1)}.sfb.empty{color:var(--muted);font-weight:400}</style>
 </head>
 <body data-palette="#CE0E2D,#27649E">
 <header>
@@ -1497,7 +1499,7 @@ function sepMonth(A){
 const MONTHLY_ACTIVITY = { 9: SEPTEMBER_ACTIVITY };
 let sepSel = 9;
 function sepAllOverview(months){
-  let h=`<div class="card"><h3>월별 활동 리포트 (1~9월)</h3><p class="note">월 버튼을 선택하면 해당 월 리포트가 표시됩니다. 활동 데이터(오더 금액과 비합산)는 입력된 월만 표시됩니다.</p>
+  let h=`<div class="card"><h3>월별 활동 리포트 · 종합</h3><p class="note">상단 드롭다운에서 월을 선택하면 해당 월 리포트가 표시됩니다. 데이터가 입력된 월만 노출됩니다.</p>
    <div class="tblwrap"><table class="lts"><thead><tr><th>월</th><th>상태</th><th>주요 섹션</th></tr></thead><tbody>`
    +months.map(m=>`<tr><td>${m}월</td><td style="text-align:center">${MONTHLY_ACTIVITY[m]?'<span class="sbadge ok">입력 완료</span>':'<span class="sbadge wn">미입력</span>'}</td><td style="text-align:left">${MONTHLY_ACTIVITY[m]?'CIS · SEA · MENA · LATAM · SteerStar · Action Plan':'–'}</td></tr>`).join('')
    +`</tbody></table></div></div>`;
@@ -1507,15 +1509,16 @@ function sepAllOverview(months){
 function sepReport(sel){
   if(sel!==undefined) sepSel=sel;
   const months=[1,2,3,4,5,6,7,8,9];
-  const btns=`<button class="sfb${sepSel==='all'?' on':''}" data-sm="all">전체 (1~9월)</button>`
-    +months.map(m=>`<button class="sfb${sepSel===m?' on':''}${MONTHLY_ACTIVITY[m]?'':' empty'}" data-sm="${m}">${m}월${MONTHLY_ACTIVITY[m]?'':' ·미입력'}</button>`).join('');
-  $('#sepFilter').innerHTML=btns;
+  const have=months.filter(m=>MONTHLY_ACTIVITY[m]);
+  if(sepSel!=='all' && !MONTHLY_ACTIVITY[sepSel]) sepSel=have.length?have[have.length-1]:'all';
+  const opts=`<option value="all"${sepSel==='all'?' selected':''}>전체 (월간 종합)</option>`
+    +have.map(m=>`<option value="${m}"${sepSel===m?' selected':''}>${m}월 리포트</option>`).join('');
+  $('#sepFilter').innerHTML=`<label class="sepdd">월 선택 <select id="sepSelDd">${opts}</select></label>`;
   let body;
-  if(sepSel==='all') body=sepAllOverview(months);
-  else if(MONTHLY_ACTIVITY[sepSel]) body=sepMonth(MONTHLY_ACTIVITY[sepSel]);
-  else body=`<div class="card"><h3>${sepSel}월 활동 리포트</h3><p class="note">${sepSel}월 활동 데이터가 아직 입력되지 않았습니다. 데이터 입력 시 이 월의 리포트가 표시됩니다.</p></div>`;
+  if(sepSel==='all') body=sepAllOverview(have);
+  else body=sepMonth(MONTHLY_ACTIVITY[sepSel]);
   $('#sepBody').innerHTML=body;
-  $$('#sepFilter .sfb').forEach(b=>b.onclick=()=>sepReport(b.dataset.sm==='all'?'all':+b.dataset.sm));
+  const dd=$('#sepSelDd'); if(dd) dd.onchange=e=>sepReport(e.target.value==='all'?'all':+e.target.value);
 }
 
 $('#nav').addEventListener('click',e=>{const b=e.target.closest('button[data-pg]');if(!b)return;
