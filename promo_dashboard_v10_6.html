@@ -1479,13 +1479,18 @@ function sepMonth(A){
   h+=custOrderBlock('CIS','CIS · 올해 vs 전년 오더 추이 (참여 고객사)');
   // ── SEA ──
   h+=`<div class="card"><h3>SEA · Sell-out Promotion Performance</h3>
-    <p class="note">5개국 12개사 기준 Sell-out USD ${Math.round(sea.sellout_actual).toLocaleString()}를 기록하며 목표 대비 ${(sea.achievement_rate*100).toFixed(1)}% 달성. 성과는 Sales Champion Award와 Long-Term Loyalty에 집중.</p>`
+    <p class="note">공식 Sell-out 집계 <b>$${Math.round(sea.sellout_actual).toLocaleString()}</b>(목표 $${Math.round(sea.sellout_target).toLocaleString()} · 달성 ${(sea.achievement_rate*100).toFixed(1)}%) · 5개국 12개사. 성과는 Sales Champion Award(8개사)와 Long-Term Loyalty에 집중. 아래 프로그램·고객사 상세는 수령분 기준.</p>`
    +kgrid([
-     {lab:'운영 프로그램',val:sea.programs_count+'개'},{lab:'참여 국가',val:sea.countries+'개국'},{lab:'참여 고객사',val:sea.customers+'개사'},
-     {lab:'Sell-out 목표',val:'$'+Math.round(sea.sellout_target).toLocaleString()},{lab:'Sell-out 실적',val:'$'+Math.round(sea.sellout_actual).toLocaleString(),hero:true},{lab:'달성률',val:(sea.achievement_rate*100).toFixed(1)+'%',hero:true}])
+     {lab:'Sell-out 실적 (공식)',val:'$'+Math.round(sea.sellout_actual).toLocaleString(),sub:`목표 $${Math.round(sea.sellout_target).toLocaleString()} · 달성 ${(sea.achievement_rate*100).toFixed(1)}% · SEA Choice Kit 공식 집계(12개사)`,hero:true},
+     {lab:'sell-out 대상 고객사',val:'10',sub:'Display 단독 2개사(SERI·Zentralink)만 비대상'},
+     {lab:'참여 국가',val:sea.countries+'',sub:'VN·PH·TH·ID·MY'},
+     {lab:'참여 프로그램',val:sea.programs_count+'종',sub:'Sales Champion·POSM·New Product·Loyalty·Display'},
+     {lab:'sell-out 데이터 수령',val:'5 / 10',sub:'VN Mast·Nam Bac·GTA · TH GP · MY Marboro'},
+     {lab:'관측 기간',val:'5~8월',sub:'프로그램별 시작월 상이'}])
    +`<h4 class="soh">프로그램별 성과</h4><div class="tblwrap"><table class="lts"><thead><tr><th>프로그램</th><th>참여</th><th>실적 (USD)</th><th>달성률</th><th>해석</th></tr></thead><tbody>`
    +sea.programs.map(p=>`<tr><td style="text-align:left">${esc(p.program)}</td><td style="text-align:center">${p.customers}</td><td>${p.actual==null?'<span style="color:var(--muted)">미제공</span>':'$'+Math.round(p.actual).toLocaleString()}</td><td style="text-align:center;font-weight:700;color:${p.achievement==null?'var(--muted)':p.achievement>=1?'var(--good)':p.achievement>=.5?'var(--warn)':'var(--serious)'}">${p.achievement==null?'–':(p.achievement*100).toFixed(0)+'%'}</td><td style="text-align:left;font-size:12.5px">${esc(p.note)}</td></tr>`).join('')
    +`</tbody></table></div>`
+   +`<p class="note" style="margin:4px 0 0;font-size:12px"><b>Sales Champion Award 참여 8개사:</b> Mast·Nam Bac·GTA (VN) · GP·CSH·ATC (TH) · Chuan Lam·Young Auto (PH, 집계 대기) — 실적 $531,154는 데이터 수령분 기준</p>`
    +`<h4 class="soh">프로그램별 달성률</h4>`+sea.programs.filter(p=>p.achievement!=null).map(p=>achBar(p.achievement,p.program,`실적 $${Math.round(p.actual).toLocaleString()} · ${p.customers}개사`)).join('')
    +`<h4 class="soh">고객사별 달성률 (Heatmap)</h4><div class="tblwrap"><table class="lts"><thead><tr><th>고객사</th><th>국가</th><th>Sales Champion</th><th>POSM</th><th>Loyalty</th></tr></thead><tbody>`
    +sea.customer_ach.map(c=>c.pending?`<tr><td>${esc(c.name)}</td><td>${c.country}</td><td colspan="3" style="text-align:center;color:var(--muted)">데이터 미제공</td></tr>`
