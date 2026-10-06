@@ -1381,6 +1381,7 @@ const SEPTEMBER_ACTIVITY = {
   mena: { september_orders:[{customer:"Dynatrade", amount_usd:1828.04},{customer:"MESK", amount_usd:1879.58}],
     september_total:3707.62, cumulative_order:12906.48, products:["Shock Absorber","Brake Pad"] },
   latam: {
+    chinese_vehicle:{"asof":"2026-09-29","sep_amt":47456,"sep_qty":8329,"sep_rows":103,"buyers":12,"countries":11,"skus":55,"yoy":33.6,"sep_prev":35517,"cum25":497680,"cum26":511288,"months":[39750,74346,79244,49047,69332,56414,45070,50628,47456],"byMake":[{"k":"JAC","v":19952},{"k":"MG","v":12997},{"k":"BYD","v":4804},{"k":"CHERY","v":4652},{"k":"HAVAL","v":1700},{"k":"SAIC","v":1543},{"k":"EXEED","v":1264},{"k":"MAXUS","v":410}],"byCtry":[{"k":"파라과이","v":18149},{"k":"아르헨티나","v":6865},{"k":"칠레","v":4887},{"k":"페루","v":4404},{"k":"에콰도르","v":3693},{"k":"엘살바도르","v":3218},{"k":"코스타리카","v":1592},{"k":"과테말라","v":1531}],"nMake":9},
     pluscar:{ ad_date:"2026-09-15", fb_link_clicks:1465, survey_before:5, survey_after:13,
       total_2025:8509, total_2026:6144, total_yoy:-0.278, promo_2025:1734, promo_2026:1751, promo_yoy:0.010,
       share_2025:0.204, share_2026:0.285, share_change_pp:8.1 },
@@ -1530,6 +1531,25 @@ function sepMonth(A){
      {lab:'Sell-out 데이터',val:'제공 완료',sub:'품목·집계 범위 세분화 필요'}],'k3')
    +`<h4 class="soh">핵심 니즈</h4><div class="grid2" style="gap:8px">`+sr.key_needs.map(n=>`<div class="card" style="margin:0;padding:10px 12px"><b>${esc(n)}</b></div>`).join('')+`</div>`
    +`<h4 class="soh">다음 단계</h4><ul class="slist"><li>${esc(sr.next)}</li><li>${esc(sr.followup)}</li></ul></div>`;
+
+  // ── LATAM 중국 차종 프로모션 ──
+  if(A.latam.chinese_vehicle){const cv=A.latam.chinese_vehicle;const C26b='var(--brand)',CB='var(--s1)';
+   const ML=['1월','2월','3월','4월','5월','6월','7월','8월','9월'];
+  h+=`<div class="card"><h3>LATAM 중국 차종(Chinese Vehicle) 프로모션 · 9월 오더</h3>
+    <p class="note">중남미 중국차종 SKU 수주(CTR Choice Kit) · 기준일 ${esc(cv.asof)} · 9월 ${cv.countries}개국 ${cv.buyers}개사 ${cv.skus} SKU.</p>`
+   +kgrid([{lab:'9월 오더',val:'$'+cv.sep_amt.toLocaleString(),sub:`전년 9월 $${cv.sep_prev.toLocaleString()} · YoY <span class="${cls(cv.yoy)}">${fmtPC(cv.yoy)}</span>`,hero:true},
+     {lab:'9월 수량',val:cv.sep_qty.toLocaleString()+' pcs',sub:cv.sep_rows+'개 오더행'},
+     {lab:'누적 1~9월',val:'$'+cv.cum26.toLocaleString(),sub:`2025 $${cv.cum25.toLocaleString()} · ${fmtPC((cv.cum26-cv.cum25)/cv.cum25*100)}`},
+     {lab:'참여 범위',val:cv.countries+'개국',sub:`${cv.buyers}개사 · ${cv.skus} SKU · 중국 브랜드 ${cv.nMake}종`}],'k4')
+   +`<div class="sub3" style="margin:8px 0 2px">2026 월별 오더 추이 (USD)</div>`
+   +gbar(ML,[{name:'2026',color:C26b,vals:cv.months}],{W:1040,H:200,fmtV:v=>'$'+Math.round(v/1000)+'K'})
+   +`<div class="grid2" style="margin-top:8px"><div><div class="sub3" style="margin:2px 0 2px">9월 브랜드별 오더 (USD)</div>`
+   +gbar(cv.byMake.map(x=>x.k),[{name:'9월',color:CB,vals:cv.byMake.map(x=>x.v)}],{W:500,H:200,fmtV:v=>'$'+Math.round(v/1000)+'K'})
+   +`</div><div><div class="sub3" style="margin:2px 0 2px">9월 국가별 오더 (USD)</div>`
+   +gbar(cv.byCtry.map(x=>x.k),[{name:'9월',color:'var(--o5)',vals:cv.byCtry.map(x=>x.v)}],{W:500,H:200,fmtV:v=>'$'+Math.round(v/1000)+'K'})
+   +`</div></div>`
+   +`<p class="note" style="font-size:11.5px;padding-left:0;margin-top:6px">9월 ${fmtPC(cv.yoy)} 성장 · 브랜드는 JAC·MG 주도, 국가는 파라과이 중심. 중국 신차 보급 확대에 따른 보수용 부품 수요 증가 흐름.</p>`
+   +`</div>`;}
 
   h+=custOrderBlock('LATAM','LATAM · 올해 vs 전년 오더 추이 (참여 고객사)');
   // ── LATAM SteerStar ──
