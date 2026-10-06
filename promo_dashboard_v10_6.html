@@ -534,7 +534,7 @@ function campGrow(){
    +`<div class="tile"><div class="lab">순증액</div><div class="val">${fmtC(t26-t25)}</div></div>`
    +`<div class="tile"><div class="lab">성장 권역</div><div class="val">${regs.filter(r=>r.a26>r.a25).length}<span style="font-size:16px;color:var(--muted)"> / ${regs.length}</span></div></div></div>`;
   h+=`<div class="legend"><span><i class="sw" style="background:${C25}"></i>2025</span><span><i class="sw" style="background:${C26b}"></i>2026</span></div>`
-   +`<div class="svgbox">`+gbar(regs.map(r=>r.k),[{name:'2025',color:C25,vals:regs.map(r=>r.a25)},{name:'2026',color:C26b,vals:regs.map(r=>r.a26)}],{W:1040,H:240,fmtV:v=>v>=1e6?'$'+(v/1e6).toFixed(1)+'M':'$'+Math.round(v/1000)+'K'})+`</div>`;
+   +`<div class="svgbox">`+gbar(regs.map(r=>r.k),[{name:'2025',color:C25,vals:regs.map(r=>r.a25)},{name:'2026',color:C26b,vals:regs.map(r=>r.a26)}],{W:1040,H:240,delta:1,fmtV:v=>v>=1e6?'$'+(v/1e6).toFixed(1)+'M':'$'+Math.round(v/1000)+'K'})+`</div>`;
   el.innerHTML=h;
 }
 function chartDid(){
@@ -1198,7 +1198,7 @@ syncProg();
 $('#fRegion').addEventListener('change',()=>{syncProg();draw();});
 $('#fProgram').addEventListener('change',draw);
 
-function gbar(groups,series,opt){opt=opt||{};const W=opt.W||360,H=opt.H||200,ml=48,mr=10,mt=18,mb=30;
+function gbar(groups,series,opt){opt=opt||{};const W=opt.W||360,H=opt.H||200,ml=48,mr=10,mt=opt.delta?28:18,mb=30;
  const iw=W-ml-mr,ih=H-mt-mb;const vals=series.flatMap(x=>x.vals.filter(v=>v!=null&&v>0));
  const vmax=Math.max(...vals,1)*1.16,Y=v=>mt+(1-v/vmax)*ih;
  const gw=iw/groups.length,inner=gw*0.76,bw=inner/series.length,pad=(gw-inner)/2;
@@ -1212,7 +1212,10 @@ function gbar(groups,series,opt){opt=opt||{};const W=opt.W||360,H=opt.H||200,ml=
    if(v==null){g+=`<text x="${(x+bw/2).toFixed(1)}" y="${(Y(0)-5).toFixed(1)}" text-anchor="middle" font-size="9" fill="var(--muted)">대기</text>`;return;}
    const y=Y(v),h=Y(0)-y;
    g+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(bw-3).toFixed(1)}" height="${Math.max(0,h).toFixed(1)}" fill="${col}" rx="1"><title>${gl} · ${sr.name}: ${fv(v)}${opt.unit||''}</title></rect>`
-    +`<text x="${(x+(bw-3)/2).toFixed(1)}" y="${(y-3).toFixed(1)}" text-anchor="middle" font-size="9" fill="var(--ink2)">${fv(v)}</text>`;});
+    +(opt.delta?'':`<text x="${(x+(bw-3)/2).toFixed(1)}" y="${(y-3).toFixed(1)}" text-anchor="middle" font-size="9" fill="var(--ink2)">${fv(v)}</text>`);});
+  if(opt.delta&&series.length===2){const a=series[0].vals[gi],c=series[1].vals[gi];
+   if(a!=null||c!=null){const dd=(c||0)-(a||0),mv=Math.max(a||0,c||0),ty=Math.max(mt-6,Y(mv)-6);
+    g+=`<text x="${(gx+inner/2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="700" fill="${dd>=0?'var(--good)':'var(--serious)'}">${(dd>=0?'+':'')+fv(dd)}</text>`;}}
   g+=`<text x="${(gx+inner/2).toFixed(1)}" y="${(H-mb+15).toFixed(1)}" text-anchor="middle" font-size="10" fill="var(--ink)">${gl}</text>`;});
  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;height:auto">${g}</svg>`;}
 function legX(items){return '<div class="legend">'+items.map(it=>`<span><i class="sw" style="background:${it.c}"></i>${it.n}</span>`).join('')+'</div>';}
@@ -1250,7 +1253,7 @@ function custOrderBlock(region,title,A){
  const top=rows.slice(0,6);
  let h=`<div class="card"><h3>${esc(title)}</h3><p class="note">참여 고객사의 ChoiceKit 대상 오더(sell-in) 2025 vs 2026 비교 · USD · 권역 합계 ${fmtC(t25)} → <b>${fmtC(t26)}</b> (${yoyC(t25,t26)})</p>`;
  h+=`<div class="grid2"><div><div class="sub3" style="margin:2px 0 4px">상위 고객사 2025 vs 2026 (USD)</div>`
-  +gbar(top.map(r=>(r.name||'').length>13?(r.name.slice(0,12)+'…'):r.name),[{name:'2025',color:C25,vals:top.map(r=>r.a25||0)},{name:'2026',color:C26b,vals:top.map(r=>r.a26||0)}],{W:360,H:200,fmtV:v=>'$'+Math.round(v/1000)+'K'})
+  +gbar(top.map(r=>(r.name||'').length>13?(r.name.slice(0,12)+'…'):r.name),[{name:'2025',color:C25,vals:top.map(r=>r.a25||0)},{name:'2026',color:C26b,vals:top.map(r=>r.a26||0)}],{W:360,H:200,delta:1,fmtV:v=>'$'+Math.round(v/1000)+'K'})
   +`</div><div><div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr><th>고객사</th><th>2025</th><th>2026</th><th>YoY</th></tr></thead><tbody>`
   +rows.map(r=>`<tr><td style="font-size:11.5px;word-break:keep-all">${esc(r.name||'')}${r.country?`<span class="sub3"> · ${esc(r.country)}</span>`:''}</td><td class="num sub3">${r.a25?fmtC(r.a25):'–'}</td><td class="num">${r.a26?fmtC(r.a26):'–'}</td><td class="num">${yoyC(r.a25||0,r.a26||0)}</td></tr>`).join('')
   +`<tr style="border-top:2px solid var(--ring)"><td><b>합계 (${rows.length}곳)</b></td><td class="num sub3"><b>${fmtC(t25)}</b></td><td class="num"><b>${fmtC(t26)}</b></td><td class="num"><b>${yoyC(t25,t26)}</b></td></tr>`
@@ -1334,7 +1337,7 @@ function selloutBox(so){if(!so)return '';
    +`<div><h4 class="soh">월별 sell-out vs sell-in (ChoiceKit·2026)</h4>`+legX([{n:'sell-out(소매)',c:'var(--s1)'},{n:'sell-in(ChoiceKit)',c:'var(--o4)'}])
      +`<div class="svgbox">${gbar(M,[{name:'sell-out',color:'var(--s1)',vals:monTot},{name:'sell-in',color:'var(--o4)',vals:siTot}],{W:460,H:210,fmtV:fu})}</div></div>`
    +`<div><h4 class="soh">월별 sell-in 추이 · 전년比 (전사 오더원장)</h4>`+legX([{n:'2025',c:'var(--o3)'},{n:'2026',c:'var(--brand)'}])
-     +`<div class="svgbox">${gbar(so.sellin_yr.months,[{name:'2025',color:'var(--o3)',vals:so.sellin_yr.agg.y25},{name:'2026',color:'var(--brand)',vals:so.sellin_yr.agg.y26}],{W:460,H:210,fmtV:fu})}</div></div>`
+     +`<div class="svgbox">${gbar(so.sellin_yr.months,[{name:'2025',color:'var(--o3)',vals:so.sellin_yr.agg.y25},{name:'2026',color:'var(--brand)',vals:so.sellin_yr.agg.y26}],{W:460,H:210,delta:1,fmtV:fu})}</div></div>`
    +`</div>`
    +`<p class="note">좌: ChoiceKit sell-out(소매)과 캠페인 sell-in(5~8월). 우: 참여 6개사 전사 오더(sell-in) 월별 2025 vs 2026(1~9월·오더원장 기준). sell-out&gt;sell-in인 달은 재고 소진 국면.</p>`;
   // per-customer sell-in YoY
@@ -1616,7 +1619,7 @@ function sepMonth(A){
      {lab:'REFATRIX Survey',val:rf.survey_count+'건',sub:esc(rf.survey_note)},
      {lab:'BRABHAM 2026 Order',val:'$'+Math.round(bb.order_2026).toLocaleString(),sub:`2025 $${Math.round(bb.order_2025).toLocaleString()} · YoY ${pc(bb.yoy)}`}],'k3')
    +`<div class="grid2"><div><div class="sub3" style="margin:4px 0 2px">고객별 Order YoY (USD)</div>`
-   +gbar(['REFATRIX','BRABHAM'],[{name:'2025',color:C1,vals:[rf.order_2025,bb.order_2025]},{name:'2026',color:C26,vals:[rf.order_2026,bb.order_2026]}],{W:340,H:190,fmtV:v=>'$'+Math.round(v/1000)+'K'})
+   +gbar(['REFATRIX','BRABHAM'],[{name:'2025',color:C1,vals:[rf.order_2025,bb.order_2025]},{name:'2026',color:C26,vals:[rf.order_2026,bb.order_2026]}],{W:340,H:190,delta:1,fmtV:v=>'$'+Math.round(v/1000)+'K'})
    +`</div><div style="align-self:center"><div class="sub3" style="margin-bottom:4px">BRABHAM INMETRO 인증</div>${badge('인증 진행 중','wn')}<p class="note" style="margin-top:6px">${esc(bb.issue)} · ${esc(bb.status)}</p></div></div></div>`;
 
   // ── SteerStar Lordco ──
@@ -1634,7 +1637,7 @@ function sepMonth(A){
       return `<tr><td style="text-align:left">${mm}</td><td class="num sub3">${a?fmtC(a):'–'}</td><td class="num">${within?(b?fmtC(b):'$0'):'<span class="sub3">미도래</span>'}</td><td class="num">${within?`<span class="${cls(dd)}">${(dd>=0?'+':'')+fmtC(dd)}</span>`:'<span class="sub3">–</span>'}</td></tr>`;}).join('')
    +`<tr style="border-top:2px solid var(--ring)"><td><b>1~${lo.last26}월 동기</b></td><td class="num sub3"><b>${fmtC(lo.cum25)}</b></td><td class="num"><b>${fmtC(lo.cum26)}</b></td><td class="num"><span class="${cls(yoy)}"><b>${fmtPC(yoy)}</b></span></td></tr>`
    +`</tbody></table></div></div><div><div class="sub3" style="margin:6px 0 2px">월별 오더 막대 (2025 vs 2026)</div>`
-   +gbar(ML,[{name:'2025',color:C25,vals:lo.y25},{name:'2026',color:C26b,vals:lo.y26}],{W:500,H:220,fmtV:v=>v?'$'+Math.round(v/1000)+'K':''})
+   +gbar(ML,[{name:'2025',color:C25,vals:lo.y25},{name:'2026',color:C26b,vals:lo.y26}],{W:500,H:220,delta:1,fmtV:v=>v?'$'+Math.round(v/1000)+'K':''})
    +`</div></div>`
    +`<h4 class="soh">무엇이 줄었나 · 제품군별 2025 vs 2026</h4><div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr><th>제품군</th><th>2025</th><th>2026</th><th>증감</th></tr></thead><tbody>`
    +(lo.prod||[]).map(p=>`<tr><td style="text-align:left">${esc(p.k)}</td><td class="num sub3">${fmtC(p.y25)}</td><td class="num">${fmtC(p.y26)}</td><td class="num"><span class="${cls(p.d)}">${(p.d>=0?'+':'')+fmtC(p.d)}</span></td></tr>`).join('')
