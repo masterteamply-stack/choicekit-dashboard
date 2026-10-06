@@ -1411,7 +1411,7 @@ const SEPTEMBER_ACTIVITY = {
     steerstar:{
       refatrix:{ order_2025:33527.07, order_2026:114595.62, yoy:2.418, survey_count:157, survey_note:"RUJAC 전시회 현장 설문 157건 집계 완료", rujac:{"n":157,"aware_none":56,"after_pos":69,"ds":80,"factors":[{"l":"Calidad / Durabilidad","p":64},{"l":"Precio","p":27},{"l":"Disponibilidad","p":17},{"l":"Garantía","p":11},{"l":"Ajuste correcto","p":10}],"motiv":[{"l":"Precio competitivo","p":45},{"l":"Calidad comprobada","p":43},{"l":"Garantía","p":17},{"l":"Recomendación de un mecánico","p":7}],"support":[{"l":"Capacitación técnica","p":38},{"l":"Catálogos","p":25},{"l":"Muestras","p":13},{"l":"Garantía","p":13},{"l":"Videos de instalación","p":10}],"promo":[{"l":"Capacitación","p":27},{"l":"Demostración del producto","p":25},{"l":"Descuento","p":15},{"l":"Promoción por paquete","p":14},{"l":"Incentivo / regalo","p":13},{"l":"Muestra gratis","p":10}],"problem":[{"l":"Baja durabilidad","p":38},{"l":"Ruido / vibración","p":27},{"l":"Calidad inconsistente","p":12}],"exp15":62} },
       brabham:{ order_2025:80488.13, order_2026:70268.22, yoy:-0.127, issue:"INMETRO 인증 미확보로 Survey / 판매 제한",
-        status:"9월 Shock Absorber INMETRO 인증 절차 착수 · 연말까지 진행 상황 확인" }, lordco:{"y25":[56940,0,501829,0,27222,87197,0,37993,0,0,92796,169425],"y26":[56634,0,0,55820,61098,0,68472,0,0,0,0,0],"last26":7,"cum25":673188,"cum26":242024,"annual25":973402,"ytd26":242024} } },
+        status:"9월 Shock Absorber INMETRO 인증 절차 착수 · 연말까지 진행 상황 확인" }, lordco:{"y25":[56940,0,501829,0,27222,87197,0,37993,0,0,92796,169425],"y26":[56634,0,0,55820,61098,0,68472,0,0,0,0,0],"last26":7,"cum25":673188,"cum26":242024,"annual25":973402,"ytd26":242024,"prod":[{"k":"CONTROL ARM","y25":330495,"y26":129597,"d":-200898},{"k":"STABILIZER LINK","y25":215567,"y26":60873,"d":-154694},{"k":"OUTER TIE ROD","y25":159047,"y26":22959,"d":-136088},{"k":"BALL JOINT","y25":111658,"y26":21239,"d":-90419},{"k":"INNER TIE ROD","y25":94625,"y26":5053,"d":-89572},{"k":"BUSH","y25":44969,"y26":913,"d":-44056},{"k":"ASSIST ARM","y25":8223,"y26":632,"d":-7591}]} } },
   action_plan:[
     {region:"CIS", action:"Free Replacement Event / Tech Seminar 협의", owner:"Phaeton · Complex Auto · Bauten", kpi:"행사 확정 · Catalogue 후속 반응 · 오더 전환", timing:"11월"},
     {region:"CIS", action:"Mechanic Support Kits 입고 및 고객사 컨테이너 발송", owner:"CIS 리테일 고객사", kpi:"발송 고객사 · 도착 일정 · 현장 활용", timing:"10월"},
@@ -1586,13 +1586,27 @@ function sepMonth(A){
    const yoy=(lo.cum26-lo.cum25)/lo.cum25*100;
    const ML=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
   h+=`<div class="card"><h3>SteerStar · Lordco (캐나다) 월별 오더 추이</h3>
-    <p class="note">전 품목 오더(USD) · 2025 연간 $${lo.annual25.toLocaleString()} · 2026 YTD(1~${lo.last26}월) $${lo.ytd26.toLocaleString()} · <b>동기(1~${lo.last26}월) 비교 ${fmtC(lo.cum25)} → ${fmtC(lo.cum26)} (<span class="${cls(yoy)}">${fmtPC(yoy)}</span>)</b>. 오더가 간헐적 대형 단건 중심이라 월별로 비교합니다.</p>`
+    <p class="note">전 품목 오더(USD) · 2025 연간 $${lo.annual25.toLocaleString()} · 2026 YTD(1~${lo.last26}월) $${lo.ytd26.toLocaleString()}. Lordco는 소수 대형 단건 중심이라 월별·품목별로 무엇이 줄었는지 함께 봅니다.</p>`
    +kgrid([{lab:'2025 연간 오더',val:'$'+lo.annual25.toLocaleString()},
      {lab:'2026 YTD 오더',val:'$'+lo.ytd26.toLocaleString(),sub:`1~${lo.last26}월`},
-     {lab:`동기(1~${lo.last26}월) YoY`,val:fmtPC(yoy),cls:yoy>=0?'up':'dn',sub:`${fmtC(lo.cum25)} → ${fmtC(lo.cum26)}`,hero:true}],'k3')
-   +`<div class="sub3" style="margin:6px 0 2px">월별 오더 2025 vs 2026 (USD)</div>`
-   +gbar(ML,[{name:'2025',color:C25,vals:lo.y25},{name:'2026',color:C26b,vals:lo.y26}],{W:720,H:210,fmtV:v=>v?'$'+Math.round(v/1000)+'K':''})
-   +`<p class="note" style="font-size:11.5px;padding-left:0;margin-top:6px">2026 7월까지 반영 · 2025년 3월 대형 오더($502K)가 2026년 미발생하며 동기 ${fmtPC(yoy)} 감소. 하반기 재주문 여부가 연간 실적을 좌우.</p>`
+     {lab:`동기(1~${lo.last26}월) 전년 대비`,val:fmtPC(yoy),cls:yoy>=0?'up':'dn',sub:`${fmtC(lo.cum25)} → ${fmtC(lo.cum26)}`,hero:true}],'k3')
+   +`<div class="grid2"><div><div class="sub3" style="margin:6px 0 2px">월별 오더 · 전년 대비 (USD)</div>`
+   +`<div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr><th>월</th><th>2025</th><th>2026</th><th>증감</th></tr></thead><tbody>`
+   +ML.map((mm,i)=>{const a=lo.y25[i]||0,b=lo.y26[i]||0; if(!a&&!b)return ''; const within=(i+1)<=lo.last26; const dd=b-a;
+      return `<tr><td style="text-align:left">${mm}</td><td class="num sub3">${a?fmtC(a):'–'}</td><td class="num">${within?(b?fmtC(b):'$0'):'<span class="sub3">미도래</span>'}</td><td class="num">${within?`<span class="${cls(dd)}">${(dd>=0?'+':'')+fmtC(dd)}</span>`:'<span class="sub3">–</span>'}</td></tr>`;}).join('')
+   +`<tr style="border-top:2px solid var(--ring)"><td><b>1~${lo.last26}월 동기</b></td><td class="num sub3"><b>${fmtC(lo.cum25)}</b></td><td class="num"><b>${fmtC(lo.cum26)}</b></td><td class="num"><span class="${cls(yoy)}"><b>${fmtPC(yoy)}</b></span></td></tr>`
+   +`</tbody></table></div></div><div><div class="sub3" style="margin:6px 0 2px">월별 오더 막대 (2025 vs 2026)</div>`
+   +gbar(ML,[{name:'2025',color:C25,vals:lo.y25},{name:'2026',color:C26b,vals:lo.y26}],{W:500,H:220,fmtV:v=>v?'$'+Math.round(v/1000)+'K':''})
+   +`</div></div>`
+   +`<h4 class="soh">무엇이 줄었나 · 제품군별 2025 vs 2026</h4><div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr><th>제품군</th><th>2025</th><th>2026</th><th>증감</th></tr></thead><tbody>`
+   +(lo.prod||[]).map(p=>`<tr><td style="text-align:left">${esc(p.k)}</td><td class="num sub3">${fmtC(p.y25)}</td><td class="num">${fmtC(p.y26)}</td><td class="num"><span class="${cls(p.d)}">${(p.d>=0?'+':'')+fmtC(p.d)}</span></td></tr>`).join('')
+   +`</tbody></table></div>`
+   +`<p class="note" style="font-size:12.5px;margin-top:4px"><b>판단:</b> 특정 품목의 일시 급감이 아니라 컨트롤암·스태빌라이저링크·타이로드·볼조인트 등 <b>전 핵심 어셈블리의 재주문이 동반 축소</b>됐습니다. 2025년 3월 대형 단건($502K)이 2026년에 미발생한 영향이 크며, 2026년은 월 오더가 더 고르지만 규모 자체가 낮습니다 → 일시 공백이 아니라 <b>재주문 볼륨 저하</b>로 관리해야 합니다.</p>`
+   +`<h4 class="soh">차달 캠페인 계획</h4>`
+   +`<div class="tblwrap"><table class="lts" style="font-size:12px;table-layout:fixed;width:100%"><colgroup><col style="width:22%"><col style="width:78%"></colgroup><tbody>`
+   +`<tr><td style="text-align:left;font-weight:700;background:var(--panel)">진행 (마컴)</td><td style="text-align:left">SteerStar Ambassador Program 운영 (Lordco Welcome·Main·Order 미션) · 한국 인센티브 트립 초청 연계</td></tr>`
+   +`<tr><td style="text-align:left;font-weight:700;background:var(--panel)">계획 (10~11월)</td><td style="text-align:left">하반기 재주문 전환 유도 · 감소 폭 큰 핵심 어셈블리(컨트롤암·타이로드·링크·볼조인트) Follow-up Order 협의 · 2027 프로그램 논의</td></tr>`
+   +`</tbody></table></div>`
    +`</div>`;}
 
   // ── RUJAC Survey Insight ──
