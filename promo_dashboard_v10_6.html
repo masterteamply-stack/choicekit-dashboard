@@ -1437,12 +1437,14 @@ const SEPTEMBER_ACTIVITY = {
       {c:"Vietnam", n:"Nam Bac", t:246154, r:202872, rate:82.4, st:"Near Target"},
       {c:"Vietnam", n:"GTA", t:100000, r:190132, rate:190.1, st:"Achieved"},
       {c:"Thailand", n:"GP", t:38863, r:100832, rate:259.5, st:"Achieved"},
-      {c:"Thailand", n:"CSH", t:15798, r:27432, rate:173.6, st:"Achieved"},
-      {c:"Indonesia", n:"Densocentra", t:22567, r:18201, rate:80.7, st:"Near Target"},
+      {c:"Thailand", n:"CSH", t:15798, r:0, rate:0, st:"Data Pending"},
+      {c:"Indonesia", n:"Densocentra", t:22567, r:0, rate:0, st:"Data Pending"},
       {c:"Malaysia", n:"Marboro", t:12308, r:11939, rate:97.0, st:"Near Target"},
-      {c:"Thailand", n:"ATC", t:22117, r:1131, rate:5.1, st:"In Progress / Data Gap"},
+      {c:"Thailand", n:"ATC", t:22117, r:0, rate:0, st:"Data Pending"},
       {c:"Philippines", n:"Chuan Lam", t:87719, r:0, rate:0, st:"Data Pending"},
-      {c:"Philippines", n:"Young Auto", t:43860, r:0, rate:0, st:"Data Pending"}],
+      {c:"Philippines", n:"Young Auto", t:43860, r:0, rate:0, st:"Data Pending"},
+      {c:"Thailand", n:"SERI (Seri Wathana)", t:null, r:null, rate:null, st:"대상 아님 (Display 프로그램)"},
+      {c:"Indonesia", n:"Zentralink", t:null, r:null, rate:null, st:"대상 아님 (Display 프로그램)"}],
     sep_reflect:"9월 신규 반영은 Thailand CSH Sales Champion 약 $4,352 수준 · 대부분 5~8월 데이터 중심이며 9월 실적은 아직 미반영/미제출. '목표 초과 달성'과 '9월 데이터 미반영 고객 회수 필요'를 함께 관리.",
     customer_ach:[
       {name:"Mast", country:"VN", ach:{"Sales Champion":5.94,"POSM":0.40}},
@@ -1455,7 +1457,7 @@ const SEPTEMBER_ACTIVITY = {
       {name:"Densocentra", country:"ID", ach:{"Loyalty":0.81}},
       {name:"Chuan Lam", country:"PH", pending:true},
       {name:"Young Auto", country:"PH", pending:true}],
-    pending_badges:["Chuan Lam","Young Auto","ATC","New Product Sell-Out","Display & Visibility"] },
+    pending_badges:["New Product Sell-Out","Display & Visibility"] },
   mena: { september_orders:[{customer:"Dynatrade", amount_usd:1828.04},{customer:"MESK", amount_usd:1879.58}],
     september_total:3707.62, cumulative_order:12906.48, products:["Shock Absorber","Brake Pad"] },
   latam: {
@@ -1593,8 +1595,8 @@ function sepMonth(A){
    +`<p class="note" style="margin:4px 0 0;font-size:12px"><b>Sales Champion Award 참여 8개사:</b> Mast·Nam Bac·GTA (VN)·GP (TH) 수령(4개사) · CSH·ATC (TH)·Chuan Lam·Young Auto (PH) 집계 대기(4개사) — 실적 $531,154는 수령분 기준</p>`
    +`<h4 class="soh">프로그램별 달성률</h4>`+sea.programs.filter(p=>p.achievement!=null).map(p=>achBar(p.achievement,p.program,`실적 $${Math.round(p.actual).toLocaleString()} · ${p.customers}개사`)).join('')
    +`<h4 class="soh">고객사별 성과 (Target → Result)</h4><div class="tblwrap"><table class="lts" style="table-layout:fixed;width:100%"><colgroup><col style="width:13%"><col style="width:18%"><col style="width:16%"><col style="width:16%"><col style="width:11%"><col style="width:26%"></colgroup><thead><tr><th>국가</th><th>고객사</th><th>Target</th><th>Result</th><th>달성률</th><th>상태</th></tr></thead><tbody>`
-   +sea.cust_perf.map(c=>{const col=c.st==='Achieved'?'var(--good)':c.st==='Near Target'?'var(--warn)':c.st.indexOf('Pending')>=0?'var(--muted)':'var(--serious)';
-      return `<tr><td style="font-size:12px">${esc(c.c)}</td><td style="text-align:left;font-weight:700">${esc(c.n)}</td><td class="num sub3">$${c.t.toLocaleString()}</td><td class="num">${c.r?'$'+c.r.toLocaleString():'<span class="sub3">–</span>'}</td><td class="num" style="font-weight:700;color:${col}">${c.rate?c.rate.toFixed(1)+'%':'–'}</td><td style="text-align:left;font-size:11.5px;color:${col};font-weight:600">${esc(c.st)}</td></tr>`;}).join('')
+   +sea.cust_perf.map(c=>{const col=c.st==='Achieved'?'var(--good)':c.st==='Near Target'?'var(--warn)':(c.st.indexOf('Pending')>=0||c.st.indexOf('대상 아님')>=0)?'var(--muted)':'var(--serious)';
+      return `<tr><td style="font-size:12px">${esc(c.c)}</td><td style="text-align:left;font-weight:700">${esc(c.n)}</td><td class="num sub3">${c.t?'$'+c.t.toLocaleString():'–'}</td><td class="num">${c.r?'$'+c.r.toLocaleString():'<span class="sub3">–</span>'}</td><td class="num" style="font-weight:700;color:${col}">${c.rate?c.rate.toFixed(1)+'%':'–'}</td><td style="text-align:left;font-size:11.5px;color:${col};font-weight:600">${esc(c.st)}</td></tr>`;}).join('')
    +`</tbody></table></div><p class="note" style="margin-top:6px"><b>9월 데이터 반영 상태:</b> ${esc(sea.sep_reflect)}</p>`
    +`<div style="margin-top:8px"><span class="sub3">미제출: </span>`+sea.pending_badges.map(b=>badge(b,'wn')).join('')+`</div></div>`;
 
