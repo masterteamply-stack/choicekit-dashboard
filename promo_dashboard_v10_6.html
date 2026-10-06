@@ -1682,13 +1682,26 @@ function sepMonth(A){
    +`<figure style="margin:14px 0 2px"><div class="sub3" style="margin:0 0 6px"><b>O2O 활동 샘플</b></div><img src="images/latam_o2o_activity.png" alt="LATAM O2O Sell-out 활동 샘플: 홍보 영상 광고 → Instagram 품목검색 HTML 페이지 → End-User WhatsApp 연결 → 설문" loading="lazy" style="width:100%;max-width:840px;display:block;border:1px solid var(--ring);border-radius:8px"><figcaption class="note" style="padding-left:0;margin:7px 0 0;font-size:12px">① 9/15 CTR×PLUSCAR 홍보 영상 광고 게시 → ② Instagram 링크에 대상 품목 검색 HTML 페이지 삽입 → ③ End-User 고객사 WhatsApp 연결 → ④ PLUSCAR 직원 설문 34건 · 현지 End-User 설문 13건(8월 5건 → +8건) 진행</figcaption></figure></div>`;
 
   // ── LATAM Survey Insight ──
+  const rf=st.refatrix;
   h+=`<div class="card"><h3>LATAM · Survey Insight &amp; Customer Follow-up</h3>
     <p class="note">현장 니즈는 가격 인하보다 보증·제품 교육·커버리지·브랜드 인지도 강화에 집중. ${esc(sr.market)}.</p>`
    +kgrid([{lab:'Super Repuestos Survey',val:sr.survey_responses+'건',hero:true,sub:esc(sr.incentive)},
      {lab:'보증 선호',val:(sr.warranty_rate*100).toFixed(0)+'%',sub:'브랜드 선택 기준 1위'},
      {lab:'Sell-out 데이터',val:'제공 완료',sub:'품목·집계 범위 세분화 필요'}],'k3')
    +`<h4 class="soh">핵심 니즈</h4><div class="grid2" style="gap:8px">`+sr.key_needs.map(n=>`<div class="card" style="margin:0;padding:10px 12px"><b>${esc(n)}</b></div>`).join('')+`</div>`
-   +`<h4 class="soh">다음 단계</h4><ul class="slist"><li>${esc(sr.next)}</li><li>${esc(sr.followup)}</li></ul></div>`;
+   +`<h4 class="soh">다음 단계</h4><ul class="slist"><li>${esc(sr.next)}</li><li>${esc(sr.followup)}</li></ul>`;
+  if(rf.rujac){const rj=rf.rujac;
+  h+=`<h4 class="soh" style="margin-top:16px;border-top:2px solid var(--ring);padding-top:12px">RUJAC 전시회 현장 설문 · REFATRIX (멕시코)</h4>
+    <p class="note">RUJAC 전시회 현장 설문 <b>${rj.n}건</b> · 경력 15년 이상 ${rj.exp15}% · 조향·현가(Dirección y suspensión) 취급 <b>${rj.ds}%</b>로 CTR 주력 카테고리와 정확히 일치.</p>`
+   +kgrid([
+     {lab:'설문 응답',val:rj.n+'건',sub:'RUJAC 전시회 현장',hero:true},
+     {lab:'CTR 사전 인지 ‘모름’',val:rj.aware_none+'%',sub:'행사 전 브랜드 미인지',cls:'dn'},
+     {lab:'접촉 후 구매·추천 의향',val:rj.after_pos+'%',sub:'Muy probable + Probable',cls:'up',hero:true},
+     {lab:'조향·현가 취급',val:rj.ds+'%',sub:'CTR 주력 카테고리'}],'k4')
+   +`<div class="grid2"><div>${pctBars('브랜드 선택 시 중요 요인',rj.factors,'var(--s1)')}${pctBars('신규 브랜드 시도 동기',rj.motiv,'var(--good)')}</div>`
+   +`<div>${pctBars('추천에 필요한 지원',rj.support,'var(--o5)')}${pctBars('선호하는 프로모션',rj.promo,'var(--brand)')}</div></div>`
+   +`<p class="note" style="font-size:12.5px;margin-top:8px"><b>시사점:</b> 응답자 ${rj.aware_none}%가 CTR를 처음 접했으나 설명 후 ${rj.after_pos}%가 구매·추천 의향을 보여 상단 인지 전환이 강함. 선택 기준은 가격보다 <b>품질·내구성(${rj.factors[0].p}%)</b>이며, 신규 브랜드 전환 동기도 가격경쟁력(${rj.motiv[0].p}%)과 검증된 품질(${rj.motiv[1].p}%)이 양대 축. 현장 니즈는 <b>기술 교육·카탈로그·제품 시연</b> 중심이라 할인보다 교육·시연형 프로모션이 효과적.</p>`;}
+  h+=`</div>`;
 
   // ── LATAM 중국 차종 프로모션 준비 ──
   if(A.latam.chinese_vehicle){const cv=A.latam.chinese_vehicle;
@@ -1711,24 +1724,9 @@ function sepMonth(A){
    +`</div>`;}
 
   h+=custOrderBlock('LATAM','LATAM · 올해 vs 전년 오더 추이 (참여 고객사)',A);
-  const rf=st.refatrix;
-  // ── RUJAC Survey Insight ──
-  if(rf.rujac){const rj=rf.rujac;
-  h+=`<div class="card"><h3>RUJAC Survey Insight · REFATRIX (멕시코)</h3>
-    <p class="note">RUJAC 전시회 현장 설문 <b>${rj.n}건</b> · 경력 15년 이상 ${rj.exp15}% · 조향·현가(Dirección y suspensión) 취급 <b>${rj.ds}%</b>로 CTR 주력 카테고리와 정확히 일치.</p>`
-   +kgrid([
-     {lab:'설문 응답',val:rj.n+'건',sub:'RUJAC 전시회 현장',hero:true},
-     {lab:'CTR 사전 인지 ‘모름’',val:rj.aware_none+'%',sub:'행사 전 브랜드 미인지',cls:'dn'},
-     {lab:'접촉 후 구매·추천 의향',val:rj.after_pos+'%',sub:'Muy probable + Probable',cls:'up',hero:true},
-     {lab:'조향·현가 취급',val:rj.ds+'%',sub:'CTR 주력 카테고리'}],'k4')
-   +`<div class="grid2"><div>${pctBars('브랜드 선택 시 중요 요인',rj.factors,'var(--s1)')}${pctBars('신규 브랜드 시도 동기',rj.motiv,'var(--good)')}</div>`
-   +`<div>${pctBars('추천에 필요한 지원',rj.support,'var(--o5)')}${pctBars('선호하는 프로모션',rj.promo,'var(--brand)')}</div></div>`
-   +`<p class="note" style="font-size:12.5px;margin-top:8px"><b>시사점:</b> 응답자 ${rj.aware_none}%가 CTR를 처음 접했으나 설명 후 ${rj.after_pos}%가 구매·추천 의향을 보여 상단 인지 전환이 강함. 선택 기준은 가격보다 <b>품질·내구성(${rj.factors[0].p}%)</b>이며, 신규 브랜드 전환 동기도 가격경쟁력(${rj.motiv[0].p}%)과 검증된 품질(${rj.motiv[1].p}%)이 양대 축. 현장 니즈는 <b>기술 교육·카탈로그·제품 시연</b> 중심이라 할인보다 교육·시연형 프로모션이 효과적.</p>`
-   +`</div>`;}
-
   h+=planBlock('LATAM',A);
 
-h+=`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">KR</span> <span style="font-size:12.5px;color:var(--ink2)">· 한국 · 전략 고객사(세종파츠플러스) Sell-in</span></div><div class="card"><h3>KR · 세종파츠플러스 Sell-in 오더</h3><p class="note">세종파츠플러스 유한회사(114621) · Strategic Partner Program · 단위 USD · ChoiceKit 전 품목 대상</p><div class="kpis k4" style="margin:8px 0"><div class="tile"><div class="lab">2025 → 2026 당해</div><div class="val" style="font-size:20px">$121.8K → $91.6K</div><div class="sub2">YoY -24.8%</div></div><div class="tile" style="border-top-color:var(--brand)"><div class="lab">9월 오더</div><div class="val">$31,599</div><div class="sub2">8월 $34,233 · 7월 $111</div></div><div class="tile"><div class="lab">7~9월 합계</div><div class="val">$65,943</div></div><div class="tile"><div class="lab">오더 SKU</div><div class="val">143종</div></div></div><p class="note" style="font-size:11.5px">Sell-in 오더 원장 기준(2026-07-30~09-23, 9.28 수신). ASIA 판매구역이나 KR 전략 고객사로 별도 관리.</p></div>`;
+h+=`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">KR</span> <span style="font-size:12.5px;color:var(--ink2)">· 한국 · 전략 고객사(세종파츠플러스) Sell-in</span></div><div class="card"><h3>KR · 세종파츠플러스 Sell-in 오더</h3><p class="note">세종파츠플러스 유한회사(114621) · Strategic Partner Program · 단위 USD · ChoiceKit 전 품목 대상</p><div class="kpis k4" style="margin:8px 0"><div class="tile"><div class="lab">2025 → 2026 당해</div><div class="val" style="font-size:20px">$121.8K → $91.6K</div><div class="sub2">YoY -24.8%</div></div><div class="tile" style="border-top-color:var(--brand)"><div class="lab">9월 오더</div><div class="val">$31,599</div><div class="sub2">8월 $34,233 · 7월 $111</div></div><div class="tile"><div class="lab">7~9월 합계</div><div class="val">$65,943</div></div><div class="tile"><div class="lab">오더 SKU</div><div class="val">143종</div></div></div><p class="note" style="font-size:11.5px">Sell-in 오더 원장 기준(2026-07-30~09-23, 9.28 수신). ASIA 판매구역이나 KR 전략 고객사로 별도 관리.</p><h4 class="soh" style="margin-top:12px">주요 구매 품목 (7~9월)</h4><div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr><th style="text-align:left">제품군</th><th>금액(USD)</th><th>비중</th><th>수량</th></tr></thead><tbody><tr><td style="text-align:left">컨트롤암 어셈블리 (Control Arm)</td><td class="num"><b>$50,941</b></td><td class="num"><b>77.3%</b></td><td class="num sub3">1,553ea</td></tr><tr><td style="text-align:left">타이로드 (Tie Rod)</td><td class="num">$5,110</td><td class="num">7.7%</td><td class="num sub3">628ea</td></tr><tr><td style="text-align:left">스태빌라이저 링크 (Stabilizer Link)</td><td class="num">$4,990</td><td class="num">7.6%</td><td class="num sub3">751ea</td></tr><tr><td style="text-align:left">볼조인트 (Ball Joint)</td><td class="num">$4,876</td><td class="num">7.4%</td><td class="num sub3">606ea</td></tr></tbody></table></div><div style="margin-top:12px;padding:11px 14px;background:var(--head-soft,rgba(127,127,127,.06));border-left:4px solid var(--serious);border-radius:8px"><div style="font-size:14px;font-weight:700;margin-bottom:6px">현황 · 이슈</div><ul class="note" style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.6"><li>물류 이슈와 담당자 교체·부재로 오더가 꾸준히 이어지지 못해 현재 <b>재고 부족</b> 상태.</li><li>재고 부족으로 <b>ChoiceKit Sell-out 프로모션 참여를 거절</b>한 상황.</li><li>스태빌라이저 연결부 파손 이슈 등 품질 컴플레인 대응 논의 필요.</li></ul><div style="font-size:13px;font-weight:700;margin:10px 0 4px;color:var(--brand)">다음 단계 · 10월 C-level 미팅</div><p class="note" style="margin:0;font-size:12.5px;line-height:1.6">물류·담당자 이슈와 품질 컴플레인(스태빌라이저 연결부 파손 등)에 <b>함께 대응할 수 있는 전략을 10월 C-level 미팅에서 도출</b> 협의.</p></div></div>`;
 
 
 
