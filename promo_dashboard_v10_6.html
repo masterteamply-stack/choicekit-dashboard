@@ -1048,7 +1048,7 @@ function steerStarExtra(){
  const pc=v=>(v>=0?"+":"")+(v*100).toFixed(1)+"%";
  const kgrid=(cards,cls)=>`<div class="kpis ${cls||"k6"}">`+cards.map(k=>`<div class="tile${k.hero?" hero":""}"><div class="lab">${k.lab}</div><div class="val">${k.val}</div>${k.sub?`<div class="sub2">${k.sub}</div>`:""}</div>`).join("")+`</div>`;
  const badge=(t,tone)=>`<span class="sbadge ${tone||""}">${esc(t)}</span>`;
- let h=`<div style="margin:4px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:18px;font-weight:800">SteerStar · 심층 분석 (파트너 미션 테이블 보완)</span></div>`;
+ let h=`<div style="margin:4px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:18px;font-weight:800">SteerStar · 심층 분석 (파트너 미션 테이블 보완)</span><div class="sub3" style="font-size:12px;margin-top:3px">미션 달성조건: 파트너별 <b>$200,000 매출</b> + <b>설문 200건</b> 진행</div></div>`;
  if(rf.rujac){const rj=rf.rujac;
   h+=`<div class="card"><h3>REFATRIX (멕시코) · RUJAC Survey Insight</h3>
    <p class="note">REFATRIX 2026 오더 전년 대비 <b>${pc(rf.yoy)}</b> 성장 · BRABHAM INMETRO 인증 이슈로 판매 확산 제한(오더 실적은 상단 파트너 미션 테이블 참조). ${esc(bb.issue)} · ${esc(bb.status)}</p>
@@ -1693,8 +1693,13 @@ function sepMonth(A){
    +kgrid([{lab:'Super Repuestos Survey',val:sr.survey_responses+'건',hero:true,sub:esc(sr.incentive)},
      {lab:'보증 선호',val:(sr.warranty_rate*100).toFixed(0)+'%',sub:'브랜드 선택 기준 1위'},
      {lab:'Sell-out 데이터',val:'제공 완료',sub:'품목·집계 범위 세분화 필요'}],'k3')
-   +`<h4 class="soh">핵심 니즈</h4><div class="grid2" style="gap:8px">`+sr.key_needs.map(n=>`<div class="card" style="margin:0;padding:10px 12px"><b>${esc(n)}</b></div>`).join('')+`</div>`
-   +`<h4 class="soh">다음 단계</h4><ul class="slist"><li>${esc(sr.next)}</li><li>${esc(sr.followup)}</li></ul>`;
+   +`<h4 class="soh">Super Repuestos 운영 현황</h4>`
+   +`<ul class="note" style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.65"><li><b>프로모션 운영:</b> 고객사 여건을 고려해 영업사원 대상 판매 인센티브 프로모션 진행 · 판매 실적에 따라 경품 지급으로 판매 확대 유도.</li><li><b>설문 현황:</b> 직원 대상 설문 응답 현재까지 총 <b>62건</b> 확보.</li><li><b>판매 데이터:</b> 고객사로부터 sell-out 데이터를 전달받았으나, PLUSCAR와 달리 판매 품목·집계 범위가 명확하지 않아 프로모션 관련 실적 구분이 어려움 · 중남미 영업팀이 추가 협의해 <b>품목별 세부 판매 데이터 확보 예정</b>.</li></ul>`
+   +`<h4 class="soh">국가별 Sell-out (8월 · 개)</h4>`
+   +`<div class="tblwrap"><table class="lts" style="font-size:12.5px"><thead><tr><th style="text-align:left">국가</th><th>2024.8</th><th>2025.8</th><th>2026.8</th><th>전년 대비</th></tr></thead><tbody><tr><td style="text-align:left">엘살바도르</td><td class="num sub3">9,487개</td><td class="num sub3">10,294개</td><td class="num"><b>8,827개</b></td><td class="num"><span class="dn">-14.3%</span></td></tr><tr><td style="text-align:left">온두라스</td><td class="num sub3">4,224개</td><td class="num sub3">4,531개</td><td class="num"><b>4,743개</b></td><td class="num"><span class="up">+4.7%</span></td></tr><tr style="border-top:2px solid var(--ring)"><td style="text-align:left"><b>합계</b></td><td class="num sub3"><b>13,711개</b></td><td class="num sub3"><b>14,825개</b></td><td class="num"><b>13,570개</b></td><td class="num"><span class="dn"><b>-8.5%</b></span></td></tr></tbody></table></div>`
+   +`<p class="note" style="font-size:11.5px;margin-top:5px">전체 매장 판매량(개) 기준 · 프로모션 대상 품목 구분 전 수치(품목별 세분화 협의 중).</p>`
+   +`<h4 class="soh">설문 분석</h4><ul class="note" style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.65"><li>현장이 원하는 것은 <b>가격 인하가 아니라 교육·커버리지·인지도</b>.</li><li>브랜드 선택 기준 1위도 가격이 아닌 <b>보증(79%)</b> · 저가 시장이 아니라 <b>검증된 품질을 합리적 가격에 찾는 시장</b>임이 확인.</li><li>다음 프로모션 시 <b>정비사 초청 기술 세미나 결합</b> · <b>칠레 지사 인력을 활용한 현장 제품 교육</b>이 가장 효율적인 실행 수단으로 확인.</li><li>11월 출장에서 설문 결과를 바탕으로 SUPER REPUESTOS 마케팅 담당자와 이번 sell-out promotion을 계기로 <b>2027년 마케팅 계획 수립</b> 예정.</li></ul>`
+   +`<h4 class="soh">다음 단계 · 기타 지역</h4><ul class="slist"><li>11월 출장 · 설문 기반 <b>2027 마케팅 계획 수립</b> (Super Repuestos 마케팅 담당자 협의)</li><li>품목별 세부 sell-out 데이터 확보 (중남미 영업팀 추가 협의)</li><li>과테말라 sell-out promotion <b>연말 협의 예정</b> (진행 여부 미확정)</li></ul>`;
   
   h+=`</div>`;
 
