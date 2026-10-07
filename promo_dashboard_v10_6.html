@@ -112,6 +112,8 @@ select:focus,input:focus{outline:2px solid var(--brand);outline-offset:1px}
 
 /* ── 차트 ── */
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;align-items:start}
+    .ssg{align-items:stretch}
+    .ssg>.card{display:flex;flex-direction:column}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
 @media(max-width:1180px){.grid2,.grid3{grid-template-columns:1fr}}
 .grid2>.card,.grid3>.card{margin-bottom:0}
@@ -182,8 +184,8 @@ th .up{color:#7be3b8}
 .sk3 .bwrap{height:11px;background:var(--track);border-radius:3px;overflow:hidden}
 .sk3 .bfill{height:100%;border-radius:3px}
 .sk3 .sv{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
-.brow{display:grid;grid-template-columns:104px 1fr 150px;gap:10px;align-items:center;margin:7px 0;font-size:14px}
-.brow .nm{font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brow{display:grid;grid-template-columns:max-content 1fr 150px;gap:10px;align-items:center;margin:7px 0;font-size:14px}
+.brow .nm{font-weight:600;color:var(--ink);white-space:nowrap}
 .brow .bwrap{height:13px;background:var(--track);border-radius:3px;overflow:hidden}
 .brow .bfill{height:100%;border-radius:3px}
 @media(max-width:560px){.brow{grid-template-columns:80px 1fr;}.brow .small{grid-column:1/-1;text-align:right}}
@@ -356,7 +358,6 @@ tfoot td.num{text-align:right}
   <div class="page" id="p6">
     <div class="warnbox" id="w6"></div>
     <div class="kpis k6" id="ssKpi"></div>
-    <p class="note" style="margin:4px 0 12px;line-height:1.7">파트너 10곳(올해 제외 3곳: Pan · Auto1 · Arwani) · 오더 미션은 파트너별로 약속한 목표로 영업 Order Target과는 별개임. 설문 참여 수 목표는 전사 공통 200건임.</p>
     <div id="ssBody"></div>
     <div id="ssExtra"></div>
   </div>
@@ -1118,9 +1119,9 @@ function ssPage(){
       +`</div></div>`;
     return;}
   $('#w6').innerHTML=`<b>SteerStar 2026</b> · 파트너 ${rows.length}곳`
-    +(drop.length?` (올해 제외 ${drop.length}곳 — ${drop.map(r=>esc(r.name.split(' ')[0])).join(' · ')})`:'')
-    +` · 오더 미션은 파트너별로 약속한 목표이며 영업 Order Target 과는 별개입니다.`
-    +` 설문 참여 수 목표는 전사 공통 ${SS.lead_target}건입니다.`;
+    +(drop.length?` (올해 제외 ${drop.length}곳: ${drop.map(r=>esc(r.name.split(' ')[0])).join(' · ')})`:'')
+    +` · 오더 미션은 파트너별로 약속한 목표로 영업 Order Target과는 별개임.`
+    +` 설문 참여 수 목표는 전사 공통 ${SS.lead_target}건임.`;
 
   const K=[
     {lab:'오더 미션 목표 → 실적',hero:1,val:`${fmtC(tgt)} <span style="color:var(--muted);font-weight:400">→</span> ${fmtC(got)}`,
@@ -1169,7 +1170,7 @@ function ssPage(){
                    (r.lser||[]).forEach(x=>{const t=MS.find(y=>y.m===x.m);if(t)t.l+=x.v;});});
 
   $('#ssBody').innerHTML=`
-    <div class="grid2">
+    <div class="grid2 ssg">
       <div class="card"><h3>오더 미션 진행률</h3>
         <p class="note">막대는 목표 대비 실적입니다. 초록은 목표를 넘긴 파트너입니다. <span style="color:var(--ink2)">· 3월(SteerStar 시작)부터 누적 오더 집계 · 전 품목 오더 기준</span></p>
         ${missBars||'<div class="empty">해당 파트너가 없습니다.</div>'}</div>
@@ -1545,7 +1546,7 @@ const SEPTEMBER_ACTIVITY = {
       next:"정비사 초청 기술 세미나 결합 · 칠레 지사 인력 활용 현장 제품 교육",
       followup:"11월 Super Repuestos 마케팅 담당자와 2027년 계획 논의" },
     steerstar:{
-      refatrix:{ order_2025:33527.07, order_2026:114595.62, yoy:2.418, survey_count:157, survey_note:"RUJAC 전시회 현장 설문 157건 집계 완료", rujac:{"n":157,"aware_none":56,"after_pos":69,"ds":80,"factors":[{"l":"Calidad / Durabilidad","p":64},{"l":"Precio","p":27},{"l":"Disponibilidad","p":17},{"l":"Garantía","p":11},{"l":"Ajuste correcto","p":10}],"motiv":[{"l":"Precio competitivo","p":45},{"l":"Calidad comprobada","p":43},{"l":"Garantía","p":17},{"l":"Recomendación de un mecánico","p":7}],"support":[{"l":"Capacitación técnica","p":38},{"l":"Catálogos","p":25},{"l":"Muestras","p":13},{"l":"Garantía","p":13},{"l":"Videos de instalación","p":10}],"promo":[{"l":"Capacitación","p":27},{"l":"Demostración del producto","p":25},{"l":"Descuento","p":15},{"l":"Promoción por paquete","p":14},{"l":"Incentivo / regalo","p":13},{"l":"Muestra gratis","p":10}],"problem":[{"l":"Baja durabilidad","p":38},{"l":"Ruido / vibración","p":27},{"l":"Calidad inconsistente","p":12}],"exp15":62} },
+      refatrix:{ order_2025:33527.07, order_2026:114595.62, yoy:2.418, survey_count:157, survey_note:"RUJAC 전시회 현장 설문 157건 집계 완료", rujac:{"n":157,"aware_none":56,"after_pos":69,"ds":80,"factors":[{"l":"품질 / 내구성","p":64},{"l":"가격","p":27},{"l":"재고 가용성","p":17},{"l":"보증","p":11},{"l":"정확한 적합성","p":10}],"motiv":[{"l":"경쟁력 있는 가격","p":45},{"l":"검증된 품질","p":43},{"l":"보증","p":17},{"l":"정비사 추천","p":7}],"support":[{"l":"기술 교육","p":38},{"l":"카탈로그","p":25},{"l":"샘플","p":13},{"l":"보증","p":13},{"l":"설치 영상","p":10}],"promo":[{"l":"교육","p":27},{"l":"제품 시연","p":25},{"l":"할인","p":15},{"l":"패키지 프로모션","p":14},{"l":"인센티브 / 사은품","p":13},{"l":"무료 샘플","p":10}],"problem":[{"l":"낮은 내구성","p":38},{"l":"소음 / 진동","p":27},{"l":"일관되지 않은 품질","p":12}],"exp15":62} },
       brabham:{ order_2025:80488.13, order_2026:70268.22, yoy:-0.127, issue:"INMETRO 인증 미확보로 Survey / 판매 제한",
         status:"9월 Shock Absorber INMETRO 인증 절차 착수 · 연말까지 진행 상황 확인" }, lordco:{"y25":[56940,0,501829,0,27222,87197,0,37993,0,0,92796,169425],"y26":[56634,0,0,55820,61098,0,68472,0,0,0,0,0],"last26":7,"cum25":673188,"cum26":242024,"annual25":973402,"ytd26":242024,"prod":[{"k":"CONTROL ARM","y25":330495,"y26":129597,"d":-200898},{"k":"STABILIZER LINK","y25":215567,"y26":60873,"d":-154694},{"k":"OUTER TIE ROD","y25":159047,"y26":22959,"d":-136088},{"k":"BALL JOINT","y25":111658,"y26":21239,"d":-90419},{"k":"INNER TIE ROD","y25":94625,"y26":5053,"d":-89572},{"k":"BUSH","y25":44969,"y26":913,"d":-44056},{"k":"ASSIST ARM","y25":8223,"y26":632,"d":-7591}]} } },
   action_plan:[
