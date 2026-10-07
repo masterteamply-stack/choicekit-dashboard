@@ -1344,11 +1344,11 @@ function custOrderBlock(region,title,A,extra){
  const _per=_wins.length?` · 집계 구간 <b>${_wins.map(w=>w[0]).sort()[0]}~${_wins.map(w=>w[1]).sort().slice(-1)[0]}</b> (캠페인 시작~관측 종료 · 전년 동일 구간 비교, 전체 연도 오더와 다름)`:'';
  const trows=uniq.slice().sort((a,b)=>(a.country||'zz').localeCompare(b.country||'zz')||(b.a26-a.a26));
   let h=`<div class="card"><h3>${esc(title)}</h3><p class="note">참여 고객사의 ChoiceKit 연관 오더(sell-in) 2025 vs 2026 비교 · USD · 권역 합계 ${fmtC(t25)} → <b>${fmtC(t26)}</b> (${yoyC(t25,t26)}) · 고객사 ${uniq.length}곳${_per}</p>`;
-  h+=`<p class="note" style="margin-top:-4px;font-size:11.5px">매출 = CTR 출하·청구(인보이스) 기준 · 2025·2026 <b>1~8월 확정 누계</b> (USD) · 권역 합계 매출 ${fmtC(tr25)} → <b>${fmtC(tr26)}</b> (${yoyC(tr25,tr26)}) · 캠페인 연관 오더(sell-in)와 별개 지표로, 오더는 적어도 매출·성장이 큰 고객사를 함께 확인</p>`;
+  h+=`<p class="note" style="margin-top:-4px;font-size:11.5px">매출 = <b>해당 고객사의 총 매출</b> (전 품목·전 차종, CTR 출하·청구 인보이스 기준) · 2025·2026 <b>1~8월 누계</b> (USD) · 권역 합계 ${fmtC(tr25)} → <b>${fmtC(tr26)}</b> (${yoyC(tr25,tr26)}). 좌측 오더는 ChoiceKit <b>캠페인 대상(특정 SKU·차종·기간) sell-in</b>이라 고객사 총 오더·총 매출과 범위·규모가 크게 다를 수 있음</p>`;
  h+=`<div><div class="sub3" style="margin:2px 0 6px">상위 고객사 2025 vs 2026 (USD)</div>`
   +gbar(top.map(r=>(r.name||'').length>13?(r.name.slice(0,12)+'…'):r.name),[{name:'2025',color:C25,vals:top.map(r=>r.a25)},{name:'2026',color:C26b,vals:top.map(r=>r.a26)}],{W:1040,H:360,delta:1,fmtV:v=>'$'+Math.round(v/1000)+'K'})
   +`</div>`;
- h+=`<div style="margin-top:12px"><div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr><th>나라</th><th>고객사</th><th>오더 \'25</th><th>오더 \'26</th><th>오더 YoY</th><th class="rvcol">매출 \'25</th><th class="rvcol">매출 \'26</th><th class="rvcol">매출 YoY</th>`
+ h+=`<div style="margin-top:12px"><div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr><th>나라</th><th>고객사</th><th>오더 \'25</th><th>오더 \'26</th><th>오더 YoY</th><th class="rvcol">총매출 \'25</th><th class="rvcol">총매출 \'26</th><th class="rvcol">총매출 YoY</th>`
    +(multi?progList.map(p=>`<th>${esc(plab(p))} 25→26</th>`).join(''):'')
    +`</tr></thead><tbody>`
   +trows.map(r=>`<tr><td class="sub3" style="font-size:10.5px;white-space:nowrap">${esc(r.country||'–')}</td><td style="font-size:11.5px;word-break:keep-all">${esc(r.name||'')}</td><td class="num sub3">${r.a25?fmtC(r.a25):'–'}</td><td class="num">${r.a26?fmtC(r.a26):'–'}</td><td class="num">${yoyC(r.a25,r.a26)}</td><td class="num sub3 rvcol">${r.r25?fmtC(r.r25):'–'}</td><td class="num rvcol">${r.r26?fmtC(r.r26):'–'}</td><td class="num rvcol">${r.r25||r.r26?yoyC(r.r25,r.r26):'–'}</td>`
