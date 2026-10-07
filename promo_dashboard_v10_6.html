@@ -1567,25 +1567,19 @@ function sepMonth(A){
   const _by={}; camps().forEach(c=>{const r=c.region;_by[r]=_by[r]||{a25:0,a26:0,osku:0,tsku:0};_by[r].a25+=c.a25||0;_by[r].a26+=c.a26||0;_by[r].osku+=c.ord_sku||0;_by[r].tsku+=c.tgt_sku||0;});
   const _gr=Object.entries(_by).map(([k,v])=>({k,a25:v.a25,a26:v.a26,osku:v.osku,tsku:v.tsku})).filter(r=>r.a25>0||r.a26>0).sort((a,b)=>b.a26-a.a26);
   const _g25=_gr.reduce((a,r)=>a+r.a25,0),_g26=_gr.reduce((a,r)=>a+r.a26,0),_gy=_g25?(_g26-_g25)/_g25*100:0,_gosku=_gr.reduce((a,r)=>a+r.osku,0),_gtsku=_gr.reduce((a,r)=>a+r.tsku,0);
-  const ov=`<div class="kpis k4" style="margin:12px 0 2px">`
-   +`<div class="tile hero"><div class="lab">연관 오더 (전년 → 당해)</div><div class="val">${fmtC(Tov.a25)} <span style="color:var(--muted);font-weight:400">→</span> ${fmtC(Tov.a26)}</div><div class="sub2">캠페인 기간 · 대상 SKU 기준</div></div>`
-   +`<div class="tile"><div class="lab">YoY</div><div class="val"><span class="${cls(Tov.yoy)}">${fmtPC(Tov.yoy)}</span></div></div>`
-   +`<div class="tile"><div class="lab">집행 캠페인</div><div class="val">${Tov.run}<span style="font-size:16px;color:var(--muted)"> / ${Tov.n}</span></div><div class="sub2">대상 고객 ${Tov.cust.size.toLocaleString()}곳</div></div>`
-   +`<div class="tile"><div class="lab">달성률</div><div class="val">${Tov.prog.toFixed(0)}%</div><div class="sub2">관측 ${Tov.obs.toLocaleString()}일 / 계획 ${Tov.tot.toLocaleString()}일</div></div></div>`
-   +`<h4 class="soh">2026 CK PROMOTION 연관 오더 현황</h4>`
-   +`<p class="note" style="margin-top:-2px">ChoiceKit 캠페인 연관 오더(sell-in)의 전년 대비 증감 · 권역별 · USD</p>`
-   +`<div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:6px 0 10px">`
-   +`<div class="tile" style="border-top-color:var(--brand)"><div class="lab">2026 연관 오더</div><div class="val">${fmtC(_g26)}</div><div class="sub2">전년 대비 <span class="${cls(_gy)}">${fmtPC(_gy)}</span></div></div>`
+  const kpirow=`<div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin:12px 0 10px">`
+   +`<div class="tile hero" style="grid-column:span 2"><div class="lab">연관 오더 (전년 → 당해)</div><div class="val">${fmtC(Tov.a25)} <span style="color:var(--muted);font-weight:400">→</span> ${fmtC(Tov.a26)}</div><div class="sub2">전년 대비 <span class="${cls(Tov.yoy)}">${fmtPC(Tov.yoy)}</span> · 캠페인 기간 기준</div></div>`
    +`<div class="tile"><div class="lab">순증액</div><div class="val">${fmtC(_g26-_g25)}</div></div>`
-   +`<div class="tile"><div class="lab">대상 SKU 종합</div><div class="val">${_gtsku.toLocaleString()}<span style="font-size:15px;color:var(--muted)">종</span></div><div class="sub2 sub3">목표 지정 캠페인</div></div>`
-   +`<div class="tile"><div class="lab">오더 전환 SKU</div><div class="val">${_gosku.toLocaleString()}<span style="font-size:15px;color:var(--muted)">종</span></div><div class="sub2 sub3">누적 오더 품목 수</div></div>`
-   +`<div class="tile"><div class="lab">성장 권역</div><div class="val">${_gr.filter(r=>r.a26>r.a25).length}<span style="font-size:16px;color:var(--muted)"> / ${_gr.length}</span></div></div></div>`
+   +`<div class="tile"><div class="lab">오더 전환 SKU</div><div class="val">${_gosku.toLocaleString()}<span style="font-size:15px;color:var(--muted)">종</span></div><div class="sub2 sub3">ChoiceKit 오더 전환 품목</div></div>`
+   +`<div class="tile"><div class="lab">성장 권역</div><div class="val">${_gr.filter(r=>r.a26>r.a25).length}<span style="font-size:16px;color:var(--muted)"> / ${_gr.length}</span></div></div>`
+   +`<div class="tile"><div class="lab">집행 캠페인</div><div class="val">${Tov.run}<span style="font-size:16px;color:var(--muted)"> / ${Tov.n}</span></div><div class="sub2">대상 고객 ${Tov.cust.size.toLocaleString()}곳</div></div>`
+   +`<div class="tile"><div class="lab">달성률</div><div class="val">${Tov.prog.toFixed(0)}%</div><div class="sub2">관측 ${Tov.obs.toLocaleString()}일 / 계획 ${Tov.tot.toLocaleString()}일</div></div></div>`;
+  const ov=`<h4 class="soh">2026 CK PROMOTION 연관 오더 현황</h4>`
+   +`<p class="note" style="margin-top:-2px">ChoiceKit 캠페인 연관 오더(sell-in)의 전년 대비 증감 · 권역별 · USD</p>`
    +`<div class="legend"><span><i class="sw" style="background:var(--s1)"></i>2025</span><span><i class="sw" style="background:var(--brand)"></i>2026</span><span><i class="sw" style="background:#2563eb;border-radius:50%"></i>오더 전환 SKU (점 · 우축)</span></div>`
-   +`<div class="svgbox">`+gbar(_gr.map(r=>r.k),[{name:'2025',color:'var(--s1)',vals:_gr.map(r=>r.a25)},{name:'2026',color:'var(--brand)',vals:_gr.map(r=>r.a26)}],{W:1040,H:300,delta:1,fmtV:v=>v>=1e6?'$'+(v/1e6).toFixed(2)+'M':'$'+Math.round(v/1000)+'K',line:{name:'오더 전환 SKU',color:'#2563eb',vals:_gr.map(r=>r.osku),fmtV:v=>Math.round(v).toLocaleString()+'종'}})+`</div>`;
-
-  // ── Summary ──
-  h+=`<div class="card"><h3>September Report Summary</h3>`
-   +`<ul style="list-style:none;padding:0;margin:8px 0 2px">`+A.summary.split('. ').map(x=>x.replace(/\.\s*$/,'').trim()).filter(Boolean).map(x=>`<li class="note" style="margin:6px 0;padding-left:18px;position:relative;font-size:15px;line-height:1.55"><span style="position:absolute;left:0;top:0;color:var(--brand);font-weight:700">▪</span>${esc(x)}.</li>`).join('')+`</ul>`
+   +`<div class="svgbox">`+gbar(_gr.map(r=>r.k),[{name:'2025',color:'var(--s1)',vals:_gr.map(r=>r.a25)},{name:'2026',color:'var(--brand)',vals:_gr.map(r=>r.a26)}],{W:1040,H:300,delta:1,fmtV:v=>v>=1e6?'$'+(v/1e6).toFixed(2)+'M':'$'+Math.round(v/1000)+'K',line:{name:'오더 전환 SKU',color:'#2563eb',vals:_gr.map(r=>r.osku),fmtV:v=>Math.round(v).toLocaleString()+'종'}})+`</div>`;// ── Summary ──
+  h+=`<div class="card">`
+   +kpirow
    +ov
    +`<div style="margin:22px 0 8px;display:flex;align-items:center;gap:10px"><span style="width:6px;height:26px;background:var(--brand);border-radius:2px;display:inline-block"></span><h3 style="margin:0;font-size:22px;font-weight:800;letter-spacing:-0.5px">이달 주요 성과</h3></div>`
    +kgrid([
@@ -1595,6 +1589,8 @@ function sepMonth(A){
      {lab:'LATAM PLUSCAR Clicks',val:pl.fb_link_clicks.toLocaleString(),sub:`Survey ${pl.survey_before} → ${pl.survey_after}`},
      {lab:'Super Repuestos Survey',val:sr.survey_responses+'건',sub:`보증 선호 ${(sr.warranty_rate*100).toFixed(0)}%`},
      {lab:'REFATRIX 2026 Order',val:'$'+Math.round(st.refatrix.order_2026).toLocaleString(),sub:`YoY ${pc(st.refatrix.yoy)} · Survey ${st.refatrix.survey_count}건`}])
+   +`<h3 style="margin:22px 0 2px">September Report Summary</h3>`
+   +`<ul style="list-style:none;padding:0;margin:8px 0 2px">`+A.summary.split('. ').map(x=>x.replace(/\.\s*$/,'').trim()).filter(Boolean).map(x=>`<li class="note" style="margin:6px 0;padding-left:18px;position:relative;font-size:15px;line-height:1.55"><span style="position:absolute;left:0;top:0;color:var(--brand);font-weight:700">▪</span>${esc(x)}.</li>`).join('')+`</ul>`
    +`<div class="sub3" style="color:var(--ink2);font-size:12px;margin:12px 0 3px"><b>권역 × 캠페인 오더 종합</b> <span style="font-weight:400">· 캠페인 기간 오더 vs 전년 동기 · ChoiceKit 대상 기준 (index 대시보드 정합)</span></div>`
    +(()=>{const SO=new Set(['SELL-OUT Promotion','Sell-Out Promotion','Trade promotion']);
      const cs=(D.campaigns||[]).slice().sort((a,b)=>(a.region+'').localeCompare(b.region+'')||(b.a26||0)-(a.a26||0));
@@ -1707,6 +1703,15 @@ function sepMonth(A){
     <p class="note" style="font-size:13.5px;line-height:1.55;background:var(--hoverwash);border-left:3px solid var(--brand);padding:9px 12px;margin:0 0 10px;border-radius:0 6px 6px 0">LATAM Chinese Vehicle Promotion은 9월 오더 성과가 아니라 <b>10월 신규 수요 개발을 위한 준비 활동</b>으로 관리합니다. 콘텐츠는 프로모션 직접 홍보보다 <b>CTR의 중국 차종 Fit 품목 보유 사실을 알리는 Awareness 중심</b>으로 운영합니다.</p>`
    +`<div class="tblwrap"><table class="lts" style="table-layout:fixed;width:100%"><colgroup><col style="width:22%"><col style="width:78%"></colgroup><tbody>`
    +rows.map(r=>`<tr><td style="text-align:left;font-weight:700;background:var(--panel)">${esc(r[0])}</td><td style="text-align:left;font-size:12.5px">${esc(r[1])}</td></tr>`).join('')
+   +`</tbody></table></div>`
+   +`<h4 class="soh" style="margin-top:14px">중국차종 부품 오더 전환 추이 (5~9월)</h4>`
+   +`<p class="note" style="margin-top:-2px">4월 카탈로그 배포 이후 중국차종향 부품의 월별 오더 전환 SKU 수와 오더금액(USD). 하단 구분은 카탈로그 배포 이후 처음으로 오더 전환된 신규 품목.</p>`
+   +`<div class="tblwrap"><table class="lts" style="table-layout:fixed;width:100%"><colgroup><col style="width:28%"><col style="width:11%"><col><col><col><col><col><col style="width:13%"></colgroup>`
+   +`<thead><tr><th style="text-align:left">구분</th><th>항목</th><th>5월</th><th>6월</th><th>7월</th><th>8월</th><th>9월</th><th>합계</th></tr></thead><tbody>`
+   +`<tr><td rowspan="2" style="text-align:left;font-weight:700;background:var(--panel);vertical-align:middle">Only 중국차종 부품</td><td class="sub3">SKU</td><td>26</td><td>47</td><td>13</td><td>52</td><td>37</td><td><b>175</b></td></tr>`
+   +`<tr><td class="sub3">오더금액</td><td>$3,312</td><td>$11,793</td><td>$2,063</td><td>$12,270</td><td>$6,699</td><td><b>$36,137</b></td></tr>`
+   +`<tr><td rowspan="2" style="text-align:left;font-weight:700;background:var(--panel);vertical-align:middle">+ 4월 카탈로그 배포 이후<br>첫 오더 전환 품목</td><td class="sub3">SKU</td><td>3</td><td>18</td><td>1</td><td>17</td><td>17</td><td><b>56</b></td></tr>`
+   +`<tr><td class="sub3">오더금액</td><td>$485</td><td>$2,600</td><td>$36</td><td>$3,818</td><td>$1,507</td><td><b>$8,447</b></td></tr>`
    +`</tbody></table></div>`
    +`<p class="note" style="font-size:11.5px;padding-left:0;margin-top:7px"><b>참고 · Baseline(콘텐츠 발행 전):</b> 9월 중국차종 오더 $${cv.sep_amt.toLocaleString()} · ${cv.countries}개국 ${cv.buyers}개사 ${cv.skus} SKU — 10월 전환 추적의 비교 기준선으로만 사용하며 프로모션 성과로 집계하지 않습니다.</p>`
    +`</div>`;}
