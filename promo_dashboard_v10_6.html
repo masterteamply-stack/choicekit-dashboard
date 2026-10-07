@@ -244,7 +244,7 @@ td.b0{background:var(--panel);font-weight:700}
 tfoot td.num{text-align:right}
 
 </style>
-<style>.lts th{background:var(--head);color:#fff;font-weight:700;text-align:right;font-size:14px;padding:4px 8px;border:1px solid var(--headbd);position:static;cursor:default}.lts th:first-child,.lts td:first-child{text-align:left}.lts{margin:2px 0 6px}</style>
+<style>.lts th{background:var(--head);color:#fff;font-weight:700;text-align:right;font-size:14px;padding:4px 8px;border:1px solid var(--headbd);position:static;cursor:default}.lts th:first-child,.lts td:first-child{text-align:left}.rvcol{background:rgba(37,111,235,0.055)}.lts th.rvcol{color:#2563eb}.lts{margin:2px 0 6px}</style>
 <style>.brc{display:inline-block;background:var(--o1);color:var(--o6);border:1px solid var(--o2);border-radius:3px;padding:0 5px;margin-right:6px;font-size:12.5px;font-weight:700;vertical-align:1px}</style>
 <style>.sbadge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12.5px;font-weight:700;margin:2px 4px 2px 0;background:var(--o1);color:var(--o6);border:1px solid var(--o2)}.sbadge.ok{background:#e6f4ec;color:#0a7a44;border-color:#b8e0c8}.sbadge.wn{background:#fdf3d9;color:#8a6d00;border-color:#f0dca0}.slist{margin:5px 0 0;padding-left:18px;font-size:14px;line-height:1.7;color:var(--ink2)}#p7 .kpis{margin-bottom:10px}</style>
 <style>.sepfilter{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px;align-items:center}
@@ -1321,6 +1321,7 @@ function planBlock(region,A){
  p+=`</div>`;
  return p;
 }
+const REV={"200287":[583739.26,437685.11],"200284":[1789296.75,1023485.49],"200443":[1050328.22,1170689.21],"200318":[129597.8,213155.14],"200312":[899643.36,1422259.51],"200181":[722206.19,1077330.8],"200193":[499272.58,864412.61],"200311":[281369.15,409474.25],"200465":[31221.74,116187.34],"200192":[365089.47,342152.73],"200745":[22342.48,53973.79],"200169":[748478.73,737889.83],"290021":[0,48093.74],"200403":[78271.87,133097.28],"200358":[89434.54,1227168.26],"203776":[586480.11,568693.35],"200601":[22806.66,87892.11],"200170":[147598.74,69821.6],"200183":[269370.22,159456.26],"200184":[139618.71,158716.23],"200187":[423117.47,684717.14],"200387":[38410.11,17172.68],"280921":[4346.07,16209.5],"289404":[0,84689.81],"200189":[477706.33,452729.85],"287584":[727878.65,999804.73],"200323":[633329.82,907754.96],"287553":[481936.82,905396.3],"288336":[200615.38,405248.78],"287585":[339704.55,253654.44],"200572":[491766.16,124850.67],"200380":[141884.09,626288.01],"200507":[29264.47,91481.83],"289300":[27429.66,10673.28],"289381":[0,351213.35],"200344":[935401.4,1235990.2],"200456":[0,67718.93],"288281":[71977.13,244868.24],"289383":[0,120043.16],"289029":[378785.8,441817.15],"114621":[12612178.98,13815363.72],"289248":[32991.56,339459.79],"288352":[119430.88,287020.05],"200691":[10805.89,127459.11],"200332":[129500.7,82375.9],"288291":[55512.41,60724.14],"200335":[69055.51,76693.66],"200464":[83220.08,69285.22],"200371":[121794.07,272869.21],"200770":[140036.56,61056.86],"200242":[27834.84,9734.87],"200241":[317997.73,360319.88],"200264":[51686.5,82564.12]};
 function custOrderBlock(region,title,A,extra){
  const raw=(D.cust_delta||[]).filter(r=>r.region===region&&((r.a26||0)>0||(r.a25||0)>0));
  if(!raw.length) return '';
@@ -1331,26 +1332,29 @@ function custOrderBlock(region,title,A,extra){
  const multi=progList.length>1;
  // 고객사(code) 기준 중복 병합 + 프로그램별 분리
  const byCode={};
- raw.forEach(r=>{const key=r.code||r.name; const o=byCode[key]||(byCode[key]={name:r.name,country:r.country||'',a25:0,a26:0,pg:{}});
+ raw.forEach(r=>{const key=r.code||r.name; const o=byCode[key]||(byCode[key]={name:r.name,code:r.code||'',country:r.country||'',a25:0,a26:0,pg:{}});
    o.a25+=r.a25||0; o.a26+=r.a26||0; if(!o.country&&r.country)o.country=r.country;
    const pp=o.pg[r.program]||(o.pg[r.program]={a25:0,a26:0}); pp.a25+=r.a25||0; pp.a26+=r.a26||0;});
  const uniq=Object.values(byCode);
+ uniq.forEach(r=>{const rv=REV[r.code]||[];r.r25=rv[0]||0;r.r26=rv[1]||0;});
+ const tr25=uniq.reduce((a,r)=>a+(r.r25||0),0), tr26=uniq.reduce((a,r)=>a+(r.r26||0),0);
  const t25=uniq.reduce((a,r)=>a+r.a25,0), t26=uniq.reduce((a,r)=>a+r.a26,0);
  const top=uniq.slice().sort((a,b)=>b.a26-a.a26).slice(0,6);
  const _wins=(D.campaigns||[]).filter(c=>c.region===region&&c.started).flatMap(c=>c.wins||[]);
  const _per=_wins.length?` · 집계 구간 <b>${_wins.map(w=>w[0]).sort()[0]}~${_wins.map(w=>w[1]).sort().slice(-1)[0]}</b> (캠페인 시작~관측 종료 · 전년 동일 구간 비교, 전체 연도 오더와 다름)`:'';
  const trows=uniq.slice().sort((a,b)=>(a.country||'zz').localeCompare(b.country||'zz')||(b.a26-a.a26));
   let h=`<div class="card"><h3>${esc(title)}</h3><p class="note">참여 고객사의 ChoiceKit 연관 오더(sell-in) 2025 vs 2026 비교 · USD · 권역 합계 ${fmtC(t25)} → <b>${fmtC(t26)}</b> (${yoyC(t25,t26)}) · 고객사 ${uniq.length}곳${_per}</p>`;
+  h+=`<p class="note" style="margin-top:-4px;font-size:11.5px">매출 = CTR 출하·청구(인보이스) 기준 · 2025·2026 <b>1~8월 확정 누계</b> (USD) · 권역 합계 매출 ${fmtC(tr25)} → <b>${fmtC(tr26)}</b> (${yoyC(tr25,tr26)}) · 캠페인 연관 오더(sell-in)와 별개 지표로, 오더는 적어도 매출·성장이 큰 고객사를 함께 확인</p>`;
  h+=`<div><div class="sub3" style="margin:2px 0 6px">상위 고객사 2025 vs 2026 (USD)</div>`
   +gbar(top.map(r=>(r.name||'').length>13?(r.name.slice(0,12)+'…'):r.name),[{name:'2025',color:C25,vals:top.map(r=>r.a25)},{name:'2026',color:C26b,vals:top.map(r=>r.a26)}],{W:1040,H:360,delta:1,fmtV:v=>'$'+Math.round(v/1000)+'K'})
   +`</div>`;
- h+=`<div style="margin-top:12px"><div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr><th>나라</th><th>고객사</th><th>2025 종합</th><th>2026 종합</th><th>YoY</th>`
+ h+=`<div style="margin-top:12px"><div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr><th>나라</th><th>고객사</th><th>오더 \'25</th><th>오더 \'26</th><th>오더 YoY</th><th class="rvcol">매출 \'25</th><th class="rvcol">매출 \'26</th><th class="rvcol">매출 YoY</th>`
    +(multi?progList.map(p=>`<th>${esc(plab(p))} 25→26</th>`).join(''):'')
    +`</tr></thead><tbody>`
-  +trows.map(r=>`<tr><td class="sub3" style="font-size:10.5px;white-space:nowrap">${esc(r.country||'–')}</td><td style="font-size:11.5px;word-break:keep-all">${esc(r.name||'')}</td><td class="num sub3">${r.a25?fmtC(r.a25):'–'}</td><td class="num">${r.a26?fmtC(r.a26):'–'}</td><td class="num">${yoyC(r.a25,r.a26)}</td>`
+  +trows.map(r=>`<tr><td class="sub3" style="font-size:10.5px;white-space:nowrap">${esc(r.country||'–')}</td><td style="font-size:11.5px;word-break:keep-all">${esc(r.name||'')}</td><td class="num sub3">${r.a25?fmtC(r.a25):'–'}</td><td class="num">${r.a26?fmtC(r.a26):'–'}</td><td class="num">${yoyC(r.a25,r.a26)}</td><td class="num sub3 rvcol">${r.r25?fmtC(r.r25):'–'}</td><td class="num rvcol">${r.r26?fmtC(r.r26):'–'}</td><td class="num rvcol">${r.r25||r.r26?yoyC(r.r25,r.r26):'–'}</td>`
      +(multi?progList.map(p=>{const x=r.pg[p];return `<td class="num sub3" style="font-size:10px">${x&&(x.a25||x.a26)?`${x.a25?fmtC(x.a25):'$0'}→${x.a26?fmtC(x.a26):'$0'}`:'–'}</td>`;}).join(''):'')
      +`</tr>`).join('')
-  +`<tr style="border-top:2px solid var(--ring)"><td></td><td><b>합계 (${uniq.length}곳)</b></td><td class="num sub3"><b>${fmtC(t25)}</b></td><td class="num"><b>${fmtC(t26)}</b></td><td class="num"><b>${yoyC(t25,t26)}</b></td>`
+  +`<tr style="border-top:2px solid var(--ring)"><td></td><td><b>합계 (${uniq.length}곳)</b></td><td class="num sub3"><b>${fmtC(t25)}</b></td><td class="num"><b>${fmtC(t26)}</b></td><td class="num"><b>${yoyC(t25,t26)}</b></td><td class="num sub3 rvcol"><b>${fmtC(tr25)}</b></td><td class="num rvcol"><b>${fmtC(tr26)}</b></td><td class="num rvcol"><b>${yoyC(tr25,tr26)}</b></td>`
     +(multi?progList.map(p=>{const pa=uniq.reduce((s,r)=>s+((r.pg[p]||{}).a25||0),0),pb=uniq.reduce((s,r)=>s+((r.pg[p]||{}).a26||0),0);return `<td class="num sub3" style="font-size:10px"><b>${fmtC(pa)}→${fmtC(pb)}</b></td>`;}).join(''):'')
     +`</tr></tbody></table></div></div>`;
  if(region!=='LATAM') h+=planBlock(region,A);
