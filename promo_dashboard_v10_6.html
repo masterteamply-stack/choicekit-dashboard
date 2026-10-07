@@ -1723,6 +1723,20 @@ function sepMonth(A){
       return `<tr><td style="font-size:12px">${esc(c.c)}</td><td style="text-align:left;font-weight:700">${esc(c.n)}</td><td class="num sub3">${c.t?'$'+c.t.toLocaleString():'–'}</td><td class="num">${c.r?'$'+c.r.toLocaleString():'<span class="sub3">–</span>'}</td><td class="num" style="font-weight:700;color:${col}">${c.rate?c.rate.toFixed(1)+'%':'–'}</td><td style="text-align:left;font-size:11.5px;color:${col};font-weight:600">${esc(c.st)}</td></tr>`;}).join('')
    +`</tbody></table></div><p class="note" style="margin-top:6px"><b>9월 데이터 반영 상태:</b> ${esc(sea.sep_reflect)}</p>`
    +`<div style="margin-top:8px"><span class="sub3">미제출: </span>`+sea.pending_badges.map(b=>badge(b,'wn')).join('')+`</div></div>`;
+  // ── ASIA 프로그램 설명 (SEA 2026) ──
+  {const asiaProg=[
+    ['베트남','딜러 백오더 과다 (공장 재고 · 시장 미출고)','상반기 백오더 해소 · 하반기 Sell-out 프로모션','MAST · NAM BAC · GTA · TAN CO·MYTECH','파츠샵 4곳 VND 5천만↑ 구매 시 CTR 인보이스 10% 인센티브 · 가라지 20곳 정비사 5% 커미션 (인보이스·사진 제출)'],
+    ['태국','딜러 재고 이슈 없음 · 낮은 오더 물량','상반기 서브딜러 인센티브 · 하반기 신규 SKU 오더 캠페인','GP · SWE(Seri) · ATC · CSH','THB 1만↑ 구매당 Lotus 기프트카드 THB 300 (CTR 제품 한정) · 총 230장 (GP 80 · SWE 100 · ATC 40 · CSH 10)'],
+    ['필리핀','딜러 노후 재고 과다 · 판매 부진으로 신규 오더 정체','연중 재고 소진 프로모션 · 하반기 세일즈킷 · 마케팅 패키지 지원','Chuan Lam · Young Auto','10% 지원 (Chuan Lam $40,459 · 자체 10% 추가로 5년 이상 품목 20% 할인) · Young Auto $6,557 참여 검토'],
+    ['인니','낮은 오더 물량 · 재고 회전 둔화','상반기 Sales Champion · 하반기 신규 SKU 오더 캠페인','서브딜러','협의 중'],
+    ['말레이시아','별도 명시 없음','상반기 서브딜러 인센티브 · 하반기 브랜드 인지도 + 신규 SKU 오더 캠페인','서브딜러','협의 중']];
+  h+=`<div class="card"><h3>ASIA · 국가별 프로모션 프로그램 (SEA 2026)</h3>`
+   +`<p class="note">국가별 이슈와 상 · 하반기 프로그램 구성 요약입니다. 참여 고객사 · 핵심 메커니즘 중심.</p>`
+   +`<div style="overflow-x:auto"><table class="lts"><thead><tr><th>국가</th><th>이슈</th><th>프로그램 (상 · 하반기)</th><th>참여 고객사</th><th>핵심 메커니즘</th></tr></thead><tbody>`
+   +asiaProg.map(p=>`<tr><td style="font-weight:700;white-space:nowrap">${esc(p[0])}</td><td style="text-align:left;font-size:12px">${esc(p[1])}</td><td style="text-align:left;font-size:12px">${esc(p[2])}</td><td style="text-align:left;font-size:12px">${esc(p[3])}</td><td style="text-align:left;font-size:12px">${esc(p[4])}</td></tr>`).join('')
+   +`</tbody></table></div>`
+   +`<p class="note sub3" style="margin-top:6px">SEA 2026 연간 마케팅 예산 · HQ $10,000 + VINA $47,600 (프로모션 70% · POS 30%)</p></div>`;}
+
 
   h+=custOrderBlock('ASIA','ASIA · 올해 vs 전년 오더 추이 (참여 고객사)',A);
   
