@@ -1170,9 +1170,10 @@ function ssPage(){
   $('#ssBody').innerHTML=`
     <div class="grid2">
       <div class="card"><h3>오더 미션 진행률</h3>
-        <p class="note">막대는 목표 대비 실적입니다. 초록은 목표를 넘긴 파트너입니다.</p>
+        <p class="note">막대는 목표 대비 실적입니다. 초록은 목표를 넘긴 파트너입니다. <span style="color:var(--ink2)">· 3월(SteerStar 시작)부터 누적 오더 집계 · 전 품목 오더 기준</span></p>
         ${missBars||'<div class="empty">해당 파트너가 없습니다.</div>'}</div>
       <div class="card"><h3>월별 오더 실적</h3>
+        <p class="note" style="margin:2px 0 6px">SteerStar 참여 파트너 월별 오더(USD) · 3월부터 집계 · 전 품목 기준</p>
         <div class="legend"><span><i class="sw" style="background:var(--o3)"></i>오더 (USD)</span>
           <span><i class="sw" style="background:var(--brand)"></i>설문 참여 수 (건)</span></div>
         <div class="svgbox">${ssSvg(MS,460)}</div></div>
@@ -1500,7 +1501,7 @@ const SEPTEMBER_ACTIVITY = {
     programs:[
       {program:"Sales Champion Award", customers:8, target:271967, actual:531154.3828, achievement:1.9530, note:"전체 성과 핵심 견인"},
       {program:"Long-Term Loyalty", customers:3, target:54780, actual:75072.0032, achievement:1.3704, note:"GP·Densocentra·Marboro 중심 안정적 성과"},
-      {program:"Order to Earn POSM", customers:3, target:496154, actual:257819.1252, achievement:0.5196, note:"GTA는 달성 · Mast / Nam Bac 추가 Push 필요"},
+      {program:"Order to Earn POSM", customers:3, target:496154, actual:257819.1252, achievement:0.5196, note:"POSM 조건 오더 기준 · GTA 달성 · Mast·Nam Bac 추가 Push 필요"},
       {program:"New Product Sell-Out", customers:2, target:12638, actual:0, achievement:0, note:"데이터 미제공"},
       {program:"Display & Visibility", customers:3, target:null, actual:null, achievement:null, note:"전시·사진 증빙 미제공"}],
     cust_perf:[
@@ -1599,7 +1600,7 @@ function sepMonth(A){
      {lab:'LATAM PLUSCAR Clicks',val:pl.fb_link_clicks.toLocaleString(),sub:`Survey ${pl.survey_before} → ${pl.survey_after}`},
      {lab:'Super Repuestos Survey',val:sr.survey_responses+'건',sub:`보증 선호 ${(sr.warranty_rate*100).toFixed(0)}%`},
      {lab:'REFATRIX 2026 Order',val:'$'+Math.round(st.refatrix.order_2026).toLocaleString(),sub:`YoY ${pc(st.refatrix.yoy)} · Survey ${st.refatrix.survey_count}건`}])
-   +`<h3 style="margin:22px 0 2px">September Report Summary</h3>`
+   +`<div class="note" style="border:1px solid var(--line);border-radius:8px;padding:10px 13px;margin:16px 0 4px;background:var(--hoverwash);font-size:12px;line-height:1.75"><b style="font-size:12.5px">집계 기준 안내</b> <span style="color:var(--ink2)">· 지표마다 집계 범위가 다릅니다</span><br>· <b>Sell-in</b> 전사 오더 원장 기준 · CTR가 수주한 전체 오더<br>· <b>Sell-out</b> 프로모션 참여 고객사의 ChoiceKit 대상 오더(2차 판매 집계)<br>· <b>프로모션 조건 오더</b> 각 프로그램의 대상 SKU·차종·기간 조건에 맞는 오더만 · 고객사 전체 오더와 범위 다름<br>· <b>매출(출하·청구)</b> CTR 인보이스 기준(1~9월) · 캠페인 오더와 범위·규모 상이</div>`+`<h3 style="margin:22px 0 2px">September Report Summary</h3>`
    +`<ul style="list-style:none;padding:0;margin:8px 0 2px">`+A.summary.split('. ').map(x=>x.replace(/\.\s*$/,'').trim()).filter(Boolean).map(x=>`<li class="note" style="margin:6px 0;padding-left:18px;position:relative;font-size:15px;line-height:1.55"><span style="position:absolute;left:0;top:0;color:var(--brand);font-weight:700">▪</span>${esc(x)}.</li>`).join('')+`</ul>`
    +`<div class="sub3" style="color:var(--ink2);font-size:12px;margin:12px 0 3px"><b>권역 × 캠페인 오더 종합</b> <span style="font-weight:400">· 캠페인 기간 오더 vs 전년 동기 · ChoiceKit 대상 기준 (index 대시보드 정합)</span></div>`
    +(()=>{const SO=new Set(['SELL-OUT Promotion','Sell-Out Promotion','Trade promotion']);
@@ -1650,9 +1651,9 @@ function sepMonth(A){
   h+=custOrderBlock('CIS','CIS · 올해 vs 전년 오더 추이 (참여 고객사)',A);
   // ── MENA ──
   h+=`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">MENA</span> <span style="font-size:12.5px;color:var(--ink2)">· 중동 · Portfolio Expansion (Shock Absorber · Brake Pad)</span></div><div class="card"><h3>MENA · Shock Absorber &amp; Brake Pad Promotion</h3>
-    <p class="note">Dynatrade와 MESK에서 9월 추가 오더 발생 · 누적 오더 USD ${mena.cumulative_order.toLocaleString()}로 제한적이나 실질 전환 확인.</p>`
+    <p class="note">Dynatrade와 MESK에서 9월 추가 오더 발생 · 프로모션 연관 누적 오더 USD ${mena.cumulative_order.toLocaleString()}로 제한적이나 실질 전환 확인. <span style="color:var(--ink2)">(대상 품목 Shock Absorber·Brake Pad 오더 기준)</span></p>`
    +kgrid([{lab:'9월 추가 오더',val:'$'+mena.september_total.toLocaleString(),hero:true,sub:'Dynatrade + MESK'},
-     {lab:'누적 오더',val:'$'+mena.cumulative_order.toLocaleString()},
+     {lab:'프로모션 누적 오더',val:'$'+mena.cumulative_order.toLocaleString()},
      {lab:'제품군',val:mena.products.length+'종',sub:mena.products.join(' · ')}],'k3')
    +`<div class="grid2"><div><div class="sub3" style="margin:4px 0 2px">고객별 9월 오더 (USD)</div>`
    +gbar(mena.september_orders.map(o=>o.customer),[{name:'9월 오더',color:C2,vals:mena.september_orders.map(o=>o.amount_usd)}],{W:320,H:180,fmtV:v=>'$'+Math.round(v).toLocaleString(),groupColors:[C1,C2]})
@@ -1741,7 +1742,7 @@ function sepMonth(A){
    +`</tbody></table></div>`
    +`<p class="note" style="margin:4px 0 0;font-size:12px"><b>Sales Champion Award 참여 8개사:</b> Mast·Nam Bac·GTA (VN)·GP (TH) 수령(4개사) · CSH·ATC (TH)·Chuan Lam·Young Auto (PH) 집계 대기(4개사) — 실적 $531,154는 수령분 기준</p>`
    
-   +`<h4 class="soh">고객사별 성과 (Target → Result)</h4><p class="sub3" style="margin:-4px 0 9px;line-height:1.5">고객사 전체 sell-out 오더 기준(모든 활동 합산) · 특정 프로그램 조건 오더 진척은 위 프로그램별 성과 참고</p><div class="tblwrap"><table class="lts" style="table-layout:fixed;width:100%"><colgroup><col style="width:13%"><col style="width:18%"><col style="width:16%"><col style="width:16%"><col style="width:11%"><col style="width:26%"></colgroup><thead><tr><th>국가</th><th>고객사</th><th>Target</th><th>Result</th><th>달성률</th><th>상태</th></tr></thead><tbody>`
+   +`<h4 class="soh">고객사별 성과 (Target → Result)</h4><p class="sub3" style="margin:-4px 0 9px;line-height:1.5">고객사 전체 sell-out 오더 기준(수령분) · 특정 프로그램 조건 오더 진척은 위 프로그램별 성과 참고</p><div class="tblwrap"><table class="lts" style="table-layout:fixed;width:100%"><colgroup><col style="width:13%"><col style="width:18%"><col style="width:16%"><col style="width:16%"><col style="width:11%"><col style="width:26%"></colgroup><thead><tr><th>국가</th><th>고객사</th><th>Target</th><th>Result</th><th>달성률</th><th>상태</th></tr></thead><tbody>`
    +sea.cust_perf.map(c=>{const col=c.st==='Achieved'?'var(--good)':c.st==='Near Target'?'var(--warn)':(c.st.indexOf('Pending')>=0||c.st.indexOf('대상 아님')>=0)?'var(--muted)':'var(--serious)';
       return `<tr><td style="font-size:12px">${esc(c.c)}</td><td style="text-align:left;font-weight:700">${esc(c.n)}</td><td class="num sub3">${c.t?'$'+c.t.toLocaleString():'–'}</td><td class="num">${c.r?'$'+c.r.toLocaleString():'<span class="sub3">–</span>'}</td><td class="num" style="font-weight:700;color:${col}">${c.rate?c.rate.toFixed(1)+'%':'–'}</td><td style="text-align:left;font-size:11.5px;color:${col};font-weight:600">${esc(c.st)}</td></tr>`;}).join('')
    +`</tbody></table></div><p class="note" style="margin-top:6px"><b>9월 데이터 반영 상태:</b> ${esc(sea.sep_reflect)}</p>`
