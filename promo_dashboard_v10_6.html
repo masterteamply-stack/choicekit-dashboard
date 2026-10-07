@@ -1830,7 +1830,7 @@ function cnOrderReport(){
   const srow=(lab,d,c)=>`<tr><td style="text-align:left;font-weight:700;color:${c};white-space:nowrap">${lab}</td>`+months.map(m=>`<td class="num">${cnFmt(d.msum[m])}</td>`).join('')+`<td class="num" style="background:var(--panel)"><b>${cnFmt(d.gtot)}</b></td><td class="num">${d.rows.length}</td></tr>`;
   h+=`<div class="card"><h3>기준별 월별 비교 <span class="sub3" style="font-weight:400">· ${reg==='ALL'?'전체 권역':reg+' 권역'} · 오더금액 USD</span></h3>`
    +`<p class="note">세 기준의 월별 오더금액을 같은 열(월)로 정렬해 격차를 한눈에 비교</p>`
-   +`<div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr><th style="text-align:left">기준</th>`+mlab.map(x=>`<th>${x}</th>`).join('')+`<th>합계</th><th>품번</th></tr></thead><tbody>`
+   +`<div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr><th style="text-align:left">기준</th>`+mlab.map(x=>`<th>${x}</th>`).join('')+`<th>합계</th><th>SKU</th></tr></thead><tbody>`
    +srow('① 중국차 커버 전체',d1,'var(--ink)')
    +srow('② 중국 전용',d2,'#2563eb')
    +srow('③ 5월 신규 (카탈로그 효과)',d3,'#0d9488')
