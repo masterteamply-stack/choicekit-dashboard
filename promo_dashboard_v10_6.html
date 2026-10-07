@@ -1976,10 +1976,6 @@ $('#btnTheme').onclick=()=>{const dk=document.documentElement.getAttribute('data
 $('#btnReset').onclick=()=>{$('#fRegion').value='ALL';syncProg();$('#fProgram').value='ALL';draw();};
 addEventListener('resize',()=>{chartDid();persist();soPage();ssPage();});
 draw(); soFilterUI($('#nav button.on').dataset.pg);
-$('#foot').innerHTML=`모든 수치는 <b>캠페인 기간 vs 전년 동일 기간 · 대상 SKU 기준</b>입니다. 영업 Order Target 은 표시하지 않습니다(SteerStar 화면의 목표는 파트너별 미션 목표입니다).<br>
-  캠페인 단위는 marketing.xlsx의 <b>Program × 권역</b>이며, 집행 기간은 그 캠페인 활동들의 전체 구간입니다.
-  원장 추출 구간이 비어 있는 날짜는 당해·전년 양쪽에서 함께 제외합니다.<br>
-  Sell-out·SteerStar 반영 ${C.added||''} · 생성 ${D.generated_at} · 기준일 ${D.today} · 오더 원장 ${D.n_fact.toLocaleString()}행 / ${fmtC(D.total_amt)} · 캠페인 ${(D.campaigns||[]).length}건<br><b>본 대시보드는 ChoiceKit 캠페인 오더 기준</b>이며 전사 매출(9월 영업 리포트)과는 범위가 다릅니다.`;
 </script>
 </body>
 </html>
