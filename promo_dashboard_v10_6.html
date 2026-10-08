@@ -1080,7 +1080,7 @@ function steerStarExtra(){
    const yoy=(lo.cum26-lo.cum25)/lo.cum25*100;
    const ML=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
   h+=`<div class="card"><h3>NA · Lordco (캐나다) 월별 오더 추이</h3>
-    <p class="note">전 품목 오더(USD) · 2025 연간 $${lo.annual25.toLocaleString()} · 2026 YTD(1~${lo.last26}월) $${lo.ytd26.toLocaleString()}. Lordco는 소수 대형 단건 중심이라 월별·품목별로 무엇이 줄었는지 함께 봄.</p>`
+    <p class="note">전 품목 오더(USD) · 2025 연간 $${lo.annual25.toLocaleString()} · 2026 YTD(1~${lo.last26}월) $${lo.ytd26.toLocaleString()}. Lordco는 소수 대형 단건 중심이라 월별·품목별로 무엇이 줄었는지 함께 봄.</p>` +`<div style="margin:8px 0 2px;padding:9px 14px;background:rgba(0,122,76,.08);border-left:5px solid var(--good);border-radius:0 6px 6px 0;font-size:13px"><b style="color:var(--good)">매출 성과</b> · 2026 매출(출하·청구 기준) <b>$${Math.round((REV['289029']||[0,0])[1]).toLocaleString()}</b> · 전년 $${Math.round((REV['289029']||[0,0])[0]).toLocaleString()} 대비 <b>${fmtPC(((REV['289029']||[1,1])[1]/(REV['289029']||[1,1])[0]-1)*100)}</b> <span style="color:var(--ink2)">· 출하·청구 인보이스 기준 · 오더(sell-in)와 범위 다름</span></div>`
    +kgrid([{lab:'2025 연간 오더',val:'$'+lo.annual25.toLocaleString()},
      {lab:'2026 YTD 오더',val:'$'+lo.ytd26.toLocaleString(),sub:`1~${lo.last26}월`},
      {lab:`동기(1~${lo.last26}월) 전년 대비`,val:fmtPC(yoy),cls:yoy>=0?'up':'dn',sub:`${fmtC(lo.cum25)} → ${fmtC(lo.cum26)}`,hero:true}],'k3')
