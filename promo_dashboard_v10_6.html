@@ -248,7 +248,8 @@ tfoot td.num{text-align:right}
 </style>
 <style>.lts th{background:var(--head);color:#fff;font-weight:700;text-align:right;font-size:14px;padding:4px 8px;border:1px solid var(--headbd);position:static;cursor:default}.lts th:first-child,.lts td:first-child{text-align:left}.rvcol{background:rgba(37,111,235,0.08)}.rvcol2{background:rgba(13,148,136,0.13);border-left:1px solid rgba(13,148,136,0.4)}.lts th.rvcol{font-weight:800;box-shadow:inset 0 -3px 0 #2563eb}.lts th.rvcol2{font-weight:800;box-shadow:inset 0 -3px 0 #0d9488}[data-theme="dark"] .rvcol{background:rgba(96,165,250,0.13)}[data-theme="dark"] .rvcol2{background:rgba(45,212,191,0.15)}[data-theme="dark"] .lts th.rvcol{box-shadow:inset 0 -3px 0 #60a5fa}[data-theme="dark"] .lts th.rvcol2{box-shadow:inset 0 -3px 0 #4fd1c5}.lts{margin:2px 0 6px}</style>
 <style>.brc{display:inline-block;background:var(--o1);color:var(--o6);border:1px solid var(--o2);border-radius:3px;padding:0 5px;margin-right:6px;font-size:12.5px;font-weight:700;vertical-align:1px}</style>
-<style>.sbadge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12.5px;font-weight:700;margin:2px 4px 2px 0;background:var(--o1);color:var(--o6);border:1px solid var(--o2)}.sbadge.ok{background:#e6f4ec;color:#0a7a44;border-color:#b8e0c8}.sbadge.wn{background:#fdf3d9;color:#8a6d00;border-color:#f0dca0}.slist{margin:5px 0 0;padding-left:18px;font-size:14px;line-height:1.7;color:var(--ink2)}#p7 .kpis{margin-bottom:10px}</style>
+<style>.sbadge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12.5px;font-weight:700;margin:2px 4px 2px 0;background:var(--o1);color:var(--o6);border:1px solid var(--o2)}.sbadge.ok{background:#e6f4ec;color:#0a7a44;border-color:#b8e0c8}.sbadge.wn{background:#fdf3d9;color:#8a6d00;border-color:#f0dca0}.slist{margin:5px 0 0;padding-left:18px;font-size:14px;line-height:1.7;color:var(--ink2)}
+    .slist li.subli{list-style:none;margin-left:12px;color:var(--muted)}#p7 .kpis{margin-bottom:10px}</style>
 <style>.sepfilter{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px;align-items:center}
 .sepdd{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink2)}
 .sepdd select{padding:8px 12px;border:1px solid var(--ring);border-radius:7px;background:var(--surface);color:var(--ink);font-size:14px;font-weight:600;cursor:pointer}.sfb{padding:6px 13px;border:1px solid var(--ring);background:var(--surface);border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink)}.sfb.on{background:var(--s1);color:#fff;border-color:var(--s1)}.sfb.empty{color:var(--muted);font-weight:400}</style>
@@ -1496,10 +1497,10 @@ const SEPTEMBER_ACTIVITY = {
       {type:"Asian", title:"Asian 5개 차종 소재 2", uploaded_at:"2026-09-30", status:"집행 완료"}],
     content_done:3, content_total:6,
     followup:["11월 출장 연계 현지 콜라보 이벤트 진행 기획 - 3개사 진행 확정 · 진행 플랜 상세 조율 중",
-      "Free Replacement Event / Tech Seminar - **Complex Auto**(KG)",
-      "Tech Seminar - **Bauten**(KZ), **Alliance Motors**(KG)",
+      "↳ Free Replacement Event / Tech Seminar - **Complex Auto**(KG)",
+      "↳ Tech Seminar - **Bauten**(KZ), **Alliance Motors**(KG)",
       "Mechanic Support Kits 10월 입고 후 고객사 컨테이너로 순차 발송",
-      "Kit 구성: 로고 공구 조끼·모자 세트, Mechanic Handbook, Asian / European 차종 Flyer"] },
+      "↳ Kit 구성: 로고 공구 조끼·모자 세트, Mechanic Handbook, Asian / European 차종 Flyer"] },
   sea: { programs_count:5, countries:5, customers:12, period:"2026년 5~11월",
     sellout_target:835538.7473, sellout_actual:864045.5111, achievement_rate:1.0341,
     programs:[
@@ -1650,7 +1651,7 @@ function sepMonth(A){
    +`<h4 class="soh">콘텐츠 집행 현황 (${cis.content_done} / ${cis.content_total}건)</h4><div class="tblwrap"><table class="lts"><thead><tr><th>구분</th><th>소재</th><th>업로드</th><th>상태</th></tr></thead><tbody>`
    +cis.meta_posts.map(p=>`<tr><td>${p.type}</td><td style="text-align:left">${esc(p.title)}</td><td>${p.uploaded_at}</td><td>${badge(p.status,'ok')}</td></tr>`).join('')
    +`<tr><td>Asian/European</td><td style="text-align:left">잔여 소재</td><td>예정</td><td>${badge('준비 중','wn')}</td></tr></tbody></table></div>`
-   +`<h4 class="soh">후속 실행</h4><ul class="slist">`+cis.followup.map(x=>`<li>${esc(x).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')}</li>`).join('')+`</ul></div>`;
+   +`<h4 class="soh">후속 실행</h4><ul class="slist">`+cis.followup.map(x=>`<li${x.startsWith('↳')?' class="subli"':''}>${esc(x).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')}</li>`).join('')+`</ul></div>`;
 
   h+=custOrderBlock('CIS','CIS · 올해 vs 전년 오더 추이 (참여 고객사)',A);
   // ── MENA ──
