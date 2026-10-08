@@ -1487,7 +1487,7 @@ const SEPTEMBER_ACTIVITY = {
       {r:"국내", sep:"$93K", cum:"$1.7M", yoy:"-67.0%", note:"국내"}],
     carryover:"유럽 €30만 · LATAM $50~60만 · 이집트 $32만 · 카타르 $30~40만 · CIS $40~80만 (10~11월 이월)" },
   generated_at: "2026-10-06",
-  summary: "9월 Choice Kit은 지역별로 전환 단계가 다르게 나타남. ASIA는 Sell-out 목표를 초과해 판매 검증 성과 확인함. LATAM은 O2O 광고·Survey로 현장 반응과 구매 전환 가능성 확인함. CIS는 Catalogue 확산과 고객별 재고·Backorder 데이터를 연결해 11월 현장 활동 우선순위 정리 중임. MENA는 제한적이나 Dynatrade·MESK에서 추가 오더 발생함.", outlook: "10~11월에는 Sell-out 데이터 회수, 재고 기반 현장 지원, Survey 분석, Follow-up Order 전환을 집중 관리함.",
+  summary: "9월 Choice Kit은 지역별로 전환 단계가 다르게 나타남. ASIA는 Sell-out 목표를 초과해 판매 검증 성과 확인함. LATAM은 O2O 광고·Survey로 현장 반응과 구매 전환 가능성 확인함. CIS는 Catalogue 확산과 고객별 재고·Backorder 데이터를 연결해 11월 현장 활동 우선순위 정리 중임. MENA는 제한적이나 Dynatrade·MESK에서 추가 오더 발생함. CIS Choice Kit Catalogue는 이메일 배포·웹 다운로드·SNS 콘텐츠 기준 자료로 활용 중이며 3~9월 Catalogue 대상 SKU 연관 오더 Asian $1.30M·European $87K, 웹 다운로드 Asian 370회·European 784회로 확인됨 · 10월 프로모션 종료 후 최종 재집계 예정임.", outlook: "10~11월에는 Sell-out 데이터 회수, 재고 기반 현장 지원, Survey 분석, Follow-up Order 전환을 집중 관리함.",
   cis: { views:18228, downloads_total:832, downloads_asian:368, downloads_european:464, download_rate:0.0456,
     posted_at:"2026-09-03", target_countries:["카자흐스탄","키르기스스탄","타지키스탄","투르크메니스탄"],
     meta_posts:[
@@ -1562,6 +1562,129 @@ const SEPTEMBER_ACTIVITY = {
     {region:"LATAM", action:"RUJAC Survey 수기 응답 정리", owner:"REFATRIX", kpi:"157건 응답 분석 · 니즈 키워드", timing:"10월"},
     {region:"LATAM", action:"BRABHAM INMETRO 인증 진행 확인", owner:"BRABHAM", kpi:"인증 단계 · 판매 가능 품목 · Survey 재개", timing:"연말"}]
 };
+const CIS_CATALOGUE_PERFORMANCE = {
+  period: "2026-03 to 2026-09",
+  final_update_plan: "After Choice Kit promotion closing in October",
+  distribution: {
+    asian_catalogue_sent_month: "2026-04", european_catalogue_sent_month: "2026-05",
+    countries: ["KG","KZ","TJ","TM"], customer_count: 15, method: "Email distribution",
+    customers: [
+      {no:1,country:"KG",customer:"ALLIANCE-MOTORS LLC",status:"Distributed"},
+      {no:2,country:"KZ",customer:"ARMTEK KZ",status:"Distributed"},
+      {no:3,country:"TJ",customer:"AUTOMIR",status:"Distributed"},
+      {no:4,country:"KZ",customer:"AUTOTRADE KZ",status:"Distributed"},
+      {no:5,country:"TJ",customer:"AVTOKOM LLC",status:"Distributed"},
+      {no:6,country:"KZ",customer:"BAUTEN",status:"Distributed"},
+      {no:7,country:"TM",customer:"BTT",status:"Distributed"},
+      {no:8,country:"KG",customer:"COMPLEX-AUTO",status:"Distributed"},
+      {no:9,country:"TM",customer:"RAHAT YOL",status:"Distributed"},
+      {no:10,country:"TJ",customer:"PARDIS GROUP",status:"Distributed"},
+      {no:11,country:"KZ",customer:"PHAETON KZ LLP",status:"Distributed"},
+      {no:12,country:"KZ",customer:"ROSSKO KZ",status:"Distributed"},
+      {no:13,country:"KZ",customer:"SHATE M KZ",status:"Distributed"},
+      {no:14,country:"KZ",customer:"TISS AUTO PARTS LLP",status:"Distributed"},
+      {no:15,country:"TM",customer:"YASHLYK TUG LLC",status:"Distributed"}
+    ]
+  },
+  linked_orders: {
+    asian:{amount_usd:1301559,customer_count:15,label:"Choice Kit Asian Vehicle SKUs"},
+    european:{amount_usd:87417,customer_count:10,label:"Choice Kit European Vehicle SKUs"},
+    total_amount_usd:1388976
+  },
+  website_downloads: {
+    url:"https://aftermarket.ctr.co.kr/$$/catalogue-list/618",
+    asian_downloads:370, european_downloads:784, total_downloads:1154
+  },
+  sns_contents: {
+    total_planned:6, released:4, pending:2,
+    contents:[
+      {title:"Asian 5개 차종 소재 1",vehicle_type:"Asian",upload_date:"2026-09-16",instagram_url:"https://www.instagram.com/p/DdV1UDmkvc5/?img_index=1",facebook_url_status:"Link provided separately",status:"Released"},
+      {title:"European 5개 차종 소재 1",vehicle_type:"European",upload_date:"2026-09-23",instagram_url:"https://www.instagram.com/p/DdnIV2OEvvH/?img_index=1",facebook_url_status:"Link provided separately",status:"Released"},
+      {title:"Asian 5개 차종 소재 2",vehicle_type:"Asian",upload_date:"2026-09-30",instagram_url:"https://www.instagram.com/p/Dd5Nb2zkpSU/?img_index=1",facebook_url_status:"Link provided separately",status:"Released"},
+      {title:"European 5개 차종 소재 2",vehicle_type:"European",upload_date:"2026-10-07",instagram_url:"https://www.instagram.com/p/DeLLIjiEln5/?img_index=1",facebook_url_status:"Link provided separately",status:"Released"}
+    ]
+  }
+};
+
+function cisCataloguePerf(){
+  const P=CIS_CATALOGUE_PERFORMANCE, d=P.distribution, lo=P.linked_orders, wd=P.website_downloads, sn=P.sns_contents;
+  const nf=v=>Number(v).toLocaleString();
+  const CA='#27649E', CE='#9DBAD3';
+  const donut=(parts)=>{const tot=parts.reduce((s,p)=>s+p.v,0)||1;let a0=-Math.PI/2,g='';const C=60,R=46,r=27;
+    parts.forEach(p=>{const f=p.v/tot,a1=a0+f*2*Math.PI,lg=f>.5?1:0;
+      const x0=C+R*Math.cos(a0),y0=C+R*Math.sin(a0),x1=C+R*Math.cos(a1),y1=C+R*Math.sin(a1);
+      const xi1=C+r*Math.cos(a1),yi1=C+r*Math.sin(a1),xi0=C+r*Math.cos(a0),yi0=C+r*Math.sin(a0);
+      g+=`<path d="M${x0} ${y0} A${R} ${R} 0 ${lg} 1 ${x1} ${y1} L${xi1} ${yi1} A${r} ${r} 0 ${lg} 0 ${xi0} ${yi0} Z" fill="${p.color}"/>`;a0=a1;});
+    return `<svg width="120" height="120" viewBox="0 0 120 120" style="flex:none;width:120px;height:120px">${g}</svg>`;};
+  const tile=(lab,val,sub)=>`<div class="tile"><div class="lab">${esc(lab)}</div><div class="val">${val}</div>${sub?`<div class="sub2">${sub}</div>`:''}</div>`;
+  const lg=(c,t)=>`<span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink2)"><i style="width:11px;height:11px;border-radius:2px;background:${c};display:inline-block"></i>${t}</span>`;
+  const asianShare=lo.asian.amount_usd/lo.total_amount_usd*100, euShare=lo.european.amount_usd/lo.total_amount_usd*100;
+  const dTot=wd.total_downloads, euDl=wd.european_downloads/dTot*100, asDl=wd.asian_downloads/dTot*100;
+  const relPct=sn.released/sn.total_planned*100;
+  const kp='<div class="kpis" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px">';
+
+  let h=`<!-- 카탈로그 제작 협업 성과 참고용 -->`;
+  h+=`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">CIS · Choice Kit Catalogue Performance</span> <span style="font-size:12.5px;color:var(--ink2)">· Catalogue 활용 성과 · 연관 오더 / 다운로드 / SNS 콘텐츠</span></div>`;
+  h+=`<div class="card"><p class="note" style="margin:0;padding-left:0;font-size:13.5px;line-height:1.6">Choice Kit Asian / European Catalogue는 4개국 15개 고객사 배포 이후, 연관 SKU 오더와 웹사이트 다운로드로 <b>프로모션 활용 성과 확인 중</b>. <span style="color:var(--muted);font-size:12px">(Catalogue 활용 성과는 오더 성과·ROMI·ROI에 직접 합산하지 않음 · 최종 성과는 10월 프로모션 종료 후 재집계 예정)</span></p></div>`;
+
+  h+=`<div class="card"><h3>Catalogue 배포 개요</h3>`+kp
+    +tile('Asian Catalogue 배포','2026-04','Asian Vehicle Catalogue')
+    +tile('European Catalogue 배포','2026-05','European Vehicle Catalogue')
+    +tile('대상 국가 · 고객사','4개국 · 15개사','KG·KZ·TJ·TM · 이메일 배포')
+    +tile('집계 기간','3~9월','10월 마감 기준 재집계 예정')
+    +`</div>`
+    +`<div class="tblwrap"><table class="lts"><thead><tr><th style="width:52px">No.</th><th style="width:84px">Country</th><th>Customer</th><th style="width:120px">Status</th></tr></thead><tbody>`
+    +d.customers.map(c=>`<tr><td style="text-align:center">${c.no}</td><td style="text-align:center">${esc(c.country)}</td><td style="text-align:left">${esc(c.customer)}</td><td style="text-align:center"><span class="sbadge ok">${esc(c.status)}</span></td></tr>`).join('')
+    +`</tbody></table></div></div>`;
+
+  h+=`<div class="card"><h3>Catalogue 연관 오더 성과 <span style="color:var(--muted);font-weight:400;font-size:12.5px">· 오더 성과와 별도 집계</span></h3>`+kp
+    +tile('Asian 연관 오더',fmtC(lo.asian.amount_usd),`$${nf(lo.asian.amount_usd)} · ${lo.asian.customer_count}개사`)
+    +tile('European 연관 오더',fmtC(lo.european.amount_usd),`$${nf(lo.european.amount_usd)} · ${lo.european.customer_count}개사`)
+    +tile('Total 연관 오더',fmtC(lo.total_amount_usd),`$${nf(lo.total_amount_usd)} · Asian+European`)
+    +tile('Asian 비중',asianShare.toFixed(1)+'%',`European ${euShare.toFixed(1)}%`)
+    +`</div>`
+    +`<div style="display:flex;align-items:center;gap:22px;flex-wrap:wrap">`
+    +`<div style="display:flex;align-items:center;gap:14px">${donut([{v:lo.asian.amount_usd,color:CA},{v:lo.european.amount_usd,color:CE}])}<div style="display:flex;flex-direction:column;gap:7px">${lg(CA,`Asian $${nf(lo.asian.amount_usd)} · ${asianShare.toFixed(1)}%`)}${lg(CE,`European $${nf(lo.european.amount_usd)} · ${euShare.toFixed(1)}%`)}</div></div>`
+    +`<p class="note" style="flex:1;min-width:280px;margin:0;padding-left:0;font-size:12.5px;line-height:1.6">3~9월 Catalogue 대상 SKU 연관 오더는 <b>Asian 중심</b> · Asian 15개사 $1.30M / European 10개사 $87K · European은 초기 단계로 다운로드와 함께 전환 추적 필요함.</p>`
+    +`</div></div>`;
+
+  const fn=(lab,val,w,c)=>`<div style="display:flex;align-items:center;gap:10px;margin:5px 0"><div style="width:150px;font-size:12px;color:var(--ink2);flex:none">${lab}</div><div style="height:28px;width:${w}%;min-width:90px;background:${c};border-radius:5px;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;padding:0 12px">${val}</div></div>`;
+  h+=`<div class="card"><h3>웹사이트 Catalogue 다운로드 성과</h3>`+kp
+    +tile('Asian 다운로드',nf(wd.asian_downloads)+'회',`${asDl.toFixed(1)}%`)
+    +tile('European 다운로드',nf(wd.european_downloads)+'회',`${euDl.toFixed(1)}%`)
+    +tile('Total 다운로드',nf(wd.total_downloads)+'회','Asian+European')
+    +tile('European 다운로드 비중',euDl.toFixed(1)+'%',`Asian ${asDl.toFixed(1)}%`)
+    +`</div>`
+    +`<div style="display:flex;align-items:center;gap:22px;flex-wrap:wrap">`
+    +`<div style="display:flex;align-items:center;gap:14px">${donut([{v:wd.asian_downloads,color:CA},{v:wd.european_downloads,color:CE}])}<div style="display:flex;flex-direction:column;gap:7px">${lg(CA,`Asian ${nf(wd.asian_downloads)}회 · ${asDl.toFixed(1)}%`)}${lg(CE,`European ${nf(wd.european_downloads)}회 · ${euDl.toFixed(1)}%`)}</div></div>`
+    +`<p class="note" style="flex:1;min-width:280px;margin:0;padding-left:0;font-size:12.5px;line-height:1.6">웹 다운로드는 <b>European 784회 &gt; Asian 370회</b> · 단 연관 오더는 Asian 중심이라 European은 관심도↑·전환 초기 · 10월 마감 후 전환 연결성 검토함.</p>`
+    +`</div>`
+    +`<div style="margin-top:14px"><div style="font-size:12px;color:var(--ink2);font-weight:700;margin-bottom:4px">Catalogue 활용 퍼널</div>`
+    +fn('웹 Catalogue 페이지','게시 운영',100,'#1F4E79')
+    +fn('Catalogue 다운로드',nf(dTot)+'회',70,'#27649E')
+    +fn('연관 SKU 오더',fmtC(lo.total_amount_usd),46,'#6a97c0')
+    +`</div></div>`;
+
+  const fbCell=`<span style="color:var(--muted);font-size:11.5px">Link provided separately</span>`;
+  let rows=sn.contents.map((c,i)=>`<tr><td style="text-align:center">${i+1}</td><td style="text-align:left">${esc(c.title)}</td><td style="text-align:center">${esc(c.vehicle_type)}</td><td style="text-align:center">${esc(c.upload_date)}</td><td style="text-align:center"><a href="${esc(c.instagram_url)}" target="_blank" rel="noopener" style="color:var(--s1);font-weight:600">보기</a></td><td style="text-align:center">${fbCell}</td><td style="text-align:center"><span class="sbadge ok">${esc(c.status)}</span></td></tr>`).join('');
+  rows+=`<tr><td style="text-align:center">5</td><td style="text-align:left">Remaining Content 1</td><td style="text-align:center">–</td><td style="text-align:center">–</td><td style="text-align:center">–</td><td style="text-align:center">–</td><td style="text-align:center"><span class="sbadge">Pending</span></td></tr>`;
+  rows+=`<tr><td style="text-align:center">6</td><td style="text-align:left">Remaining Content 2</td><td style="text-align:center">–</td><td style="text-align:center">–</td><td style="text-align:center">–</td><td style="text-align:center">–</td><td style="text-align:center"><span class="sbadge">Pending</span></td></tr>`;
+  const tline=sn.contents.map(c=>`<div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;z-index:1;flex:1;min-width:80px"><div style="width:13px;height:13px;border-radius:50%;background:var(--brand);border:2px solid var(--surface)"></div><div style="font-size:11.5px;color:var(--ink2)">${esc(c.upload_date.slice(5))}</div><div style="font-size:10.5px;text-align:center">${esc(c.vehicle_type)} ${esc(c.title.slice(-1))}</div></div>`).join('');
+  h+=`<div class="card"><h3>Catalogue 기반 SNS 콘텐츠 발행 현황</h3>`
+    +`<div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap"><div style="font-size:22px;font-weight:800">${sn.released} <span style="font-size:15px;color:var(--ink2);font-weight:600">/ ${sn.total_planned}</span> <span style="font-size:13px;color:var(--good);font-weight:700">Released ${relPct.toFixed(1)}%</span></div><div style="flex:1;min-width:140px;height:13px;background:var(--track);border-radius:7px;overflow:hidden"><div style="height:100%;width:${relPct}%;background:var(--good);border-radius:7px"></div></div><div style="font-size:12px;color:var(--ink2)">채널 Instagram · Facebook</div></div>`
+    +`<div style="position:relative;display:flex;justify-content:space-between;margin:4px 6px 16px;padding-top:2px"><div style="position:absolute;top:8px;left:8%;right:8%;height:2px;background:var(--grid);z-index:0"></div>${tline}</div>`
+    +`<div class="tblwrap"><table class="lts"><thead><tr><th style="width:46px">No.</th><th>Content</th><th style="width:84px">Vehicle</th><th style="width:104px">Upload</th><th style="width:70px">IG</th><th style="width:150px">FB</th><th style="width:96px">Status</th></tr></thead><tbody>${rows}</tbody></table></div>`
+    +`<p class="note" style="margin:10px 0 0;padding-left:0;font-size:12.5px;line-height:1.6">Catalogue는 배포 자료를 넘어 <b>SNS 콘텐츠 6종의 기준 자료로 확장 활용</b> · 현재 4종 발행 · 공식 웹 Catalogue 게시물 유입 유도 구조로 운영됨.</p></div>`;
+
+  const ins=(title,body,metrics)=>`<div style="border:1px solid var(--grid);border-radius:10px;padding:13px 15px;background:var(--panel)"><div style="font-size:13px;font-weight:700;color:var(--brand);margin-bottom:7px;line-height:1.35">${title}</div><p style="margin:0 0 9px;font-size:12.5px;line-height:1.55;color:var(--ink2)">${body}</p><div style="display:flex;flex-wrap:wrap;gap:6px">${metrics.map(m=>`<span class="sbadge">${m}</span>`).join('')}</div></div>`;
+  h+=`<div class="card"><h3>Catalogue 활용 성과 인사이트</h3><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">`
+    +ins('Asian Catalogue · Order-driven Performance','Choice Kit Asian Vehicle SKU는 15개사 $1.30M 연관 오더로 현재 오더 성과의 핵심 축으로 작동함.',['$1,301,559','15 customers'])
+    +ins('European Catalogue · Interest-driven Potential','European은 연관 오더 규모는 작지만 다운로드가 Asian 대비 높아 향후 전환 가능성 추적 필요함.',['784 downloads','$87,417 linked'])
+    +ins('Catalogue-to-Content Expansion','Catalogue는 이메일 배포·웹 다운로드·SNS 콘텐츠로 확장되며 대상 차종 인지 확대의 기준 자료로 기능함.',['15 distributed','1,154 downloads','4/6 released'])
+    +`</div></div>`;
+  return h;
+}
+
 function sepMonth(A){
   const C1='var(--o4)', C2='var(--s1)', C26='var(--brand)';
   const pc=v=>(v>=0?'+':'')+(v*100).toFixed(1)+'%';
@@ -1633,7 +1756,7 @@ function sepMonth(A){
 
   // ── CIS ──
   h+=`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">CIS</span> <span style="font-size:12.5px;color:var(--ink2)">· 중앙아시아 · Catalogue Awareness &amp; Retail · 참여 고객사 오더</span></div><div class="card"><h3>CIS · Catalogue Awareness &amp; Retail Activation</h3>
-    <p class="note">Asian / European 차종 Catalogue 확산으로 End User 인지와 리테일 채널 활용 기반을 동시에 확대. 대상: ${cis.target_countries.join(' · ')} · 게시 ${cis.posted_at}</p>`
+    <p class="note">Asian / European 차종 Catalogue 확산으로 End User 인지와 리테일 채널 활용 기반을 동시에 확대. 대상: ${cis.target_countries.join(' · ')} · 게시 ${cis.posted_at}<br><span style="color:var(--ink2)">Catalogue는 4~5월 4개국 15개사 선배포 후 공식 웹 다운로드·SNS 콘텐츠로 확장 활용 중 · Asian은 오더 성과 중심, European은 다운로드 관심도 중심으로 역할 구분해 후속 전환 추적 필요함.</span></p>`
    +kgrid([
      {lab:'게시물 조회수',val:cis.views.toLocaleString()},
      {lab:'Catalogue 다운로드',val:cis.downloads_total.toLocaleString(),sub:`전환율 ${(cis.download_rate*100).toFixed(1)}%`},
@@ -1653,6 +1776,7 @@ function sepMonth(A){
    +`<h4 class="soh">후속 실행</h4><ul class="slist">`+cis.followup.map(x=>`<li${x.startsWith('↳')?' class="subli"':''}>${esc(x).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')}</li>`).join('')+`</ul></div>`;
 
   h+=custOrderBlock('CIS','CIS · 올해 vs 전년 오더 추이 (참여 고객사)',A);
+  h+=cisCataloguePerf();
   // ── MENA ──
   h+=`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">MENA</span> <span style="font-size:12.5px;color:var(--ink2)">· 중동 · Portfolio Expansion (Shock Absorber · Brake Pad)</span></div><div class="card"><h3>MENA · Shock Absorber &amp; Brake Pad Promotion</h3>
     <p class="note">Dynatrade와 MESK에서 9월 추가 오더 발생 · 프로모션 연관 누적 오더 USD ${mena.cumulative_order.toLocaleString()}로 제한적이나 실질 전환 확인. <span style="color:var(--ink2)">(대상 품목 Shock Absorber·Brake Pad 오더 기준)</span></p>`
