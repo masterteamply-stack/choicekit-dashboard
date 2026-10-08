@@ -207,6 +207,12 @@ th .up{color:#7be3b8}
 #tip .r b{font-variant-numeric:tabular-nums}
 #tip .r span{color:var(--ink2);display:inline-flex;gap:6px;align-items:center;font-size:13px}
 .foot{color:var(--muted);font-size:13px;margin-top:18px;line-height:1.75}
+.tablink{display:inline-flex;align-items:center;margin-left:7px;padding:1px;opacity:.4;cursor:pointer;color:var(--ink2);border-radius:4px;vertical-align:middle;transition:opacity .15s,background .15s}
+.tablink:hover{opacity:1;background:var(--hoverwash)}
+.nav button.on .tablink{color:var(--brand)}
+.lkico{display:block}
+.toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(16px);background:var(--ink);color:#fff;padding:10px 18px;border-radius:9px;font-size:13px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.22);opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;z-index:9999;max-width:88vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .foot b{color:var(--ink2);font-weight:700}
 .warnbox{background:var(--surface);border:1px solid var(--ring);border-left:4px solid var(--warn);
   border-radius:8px;padding:9px 13px;font-size:13px;color:var(--ink2);margin-bottom:16px}
@@ -266,12 +272,12 @@ tfoot td.num{text-align:right}
 </header>
 
 <div class="nav" id="nav">
-  <button data-pg="p7" class="on">월간 리포트</button>
-  <button data-pg="p6">SteerStar</button>
-  <button data-pg="p1">캠페인 효과 · SKU·고객</button>
-  <button data-pg="p5">고객 Sell-out 연계</button>
-  <button data-pg="p3">비용 · 회수</button>
-  <button data-pg="p8">중국차 오더 리포트</button>
+  <button data-pg="p7" class="on">월간 리포트<span class="tablink" data-link="p7" title="이 탭 링크 복사" role="button" aria-label="이 탭 링크 복사"><svg class="lkico" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M9.3 14.7a3.6 3.6 0 0 0 5.1 0l2.6-2.6a3.6 3.6 0 1 0-5.1-5.1l-1 1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14.7 9.3a3.6 3.6 0 0 0-5.1 0L7 11.9a3.6 3.6 0 1 0 5.1 5.1l1-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
+  <button data-pg="p6">SteerStar<span class="tablink" data-link="p6" title="이 탭 링크 복사" role="button" aria-label="이 탭 링크 복사"><svg class="lkico" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M9.3 14.7a3.6 3.6 0 0 0 5.1 0l2.6-2.6a3.6 3.6 0 1 0-5.1-5.1l-1 1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14.7 9.3a3.6 3.6 0 0 0-5.1 0L7 11.9a3.6 3.6 0 1 0 5.1 5.1l1-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
+  <button data-pg="p1">캠페인 효과 · SKU·고객<span class="tablink" data-link="p1" title="이 탭 링크 복사" role="button" aria-label="이 탭 링크 복사"><svg class="lkico" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M9.3 14.7a3.6 3.6 0 0 0 5.1 0l2.6-2.6a3.6 3.6 0 1 0-5.1-5.1l-1 1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14.7 9.3a3.6 3.6 0 0 0-5.1 0L7 11.9a3.6 3.6 0 1 0 5.1 5.1l1-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
+  <button data-pg="p5">고객 Sell-out 연계<span class="tablink" data-link="p5" title="이 탭 링크 복사" role="button" aria-label="이 탭 링크 복사"><svg class="lkico" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M9.3 14.7a3.6 3.6 0 0 0 5.1 0l2.6-2.6a3.6 3.6 0 1 0-5.1-5.1l-1 1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14.7 9.3a3.6 3.6 0 0 0-5.1 0L7 11.9a3.6 3.6 0 1 0 5.1 5.1l1-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
+  <button data-pg="p3">비용 · 회수<span class="tablink" data-link="p3" title="이 탭 링크 복사" role="button" aria-label="이 탭 링크 복사"><svg class="lkico" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M9.3 14.7a3.6 3.6 0 0 0 5.1 0l2.6-2.6a3.6 3.6 0 1 0-5.1-5.1l-1 1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14.7 9.3a3.6 3.6 0 0 0-5.1 0L7 11.9a3.6 3.6 0 1 0 5.1 5.1l1-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
+  <button data-pg="p8">중국차 오더 리포트<span class="tablink" data-link="p8" title="이 탭 링크 복사" role="button" aria-label="이 탭 링크 복사"><svg class="lkico" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M9.3 14.7a3.6 3.6 0 0 0 5.1 0l2.6-2.6a3.6 3.6 0 1 0-5.1-5.1l-1 1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14.7 9.3a3.6 3.6 0 0 0-5.1 0L7 11.9a3.6 3.6 0 1 0 5.1 5.1l1-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
 </div>
 <main>
   <div class="filters">
@@ -1967,11 +1973,15 @@ function cnOrderReport(){
   $('#cnBody').innerHTML=h;
 }
 
-$('#nav').addEventListener('click',e=>{const b=e.target.closest('button[data-pg]');if(!b)return;
+function activateTab(b){if(!b)return;
   $$('#nav button').forEach(x=>x.classList.toggle('on',x===b));
   $$('.page').forEach(p=>p.classList.toggle('on',p.id===b.dataset.pg));
   soFilterUI(b.dataset.pg);
-  if(b.dataset.pg==='p1'){campGrow();chartDid();persist();} if(b.dataset.pg==='p5')soPage(); if(b.dataset.pg==='p6')ssPage(); if(b.dataset.pg==='p7')sepReport(); if(b.dataset.pg==='p8')cnOrderReport();});
+  if(b.dataset.pg==='p1'){campGrow();chartDid();persist();} if(b.dataset.pg==='p5')soPage(); if(b.dataset.pg==='p6')ssPage(); if(b.dataset.pg==='p7')sepReport(); if(b.dataset.pg==='p8')cnOrderReport();
+  try{history.replaceState(null,'','#'+b.dataset.pg);}catch(e){location.hash=b.dataset.pg;}}
+$('#nav').addEventListener('click',e=>{
+  const lk=e.target.closest('.tablink'); if(lk){e.stopPropagation();copyTabLink(lk.dataset.link);return;}
+  const b=e.target.closest('button[data-pg]');if(!b)return; activateTab(b);});
 document.addEventListener('click',e=>{const b=e.target.closest('button[data-tv]');if(!b)return;
   const id=b.dataset.tv, on=$('#'+id+'tv').classList.toggle('on');
   $('#'+id+'box').classList.toggle('off',on); b.classList.toggle('on',on); b.textContent=on?'차트':'표';});
@@ -1981,6 +1991,12 @@ $('#btnTheme').onclick=()=>{const dk=document.documentElement.getAttribute('data
 $('#btnReset').onclick=()=>{$('#fRegion').value='ALL';syncProg();$('#fProgram').value='ALL';draw();};
 addEventListener('resize',()=>{chartDid();persist();soPage();ssPage();});
 draw(); soFilterUI($('#nav button.on').dataset.pg);
+function tabLinkURL(pg){return location.origin+location.pathname+'#'+pg;}
+function toast(msg){var el=document.getElementById('toast');if(!el)return;el.textContent=msg;el.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(function(){el.classList.remove('show');},2600);}
+function fallbackCopy(text,cb){try{var ta=document.createElement('textarea');ta.value=text;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.top='-999px';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}catch(e){}if(cb)cb();}
+function copyTabLink(pg){var url=tabLinkURL(pg);var ok=function(){toast('탭 링크 복사됨: '+url);};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(url).then(ok,function(){fallbackCopy(url,ok);});}else fallbackCopy(url,ok);}
+(function(){var PG=['p7','p6','p1','p5','p3','p8'];function fromHash(){var h=(location.hash||'').replace('#','');if(PG.indexOf(h)<0)return null;return document.querySelector('#nav button[data-pg="'+h+'"]');}var b=fromHash();if(b)activateTab(b);addEventListener('hashchange',function(){var bb=fromHash();if(bb&&!bb.classList.contains('on'))activateTab(bb);});})();
 </script>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
