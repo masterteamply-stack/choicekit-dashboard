@@ -278,6 +278,7 @@ tfoot td.num{text-align:right}
   <button data-pg="p5">고객 Sell-out 연계<span class="tablink" data-link="p5" title="이 탭 링크 복사" role="button" aria-label="이 탭 링크 복사"><svg class="lkico" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M9.3 14.7a3.6 3.6 0 0 0 5.1 0l2.6-2.6a3.6 3.6 0 1 0-5.1-5.1l-1 1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14.7 9.3a3.6 3.6 0 0 0-5.1 0L7 11.9a3.6 3.6 0 1 0 5.1 5.1l1-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
   <button data-pg="p3">비용 · 회수<span class="tablink" data-link="p3" title="이 탭 링크 복사" role="button" aria-label="이 탭 링크 복사"><svg class="lkico" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M9.3 14.7a3.6 3.6 0 0 0 5.1 0l2.6-2.6a3.6 3.6 0 1 0-5.1-5.1l-1 1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14.7 9.3a3.6 3.6 0 0 0-5.1 0L7 11.9a3.6 3.6 0 1 0 5.1 5.1l1-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
   <button data-pg="p8">중국차 오더 리포트<span class="tablink" data-link="p8" title="이 탭 링크 복사" role="button" aria-label="이 탭 링크 복사"><svg class="lkico" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M9.3 14.7a3.6 3.6 0 0 0 5.1 0l2.6-2.6a3.6 3.6 0 1 0-5.1-5.1l-1 1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14.7 9.3a3.6 3.6 0 0 0-5.1 0L7 11.9a3.6 3.6 0 1 0 5.1 5.1l1-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
+  <button data-pg="p9">설문 인사이트<span class="tablink" data-link="p9" title="이 탭 링크 복사" role="button" aria-label="이 탭 링크 복사"><svg class="lkico" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M9.3 14.7a3.6 3.6 0 0 0 5.1 0l2.6-2.6a3.6 3.6 0 1 0-5.1-5.1l-1 1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14.7 9.3a3.6 3.6 0 0 0-5.1 0L7 11.9a3.6 3.6 0 1 0 5.1 5.1l1-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
 </div>
 <main>
   <div class="filters">
@@ -374,6 +375,8 @@ tfoot td.num{text-align:right}
 
   <!-- P8 중국차 오더 리포트 -->
   <div class="page" id="p8"><div class="sepfilter"><label style="font-size:12px;font-weight:600;margin-right:6px">권역</label><select id="cnRegion" style="padding:4px 8px;border-radius:6px;border:1px solid var(--ring);background:var(--card);color:var(--ink)"></select></div><div id="cnBody"></div></div>
+  <!-- P9 설문 인사이트 -->
+  <div class="page" id="p9"><div id="survBody"></div></div>
 
   <div class="foot" id="foot"></div>
 </main>
@@ -1063,19 +1066,7 @@ function steerStarExtra(){
  const kgrid=(cards,cls)=>`<div class="kpis ${cls||"k6"}">`+cards.map(k=>`<div class="tile${k.hero?" hero":""}"><div class="lab">${k.lab}</div><div class="val">${k.val}</div>${k.sub?`<div class="sub2">${k.sub}</div>`:""}</div>`).join("")+`</div>`;
  const badge=(t,tone)=>`<span class="sbadge ${tone||""}">${esc(t)}</span>`;
  let h=`<div style="margin:4px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:18px;font-weight:800">SteerStar · 심층 분석 (파트너 미션 테이블 보완)</span><div class="sub3" style="font-size:12px;margin-top:3px">미션 달성조건: 파트너별 <b>$200,000 매출</b> + <b>설문 200건</b> 진행</div></div>`;
- if(rf.rujac){const rj=rf.rujac;
-  h+=`<div class="card"><h3>REFATRIX (멕시코) · RUJAC Survey Insight</h3>
-   <p class="note">REFATRIX 2026 오더 전년 대비 <b>${pc(rf.yoy)}</b> 성장 · BRABHAM INMETRO 인증 이슈로 판매 확산 제한(오더 실적은 상단 파트너 미션 테이블 참조). ${esc(bb.issue)} · ${esc(bb.status)}</p>
-   <p class="note">RUJAC 전시회 현장 설문 <b>${rj.n}건</b> · 경력 15년 이상 ${rj.exp15}% · 조향·현가(Dirección y suspensión) 취급 <b>${rj.ds}%</b>로 CTR 주력 카테고리와 정확히 일치.</p>`
-   +kgrid([
-     {lab:'설문 응답',val:rj.n+'건',sub:'RUJAC 전시회 현장',hero:true},
-     {lab:'CTR 사전 인지 ‘모름’',val:rj.aware_none+'%',sub:'행사 전 브랜드 미인지',cls:'dn'},
-     {lab:'접촉 후 구매·추천 의향',val:rj.after_pos+'%',sub:'Muy probable + Probable',cls:'up',hero:true},
-     {lab:'조향·현가 취급',val:rj.ds+'%',sub:'CTR 주력 카테고리'}],'k4')
-   +`<div class="grid2"><div>${pctBars('브랜드 선택 시 중요 요인',rj.factors,'var(--s1)')}${pctBars('신규 브랜드 시도 동기',rj.motiv,'var(--good)')}</div>`
-   +`<div>${pctBars('추천에 필요한 지원',rj.support,'var(--o5)')}${pctBars('선호하는 프로모션',rj.promo,'var(--brand)')}</div></div>`
-   +`<p class="note" style="font-size:12.5px;margin-top:8px"><b>시사점:</b> 응답자 ${rj.aware_none}%가 CTR를 처음 접했으나 설명 후 ${rj.after_pos}%가 구매·추천 의향을 보여 상단 인지 전환이 강함. 선택 기준은 가격보다 <b>품질·내구성(${rj.factors[0].p}%)</b>이며, 신규 브랜드 전환 동기도 가격경쟁력(${rj.motiv[0].p}%)과 검증된 품질(${rj.motiv[1].p}%)이 양대 축. 현장 니즈는 <b>기술 교육·카탈로그·제품 시연</b> 중심이라 할인보다 교육·시연형 프로모션이 효과적.</p>`+`</div>`;}
- else{h+=`<div class="card"><h3>REFATRIX &amp; BRABHAM</h3><p class="note">REFATRIX 2026 오더 전년 대비 <b>${pc(rf.yoy)}</b> 성장 · BRABHAM INMETRO 인증 이슈로 판매 확산 제한. ${esc(bb.issue)} · ${esc(bb.status)}</p></div>`;}
+ h+=`<div class="card"><h3>REFATRIX &amp; BRABHAM</h3><p class="note">REFATRIX 2026 오더 전년 대비 <b>${pc(rf.yoy)}</b> 성장 · BRABHAM INMETRO 인증 이슈로 판매 확산 제한. ${esc(bb.issue)} · ${esc(bb.status)}<br><span style="color:var(--ink2)">RUJAC 소비자 설문(멕시코) 상세는 <b>설문 인사이트</b> 탭 참조.</span></p></div>`;
  if(st.lordco){const lo=st.lordco;const C25='var(--s1)',C26b='var(--brand)';
    const yoy=(lo.cum26-lo.cum25)/lo.cum25*100;
    const ML=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
@@ -1188,7 +1179,7 @@ function ssPage(){
         <div class="svgbox">${ssSvg(MS,460)}</div></div>
     </div>
     ${card(T1,'t1')}
-    ${card(T2,'t2')}
+    <div class="card"><h3>파트너별 설문 진행 미션</h3><p class="note" style="padding-left:0">설문 참여 수·목표·달성률(SERI Expo 포함) 상세는 <b>설문 인사이트</b> 탭으로 통합·이동함.</p></div>
     <div class="card"><h3>예산 집행</h3>
       <div class="scroll">${tbl({cols:[c2('k','항목','l','t'),c2('v','금액','r','w'),c2('sh','총예산 대비','r','sh'),c2('d','내용','l','t',520)],
         rows:(SS.budget||[]).map(b=>({...b,sh:SS.btot?Math.round(b.v/SS.btot*1000)/10:null}))})}</div></div>
@@ -1568,6 +1559,61 @@ const SEPTEMBER_ACTIVITY = {
     {region:"LATAM", action:"RUJAC Survey 수기 응답 정리", owner:"REFATRIX", kpi:"157건 응답 분석 · 니즈 키워드", timing:"10월"},
     {region:"LATAM", action:"BRABHAM INMETRO 인증 진행 확인", owner:"BRABHAM", kpi:"인증 단계 · 판매 가능 품목 · Survey 재개", timing:"연말"}]
 };
+
+function surveyPage(){
+  const A=(typeof SEPTEMBER_ACTIVITY!=='undefined')?SEPTEMBER_ACTIVITY:null;
+  const box=document.getElementById('survBody'); if(!box)return;
+  if(!A||!A.latam){box.innerHTML='<div class="card"><div class="empty">설문 데이터가 없습니다.</div></div>';return;}
+  const lt=A.latam, pl=lt.pluscar||{}, sr=lt.super_repuestos||{}, rj=(lt.steerstar&&lt.steerstar.refatrix)?lt.steerstar.refatrix.rujac:null;
+  const nf=v=>Number(v||0).toLocaleString();
+  const tile=(lab,val,sub,hero)=>`<div class="tile${hero?' hero':''}"><div class="lab">${esc(lab)}</div><div class="val">${val}</div>${sub?`<div class="sub2">${sub}</div>`:''}</div>`;
+  const ssLive=((typeof SS!=='undefined'&&SS.rows)||[]).filter(r=>r.lead_tgt!=null);
+  const leadSum=ssLive.reduce((a,r)=>a+(r.leads||0),0), ltgtSum=ssLive.reduce((a,r)=>a+(r.lead_tgt||0),0);
+  const plEmp=34, plTotal=plEmp+(pl.survey_after||0);
+  let h='';
+  h+=`<div style="margin:6px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">설문 인사이트</span> <span style="font-size:12.5px;color:var(--ink2)">· 전 지역 설문 통합 · 참여 현황 · 소비자/시장 인사이트</span></div>`;
+  // 1. 종합 요약
+  h+=`<div class="card"><h3>설문 종합 요약</h3><div class="kpis" style="grid-template-columns:repeat(4,1fr)">`
+    +tile('SteerStar 설문 참여',nf(leadSum)+' / '+nf(ltgtSum),`목표 ${(SS&&SS.lead_target)||200}건/파트너 · 달성 ${ltgtSum?(leadSum/ltgtSum*100).toFixed(0):0}%`,true)
+    +tile('REFATRIX RUJAC',(rj?rj.n:0)+'건','멕시코 전시회 현장')
+    +tile('Super Repuestos',(sr.survey_responses||0)+'건','LATAM 직원 설문')
+    +tile('PLUSCAR O2O',plTotal+'건',`직원 ${plEmp} + End-User ${pl.survey_after||0}`)
+    +`</div><p class="note" style="margin:10px 0 0;padding-left:0;font-size:12.5px">설문은 프로그램·지역별로 진행 · SteerStar는 파트너별 목표 ${(SS&&SS.lead_target)||200}건 기준 · 아래 소스별 상세.</p></div>`;
+  // 2. SteerStar 설문 참여
+  h+=`<div class="card"><h3>SteerStar 파트너별 설문 참여 현황</h3>`
+    +`<div class="tblwrap"><table class="lts"><thead><tr><th style="width:92px">국가</th><th style="text-align:left">파트너</th><th style="text-align:left">활동</th><th style="text-align:left">시기</th><th>설문 참여</th><th>목표</th><th>달성률</th></tr></thead><tbody>`
+    +ssLive.map(r=>{const rate=r.lead_rate;const cls=rate>=100?'up':'dn';return `<tr><td>${esc(r.country||'')}</td><td style="text-align:left">${esc(r.name||'')}</td><td style="text-align:left">${esc(r.act||'–')}</td><td style="text-align:left">${esc(r.when||'–')}</td><td class="num">${nf(r.leads)}</td><td class="num sub3">${nf(r.lead_tgt)}</td><td class="num"><b class="${cls}">${rate!=null?rate.toFixed(0)+'%':'–'}</b></td></tr>`;}).join('')
+    +`<tr style="border-top:2px solid var(--ring)"><td><b>합계</b></td><td></td><td></td><td></td><td class="num"><b>${nf(leadSum)}</b></td><td class="num sub3">${nf(ltgtSum)}</td><td class="num"><b>${ltgtSum?(leadSum/ltgtSum*100).toFixed(0):0}%</b></td></tr>`
+    +`</tbody></table></div><p class="note" style="margin:8px 0 0;padding-left:0;font-size:12px;color:var(--muted)">SERI Expo 설문 포함 · 전사 공통 목표 파트너별 ${(SS&&SS.lead_target)||200}건</p></div>`;
+  // 3. RUJAC
+  if(rj){
+  h+=`<div class="card"><h3>REFATRIX · RUJAC 소비자 설문 (멕시코)</h3>`
+    +`<div class="kpis" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px">`
+    +tile('설문 응답',rj.n+'건','RUJAC 전시회 현장',true)
+    +tile('CTR 사전 미인지',rj.aware_none+'%','행사 전 브랜드 모름')
+    +tile('접촉 후 구매·추천 의향',rj.after_pos+'%','Muy probable + Probable')
+    +tile('조향·현가 취급',rj.ds+'%','CTR 주력 카테고리')
+    +`</div>`
+    +`<div class="grid2"><div>${pctBars('브랜드 선택 시 중요 요인',rj.factors,'var(--s1)')}${pctBars('신규 브랜드 시도 동기',rj.motiv,'var(--good)')}${pctBars('제품 불만·문제',rj.problem,'var(--serious)')}</div><div>${pctBars('추천에 필요한 지원',rj.support,'var(--s1)')}${pctBars('선호하는 프로모션',rj.promo,'var(--good)')}</div></div>`
+    +`<p class="note" style="margin:8px 0 0;padding-left:0;font-size:12.5px;line-height:1.6">경력 15년 이상 ${rj.exp15}% · 조향·현가 취급 ${rj.ds}%로 CTR 주력 카테고리와 일치 · 사전 미인지 ${rj.aware_none}%지만 접촉 후 구매·추천 의향 ${rj.after_pos}%로 전환 여지 큼.</p></div>`;
+  }
+  // 4. Super Repuestos
+  h+=`<div class="card"><h3>Super Repuestos 시장 설문 (LATAM)</h3>`
+    +`<div class="kpis" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px">`
+    +tile('설문 응답',(sr.survey_responses||0)+'건',esc(sr.incentive||''),true)
+    +tile('보증 선호',((sr.warranty_rate||0)*100).toFixed(0)+'%','브랜드 선택 기준 1위')
+    +tile('시장 니즈','가격 < 보증·교육','커버리지·브랜드 인지도')
+    +`</div><p class="note" style="margin:0;padding-left:0;font-size:12.5px;line-height:1.6">${esc(sr.market||'')} · 핵심 니즈: ${(sr.key_needs||[]).map(esc).join(' · ')}.</p></div>`;
+  // 5. PLUSCAR
+  h+=`<div class="card"><h3>PLUSCAR O2O 설문 (LATAM)</h3>`
+    +`<div class="kpis" style="grid-template-columns:repeat(3,1fr)">`
+    +tile('직원 설문',plEmp+'건','판매 인센티브 대상',true)
+    +tile('End-User 설문',(pl.survey_after||0)+'건',`8월 ${pl.survey_before||0}건 → +${(pl.survey_after||0)-(pl.survey_before||0)}건`)
+    +tile('O2O FB 클릭',nf(pl.fb_link_clicks),'홍보영상 광고 유입')
+    +`</div><p class="note" style="margin:10px 0 0;padding-left:0;font-size:12px;color:var(--muted)">O2O 흐름: 홍보영상 광고 → Instagram 품목검색 → End-User WhatsApp 연결 → 설문</p></div>`;
+  box.innerHTML=h;
+}
+
 function sepMonth(A){
   const C1='var(--o4)', C2='var(--s1)', C26='var(--brand)';
   const pc=v=>(v>=0?'+':'')+(v*100).toFixed(1)+'%';
@@ -1677,7 +1723,7 @@ function sepMonth(A){
    +kgrid([{lab:'Facebook Link Clicks',val:pl.fb_link_clicks.toLocaleString()},
      {lab:'Survey 응답',val:pl.survey_before+' → '+pl.survey_after,sub:'+'+(pl.survey_after-pl.survey_before)+'건'},
      {lab:'대상 품목 판매 비중',val:(pl.share_2026*100).toFixed(1)+'%',sub:`${(pl.share_2025*100).toFixed(1)}% → ${(pl.share_2026*100).toFixed(1)}% (+${pl.share_change_pp}%p)`,hero:true}],'k3')
-   +`<div style="margin:14px 0 10px;padding:12px 16px;background:var(--head-soft,rgba(127,127,127,.06));border-left:4px solid var(--brand);border-radius:6px;font-size:14.5px;font-weight:600;line-height:1.55">전체 판매량 <b style="color:var(--serious)">${pc(pl.total_yoy)}</b> 감소에도 프로모션 대상 품목은 <b style="color:var(--good)">${pc(pl.promo_yoy)}</b> 유지 · 대상 품목 비중 <b style="color:var(--good)">+${pl.share_change_pp}%p</b> 확대 · O2O 광고 이후 Survey 응답 증가 확인.</div>`
+   +`<div style="margin:14px 0 10px;padding:12px 16px;background:var(--head-soft,rgba(127,127,127,.06));border-left:4px solid var(--brand);border-radius:6px;font-size:14.5px;font-weight:600;line-height:1.55">전체 판매량 <b style="color:var(--serious)">${pc(pl.total_yoy)}</b> 감소에도 프로모션 대상 품목은 <b style="color:var(--good)">${pc(pl.promo_yoy)}</b> 유지 · 대상 품목 비중 <b style="color:var(--good)">+${pl.share_change_pp}%p</b> 확대 · O2O 광고 이후 Survey 응답 증가 확인. <span style="font-weight:400;color:var(--ink2)">직원·End-User 설문 통합 상세는 <b>설문 인사이트</b> 탭 참조.</span></div>`
    +`<div class="sub3" style="margin:4px 0 4px">8월 판매량: 전체 vs 프로모션 대상 (pcs)</div>`
    +gbar(['전체 판매량','프로모션 대상'],[{name:'2025.8',color:C1,vals:[pl.total_2025,pl.promo_2025]},{name:'2026.8',color:C26,vals:[pl.total_2026,pl.promo_2026]}],{W:560,H:220,fmtV:v=>v.toLocaleString()})
    +`<div class="sub3" style="margin:14px 0 3px"><b>상세 Sell-out 데이터 (8월 · pcs)</b></div>`
@@ -1689,19 +1735,16 @@ function sepMonth(A){
    +`<p class="note" style="font-size:11.5px;margin-top:7px">O2O 지표 · Facebook 링크 클릭 <b>${pl.fb_link_clicks.toLocaleString()}</b> · Survey 응답 <b>${pl.survey_before} → ${pl.survey_after}건</b>(+${pl.survey_after-pl.survey_before}) · 광고 게재 ${pl.ad_date} · 2025.8 전체 판매량 급증(8,509)은 비대상 품목 영향, 2026.8 대상 품목 비중은 28.5%로 회복.</p>`
    +`<figure style="margin:14px 0 2px"><div class="sub3" style="margin:0 0 6px"><b>O2O 활동 샘플</b></div><img src="images/latam_o2o_activity.png" alt="LATAM O2O Sell-out 활동 샘플: 홍보 영상 광고 → Instagram 품목검색 HTML 페이지 → End-User WhatsApp 연결 → 설문" loading="lazy" style="width:100%;max-width:840px;display:block;border:1px solid var(--ring);border-radius:8px"><figcaption class="note" style="padding-left:0;margin:7px 0 0;font-size:12px">① 9/15 CTR×PLUSCAR 홍보 영상 광고 게시 → ② Instagram 링크에 대상 품목 검색 HTML 페이지 삽입 → ③ End-User 고객사 WhatsApp 연결 → ④ PLUSCAR 직원 설문 34건 · 현지 End-User 설문 13건(8월 5건 → +8건) 진행</figcaption></figure></div>`;
 
-  // ── LATAM Survey Insight ──
+  // ── LATAM Super Repuestos ──
   const rf=st.refatrix;
-  h+=`<div class="card"><h3>LATAM · Survey Insight &amp; Customer Follow-up</h3>
+  h+=`<div class="card"><h3>LATAM · Super Repuestos · Sell-out &amp; Follow-up</h3>
     <p class="note">현장 니즈는 가격 인하보다 보증·제품 교육·커버리지·브랜드 인지도 강화에 집중. ${esc(sr.market)}.</p>`
-   +kgrid([{lab:'Super Repuestos Survey',val:sr.survey_responses+'건',hero:true,sub:esc(sr.incentive)},
-     {lab:'보증 선호',val:(sr.warranty_rate*100).toFixed(0)+'%',sub:'브랜드 선택 기준 1위'},
-     {lab:'Sell-out 데이터',val:'제공 완료',sub:'품목·집계 범위 세분화 필요'}],'k3')
+   +`<p class="note" style="padding-left:0;margin-top:0">Super Repuestos 설문 <b>${sr.survey_responses}건</b> · 보증 선호 ${(sr.warranty_rate*100).toFixed(0)}% 등 설문·시장 인사이트 상세는 <b>설문 인사이트</b> 탭 참조 · Sell-out 데이터 제공 완료(품목·집계 범위 세분화 필요).</p>`
    +`<h4 class="soh">Super Repuestos 운영 현황</h4>`
-   +`<ul class="note" style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.65"><li><b>프로모션 운영:</b> 고객사 여건을 고려해 영업사원 대상 판매 인센티브 프로모션 진행 · 판매 실적에 따라 경품 지급으로 판매 확대 유도.</li><li><b>설문 현황:</b> 직원 대상 설문 응답 현재까지 총 <b>62건</b> 확보.</li><li><b>판매 데이터:</b> 고객사로부터 sell-out 데이터를 전달받았으나, PLUSCAR와 달리 판매 품목·집계 범위가 명확하지 않아 프로모션 관련 실적 구분이 어려움 · 중남미 영업팀이 추가 협의해 <b>품목별 세부 판매 데이터 확보 예정</b>.</li></ul>`
+   +`<ul class="note" style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.65"><li><b>프로모션 운영:</b> 고객사 여건을 고려해 영업사원 대상 판매 인센티브 프로모션 진행 · 판매 실적에 따라 경품 지급으로 판매 확대 유도.</li><li><b>판매 데이터:</b> 고객사로부터 sell-out 데이터를 전달받았으나, PLUSCAR와 달리 판매 품목·집계 범위가 명확하지 않아 프로모션 관련 실적 구분이 어려움 · 중남미 영업팀이 추가 협의해 <b>품목별 세부 판매 데이터 확보 예정</b>.</li></ul>`
    +`<h4 class="soh">국가별 Sell-out (8월 · 개)</h4>`
    +`<div class="tblwrap"><table class="lts" style="font-size:12.5px"><thead><tr><th style="text-align:left">국가</th><th>2024.8</th><th>2025.8</th><th>2026.8</th><th>전년 대비</th></tr></thead><tbody><tr><td style="text-align:left">엘살바도르</td><td class="num sub3">9,487개</td><td class="num sub3">10,294개</td><td class="num"><b>8,827개</b></td><td class="num"><span class="dn">-14.3%</span></td></tr><tr><td style="text-align:left">온두라스</td><td class="num sub3">4,224개</td><td class="num sub3">4,531개</td><td class="num"><b>4,743개</b></td><td class="num"><span class="up">+4.7%</span></td></tr><tr style="border-top:2px solid var(--ring)"><td style="text-align:left"><b>합계</b></td><td class="num sub3"><b>13,711개</b></td><td class="num sub3"><b>14,825개</b></td><td class="num"><b>13,570개</b></td><td class="num"><span class="dn"><b>-8.5%</b></span></td></tr></tbody></table></div>`
    +`<p class="note" style="font-size:11.5px;margin-top:5px">전체 매장 판매량(개) 기준 · 프로모션 대상 품목 구분 전 수치(품목별 세분화 협의 중).</p>`
-   +`<h4 class="soh">설문 분석</h4><ul class="note" style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.65"><li>현장이 원하는 것은 <b>가격 인하가 아니라 교육·커버리지·인지도</b>.</li><li>브랜드 선택 기준 1위도 가격이 아닌 <b>보증(79%)</b> · 저가 시장이 아니라 <b>검증된 품질을 합리적 가격에 찾는 시장</b>임이 확인.</li><li>다음 프로모션 시 <b>정비사 초청 기술 세미나 결합</b> · <b>칠레 지사 인력을 활용한 현장 제품 교육</b>이 가장 효율적인 실행 수단으로 확인.</li><li>11월 출장에서 설문 결과를 바탕으로 SUPER REPUESTOS 마케팅 담당자와 이번 sell-out promotion을 계기로 <b>2027년 마케팅 계획 수립</b> 예정.</li></ul>`
    +`<h4 class="soh">다음 단계 · 기타 지역</h4><ul class="slist"><li>11월 출장 · 설문 기반 <b>2027 마케팅 계획 수립</b> (Super Repuestos 마케팅 담당자 협의)</li><li>품목별 세부 sell-out 데이터 확보 (중남미 영업팀 추가 협의)</li><li>과테말라 sell-out promotion <b>연말 협의 예정</b> (진행 여부 미확정)</li></ul>`;
   
   h+=`</div>`;
@@ -1977,7 +2020,7 @@ function activateTab(b){if(!b)return;
   $$('#nav button').forEach(x=>x.classList.toggle('on',x===b));
   $$('.page').forEach(p=>p.classList.toggle('on',p.id===b.dataset.pg));
   soFilterUI(b.dataset.pg);
-  if(b.dataset.pg==='p1'){campGrow();chartDid();persist();} if(b.dataset.pg==='p5')soPage(); if(b.dataset.pg==='p6')ssPage(); if(b.dataset.pg==='p7')sepReport(); if(b.dataset.pg==='p8')cnOrderReport();
+  if(b.dataset.pg==='p1'){campGrow();chartDid();persist();} if(b.dataset.pg==='p5')soPage(); if(b.dataset.pg==='p6')ssPage(); if(b.dataset.pg==='p7')sepReport(); if(b.dataset.pg==='p8')cnOrderReport(); if(b.dataset.pg==='p9')surveyPage();
   try{history.replaceState(null,'','#'+b.dataset.pg);}catch(e){location.hash=b.dataset.pg;}}
 $('#nav').addEventListener('click',e=>{
   const lk=e.target.closest('.tablink'); if(lk){e.stopPropagation();copyTabLink(lk.dataset.link);return;}
@@ -1995,7 +2038,7 @@ function tabLinkURL(pg){return location.origin+location.pathname+'#'+pg;}
 function toast(msg){var el=document.getElementById('toast');if(!el)return;el.textContent=msg;el.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(function(){el.classList.remove('show');},2600);}
 function fallbackCopy(text,cb){try{var ta=document.createElement('textarea');ta.value=text;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.top='-999px';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}catch(e){}if(cb)cb();}
 function copyTabLink(pg){var url=tabLinkURL(pg);var ok=function(){toast('탭 링크 복사됨: '+url);};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(url).then(ok,function(){fallbackCopy(url,ok);});}else fallbackCopy(url,ok);}
-(function(){var PG=['p7','p6','p1','p5','p3','p8'];function fromHash(){var h=(location.hash||'').replace('#','');if(PG.indexOf(h)<0)return null;return document.querySelector('#nav button[data-pg="'+h+'"]');}var b=fromHash();if(b)activateTab(b);addEventListener('hashchange',function(){var bb=fromHash();if(bb&&!bb.classList.contains('on'))activateTab(bb);});})();
+(function(){var PG=['p7','p6','p1','p5','p3','p8','p9'];function fromHash(){var h=(location.hash||'').replace('#','');if(PG.indexOf(h)<0)return null;return document.querySelector('#nav button[data-pg="'+h+'"]');}var b=fromHash();if(b)activateTab(b);addEventListener('hashchange',function(){var bb=fromHash();if(bb&&!bb.classList.contains('on'))activateTab(bb);});})();
 </script>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
