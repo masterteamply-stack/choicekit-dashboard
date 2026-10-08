@@ -1058,6 +1058,7 @@ function soFilterUI(pg){const on=(pg==='p5'||pg==='p6');
 function ssRows(){const f=F();
   return (SS.rows||[]).filter(r=>f.region==='ALL'||r.region===f.region);}
 function steerStarExtra(){
+ return "";
  const A=(typeof SEPTEMBER_ACTIVITY!=="undefined")?SEPTEMBER_ACTIVITY:null;
  if(!A||!A.latam||!A.latam.steerstar) return "";
  const st=A.latam.steerstar, rf=st.refatrix, bb=st.brabham;
