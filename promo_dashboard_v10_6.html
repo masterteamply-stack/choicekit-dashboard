@@ -1632,8 +1632,8 @@ function sepMonth(A){
    +`</div>`;
 
   // ── CIS ──
-  h+=`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">CIS</span> <span style="font-size:12.5px;color:var(--ink2)">· 중앙아시아 · Catalogue Awareness &amp; Retail · 참여 고객사 오더</span></div><div class="card"><h3>CIS · Catalogue Awareness &amp; Retail Activation</h3>
-    <p class="note">Asian / European 차종 Catalogue 확산으로 End User 인지와 리테일 채널 활용 기반을 동시에 확대. 대상: ${cis.target_countries.join(' · ')} · 게시 ${cis.posted_at}<br><span style="color:var(--ink2)">Catalogue는 4~5월 4개국 15개사 선배포 후 공식 웹 다운로드·SNS 콘텐츠로 확장 활용 중 · Asian은 오더 성과 중심, European은 다운로드 관심도 중심으로 역할 구분해 후속 전환 추적 필요함.</span></p>`
+  h+=`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">CIS</span> <span style="font-size:12.5px;color:var(--ink2)">· 중앙아시아 · Catalogue Awareness · 콘텐츠 제작·배포·활용 성과 · 참여 고객사 오더</span></div><div class="card"><h3>CIS · Catalogue Awareness &amp; Retail Activation</h3>
+    <p class="note">Asian / European 차종 Catalogue 확산으로 End User 인지와 리테일 채널 활용 기반을 동시에 확대. 대상: ${cis.target_countries.join(' · ')} · 게시 ${cis.posted_at}<br><span style="color:var(--ink2)">Catalogue 2종 + SNS 콘텐츠 6종을 제작해 4~5월 4개국 15개사 이메일 선배포 후 공식 웹 다운로드·SNS로 다채널 확장 활용 중 · Asian은 오더 성과 중심, European은 다운로드 관심도 중심으로 역할 구분해 후속 전환 추적 필요함.</span></p>`
    +kgrid([
      {lab:'게시물 조회수',val:cis.views.toLocaleString()},
      {lab:'Catalogue 다운로드',val:cis.downloads_total.toLocaleString(),sub:`전환율 ${(cis.download_rate*100).toFixed(1)}%`},
@@ -1643,14 +1643,14 @@ function sepMonth(A){
    +gbar(['Asian','European'],[{name:'다운로드',color:C2,vals:[cis.downloads_asian,cis.downloads_european]}],{W:320,H:180,groupColors:[C1,C2]})
    +`</div><div><div class="sub3" style="margin:4px 0 2px">전환 Funnel</div>`
    +`<div style="padding:6px 4px">`
-   +[['Meta 콘텐츠 집행',cis.content_done+' / '+cis.content_total+'건',100,C1],['웹사이트 조회',cis.views.toLocaleString(),100,C2],['Catalogue 다운로드',cis.downloads_total.toLocaleString()+' ('+(cis.download_rate*100).toFixed(1)+'%)',cis.download_rate*100*3,C26]]
+   +[['Meta 콘텐츠 집행',cis.content_done+' / '+cis.content_total+'건',100,C1],['웹사이트 조회',cis.views.toLocaleString(),100,C2],['Catalogue 다운로드',cis.downloads_total.toLocaleString()+' ('+(cis.download_rate*100).toFixed(1)+'%)',cis.download_rate*100*3,C26],['연관 SKU 오더 (참고)','Asian 중심 $1.30M',34,'#9dbad3']]
      .map(([l,v,w,c])=>`<div style="margin:9px 0"><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:3px"><b>${l}</b><span>${v}</span></div><div style="height:15px;background:var(--track);border-radius:3px;overflow:hidden"><div style="height:100%;width:${Math.max(w,3)}%;background:${c};border-radius:3px"></div></div></div>`).join('')
    +`</div></div></div>`
    +`<p class="note" style="margin-top:8px">조회수 대비 다운로드 전환율 ${(cis.download_rate*100).toFixed(1)}% · European Catalogue 다운로드가 Asian보다 높아 European 차종 관심 확인.</p>`
    +`<h4 class="soh">콘텐츠 집행 현황 (${cis.content_done} / ${cis.content_total}건)</h4><div class="tblwrap"><table class="lts"><thead><tr><th>구분</th><th>소재</th><th>업로드</th><th>상태</th></tr></thead><tbody>`
    +cis.meta_posts.map(p=>`<tr><td>${p.type}</td><td style="text-align:left">${esc(p.title)}</td><td>${p.uploaded_at}</td><td>${badge(p.status,'ok')}</td></tr>`).join('')
    +`<tr><td>Asian/European</td><td style="text-align:left">잔여 소재</td><td>예정</td><td>${badge('준비 중','wn')}</td></tr></tbody></table></div>`
-   +`<!-- 카탈로그 제작 협업 성과 참고용 --><p class="note" style="margin:7px 0 0;font-size:12px;line-height:1.6"><b>Catalogue 활용 요약</b> · Asian / European Catalogue 4~5월 4개국 15개사 이메일 선배포 · 공식 웹 Catalogue 다운로드 누적 ${cis.downloads_total.toLocaleString()}회(Asian ${cis.downloads_asian} · European ${cis.downloads_european}) · Catalogue 대상 SKU 연관 오더(참고) Asian 중심 $1.30M · 오더 성과와 별도.</p>`
+   +`<!-- 카탈로그 제작 협업 성과 참고용 -->`+`<h4 class="soh">핵심 인사이트 · 콘텐츠 활용 성과</h4><ul class="slist">`+`<li><b>콘텐츠 제작·확장</b> · Catalogue 데이터 기준 SNS 콘텐츠 6종 제작 · 현재 ${cis.content_done}종 발행 · 대상 차종 인지 확대 자산으로 확장</li>`+`<li><b>콘텐츠 배포·활용</b> · 이메일 15개사 + 공식 웹 + SNS 다채널 배포 · 웹 다운로드 ${cis.downloads_total.toLocaleString()}회(Asian ${cis.downloads_asian} · European ${cis.downloads_european})로 활용 확인 · European 관심도 높음</li>`+`<li><b>콘텐츠 → 전환 연계 (참고)</b> · Catalogue 대상 SKU 연관 오더 Asian 중심 $1.30M · 오더 성과·ROMI·ROI와 별도 참고 지표</li>`+`</ul>`
    +`<h4 class="soh">후속 실행</h4><ul class="slist">`+cis.followup.map(x=>`<li${x.startsWith('↳')?' class="subli"':''}>${esc(x).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')}</li>`).join('')+`</ul></div>`;
 
   h+=custOrderBlock('CIS','CIS · 올해 vs 전년 오더 추이 (참여 고객사)',A);
