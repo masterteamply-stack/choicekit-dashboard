@@ -1831,10 +1831,10 @@ const MAY_ACTIVITY={_m:5,kind:'summary',generated_at:'5월 마감 기준',
  headline:'5월 Choice Kit는 1,624건·92,152 pcs·캠페인 오더 $453,456 기록 · 연간 Order Target 대비 달성 5.7% · 집행 초기라 ROI 8,257%는 참고 수준 · CIS·ASIA 중심으로 실적 형성됨.',
  kpis:{order_amount:453456,order_label:'캠페인 이후 오더',order_target:7969394,achievement:5.7,orders:1624,pcs:92152,sku:1061,engaged:43,ordering:16,budget:131669,executed:5426,budget_used:4,roi:8257,active:'7/8',cost_per_order:3,aov:279,order_per_cust:28341},
  regions:[
-  {name:'CIS',amount:406985,orders:758,pcs:94585,custs:10,sku:153,note:'Asian vehicle가 대부분 견인($402,242)'},
-  {name:'ASIA',amount:136898,orders:476,pcs:28092,custs:6,sku:406,note:'Trade promotion 중심·SKU 확장성 우수'},
-  {name:'LATAM',amount:48009,orders:488,pcs:9292,custs:1,sku:420,note:'단일 고객이나 SKU 420개로 확장 여지'},
-  {name:'MENA',amount:3768,orders:10,pcs:232,custs:1,sku:8,note:'Portfolio Expansion·지역 불안정'}
+  {name:'CIS',sub:'전체 지역 중 최고 오더 금액',amount:406985,orders:758,pcs:94585,custs:10,sku:153,points:['Asian vehicle 캠페인이 대부분 견인($402,242 / 735건 / 93,801 pcs)','물류 이슈로 컨테이너 단위 추가 오더에 대한 고객 반응 둔화','Asian·Chinese vehicle 수요 고려 시 하반기 전략 우선순위 높음']},
+  {name:'ASIA',sub:'Trade promotion 중심',amount:136898,orders:476,pcs:28092,custs:6,sku:406,points:['기존 거래선 기반 재주문 흐름 안정적','판매 SKU 406개로 넓게 분산, 오더 금액은 상대적으로 낮음','Pair SKU·Full-set 제안으로 고객당 오더 금액 확대 여지']},
+  {name:'LATAM',sub:'브라질·멕시코 신규 공략',amount:48009,orders:488,pcs:9292,custs:1,sku:420,points:['오더 고객 1개사이나 SKU 420개로 다양한 수요 확인','Mexico Awakening $41,304 · Mexico Worldcup $6,705','멕시코 중심 초기 반응 확인, 하반기 확장 가능성']},
+  {name:'MENA',sub:'Portfolio Expansion',amount:3768,orders:10,pcs:232,custs:1,sku:8,points:['연초 소규모 오더만 발생','중동 전쟁·지역 불안정으로 기여도 제한적','예산을 고성장 지역·Chinese Vehicle Campaign으로 전환 검토']}
  ],
  programs:[
   {name:'Asian vehicle',amount:402242,orders:735,pcs:93801,custs:10,sku:132,note:'CIS 실적 대부분 견인'},
@@ -1846,22 +1846,25 @@ const MAY_ACTIVITY={_m:5,kind:'summary',generated_at:'5월 마감 기준',
   {name:'Portfolio Expansion',amount:3768,orders:10,pcs:232,custs:1,sku:8,note:'MENA 제약'}
  ],
  steerstar:[
-  {country:'Thailand',customer:'Seri Wathana',target:'$180K',ytd:'$248K',note:'목표 조기 초과'},
+  {country:'Thailand',customer:'Seri Wathana',target:'$180K',ytd:'$248K',note:'목표 조기 초과 달성'},
   {country:'Myanmar',customer:'Pan Theingi',target:'$457K',ytd:'$126K',note:'안정적 진행'},
   {country:'Brazil',customer:'Brabham',target:'$200K',ytd:'$47.6K',note:'Seminar 준비 단계'},
   {country:'Mexico',customer:'REFATRIX',target:'$200K',ytd:'$61.7K',note:'하반기 활동 예정'}
- ],
- highlights:[
-  'CIS 프로모션 조건 완화: 컨테이너 단위 → 기존 오더 추가 방식, 금액 제한 없이 적용(영업 협의 중)',
-  'LATAM 고객 확대: Mexico Awakening 성과 기반 브라질·멕시코 신규 고객 Pool 확대',
-  'ASIA 고도화: Trade promotion을 Pair SKU·Full-set 제안 중심으로, 고객당 오더 금액 확대',
-  'MENA 추가 집행 보류: 예산은 고성장 지역·Chinese Vehicle Campaign으로 전환 검토',
-  'Chinese Vehicle 연계: Asian vehicle 성과 기반 CIS·LATAM 중심 전개 검토'
  ]
 };
 const JUNE_ACTIVITY={_m:6,kind:'summary',generated_at:'6월 마감 기준',
- headline:'6월 Choice Kit 오더 $1,279,477 · 조정 Order Target $8,624,141 대비 달성 14.8% · 참여 71개사 중 46개사 전환(64.8%) · 하반기는 Target보다 추가 오더·신규 SKU·주문 고객·Reorder 중심 관리.',
+ headline:'6월 Choice Kit 오더 $1,279,477 · 조정 Order Target $8,624,141 대비 달성 14.8% · 참여 71개사 중 46개사 전환(64.8%) · 캠페인 시작 이후 누적 기준.',
  kpis:{order_amount:1279477,order_label:'캠페인 시작 이후',order_target:8624141,achievement:14.8,sku:1863,pcs:284663,engaged:71,ordering:46,conversion:64.8,budget:143715,executed:65146,budget_used:45,roi:1864,active:'8/10',cost_per_order:16,aov:336,order_per_cust:29187},
+ regions:[
+  {name:'CIS',sub:'Asian Vehicle 견인',points:['Asian Vehicle가 주요 실적 견인, 다만 3~4월 대비 최근 오더 추이 하락','European Vehicle은 Asian 대비 오더 규모 작음','Tech Seminar 지원(Kazakhstan $10,000 · Kyrgyzstan $8,000, 3~7월 오더 TOP1)','BizRewards 홍보물 4개국 오더 TOP7 지원(고객당 약 135만원)','Custom Parts·Heavy Duty는 MOQ·품목 구성 문제로 보류']},
+  {name:'ASIA',sub:'Trade Promotion Sell-out 서포트',points:['Long-term Loyalty 참여 3개 Dealer Sub-dealer 리스트 제출 완료','Sales Champion Award 데이터 제출: ATC·CSH·NamBac·GTA·GP (Chuan Lam·Mast 미제출)','6월 시작: CTR Display & Visibility · New Product Sell-Out · Order to Earn POSM','VINA 지원비 약 $16,400 송금(포스터·Reward Voucher $12,000)']},
+  {name:'LATAM',sub:'MarketFit·Awakening',points:['여러 국가에서 오더 가능성 확인','El Salvador SUPER REPUESTOS·Paraguay PLUSCAR 리테일 프로모션 8월 시작 준비','Chile 기술 세미나 현장 Survey 협의','핵심 이슈는 수요 부족보다 코드·카탈로그·홍보물·물류 병목(Mexico SYD 코드 매칭)']},
+  {name:'NA',sub:'Canada Lordco 집중',points:['Top Performer Promotion·Survey Mission 진행, 정비사·참여자 206건 Survey 완료(7월 중순 결과 배포)','Lordco YTD $173,646 · Motorcade $270,395 · WORLDPAC $370,521 · Monaco $717,855 · ALTROM $178,247','Motorcade·Worldpac 전략 고객 Survey·Marketing Package 개발 계획','AutoZone 7/2 최초 오더는 6월 실적 미포함']},
+  {name:'MENA',sub:'Portfolio Expansion',points:['Iraq MESK AL-BARARI 단일 고객(Brake Pad $888.24 · Shock Absorber $8,310.62 · Total $9,198.86)','Egypt SMG·Tunisia Treeq 중계무역 Shock Absorber 수주 가능성','수주 확정 시 SMG·Treeq 집중 집행 검토']},
+  {name:'KOREA',sub:'Sejong Parts Plus',points:['2025 신규 개발품 오더가 1분기 집중 납품, 4월 프로모션 진행','프로모션 이후 CTR 매출 증가·6월에도 유지 피드백 확인','5월 파트너십 지원 요청 · 6월 Claim 이슈 논의 · 7월 마케팅 지원 상세 협의 예정']},
+  {name:'OCEANIA',sub:'Kailos',points:['SteerStar 고객 Kailos 1~6월 전체 오더 $50,031.60, Mission Target 대비 67.4%','7월부터 Brand Showroom 운영 · 방문 고객 Survey·Korean/Japanese Vehicle 연계']},
+  {name:'EUROPE',sub:'Choice Kit 비대상',points:['Automechanika Frankfurt(AMF) 준비: RSVP 랜딩·사전 홍보로 고객 미팅 Lead 확보','Inter Cars 내 CTR Brand Presence 프로젝트 검토(중장기)','Choice Kit Order Target·달성률에 미포함, 별도 관리']}
+ ],
  steerstar:[
   {region:'ASIA',country:'Myanmar',customer:'Pan Theingi',target:'$457,070',ytd:'$65,770',note:'9~10월 Technical Seminar 준비'},
   {region:'ASIA',country:'Thailand',customer:'Seri Wathana',target:'$180,000',ytd:'$230,815',note:'전년 대비 +10% 미션 달성·SERI Expo·Survey'},
@@ -1873,42 +1876,41 @@ const JUNE_ACTIVITY={_m:6,kind:'summary',generated_at:'6월 마감 기준',
   {region:'NA',country:'Canada',customer:'Lordco Auto Parts',target:'$384,195',ytd:'$173,646',note:'Top Performer Promotion·Survey 206건'},
   {region:'MENA',country:'Kuwait',customer:'Auto1',target:'제외',ytd:'$20,939',note:'2026 SteerStar 제외'},
   {region:'MENA',country:'Syria',customer:'Arwani Motor Parts',target:'제외',ytd:'$317,301',note:'2026 SteerStar 제외'}
+ ]
+};
+const JULY_ACTIVITY={_m:7,kind:'summary',generated_at:'6월·8월 사이 추세 구간',
+ headline:'7월은 6월 $1.28M와 8월 $2.33M 사이 실행 집중 구간 · 하반기 실적 기반 마케팅 인센티브·Reward 연동, CIS 신규 SKU Mission, Lordco Survey 분석이 본격화된 달.',
+ tiles:[
+  ['캠페인 오더 추이','$1.28M → $2.33M','6월 → 8월 · 7월 진행 구간',true],
+  ['참여 → 오더 고객','46 → 49개사','6월 → 8월 추이'],
+  ['판매 SKU','1,863 → 3,449개','6월 → 8월 저변 확대'],
+  ['수량','284.7K → 593.6K pcs','6월 → 8월 누계']
  ],
- highlights:[
-  'CIS Asian·European Vehicle Sell-in 재부스팅 및 고객 인센티브 실행(Kazakhstan $10K·Kyrgyzstan $8K Tech Seminar 지원)',
-  'ASIA Trade Promotion Sell-out 데이터 회수 및 Reward 조건 연동 · Sub-dealer 판매 데이터 양식 표준화',
-  'Lordco Survey 206건 분석 및 후속 Sell-out 프로그램 구체화(7월 중순 결과 배포 예정)',
-  'Motorcade·Worldpac Survey 추진 및 전략 고객 Marketing Package 개발',
-  'LATAM Code·Catalog·POSM 운영 병목 개선, 전략 파트너 프로그램 가동',
-  'MENA SMG·Treeq 수주 확정 시 프로모션 비용 선택 집중',
-  'SteerStar CIS 신규 SKU 및 Pair SKU Mission 실행',
-  'AMF RSVP·사전 홍보로 유럽 고객 미팅 Lead 확대 · Inter Cars Brand Presence 추진',
-  'Chinese Vehicle 글로벌 Survey 6/29 시작·6,000건+ 접수 · 정제 후 8월 1차 리포트',
-  'Custom Parts·Heavy Duty는 MOQ·품목 구성 문제로 보류'
+ regions:[
+  {name:'CIS',sub:'신규 SKU Mission·조건 완화',points:['Azerbaijan·Kazakhstan 신규 SKU Mission 실행 · 미오더 SKU·Pair SKU 신규 채택 추적','프로모션 조건 완화(컨테이너 단위 → 기존 오더 추가, 금액 제한 없이) 영업 협의']},
+  {name:'ASIA',sub:'Reward 연동',points:['Trade Promotion Reward 지급을 Sell-out 데이터·실행 증빙 제출에 연동 시작','Sub-dealer별 판매 데이터 제출 양식 표준화 추진']},
+  {name:'NA',sub:'Lordco Survey',points:['Lordco Survey 206건 결과 분석·배포(7월 중순) → 후속 Sell-out 프로그램 구체화','Motorcade·Worldpac 전략 고객 Survey 추진']},
+  {name:'OCEANIA',sub:'Kailos',points:['Brand Showroom 운영 시작 · 방문 고객 Survey·Korean/Japanese Vehicle 프로모션 연계']},
+  {name:'LATAM',sub:'리테일 프로모션 준비',points:['El Salvador Super Repuestos·Paraguay PLUSCAR 리테일 프로모션 8월 시작 준비']},
+  {name:'신규 세그먼트',sub:'Chinese Vehicle',points:['글로벌 Survey 정제·분석 진행(6/29 시작·6,000건+ 접수) → 8월 1차 리포트 준비']}
  ]
 };
 const AUGUST_ACTIVITY={_m:8,kind:'summary',generated_at:'8월 마감 (MRP 마감 후)',
  headline:'8월 캠페인 기간 오더 $2,328,476 · Order Target $6,688,363 + Sell-out Target $765,207 = Performance Target $7,453,570 대비 진행률 38.1% · 전년 동기 $3,497,633 대비 -33.4%이나 SKU 저변은 3,449로 크게 확대됨.',
  kpis:{order_amount:2328476,order_label:'Campaign Period Order',order_target:6688363,sellout_target:765207,total_perf_target:7453570,target_progress:38.1,prior_year:3497633,yoy:-33.4,sku:3449,pcs:593582,engaged:65,ordering:49,transactions:7076,budget:146703,executed:57324,budget_used:39,roi:3962,roi_label:'ROMI(참고)',active:'7/7',cost_per_order:7,aov:336,order_per_cust:59709},
  regions:[
-  {name:'CIS',amount:1212239,target:1000000,progress:121,note:'Target SKU 275/333 전환·전년 -26% · 목표 대비 가장 명확'},
-  {name:'ASIA',amount:497400,note:'Sell-in +95% · Sell-out Target $765,207 대비 Result $514,951(67%)'},
-  {name:'LATAM',amount:109378,target:1300000,progress:8,note:'Target SKU 1/26 · 9월부터 중국차 200 SKU 확대 검증'},
-  {name:'MENA',amount:9199,target:420000,progress:2,note:'전년 -99% · 전쟁/물류 제약'},
-  {name:'Korea',amount:91592,target:270000,progress:34,note:'세종파츠플러스 논의 마무리 · 10월 최종 미팅'}
- ],
- highlights:[
-  '성과를 누적이 아닌 비교 기반으로 검증: 월별·분기별, 진행/미진행 고객·SKU 오더 추이 비교 구조 반영',
-  'ASIA Sell-in/Sell-out 목표 분리 · Sell-out Result $514,951을 Follow-up Sell-in Order와 함께 추적',
-  'Marketing ROI는 재무 ROI가 아닌 캠페인 집행비 대비 오더 전환 효율(참고 지표)',
-  'Target SKU 359개 중 276개 전환 · SKU 저변 전년 470 → 3,449로 확대',
-  'LATAM 9월부터 에콰도르·칠레·페루·멕시코·브라질 5개국 중국차 200 SKU 프로모션(SKU 전환율 평균 12% 목표)',
-  'Oceania Kailos: Field Validation 사례 · Survey 회수·행사 전후 오더 추이·Follow-up Order 추적'
+  {name:'CIS',sub:'목표 대비 성과 가장 명확',amount:1212239,target:1000000,progress:121,points:['Target SKU 275/333 전환 · 목표 대비 성과·SKU 전환이 가장 명확','전년 동기 대비 -26% · 성과 고객사·SKU 중심으로 전년 수준 회복 관리']},
+  {name:'ASIA',sub:'Sell-in / Sell-out 분리',amount:497400,points:['Sell-in Order $497,400 (전년 대비 +95%)','Sell-out Target $765,207 대비 Result $514,951 (진행률 67%)','여러 고객사 상세 Sell-out 데이터 제출 → Follow-up Sell-in Order와 함께 추적']},
+  {name:'LATAM',sub:'중국차 SKU 확대',amount:109378,target:1300000,progress:8,points:['Target SKU 1/26 전환 · Target SKU 절대 규모가 작아 적용 범위 제한','9월부터 중국차 약 200 SKU로 범위 확대 검증(5개국·SKU 전환율 평균 12% 목표)']},
+  {name:'MENA',sub:'전쟁·물류 제약',amount:9199,target:420000,progress:2,points:['전년 동기 대비 -99% · 광범위한 프로모션 확대 어려움','수주 가능 고객 중심 제한적 지원 검토 · 중국차 프로모션 적용 협의 중']},
+  {name:'KOREA',sub:'세종파츠플러스',amount:91592,target:270000,progress:34,points:['지난달 협업 Sell-out 활동에 긍정적 반응 확인','10월 최종 집행 내용 기준 미팅 · Choice Kit 적용·Sell-in 독려 유도']},
+  {name:'OCEANIA',sub:'Kailos Field Validation',points:['현지 행사·Brand Showroom으로 제품 노출·고객 반응·Survey Promotion 진행','Survey 회수·관심 제품군·행사 전후 오더 추이·Follow-up Order 추적']}
  ]
 };
 function monthSummary(A){
   const nf=v=>typeof v==='number'?v.toLocaleString():(v==null?'':v);
   const tile=(lab,val,sub,hero)=>`<div class="tile${hero?' hero':''}"><div class="lab">${esc(lab)}</div><div class="val">${val}</div>${sub?`<div class="sub2">${esc(sub)}</div>`:''}</div>`;
+  const rhdr=(name,sub)=>`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">${esc(name)}</span>${sub?` <span style="font-size:12.5px;color:var(--ink2)">· ${esc(sub)}</span>`:''}</div>`;
   const k=A.kpis||{}; let h='';
   h+=`<div class="card"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap"><span style="display:inline-block;width:6px;height:26px;background:var(--brand);border-radius:2px"></span><h3 style="margin:0;border:0;padding:0;font-size:20px">${A._m}월 Choice Kit 월간 요약</h3><span style="color:var(--muted);font-size:12px">· ${esc(A.generated_at||'')}</span></div><p class="note" style="padding-left:0;margin:0;font-size:13.5px;line-height:1.6">${esc(A.headline||'')}</p></div>`;
   const T=A.tiles?A.tiles.slice():[];
@@ -1927,52 +1929,41 @@ function monthSummary(A){
   if(k.cost_per_order!=null)d.push('Cost/Order $'+k.cost_per_order);
   if(k.aov!=null)d.push('평균 오더 $'+k.aov);
   if(k.order_per_cust!=null)d.push('고객당 오더 $'+nf(k.order_per_cust));
-  if(k.transactions!=null)d.push('오더 '+nf(k.transactions)+'건');
-  else if(k.orders!=null)d.push('오더 '+nf(k.orders)+'건');
+  if(k.transactions!=null)d.push('오더 '+nf(k.transactions)+'건'); else if(k.orders!=null)d.push('오더 '+nf(k.orders)+'건');
   if(k.budget_used!=null)d.push('예산 사용률 '+k.budget_used+'%');
   if(d.length)h+=`<p class="note" style="margin:8px 0 0;padding-left:0;font-size:12px;color:var(--ink2)">${d.join(' · ')}</p>`;
   h+=`</div>`;
-  if(A.regions&&A.regions.length){
-    const hasTgt=A.regions.some(r=>r.target!=null||r.progress!=null), hasBr=A.regions.some(r=>r.orders!=null||r.custs!=null||r.sku!=null);
-    h+=`<div class="card"><h3>지역별 오더 실적</h3><div class="tblwrap"><table class="lts"><thead><tr><th style="text-align:left">지역</th><th>오더 금액</th>`+(hasTgt?`<th>목표</th><th>진행률</th>`:'')+(hasBr?`<th>건수</th><th>고객</th><th>SKU</th>`:'')+`<th style="text-align:left">비고</th></tr></thead><tbody>`
-     +A.regions.map(r=>`<tr><td style="text-align:left"><b>${esc(r.name)}</b></td><td class="num">$${nf(r.amount)}</td>`+(hasTgt?`<td class="num sub3">${r.target!=null?'$'+nf(r.target):'–'}</td><td class="num">${r.progress!=null?('<b class="'+(r.progress>=100?'up':'dn')+'">'+r.progress+'%</b>'):'–'}</td>`:'')+(hasBr?`<td class="num sub3">${r.orders!=null?nf(r.orders):'–'}</td><td class="num sub3">${r.custs!=null?r.custs:'–'}</td><td class="num sub3">${r.sku!=null?nf(r.sku):'–'}</td>`:'')+`<td style="text-align:left;font-size:12px">${esc(r.note||'')}</td></tr>`).join('')
-     +`</tbody></table></div></div>`;
-  }
+  (A.regions||[]).forEach(r=>{
+    h+=rhdr(r.name,r.sub);
+    const ms=[];
+    if(r.amount!=null)ms.push(['오더 금액','$'+nf(r.amount)]);
+    if(r.target!=null)ms.push(['Target','$'+nf(r.target)]);
+    if(r.progress!=null)ms.push(['진행률',(r.progress>=100?'<span class="up">':'<span class="dn">')+r.progress+'%</span>']);
+    if(r.orders!=null)ms.push(['건수',nf(r.orders)]);
+    if(r.pcs!=null)ms.push(['수량',nf(r.pcs)+' pcs']);
+    if(r.custs!=null)ms.push(['고객',r.custs+'개사']);
+    if(r.sku!=null)ms.push(['SKU',nf(r.sku)+'개']);
+    h+=`<div class="card">`;
+    if(ms.length)h+=`<div class="kpis" style="grid-template-columns:repeat(${Math.min(ms.length,6)},1fr);margin-bottom:${(r.points&&r.points.length)?'12px':'0'}">`+ms.map(m=>tile(m[0],m[1])).join('')+`</div>`;
+    if(r.points&&r.points.length)h+=`<ul class="slist" style="margin:${ms.length?'0':'2px 0 0'}">`+r.points.map(x=>`<li>${esc(x)}</li>`).join('')+`</ul>`;
+    h+=`</div>`;
+  });
   if(A.programs&&A.programs.length){
-    h+=`<div class="card"><h3>프로모션별 실적</h3><div class="tblwrap"><table class="lts"><thead><tr><th style="text-align:left">프로모션</th><th>오더 금액</th><th>건수</th><th>PCS</th><th>고객</th><th>SKU</th><th style="text-align:left">해석</th></tr></thead><tbody>`
+    h+=rhdr('프로모션별 실적','');
+    h+=`<div class="card"><div class="tblwrap"><table class="lts"><thead><tr><th style="text-align:left">프로모션</th><th>오더 금액</th><th>건수</th><th>PCS</th><th>고객</th><th>SKU</th><th style="text-align:left">해석</th></tr></thead><tbody>`
      +A.programs.map(pr=>`<tr><td style="text-align:left">${esc(pr.name)}</td><td class="num">$${nf(pr.amount)}</td><td class="num sub3">${nf(pr.orders)}</td><td class="num sub3">${nf(pr.pcs)}</td><td class="num sub3">${pr.custs}</td><td class="num sub3">${nf(pr.sku)}</td><td style="text-align:left;font-size:12px">${esc(pr.note||'')}</td></tr>`).join('')
      +`</tbody></table></div></div>`;
   }
   if(A.steerstar&&A.steerstar.length){
+    h+=rhdr('SteerStar Ambassador','');
     const hasReg=A.steerstar.some(r=>r.region);
-    h+=`<div class="card"><h3>SteerStar Ambassador 현황</h3><div class="tblwrap"><table class="lts"><thead><tr>`+(hasReg?`<th>권역</th>`:'')+`<th>국가</th><th style="text-align:left">고객</th><th>Mission Target</th><th>YTD 오더</th><th style="text-align:left">현황</th></tr></thead><tbody>`
+    h+=`<div class="card"><div class="tblwrap"><table class="lts"><thead><tr>`+(hasReg?`<th>권역</th>`:'')+`<th>국가</th><th style="text-align:left">고객</th><th>Mission Target</th><th>YTD 오더</th><th style="text-align:left">현황</th></tr></thead><tbody>`
      +A.steerstar.map(r=>`<tr>`+(hasReg?`<td>${esc(r.region||'')}</td>`:'')+`<td>${esc(r.country)}</td><td style="text-align:left">${esc(r.customer)}</td><td class="num">${esc(r.target)}</td><td class="num"><b>${esc(r.ytd)}</b></td><td style="text-align:left;font-size:12px">${esc(r.note||'')}</td></tr>`).join('')
      +`</tbody></table></div><p class="note" style="margin:6px 0 0;padding-left:0;font-size:11.5px;color:var(--muted)">YTD 오더는 각 고객사 2026년 누계 전체 CTR 오더(캠페인 오더만을 의미하지 않음).</p></div>`;
-  }
-  if(A.highlights&&A.highlights.length){
-    h+=`<div class="card"><h3>주요 대응 · 하반기 방향</h3><ul class="slist">`+A.highlights.map(x=>`<li>${esc(x)}</li>`).join('')+`</ul></div>`;
   }
   return h;
 }
 
-const JULY_ACTIVITY={_m:7,kind:'summary',generated_at:'6월·8월 사이 추세 구간',
- headline:'7월은 6월 $1.28M와 8월 $2.33M 사이 실행 집중 구간 · 하반기 실적 기반 마케팅 인센티브·Reward 연동, CIS 신규 SKU Mission, Lordco Survey 분석이 본격화된 달.',
- tiles:[
-  ['캠페인 오더 추이','$1.28M → $2.33M','6월 → 8월 · 7월 진행 구간',true],
-  ['참여 → 오더 고객','46 → 49개사','6월 → 8월 추이'],
-  ['판매 SKU','1,863 → 3,449개','6월 → 8월 저변 확대'],
-  ['수량','284.7K → 593.6K pcs','6월 → 8월 누계']
- ],
- highlights:[
-  'CIS Azerbaijan·Kazakhstan 신규 SKU Mission 실행 · 미오더 SKU·Pair SKU 신규 채택 별도 추적',
-  'CIS 프로모션 조건 완화(컨테이너 단위 → 기존 오더 추가, 금액 제한 없이) 영업 협의 진행',
-  'Lordco Survey 206건 결과 분석·배포(7월 중순) → 후속 Sell-out 프로그램 구체화',
-  'Australia Kailos Brand Showroom 운영 시작 · 방문 고객 Survey·Korean/Japanese Vehicle 프로모션 연계',
-  'ASIA Trade Promotion Reward 지급을 Sell-out 데이터·실행 증빙 제출에 연동 시작',
-  'Chinese Vehicle 글로벌 Survey 정제·분석 진행 → 8월 1차 리포트 준비',
-  'LATAM El Salvador Super Repuestos·Paraguay PLUSCAR 리테일 프로모션 8월 시작 준비'
- ]
-};
 const MONTHLY_ACTIVITY = { 5: MAY_ACTIVITY, 6: JUNE_ACTIVITY, 7: JULY_ACTIVITY, 8: AUGUST_ACTIVITY, 9: SEPTEMBER_ACTIVITY };
 let sepSel = 9;
 function sepAllOverview(months){
