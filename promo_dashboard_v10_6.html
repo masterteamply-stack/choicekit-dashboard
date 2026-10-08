@@ -1610,12 +1610,12 @@ function cisCataloguePerf(){
   const P=CIS_CATALOGUE_PERFORMANCE, d=P.distribution, lo=P.linked_orders, wd=P.website_downloads, sn=P.sns_contents;
   const nf=v=>Number(v).toLocaleString();
   const CA='#27649E', CE='#9DBAD3';
-  const donut=(parts)=>{const tot=parts.reduce((s,p)=>s+p.v,0)||1;let a0=-Math.PI/2,g='';const C=60,R=46,r=27;
+  const donut=(parts,sz)=>{sz=sz||120;const tot=parts.reduce((s,p)=>s+p.v,0)||1;let a0=-Math.PI/2,g='';const C=sz/2,R=sz*0.383,r=sz*0.225;
     parts.forEach(p=>{const f=p.v/tot,a1=a0+f*2*Math.PI,lg=f>.5?1:0;
       const x0=C+R*Math.cos(a0),y0=C+R*Math.sin(a0),x1=C+R*Math.cos(a1),y1=C+R*Math.sin(a1);
       const xi1=C+r*Math.cos(a1),yi1=C+r*Math.sin(a1),xi0=C+r*Math.cos(a0),yi0=C+r*Math.sin(a0);
       g+=`<path d="M${x0} ${y0} A${R} ${R} 0 ${lg} 1 ${x1} ${y1} L${xi1} ${yi1} A${r} ${r} 0 ${lg} 0 ${xi0} ${yi0} Z" fill="${p.color}"/>`;a0=a1;});
-    return `<svg width="120" height="120" viewBox="0 0 120 120" style="flex:none;width:120px;height:120px">${g}</svg>`;};
+    return `<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" style="flex:none;width:${sz}px;height:${sz}px">${g}</svg>`;};
   const tile=(lab,val,sub)=>`<div class="tile"><div class="lab">${esc(lab)}</div><div class="val">${val}</div>${sub?`<div class="sub2">${sub}</div>`:''}</div>`;
   const lg=(c,t)=>`<span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink2)"><i style="width:11px;height:11px;border-radius:2px;background:${c};display:inline-block"></i>${t}</span>`;
   const asianShare=lo.asian.amount_usd/lo.total_amount_usd*100, euShare=lo.european.amount_usd/lo.total_amount_usd*100;
@@ -1624,66 +1624,71 @@ function cisCataloguePerf(){
   const kp='<div class="kpis" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px">';
 
   let h=`<!-- 카탈로그 제작 협업 성과 참고용 -->`;
-  h+=`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">CIS · Choice Kit Catalogue Performance</span> <span style="font-size:12.5px;color:var(--ink2)">· Catalogue 활용 성과 · 연관 오더 / 다운로드 / SNS 콘텐츠</span></div>`;
-  h+=`<div class="card"><p class="note" style="margin:0;padding-left:0;font-size:13.5px;line-height:1.6">Choice Kit Asian / European Catalogue는 4개국 15개 고객사 배포 이후, 연관 SKU 오더와 웹사이트 다운로드로 <b>프로모션 활용 성과 확인 중</b>. <span style="color:var(--muted);font-size:12px">(Catalogue 활용 성과는 오더 성과·ROMI·ROI에 직접 합산하지 않음 · 최종 성과는 10월 프로모션 종료 후 재집계 예정)</span></p></div>`;
+  h+=`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">CIS · Choice Kit Catalogue Content Performance</span> <span style="font-size:12.5px;color:var(--ink2)">· Catalogue 데이터 기반 콘텐츠 제작·배포·활용 성과 (연관 오더는 참고 지표)</span></div>`;
+  h+=`<div class="card"><p class="note" style="margin:0;padding-left:0;font-size:13.5px;line-height:1.6">Choice Kit Catalogue 데이터를 활용해 Asian / European 차종 콘텐츠를 제작하고 공식 웹사이트·SNS로 <b>배포·확산 중</b> · 아래는 콘텐츠 제작·배포·활용 성과이며 연관 오더는 참고 지표로 분리 표기함. <span style="color:var(--muted);font-size:12px">(콘텐츠 활용 성과는 오더 성과·ROMI·ROI에 직접 합산하지 않음 · 최종 성과는 10월 프로모션 종료 후 재집계 예정)</span></p></div>`;
 
-  h+=`<div class="card"><h3>Catalogue 배포 개요</h3>`+kp
-    +tile('Asian Catalogue 배포','2026-04','Asian Vehicle Catalogue')
-    +tile('European Catalogue 배포','2026-05','European Vehicle Catalogue')
-    +tile('대상 국가 · 고객사','4개국 · 15개사','KG·KZ·TJ·TM · 이메일 배포')
-    +tile('집계 기간','3~9월','10월 마감 기준 재집계 예정')
+  // 1. 콘텐츠 제작·배포 현황
+  h+=`<div class="card"><h3>콘텐츠 제작·배포 현황</h3>`+kp
+    +tile('제작 콘텐츠 자산','Catalogue 2종 + SNS 6종','Asian / European 차종 기반')
+    +tile('SNS 발행 완료',sn.released+' / '+sn.total_planned+'종',`Released ${relPct.toFixed(1)}% · IG·FB`)
+    +tile('배포 채널','이메일 · 웹 · SNS','다채널 확산')
+    +tile('배포 고객사',d.customer_count+'개사 · 4개국','KG·KZ·TJ·TM · 이메일')
     +`</div>`
-    +`<div class="tblwrap"><table class="lts"><thead><tr><th style="width:52px">No.</th><th style="width:84px">Country</th><th>Customer</th><th style="width:120px">Status</th></tr></thead><tbody>`
-    +d.customers.map(c=>`<tr><td style="text-align:center">${c.no}</td><td style="text-align:center">${esc(c.country)}</td><td style="text-align:left">${esc(c.customer)}</td><td style="text-align:center"><span class="sbadge ok">${esc(c.status)}</span></td></tr>`).join('')
-    +`</tbody></table></div></div>`;
+    +`<p class="note" style="margin:0;padding-left:0;font-size:12.5px;line-height:1.6">Catalogue는 단순 배포 자료를 넘어 <b>SNS 콘텐츠 6종의 기준 자료로 확장 활용</b> · 4~5월 4개국 15개사 선배포 후 공식 웹·SNS로 다채널 확산 중.</p></div>`;
 
-  h+=`<div class="card"><h3>Catalogue 연관 오더 성과 <span style="color:var(--muted);font-weight:400;font-size:12.5px">· 오더 성과와 별도 집계</span></h3>`+kp
-    +tile('Asian 연관 오더',fmtC(lo.asian.amount_usd),`$${nf(lo.asian.amount_usd)} · ${lo.asian.customer_count}개사`)
-    +tile('European 연관 오더',fmtC(lo.european.amount_usd),`$${nf(lo.european.amount_usd)} · ${lo.european.customer_count}개사`)
-    +tile('Total 연관 오더',fmtC(lo.total_amount_usd),`$${nf(lo.total_amount_usd)} · Asian+European`)
-    +tile('Asian 비중',asianShare.toFixed(1)+'%',`European ${euShare.toFixed(1)}%`)
-    +`</div>`
-    +`<div style="display:flex;align-items:center;gap:22px;flex-wrap:wrap">`
-    +`<div style="display:flex;align-items:center;gap:14px">${donut([{v:lo.asian.amount_usd,color:CA},{v:lo.european.amount_usd,color:CE}])}<div style="display:flex;flex-direction:column;gap:7px">${lg(CA,`Asian $${nf(lo.asian.amount_usd)} · ${asianShare.toFixed(1)}%`)}${lg(CE,`European $${nf(lo.european.amount_usd)} · ${euShare.toFixed(1)}%`)}</div></div>`
-    +`<p class="note" style="flex:1;min-width:280px;margin:0;padding-left:0;font-size:12.5px;line-height:1.6">3~9월 Catalogue 대상 SKU 연관 오더는 <b>Asian 중심</b> · Asian 15개사 $1.30M / European 10개사 $87K · European은 초기 단계로 다운로드와 함께 전환 추적 필요함.</p>`
-    +`</div></div>`;
-
-  const fn=(lab,val,w,c)=>`<div style="display:flex;align-items:center;gap:10px;margin:5px 0"><div style="width:150px;font-size:12px;color:var(--ink2);flex:none">${lab}</div><div style="height:28px;width:${w}%;min-width:90px;background:${c};border-radius:5px;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;padding:0 12px">${val}</div></div>`;
-  h+=`<div class="card"><h3>웹사이트 Catalogue 다운로드 성과</h3>`+kp
-    +tile('Asian 다운로드',nf(wd.asian_downloads)+'회',`${asDl.toFixed(1)}%`)
-    +tile('European 다운로드',nf(wd.european_downloads)+'회',`${euDl.toFixed(1)}%`)
-    +tile('Total 다운로드',nf(wd.total_downloads)+'회','Asian+European')
-    +tile('European 다운로드 비중',euDl.toFixed(1)+'%',`Asian ${asDl.toFixed(1)}%`)
+  // 2. 콘텐츠 활용 성과 (LEAD) — downloads
+  const fn=(lab,val,w,c)=>`<div style="display:flex;align-items:center;gap:10px;margin:5px 0"><div style="width:168px;font-size:12px;color:var(--ink2);flex:none">${lab}</div><div style="height:28px;width:${w}%;min-width:90px;background:${c};border-radius:5px;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;padding:0 12px">${val}</div></div>`;
+  h+=`<div class="card"><h3>콘텐츠 활용 성과 · 웹 Catalogue 다운로드</h3>`+kp
+    +tile('Asian 콘텐츠 다운로드',nf(wd.asian_downloads)+'회',`${asDl.toFixed(1)}%`)
+    +tile('European 콘텐츠 다운로드',nf(wd.european_downloads)+'회',`${euDl.toFixed(1)}%`)
+    +tile('Total 콘텐츠 다운로드',nf(wd.total_downloads)+'회','Asian+European')
+    +tile('European 비중',euDl.toFixed(1)+'%',`Asian ${asDl.toFixed(1)}%`)
     +`</div>`
     +`<div style="display:flex;align-items:center;gap:22px;flex-wrap:wrap">`
     +`<div style="display:flex;align-items:center;gap:14px">${donut([{v:wd.asian_downloads,color:CA},{v:wd.european_downloads,color:CE}])}<div style="display:flex;flex-direction:column;gap:7px">${lg(CA,`Asian ${nf(wd.asian_downloads)}회 · ${asDl.toFixed(1)}%`)}${lg(CE,`European ${nf(wd.european_downloads)}회 · ${euDl.toFixed(1)}%`)}</div></div>`
-    +`<p class="note" style="flex:1;min-width:280px;margin:0;padding-left:0;font-size:12.5px;line-height:1.6">웹 다운로드는 <b>European 784회 &gt; Asian 370회</b> · 단 연관 오더는 Asian 중심이라 European은 관심도↑·전환 초기 · 10월 마감 후 전환 연결성 검토함.</p>`
+    +`<p class="note" style="flex:1;min-width:280px;margin:0;padding-left:0;font-size:12.5px;line-height:1.6">콘텐츠 다운로드는 <b>European 784회 &gt; Asian 370회</b> · European 콘텐츠 관심도 높음 · 제작 콘텐츠의 실제 활용·도달을 다운로드로 확인함.</p>`
     +`</div>`
-    +`<div style="margin-top:14px"><div style="font-size:12px;color:var(--ink2);font-weight:700;margin-bottom:4px">Catalogue 활용 퍼널</div>`
-    +fn('웹 Catalogue 페이지','게시 운영',100,'#1F4E79')
-    +fn('Catalogue 다운로드',nf(dTot)+'회',70,'#27649E')
-    +fn('연관 SKU 오더',fmtC(lo.total_amount_usd),46,'#6a97c0')
+    +`<div style="margin-top:14px"><div style="font-size:12px;color:var(--ink2);font-weight:700;margin-bottom:4px">콘텐츠 활용 퍼널</div>`
+    +fn('콘텐츠 배포 (웹·SNS 게시)','게시 운영',100,'#1F4E79')
+    +fn('웹 Catalogue 다운로드',nf(dTot)+'회',70,'#27649E')
+    +fn('연관 SKU 오더 (참고)',fmtC(lo.total_amount_usd),46,'#9dbad3')
     +`</div></div>`;
 
+  // 3. SNS 콘텐츠 발행 현황
   const fbCell=`<span style="color:var(--muted);font-size:11.5px">Link provided separately</span>`;
   let rows=sn.contents.map((c,i)=>`<tr><td style="text-align:center">${i+1}</td><td style="text-align:left">${esc(c.title)}</td><td style="text-align:center">${esc(c.vehicle_type)}</td><td style="text-align:center">${esc(c.upload_date)}</td><td style="text-align:center"><a href="${esc(c.instagram_url)}" target="_blank" rel="noopener" style="color:var(--s1);font-weight:600">보기</a></td><td style="text-align:center">${fbCell}</td><td style="text-align:center"><span class="sbadge ok">${esc(c.status)}</span></td></tr>`).join('');
   rows+=`<tr><td style="text-align:center">5</td><td style="text-align:left">Remaining Content 1</td><td style="text-align:center">–</td><td style="text-align:center">–</td><td style="text-align:center">–</td><td style="text-align:center">–</td><td style="text-align:center"><span class="sbadge">Pending</span></td></tr>`;
   rows+=`<tr><td style="text-align:center">6</td><td style="text-align:left">Remaining Content 2</td><td style="text-align:center">–</td><td style="text-align:center">–</td><td style="text-align:center">–</td><td style="text-align:center">–</td><td style="text-align:center"><span class="sbadge">Pending</span></td></tr>`;
   const tline=sn.contents.map(c=>`<div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;z-index:1;flex:1;min-width:80px"><div style="width:13px;height:13px;border-radius:50%;background:var(--brand);border:2px solid var(--surface)"></div><div style="font-size:11.5px;color:var(--ink2)">${esc(c.upload_date.slice(5))}</div><div style="font-size:10.5px;text-align:center">${esc(c.vehicle_type)} ${esc(c.title.slice(-1))}</div></div>`).join('');
-  h+=`<div class="card"><h3>Catalogue 기반 SNS 콘텐츠 발행 현황</h3>`
+  h+=`<div class="card"><h3>SNS 콘텐츠 발행 현황 <span style="color:var(--muted);font-weight:400;font-size:12.5px">· Catalogue 기반 제작 콘텐츠</span></h3>`
     +`<div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap"><div style="font-size:22px;font-weight:800">${sn.released} <span style="font-size:15px;color:var(--ink2);font-weight:600">/ ${sn.total_planned}</span> <span style="font-size:13px;color:var(--good);font-weight:700">Released ${relPct.toFixed(1)}%</span></div><div style="flex:1;min-width:140px;height:13px;background:var(--track);border-radius:7px;overflow:hidden"><div style="height:100%;width:${relPct}%;background:var(--good);border-radius:7px"></div></div><div style="font-size:12px;color:var(--ink2)">채널 Instagram · Facebook</div></div>`
     +`<div style="position:relative;display:flex;justify-content:space-between;margin:4px 6px 16px;padding-top:2px"><div style="position:absolute;top:8px;left:8%;right:8%;height:2px;background:var(--grid);z-index:0"></div>${tline}</div>`
     +`<div class="tblwrap"><table class="lts"><thead><tr><th style="width:46px">No.</th><th>Content</th><th style="width:84px">Vehicle</th><th style="width:104px">Upload</th><th style="width:70px">IG</th><th style="width:150px">FB</th><th style="width:96px">Status</th></tr></thead><tbody>${rows}</tbody></table></div>`
-    +`<p class="note" style="margin:10px 0 0;padding-left:0;font-size:12.5px;line-height:1.6">Catalogue는 배포 자료를 넘어 <b>SNS 콘텐츠 6종의 기준 자료로 확장 활용</b> · 현재 4종 발행 · 공식 웹 Catalogue 게시물 유입 유도 구조로 운영됨.</p></div>`;
+    +`<p class="note" style="margin:10px 0 0;padding-left:0;font-size:12.5px;line-height:1.6">현재 4종 발행 · 콘텐츠는 공식 웹 Catalogue 게시물로 유입을 유도하는 구조로 운영됨 · 잔여 2종 발행 예정.</p></div>`;
 
-  const ins=(title,body,metrics)=>`<div style="border:1px solid var(--grid);border-radius:10px;padding:13px 15px;background:var(--panel)"><div style="font-size:13px;font-weight:700;color:var(--brand);margin-bottom:7px;line-height:1.35">${title}</div><p style="margin:0 0 9px;font-size:12.5px;line-height:1.55;color:var(--ink2)">${body}</p><div style="display:flex;flex-wrap:wrap;gap:6px">${metrics.map(m=>`<span class="sbadge">${m}</span>`).join('')}</div></div>`;
-  h+=`<div class="card"><h3>Catalogue 활용 성과 인사이트</h3><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">`
-    +ins('Asian Catalogue · Order-driven Performance','Choice Kit Asian Vehicle SKU는 15개사 $1.30M 연관 오더로 현재 오더 성과의 핵심 축으로 작동함.',['$1,301,559','15 customers'])
-    +ins('European Catalogue · Interest-driven Potential','European은 연관 오더 규모는 작지만 다운로드가 Asian 대비 높아 향후 전환 가능성 추적 필요함.',['784 downloads','$87,417 linked'])
-    +ins('Catalogue-to-Content Expansion','Catalogue는 이메일 배포·웹 다운로드·SNS 콘텐츠로 확장되며 대상 차종 인지 확대의 기준 자료로 기능함.',['15 distributed','1,154 downloads','4/6 released'])
+  // 4. 배포 고객사 현황
+  h+=`<div class="card"><h3>콘텐츠 배포 고객사 (4개국 15개사)</h3>`
+    +`<div class="tblwrap"><table class="lts"><thead><tr><th style="width:52px">No.</th><th style="width:84px">Country</th><th>Customer</th><th style="width:120px">Status</th></tr></thead><tbody>`
+    +d.customers.map(c=>`<tr><td style="text-align:center">${c.no}</td><td style="text-align:center">${esc(c.country)}</td><td style="text-align:left">${esc(c.customer)}</td><td style="text-align:center"><span class="sbadge ok">${esc(c.status)}</span></td></tr>`).join('')
+    +`</tbody></table></div><p class="note" style="margin:8px 0 0;padding-left:0;font-size:12px;color:var(--muted)">Asian Catalogue 2026-04 · European Catalogue 2026-05 배포 · 이메일 발송 (이메일 주소 비표시)</p></div>`;
+
+  // 5. 참고 · Catalogue 연관 오더 (de-emphasized)
+  h+=`<div class="card" style="background:var(--panel)"><h3 style="border-left-color:var(--muted)">참고 · Catalogue 연관 오더 <span style="color:var(--muted);font-weight:400;font-size:12.5px">· 콘텐츠·자료 활용 연계 참고 지표 · 오더 성과·ROMI·ROI 미합산</span></h3>`
+    +`<div style="display:flex;align-items:center;gap:22px;flex-wrap:wrap">`
+    +`<div style="display:flex;align-items:center;gap:14px">${donut([{v:lo.asian.amount_usd,color:CA},{v:lo.european.amount_usd,color:CE}],100)}<div style="display:flex;flex-direction:column;gap:6px">${lg(CA,`Asian $${nf(lo.asian.amount_usd)} · ${lo.asian.customer_count}개사 · ${asianShare.toFixed(1)}%`)}${lg(CE,`European $${nf(lo.european.amount_usd)} · ${lo.european.customer_count}개사 · ${euShare.toFixed(1)}%`)}<span style="font-size:12px;color:var(--ink2);margin-top:2px">Total $${nf(lo.total_amount_usd)}</span></div></div>`
+    +`<p class="note" style="flex:1;min-width:280px;margin:0;padding-left:0;font-size:12.5px;line-height:1.6">콘텐츠 활용과 연계된 Catalogue 대상 SKU 연관 오더는 <b>Asian 중심</b>(15개사 $1.30M) · European은 10개사 $87K로 초기 단계 · <b>참고 지표로 오더 성과와 별도 집계</b>함.</p>`
+    +`</div></div>`;
+
+  // 6. 인사이트 (콘텐츠 활용 중심)
+  const ins=(title,body,metrics)=>`<div style="border:1px solid var(--grid);border-radius:10px;padding:13px 15px;background:var(--surface)"><div style="font-size:13px;font-weight:700;color:var(--brand);margin-bottom:7px;line-height:1.35">${title}</div><p style="margin:0 0 9px;font-size:12.5px;line-height:1.55;color:var(--ink2)">${body}</p><div style="display:flex;flex-wrap:wrap;gap:6px">${metrics.map(m=>`<span class="sbadge">${m}</span>`).join('')}</div></div>`;
+  h+=`<div class="card"><h3>콘텐츠 활용 성과 인사이트</h3><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">`
+    +ins('콘텐츠 제작·확장','Catalogue 데이터를 기준 자료로 SNS 콘텐츠 6종 제작, 현재 4종 발행 · 대상 차종 인지 확대의 콘텐츠 자산으로 확장함.',['Catalogue 2종','SNS 6종 · 4 발행'])
+    +ins('콘텐츠 배포·활용','이메일 15개사 + 공식 웹 + SNS 다채널로 배포 · 웹 다운로드 1,154회로 활용 확인, European 콘텐츠 관심도 높음.',['15개사 배포','1,154 downloads'])
+    +ins('콘텐츠 → 전환 연계 (참고)','콘텐츠 활용과 연계된 Catalogue 대상 SKU 연관 오더는 Asian 중심 · 오더 성과와 별도 참고 지표로 추적함.',['Asian 중심','$1.39M linked (참고)'])
     +`</div></div>`;
   return h;
 }
+
 
 function sepMonth(A){
   const C1='var(--o4)', C2='var(--s1)', C26='var(--brand)';
