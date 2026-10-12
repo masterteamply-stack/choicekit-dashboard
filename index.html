@@ -13913,29 +13913,61 @@ function injectCopyLinkButtons() {
 })();
 </script>
 <script>
-/* ChoiceKit 효과 대시보드 기준 반영: 상단 "연관 오더"·"기간 경과율"을 효과 대시보드(2026-09-04 스냅샷) 수치로 고정.
-   사용자 지정(효과 대시보드에 맞춤). 효과 대시보드 D 갱신 시 아래 값도 같이 갱신할 것. */
+/* 연관 오더(ChoiceKit) 라이브 집계 = _execOrderTotal − LATAM raw SELL-IN + LATAM 4버킷.
+   LATAM 4버킷(모두 SELL-IN): (1) 멕시코 REFATRIX 16SKU 게시일~2026-07-31
+   (2) Mexico Awakening = 멕시코 16SKU 제외 2026-01-17~ (3) CTR MarketFit = 멕·브 제외 전 라탐,
+   66SKU 게시일 기준, PLUSCAR·SUPER REPUESTOS 2026-09-01~ 제외 (4) PLUSCAR+SUPER REPUESTOS 2026-09-01~.
+   SKU 게시일 맵은 LATAM_MarketFit_SKU 목록 기준. 목록 갱신 시 아래 POST16/POST66 교체. */
 (function(){
-  var OV={
-    kpiOrder:'$3.08M',
-    kpiOrderSub:'전년 $2.33M · +32.0% YoY · ChoiceKit 캠페인 기간 · 효과 대시보드 기준',
-    kpiAchv:'69%',
-    kpiAchvSub:'관측 1,561 / 계획 2,262일 · 기간 경과율 · 효과 대시보드 기준'
-  };
-  var MARK='효과 대시보드(ChoiceKit) 기준';
-  var NOTE='<span class="t-purple" style="font-weight:600">※ 상단 연관 오더·기간 경과율은 '+MARK+'입니다. 아래 표는 전 캠페인 라이브 집계로 범위가 다릅니다.</span><br>';
+  var POST16={"CQ0280L":"2026-02-11","CQ0280R":"2026-02-11","CL0477":"2026-02-11","CR0490":"2026-02-11","CE0536L":"2026-02-11","CE0536R":"2026-02-11","CB0336":"2026-02-11","CQ0096L":"2026-03-24","CQ0096R":"2026-03-24","CE0287L":"2026-03-24","CE0287R":"2026-03-24","GV0130":"2026-03-24","CL0240":"2026-03-24","GV0131":"2026-03-24","GV0135":"2026-03-24","CB0161":"2026-03-24"};
+  var POST66={"CQ0280L":"2026-02-11","CQ0280R":"2026-02-11","CL0477":"2026-02-11","CR0490":"2026-02-11","CE0536L":"2026-02-11","CE0536R":"2026-02-11","CB0336":"2026-02-11","CQ0096L":"2026-03-24","CQ0096R":"2026-03-24","CE0287L":"2026-03-24","CE0287R":"2026-03-24","GV0130":"2026-03-24","CL0240":"2026-03-24","GV0131":"2026-03-24","GV0135":"2026-03-24","CB0161":"2026-03-24","CB0331":"2026-07-21","CE0507":"2026-07-21","CE0508":"2026-07-21","CQ0273L":"2026-07-21","CQ0273R":"2026-07-21","CR0476":"2026-07-21","GV1043":"2026-07-21","PL0477":"2026-07-21","CB0418":"2026-07-29","CE0187":"2026-07-29","CE0788":"2026-07-29","CQ0312R":"2026-07-29","CQ0312L":"2026-07-29","PL0586":"2026-07-29","CL0586":"2026-07-29","GV0497":"2026-07-29","GV1091":"2026-07-29","GV1048R":"2026-07-29","GV1048L":"2026-07-29","CB0459":"2026-08-11","CB0450":"2026-08-11","CE0909L":"2026-08-11","CE0909R":"2026-08-11","GV1447":"2026-08-11","GY1758G":"2026-08-11","CB0345":"2026-08-26","CE0611L":"2026-08-26","CE0611R":"2026-08-26","CR0522":"2026-08-26","CL0953":"2026-08-26","CQ0287L":"2026-08-26","CQ0287R":"2026-08-26","GV0587":"2026-08-26","CB0166":"2026-09-08","CE0295":"2026-09-08","CQ0102L":"2026-09-08","CQ0102R":"2026-09-08","CL0250":"2026-09-08","CR0245":"2026-09-08","CE0334R":"2026-09-23","CE0334L":"2026-09-23","CR0277":"2026-09-23","CL0309R":"2026-09-23","CL0309L":"2026-09-23","CL0283R":"2026-09-23","CL0283L":"2026-09-23","CL0282R":"2026-09-23","CL0282L":"2026-09-23","CQ0143R":"2026-09-23","CQ0143L":"2026-09-23"};
+  var SKU16={}; for(var k in POST16) SKU16[k]=1;
+  var EXCL={'PLUSCAR S.A':1,'SUPER REPUESTOS':1};
+  var MX={'MEXICO':1,'멕시코':1}, BR={'BRAZIL':1,'BRASIL':1,'브라질':1};
+  function si(o){return String(o.sell_type||'').toUpperCase().replace(/_/g,'-')==='SELL-IN';}
+  function related(){
+    var O=(typeof state!=='undefined'&&state&&state.orders)?state.orders:null;
+    if(!O||!O.length) return null;
+    var b1=0,b2=0,b3=0,b4=0,latSI=0;
+    for(var i=0;i<O.length;i++){var o=O[i];
+      var reg=String(o.region||'').toUpperCase(); var S=si(o); var amt=Number(o.amount)||0;
+      if(reg==='LATAM'&&S) latSI+=amt;
+      if(!S) continue;
+      var ctry=String(o.country||'').trim().toUpperCase();
+      var sku=String(o.sku||'').trim().toUpperCase();
+      var d=o.order_date||''; var cust=String(o.customer||'').trim();
+      var isMX=MX[ctry]===1, isBR=BR[ctry]===1, isEx=EXCL[cust]===1;
+      if(isMX && SKU16[sku] && d>=POST16[sku] && d<='2026-07-31') b1+=amt;
+      if(isMX && !SKU16[sku] && d>='2026-01-17') b2+=amt;
+      if(reg==='LATAM' && !isMX && !isBR && !(isEx && d>='2026-09-01') && POST66[sku] && d>=POST66[sku]) b3+=amt;
+      if(isEx && d>='2026-09-01') b4+=amt;
+    }
+    var buckets=b1+b2+b3+b4;
+    var execTot=(typeof window._execOrderTotal==='number')?window._execOrderTotal:null;
+    if(execTot==null) return null;
+    return {total:execTot-latSI+buckets,b1:b1,b2:b2,b3:b3,b4:b4,buckets:buckets};
+  }
+  function fmtM(v){return '$'+(v/1e6).toFixed(2)+'M';}
+  function fmtK(v){return '$'+Math.round(v).toLocaleString();}
+  var STATIC={kpiAchv:'69%', kpiAchvSub:'관측 1,561 / 계획 2,262일 · 기간 경과율 · 효과 대시보드 기준'};
+  var MARK='LATAM 4버킷 연관 오더';
   function apply(){
-    for(var id in OV){ var el=document.getElementById(id); if(el && el.textContent!==OV[id]) el.textContent=OV[id]; }
+    var r=related();
+    if(r){
+      var el=document.getElementById('kpiOrder'); if(el){var t=fmtM(r.total); if(el.textContent!==t) el.textContent=t;}
+      var sub=document.getElementById('kpiOrderSub');
+      if(sub){var txt='LATAM '+fmtK(r.buckets)+' = ①'+fmtK(r.b1)+' ②'+fmtK(r.b2)+' ③'+fmtK(r.b3)+' ④'+fmtK(r.b4)+' · 게시일 기준 SELL-IN · 라이브'; if(sub.textContent!==txt) sub.textContent=txt;}
+    }
+    for(var id in STATIC){var e=document.getElementById(id); if(e&&e.textContent!==STATIC[id]) e.textContent=STATIC[id];}
     var n=document.getElementById('execSummaryNote');
-    if(n && n.innerHTML.indexOf(MARK)===-1){ n.innerHTML=NOTE+n.innerHTML; }
+    if(n && n.innerHTML.indexOf(MARK)===-1){ n.innerHTML='<span class="t-purple" style="font-weight:600">※ 상단 연관 오더는 '+MARK+'(게시일 기준 SELL-IN) 라이브 집계임. 아래 표는 전 캠페인 기간 오더라 범위가 다름.</span><br>'+n.innerHTML; }
   }
-  function start(){
-    apply();
+  function start(){apply();
     var obs=new MutationObserver(apply);
-    ['kpiOrder','kpiOrderSub','kpiAchv','kpiAchvSub','execSummaryNote'].forEach(function(id){ var el=document.getElementById(id); if(el) obs.observe(el,{childList:true,characterData:true,subtree:true}); });
-    setInterval(apply, 600);
+    ['kpiOrder','kpiOrderSub','kpiAchv','kpiAchvSub','execSummaryNote'].forEach(function(id){var el=document.getElementById(id); if(el) obs.observe(el,{childList:true,characterData:true,subtree:true});});
+    setInterval(apply,600);
   }
-  if(document.readyState==='loading') window.addEventListener('DOMContentLoaded', function(){ setTimeout(start,300); });
+  if(document.readyState==='loading') window.addEventListener('DOMContentLoaded',function(){setTimeout(start,300);});
   else setTimeout(start,300);
 })();
 </script>
