@@ -295,7 +295,7 @@ tfoot td.num{text-align:right}
         <div class="val" id="k1">–</div><div class="sub2" id="k1s"></div><div class="sub2" id="k1d"></div></div>
       <div class="tile"><div class="lab">YoY</div><div class="val" id="k2">–</div><div class="sub2" id="k2s"></div></div>
       <div class="tile"><div class="lab">집행 캠페인</div><div class="val" id="k5">–</div><div class="sub2" id="k5s"></div></div>
-      <div class="tile"><div class="lab">기간 경과율</div><div class="val" id="k6">–</div><div class="sub2" id="k6s"></div>
+      <div class="tile"><div class="lab">달성률</div><div class="val" id="k6">–</div><div class="sub2" id="k6s"></div>
         <div class="meter"><i id="k6m" style="width:0%"></i></div></div>
     </div>
 
@@ -490,9 +490,13 @@ function kpis(){
   $('#k2s').innerHTML=`전 품목 기준 ${fmtPC(T.yoyA)}`;
   $('#k5').innerHTML=`${T.run}<span style="font-size:16px;color:var(--muted)"> / ${T.n}</span>`;
   $('#k5s').textContent=`대상 고객 ${T.cust.size.toLocaleString()}곳`;
-  $('#k6').textContent=T.prog.toFixed(0)+'%';
-  $('#k6s').textContent=`관측 ${T.obs.toLocaleString()}일 / 계획 ${T.tot.toLocaleString()}일`;
-  $('#k6m').style.width=Math.min(T.prog,100)+'%';
+  /* 달성률 = (연관 오더 + 셀아웃 실적) ÷ (오더 타깃 + 셀아웃 타깃) — 메인 대시보드 Achievement와 동일 정의 */
+  const _otgt=(D.exec_meta&&D.exec_meta.otarget)||0;
+  const _achDen=_otgt+(T.so_t||0);
+  const _ach=_achDen>0?((T.a26+(T.so_r||0))/_achDen*100):null;
+  $('#k6').textContent=_ach!=null?_ach.toFixed(0)+'%':'–';
+  $('#k6s').textContent=`(연관 오더 + 셀아웃 실적) ÷ (오더 타깃 + 셀아웃 타깃)`;
+  $('#k6m').style.width=(_ach!=null?Math.min(_ach,100):0)+'%';
   const wait=T.n-T.run;
   $('#w1').style.display=wait?'block':'none';
   if(wait)$('#w1').innerHTML=`<b>시작 전 · 원장 미도달 ${wait}건</b>은 모든 집계에서 제외됨. `
