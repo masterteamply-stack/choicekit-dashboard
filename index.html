@@ -1854,7 +1854,7 @@ header .mono b.t-orange {
           <div class="sub" id="kpiBudgetSub">0 activities · <span id="kpiPlanUse" class="t-yellow">0%</span> of plan</div>
         </div>
         <div class="hero-card ord">
-          <div class="label-mono">Order Amount</div>
+          <div class="label-mono">연관 오더</div>
           <div class="kpi-num" id="kpiOrder">$0</div>
           <div class="sub" id="kpiOrderSub">0 orders</div>
         </div>
@@ -6602,10 +6602,39 @@ function renderRegionExecSummary(fOrders, fMkt) {
     };
     const _tgtSets = {};
     Object.keys(cfg).forEach(pp => { const c = cfg[pp]||{}; if ((c.match_by||'sku').toLowerCase()==='sku' && Array.isArray(c.target_skus) && c.target_skus.length) _tgtSets[pp] = new Set(c.target_skus.map(x=>x.trim().toUpperCase())); });
+    // 연관 오더(ChoiceKit) LATAM 4버킷 규칙: LATAM 주문은 campMatch/carve-out 대신 이 규칙으로 집계.
+    //  ① 멕시코(REFATRIX) 16SKU 게시일~2026-07-31  ② Mexico Awakening=16제외 2026-01-17~
+    //  ③ 멕·브 제외 전 라탐 66SKU 게시일 기준(PLUSCAR·SUPER REP 2026-09-01~ 제외)  ④ PLUSCAR+SUPER REP 2026-09-01~. 전부 SELL-IN.
+    const _REL_P16={"CQ0280L":"2026-02-11","CQ0280R":"2026-02-11","CL0477":"2026-02-11","CR0490":"2026-02-11","CE0536L":"2026-02-11","CE0536R":"2026-02-11","CB0336":"2026-02-11","CQ0096L":"2026-03-24","CQ0096R":"2026-03-24","CE0287L":"2026-03-24","CE0287R":"2026-03-24","GV0130":"2026-03-24","CL0240":"2026-03-24","GV0131":"2026-03-24","GV0135":"2026-03-24","CB0161":"2026-03-24"};
+    const _REL_P66={"CQ0280L":"2026-02-11","CQ0280R":"2026-02-11","CL0477":"2026-02-11","CR0490":"2026-02-11","CE0536L":"2026-02-11","CE0536R":"2026-02-11","CB0336":"2026-02-11","CQ0096L":"2026-03-24","CQ0096R":"2026-03-24","CE0287L":"2026-03-24","CE0287R":"2026-03-24","GV0130":"2026-03-24","CL0240":"2026-03-24","GV0131":"2026-03-24","GV0135":"2026-03-24","CB0161":"2026-03-24","CB0331":"2026-07-21","CE0507":"2026-07-21","CE0508":"2026-07-21","CQ0273L":"2026-07-21","CQ0273R":"2026-07-21","CR0476":"2026-07-21","GV1043":"2026-07-21","PL0477":"2026-07-21","CB0418":"2026-07-29","CE0187":"2026-07-29","CE0788":"2026-07-29","CQ0312R":"2026-07-29","CQ0312L":"2026-07-29","PL0586":"2026-07-29","CL0586":"2026-07-29","GV0497":"2026-07-29","GV1091":"2026-07-29","GV1048R":"2026-07-29","GV1048L":"2026-07-29","CB0459":"2026-08-11","CB0450":"2026-08-11","CE0909L":"2026-08-11","CE0909R":"2026-08-11","GV1447":"2026-08-11","GY1758G":"2026-08-11","CB0345":"2026-08-26","CE0611L":"2026-08-26","CE0611R":"2026-08-26","CR0522":"2026-08-26","CL0953":"2026-08-26","CQ0287L":"2026-08-26","CQ0287R":"2026-08-26","GV0587":"2026-08-26","CB0166":"2026-09-08","CE0295":"2026-09-08","CQ0102L":"2026-09-08","CQ0102R":"2026-09-08","CL0250":"2026-09-08","CR0245":"2026-09-08","CE0334R":"2026-09-23","CE0334L":"2026-09-23","CR0277":"2026-09-23","CL0309R":"2026-09-23","CL0309L":"2026-09-23","CL0283R":"2026-09-23","CL0283L":"2026-09-23","CL0282R":"2026-09-23","CL0282L":"2026-09-23","CQ0143R":"2026-09-23","CQ0143L":"2026-09-23"};
+    const _REL_EXCL={'PLUSCAR S.A':1,'SUPER REPUESTOS':1};
+    const _REL_MX={'MEXICO':1,'멕시코':1}, _REL_BR={'BRAZIL':1,'BRASIL':1,'브라질':1};
+    const _relatedBucket = o => {
+      if (String(o.sell_type||'').toUpperCase().replace(/_/g,'-') !== 'SELL-IN') return false;
+      const c=String(o.country||'').trim().toUpperCase(), sk=String(o.sku||o.ctr_code||'').trim().toUpperCase();
+      const d=o.order_date||'', cu=String(o.customer||'').trim();
+      const mx=_REL_MX[c]===1, br=_REL_BR[c]===1, ex=_REL_EXCL[cu]===1;
+      if (mx && _REL_P16[sk] && d>=_REL_P16[sk] && d<='2026-07-31') return true;
+      if (mx && !_REL_P16[sk] && d>='2026-01-17') return true;
+      if (ex && d>='2026-09-01') return true;
+      if (!mx && !br && !(ex && d>='2026-09-01') && _REL_P66[sk] && d>=_REL_P66[sk]) return true;
+      return false;
+    };
     (fOrders || []).forEach(o => {
       const p = (o.promotion_category || o.promotion_id || '').trim();
       if (_skipCamp(p)) return;
       const r = o.region || ''; if (!r) return;
+      if (r === 'LATAM') {
+        if (!_relatedBucket(o)) return;
+        if ((o.order_date || '') > today) return;
+        const amt = convOrder(o);
+        const node = ensure(r, p);
+        node.order += amt; _execOrdN++; _execOrdQty += Number(o.qty) || 0;
+        let _hs=''; const _ts=_tgtSets[p];
+        if (_ts) { const _sk=(o.sku||o.ctr_code||'').trim().toUpperCase(); if (_ts.has(_sk)) { _hs=_sk; node.skus.add(_sk); } }
+        bucket(node, _ctryKey(o.country, r), o.customer, amt, 'order', _hs);
+        return;
+      }
       const gst = _campStart(p);
       if (gst && (o.order_date || '') < gst) return;
       if ((o.order_date || '') > today) return;   // cap at today (campaign impact runs to date)
@@ -6876,7 +6905,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
   const THEAD = `<thead><tr>
     <th style="min-width:300px">Region ▸ Campaign ▸ Country ▸ Customer</th>
     <th class="text-right" title="Σ Order_Target($) of SELL-IN activities">Order Target</th>
-    <th class="text-right" title="orders during the campaign period (start → today)">Campaign Period Order</th>
+    <th class="text-right" title="연관 오더(ChoiceKit): 캠페인 연관 오더. LATAM은 4버킷 규칙(게시일 기준 SELL-IN), 비LATAM은 캠페인 기간 오더">연관 오더</th>
     <th class="text-right" title="orders in the same period last year (baseline)">Prior-Yr Same Period</th>
     <th class="text-right" title="vs same period last year">YoY Growth</th>
     <th class="text-right" title="오더로 전환된 target SKU 수 / 캠페인 order target SKU 총수 (SKU 기반 캠페인만; 고객사 기반은 –)">SKU 전환</th>
