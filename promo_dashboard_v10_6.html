@@ -1699,7 +1699,7 @@ function sepMonth(A){
    +[['Meta 콘텐츠 집행',cis.content_done+' / '+cis.content_total+'건',100,C1],['웹사이트 조회',cis.views.toLocaleString(),100,C2],['Catalogue 다운로드',cis.downloads_total.toLocaleString()+' ('+(cis.download_rate*100).toFixed(1)+'%)',cis.download_rate*100*3,C26],['연관 SKU 오더 (참고)','Asian 중심 $1.30M',34,'#9dbad3']]
      .map(([l,v,w,c])=>`<div style="margin:9px 0"><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:3px"><b>${l}</b><span>${v}</span></div><div style="height:15px;background:var(--track);border-radius:3px;overflow:hidden"><div style="height:100%;width:${Math.max(w,3)}%;background:${c};border-radius:3px"></div></div></div>`).join('')
    +`</div></div></div>`
-   +`<p class="note" style="margin-top:8px">조회수 대비 다운로드 전환율 ${(cis.download_rate*100).toFixed(1)}% · European Catalogue 다운로드가 Asian보다 높아 European 차종 관심 확인.</p>`
+   +`<p class="note" style="margin-top:8px">조회수 대비 다운로드 전환율 ${(cis.download_rate*100).toFixed(1)}% · European Catalogue 다운로드가 Asian보다 높아 European 차종 관심 확인.<br><span style="color:var(--ink2)">※ 전환율은 게시물 조회수 대비 Catalogue 다운로드 기준임. 다만 게시물을 거치지 않고 다운로드 링크로 직접 유입되거나 동일 사용자가 여러 번 다운로드하는 경로가 있어, 실제 전환율은 이 수치와 다를 수 있음.</span></p>`
    +`<h4 class="soh">콘텐츠 집행 현황 (${cis.content_done} / ${cis.content_total}건)</h4><div class="tblwrap"><table class="lts"><thead><tr><th>구분</th><th>소재</th><th>업로드</th><th>상태</th></tr></thead><tbody>`
    +cis.meta_posts.map(p=>`<tr><td>${p.type}</td><td style="text-align:left">${esc(p.title)}</td><td>${p.uploaded_at}</td><td>${badge(p.status,'ok')}</td></tr>`).join('')
    +`<tr><td>Asian/European</td><td style="text-align:left">잔여 소재</td><td>예정</td><td>${badge('준비 중','wn')}</td></tr></tbody></table></div>`
