@@ -1854,12 +1854,12 @@ header .mono b.t-orange {
           <div class="sub" id="kpiBudgetSub">0 activities · <span id="kpiPlanUse" class="t-yellow">0%</span> of plan</div>
         </div>
         <div class="hero-card ord">
-          <div class="label-mono">Order Amount</div>
+          <div class="label-mono">연관 오더 (ChoiceKit)</div>
           <div class="kpi-num" id="kpiOrder">$0</div>
           <div class="sub" id="kpiOrderSub">0 orders</div>
         </div>
         <div class="hero-card ord" style="border-color:rgba(200,155,255,.5);background:rgba(200,155,255,.08)">
-          <div class="label-mono" style="color:var(--purple)">Achievement</div>
+          <div class="label-mono" style="color:var(--purple)">기간 경과율 (ChoiceKit)</div>
           <div class="kpi-num" id="kpiAchv">0%</div>
           <div class="sub" id="kpiAchvSub">평균 캠페인 달성률</div>
         </div>
@@ -13908,6 +13908,33 @@ function injectCopyLinkButtons() {
   } else {
     window.addEventListener('load', () => setTimeout(safeRun, 800));
   }
+})();
+</script>
+<script>
+/* ChoiceKit 효과 대시보드 기준 반영: 상단 "연관 오더"·"기간 경과율"을 효과 대시보드(2026-09-04 스냅샷) 수치로 고정.
+   사용자 지정(효과 대시보드에 맞춤). 효과 대시보드 D 갱신 시 아래 값도 같이 갱신할 것. */
+(function(){
+  var OV={
+    kpiOrder:'$3.08M',
+    kpiOrderSub:'전년 $2.33M · +32.0% YoY · ChoiceKit 캠페인 기간 · 효과 대시보드 기준',
+    kpiAchv:'69%',
+    kpiAchvSub:'관측 1,561 / 계획 2,262일 · 기간 경과율 · 효과 대시보드 기준'
+  };
+  var MARK='효과 대시보드(ChoiceKit) 기준';
+  var NOTE='<span class="t-purple" style="font-weight:600">※ 상단 연관 오더·기간 경과율은 '+MARK+'입니다. 아래 표는 전 캠페인 라이브 집계로 범위가 다릅니다.</span><br>';
+  function apply(){
+    for(var id in OV){ var el=document.getElementById(id); if(el && el.textContent!==OV[id]) el.textContent=OV[id]; }
+    var n=document.getElementById('execSummaryNote');
+    if(n && n.innerHTML.indexOf(MARK)===-1){ n.innerHTML=NOTE+n.innerHTML; }
+  }
+  function start(){
+    apply();
+    var obs=new MutationObserver(apply);
+    ['kpiOrder','kpiOrderSub','kpiAchv','kpiAchvSub','execSummaryNote'].forEach(function(id){ var el=document.getElementById(id); if(el) obs.observe(el,{childList:true,characterData:true,subtree:true}); });
+    setInterval(apply, 600);
+  }
+  if(document.readyState==='loading') window.addEventListener('DOMContentLoaded', function(){ setTimeout(start,300); });
+  else setTimeout(start,300);
 })();
 </script>
 </body>
