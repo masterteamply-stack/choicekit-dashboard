@@ -3351,7 +3351,9 @@ async function parseOrderCSV(file) {
           customer: str(pick(r,'customer')),
           customer_no: str(pick(r,'Customer_No','customer_no','customer no')),
         };
-      }).filter(r => r.order_id);
+      })
+      // Algeria · EURL TASSRIAA 오더 제외 (사용자 지정 · 두 대시보드 공통)
+      .filter(r => r.order_id && String(r.customer||'').trim().toUpperCase() !== 'EURL TASSRIAA');
       resolve(rows);
     }, error: reject });
   });
