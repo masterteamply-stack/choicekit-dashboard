@@ -283,6 +283,7 @@ details.cdet-c>.cdet-body{margin:0;padding:10px 12px 4px}
     <span class="sep">|</span><span>2026 Choice Kit 캠페인 효과 대시보드</span></h1>
   <span class="sub" id="hdrSub"></span>
   <span class="tools">
+    <span id="ckLang"></span>
     <button class="xbtn" id="btnTheme">다크 모드</button>
     <button class="xbtn" id="btnReset">필터 초기화</button>
   </span>
@@ -2338,5 +2339,6 @@ function copyTabLink(pg){var url=tabLinkURL(pg);var ok=function(){toast('탭 링
 (function(){var PG=['p7','p6','p1','p5','p3','p8','p9'];function fromHash(){var h=(location.hash||'').replace('#','');if(PG.indexOf(h)<0)return null;return document.querySelector('#nav button[data-pg="'+h+'"]');}var b=fromHash();if(b)activateTab(b);addEventListener('hashchange',function(){var bb=fromHash();if(bb&&!bb.classList.contains('on'))activateTab(bb);});})();
 </script>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="i18n.js?v=20261016a"></script>
 </body>
 </html>
