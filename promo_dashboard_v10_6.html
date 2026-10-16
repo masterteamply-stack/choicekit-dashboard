@@ -251,6 +251,15 @@ th .up{color:#7be3b8}
 td.b0{background:var(--panel);font-weight:700}
 tfoot td.num{text-align:right}
 
+/* 고객사 상세 — 접이식 헤더 */
+details.cdet{margin:14px 0 4px}
+details.cdet>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px;user-select:none}
+details.cdet>summary::-webkit-details-marker{display:none}
+details.cdet>summary .cdet-t{font-size:18px;font-weight:800}
+details.cdet>summary .cdet-s{color:var(--muted);font-size:12px;margin-top:3px}
+details.cdet>summary .cdet-chev{margin-left:auto;width:22px;height:22px;flex:none;color:var(--muted);transition:transform .15s}
+details.cdet[open]>summary .cdet-chev{transform:rotate(180deg)}
+details.cdet>.cdet-body{margin-top:10px}
 </style>
 <style>.lts th{background:var(--head);color:#fff;font-weight:700;text-align:right;font-size:14px;padding:4px 8px;border:1px solid var(--headbd);position:static;cursor:default}.lts th:first-child,.lts td:first-child{text-align:left}.rvcol{background:rgba(37,111,235,0.08)}.rvcol2{background:rgba(13,148,136,0.13);border-left:1px solid rgba(13,148,136,0.4)}.lts th.rvcol{font-weight:800;box-shadow:inset 0 -3px 0 #2563eb}.lts th.rvcol2{font-weight:800;box-shadow:inset 0 -3px 0 #0d9488}[data-theme="dark"] .rvcol{background:rgba(96,165,250,0.13)}[data-theme="dark"] .rvcol2{background:rgba(45,212,191,0.15)}[data-theme="dark"] .lts th.rvcol{box-shadow:inset 0 -3px 0 #60a5fa}[data-theme="dark"] .lts th.rvcol2{box-shadow:inset 0 -3px 0 #4fd1c5}.lts{margin:2px 0 6px}</style>
 <style>.brc{display:inline-block;background:var(--o1);color:var(--o6);border:1px solid var(--o2);border-radius:3px;padding:0 5px;margin-right:6px;font-size:12.5px;font-weight:700;vertical-align:1px}</style>
@@ -1061,22 +1070,39 @@ function soFilterUI(pg){const on=(pg==='p5'||pg==='p6');
 /* ══════════ 13. SteerStar — 오더 미션 / 설문 미션 ══════════ */
 function ssRows(){const f=F();
   return (SS.rows||[]).filter(r=>f.region==='ALL'||r.region===f.region);}
-function steerStarExtra(){
- /* Lordco 월별 오더·매출 블록만 켠다. REFATRIX/BRABHAM 카드는 이전에 꺼 둔 상태를 그대로 둔다. */
- const SHOW_RF=false;
+/* ══ 고객사 상세 — 월별 오더·매출 원자료를 받은 고객사의 전년 1:1 비교.
+   권역 필터(#fRegion)를 따르고, 평소에는 접어 둔다(펼친 상태는 필터를 바꿔도 유지). ══ */
+let CDET_OPEN=false;
+function custDetailList(){
  const A=(typeof SEPTEMBER_ACTIVITY!=="undefined")?SEPTEMBER_ACTIVITY:null;
- if(!A||!A.latam||!A.latam.steerstar) return "";
- const st=A.latam.steerstar, rf=st.refatrix, bb=st.brabham;
- const C1="var(--o4)",C26="var(--brand)";
- const pc=v=>(v>=0?"+":"")+(v*100).toFixed(1)+"%";
+ if(!A||!A.latam||!A.latam.steerstar) return [];
+ const st=A.latam.steerstar, L=[];
+ if(st.lordco) L.push({id:'lordco',region:'NA',country:'캐나다',name:'Lordco Auto Parts',html:()=>lordcoCard(st.lordco)});
+ /* REFATRIX/BRABHAM(LATAM) 카드는 이전에 꺼 둔 상태 그대로 둔다. 켜려면 아래 한 줄을 살리면 됨. */
+ // if(st.refatrix&&st.brabham) L.push({id:'rfbb',region:'LATAM',country:'멕시코·브라질',name:'REFATRIX & BRABHAM',html:()=>rfbbCard(st.refatrix,st.brabham)});
+ return L;
+}
+function rfbbCard(rf,bb){const pc=v=>(v>=0?"+":"")+(v*100).toFixed(1)+"%";
+ return `<div class="card"><h3>LATAM · REFATRIX &amp; BRABHAM</h3><p class="note">REFATRIX 2026 오더 전년 대비 <b>${pc(rf.yoy)}</b> 성장 · BRABHAM INMETRO 인증 이슈로 판매 확산 제한. ${esc(bb.issue)} · ${esc(bb.status)}<br><span style="color:var(--ink2)">RUJAC 소비자 설문(멕시코) 상세는 <b>설문 인사이트</b> 탭 참조.</span></p></div>`;}
+function steerStarExtra(){
+ const all=custDetailList(); if(!all.length) return "";
+ const f=F(), show=all.filter(c=>f.region==='ALL'||c.region===f.region);
+ const list=a=>a.map(c=>`${esc(c.region)} · ${esc(c.name)}`).join(' · ');
+ const title=`고객사 상세 · ${f.region==='ALL'?'전체 권역':esc(f.region)} ${show.length}곳`;
+ const sub=show.length
+   ?`${list(show)} — 오더(sell-in)와 매출(출하·청구)을 전년 같은 달과 1:1로 비교 · 클릭해서 펼침`
+   :`<b>${esc(f.region)}</b> 권역에는 월별 원자료를 받은 고객사가 없음 · 현재: ${list(all)}`;
+ const chev=`<svg class="cdet-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>`;
+ return `<details class="cdet" id="cdet"${CDET_OPEN?' open':''}><summary><div><div class="cdet-t">${title}</div><div class="cdet-s">${sub}</div></div>${chev}</summary>`
+   +`<div class="cdet-body">`+(show.length?show.map(c=>c.html()).join('')
+     :`<div class="card"><div class="empty"><b>${esc(f.region)}</b> 권역에는 월별 오더·매출 원자료를 받은 고객사가 없음.<br>권역을 <b>전체 권역</b>으로 두면 ${list(all)} 상세를 볼 수 있음.</div></div>`)
+   +`</div></details>`;
+}
+function lordcoCard(lo){const C25='var(--s1)',C26b='var(--brand)';
  const kgrid=(cards,cls)=>`<div class="kpis ${cls||"k6"}">`+cards.map(k=>`<div class="tile${k.hero?" hero":""}"><div class="lab">${k.lab}</div><div class="val">${k.val}</div>${k.sub?`<div class="sub2">${k.sub}</div>`:""}</div>`).join("")+`</div>`;
- const badge=(t,tone)=>`<span class="sbadge ${tone||""}">${esc(t)}</span>`;
- let h=`<div style="margin:4px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:18px;font-weight:800">고객사 상세 — Lordco Auto Parts</span><div class="sub3" style="font-size:12px;margin-top:3px">Lordco Order &amp; Sales data · 오더(sell-in)와 매출(출하·청구)을 전년 같은 달과 1:1로 비교</div></div>`;
- if(SHOW_RF) h+=`<div class="card"><h3>REFATRIX &amp; BRABHAM</h3><p class="note">REFATRIX 2026 오더 전년 대비 <b>${pc(rf.yoy)}</b> 성장 · BRABHAM INMETRO 인증 이슈로 판매 확산 제한. ${esc(bb.issue)} · ${esc(bb.status)}<br><span style="color:var(--ink2)">RUJAC 소비자 설문(멕시코) 상세는 <b>설문 인사이트</b> 탭 참조.</span></p></div>`;
- if(st.lordco){const lo=st.lordco;const C25='var(--s1)',C26b='var(--brand)';
    const yoy=(lo.cum26-lo.cum25)/lo.cum25*100;
    const ML=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-  h+=`<div class="card"><h3>NA · Lordco (캐나다) 월별 오더 추이</h3>
+ let h=`<div class="card"><h3>NA · Lordco (캐나다) 월별 오더 추이</h3>
     <p class="note">전 품목 오더(USD) · 2025 연간 $${lo.annual25.toLocaleString()} · 2026 YTD(1~${lo.last26}월) $${lo.ytd26.toLocaleString()}. Lordco는 소수 대형 단건 중심이라 월별·품목별로 무엇이 줄었는지 함께 봄.</p>` +`<div style="margin:8px 0 2px;padding:9px 14px;background:rgba(0,122,76,.08);border-left:5px solid var(--good);border-radius:0 6px 6px 0;font-size:13px"><b style="color:var(--good)">매출 성과 (AM 실적표 기준)</b> · 2026 <b>$${Math.round((REV['289029']||[0,0])[1]).toLocaleString()}</b> · 전년 $${Math.round((REV['289029']||[0,0])[0]).toLocaleString()} 대비 <b>${fmtPC(((REV['289029']||[1,1])[1]/(REV['289029']||[1,1])[0]-1)*100)}</b> <span style="color:var(--ink2)">· 아래 <b>월별 매출</b> 표는 Lordco Sales Raw(반품·정산 조정 포함) 기준이라 합계가 다름 — 두 수치는 집계 범위가 다른 별개 자료임</span></div>`
    +kgrid([{lab:'2025 연간 오더',val:'$'+lo.annual25.toLocaleString()},
      {lab:'2026 YTD 오더',val:'$'+lo.ytd26.toLocaleString(),sub:`1~${lo.last26}월`},
@@ -1109,11 +1135,11 @@ function steerStarExtra(){
    +`<tr><td style="text-align:left;font-weight:700;background:var(--panel)">진행 (마컴)</td><td style="text-align:left">SteerStar Ambassador Program 운영 (Lordco Welcome·Main·Order 미션) · 한국 인센티브 트립 초청 연계</td></tr>`
    +`<tr><td style="text-align:left;font-weight:700;background:var(--panel)">계획 (10~11월)</td><td style="text-align:left">하반기 재주문 전환 유도 · 감소 폭 큰 핵심 어셈블리(컨트롤암·타이로드·링크·볼조인트) Follow-up Order 협의 · 2027 프로그램 논의</td></tr>`
    +`</tbody></table></div>`
-   +`</div>`;}
+ +`</div>`;
  return h;
 }
 function ssPage(){
-  {const _x=$("#ssExtra"); if(_x)_x.innerHTML=steerStarExtra();}
+  {const _x=$("#ssExtra"); if(_x){_x.innerHTML=steerStarExtra(); const d=$("#cdet"); if(d) d.addEventListener("toggle",()=>{CDET_OPEN=d.open;});}}
   const rows=ssRows(), live=rows.filter(r=>!r.dropped), drop=rows.filter(r=>r.dropped);
   const scored=live.filter(r=>r.tgt);
   const sum=(a,k)=>a.reduce((s,r)=>s+(r[k]||0),0);
