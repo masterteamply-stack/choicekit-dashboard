@@ -1126,7 +1126,7 @@ function custCard(c){const C25='var(--s1)',C26b='var(--brand)';
    +gbar(ML,[{name:'2025',color:C25,vals:y25},{name:'2026',color:C26b,vals:y26}],{W:500,H:220,delta:1,fmtV:v=>v?'$'+Math.round(v/1000)+'K':''})
    +`</div></div>`;
  let h=`<div class="card"><h3>${esc(c.region)} · ${esc(c.name)} (${esc(c.country_ko)}) 월별 오더 추이${dropped?' <span class="pill na">26 SteerStar 제외</span>':''}</h3>`
-   +`<p class="note">${c.live?`연관 오더(sell-in, USD) · 2026 orders.csv ${esc(CDLIVE.max)} 기준 · 2025 baseline_data(전년 비교용)`+(c.inCsv?'':` · <b>orders.csv에 이 고객사 오더 없음</b>(연관 오더 0)`):`전 품목 ${streamLab}(USD) · ${esc(CD.src_note)} · 원장 ${esc(c.src||'–')}`}. 2025 연간 $${c.annual25.toLocaleString()} · 2026 YTD(1~${c.last26}월) $${c.ytd26.toLocaleString()}.</p>`
+   +`<p class="note">${c.live?`연관 오더(sell-in, USD) · 2026 orders.csv ${esc(CDLIVE.max)} 기준 · 2025 baseline_data(전년 비교용)`:`전 품목 ${streamLab}(USD) · ${esc(CD.src_note)} · 원장 ${esc(c.src||'–')}${c.snap?' · orders.csv에 오더가 없어 기존 원장 데이터를 유지':''}`}. 2025 연간 $${c.annual25.toLocaleString()} · 2026 YTD(1~${c.last26}월) $${c.ytd26.toLocaleString()}.</p>`
    +kgrid([{lab:'2025 연간 오더',val:'$'+c.annual25.toLocaleString()},
      {lab:'2026 YTD 오더',val:'$'+c.ytd26.toLocaleString(),sub:`1~${c.last26}월`},
      {lab:`동기(1~${c.last26}월) 전년 대비`,val:yoy==null?(c.cum26>0?'신규':'–'):fmtPC(yoy),sub:`${fmtC(c.cum25)} → ${fmtC(c.cum26)}`,hero:true},
@@ -1181,6 +1181,7 @@ async function cdetLoad(){
 }
 function cdetLive(c){
  if(!CDLIVE||c.id==='lordco') return c;
+ if(!CDLIVE.y26[c.code]) return {...c,snap:true};   /* orders.csv 에 없는 고객사는 기존 오더 원장 스냅샷(전 품목, ~8월)을 그대로 쓴다 */
  const r0=v=>Math.round(v), y25=(CDLIVE.y25[c.code]||Array(12).fill(0)).map(r0), y26=(CDLIVE.y26[c.code]||Array(12).fill(0)).map(r0), L=CDLIVE.last, sum=(a,n)=>a.slice(0,n).reduce((x,y)=>x+y,0);
  return {...c,y25,y26,last26:L,annual25:sum(y25,12),ytd26:sum(y26,12),cum25:sum(y25,L),cum26:sum(y26,L),so:null,stream:'SELL_IN',src:'orders.csv(연관 오더 기준)',live:true,inCsv:!!CDLIVE.y26[c.code]};
 }
