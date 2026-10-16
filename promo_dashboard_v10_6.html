@@ -524,7 +524,7 @@ function kpis(){
       +`환율은 ${D.fx_note||'고정'}임.`
     :`선택한 조건에 <b>실집행 비용 기록이 없음</b> — 회수 배수를 계산할 수 없음. 비용 원장 반영이 먼저임.`;
   $('#fInfo').innerHTML=`기준일 ${D.today} · 캠페인 ${T.n}건 · 오더 원장 ${D.n_fact.toLocaleString()}행`;
-  $('#hdrSub').textContent=`연관 오더는 오늘까지 · 이중차분·관측은 기준일 ${D.today} 원장 기준 · 캠페인 기간 vs 전년 동일 기간`;
+  $('#hdrSub').textContent='';
 }
 
 /* ══════════ 3. 권역별 표 ══════════ */
