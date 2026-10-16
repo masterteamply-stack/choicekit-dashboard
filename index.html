@@ -6764,6 +6764,20 @@ function renderRegionExecSummary(fOrders, fMkt) {
         }
       });
     }
+    // Lordco(NA, 289029) — Order & Sales data 2025.XLSX(SAP 오더 원장) 기준으로 당해·전년을 덮어씀.
+    // 당해 = 2026 1월~파일 최종월 전체(캠페인 시작 전 1월분 포함), 전년 = 2025 같은 달 구간(1~9월).
+    // 효과 대시보드(promo_dashboard_v10_6.html)와 동일 수치. 파일 갱신 시 아래 배열 교체.
+    const _LORDCO_FILE = { cust:'Lordco Auto Parts', last:9, y25:[56940,0,501829,0,27222,87197,0,37993,0], y26:[56634,0,0,55820,61098,0,68472,74871,29326] };
+    (function(){
+      const nd = agg.NA && agg.NA['Strategic Partner Program']; if (!nd) return;
+      let cc = null, uu = null;
+      Object.keys(nd.countries || {}).forEach(k => { const c = nd.countries[k]; if (c.customers && c.customers[_LORDCO_FILE.cust]) { cc = c; uu = c.customers[_LORDCO_FILE.cust]; } });
+      if (!cc) return;
+      const sm = a => a.reduce((x, y) => x + y, 0) * usdToDisp;
+      const cur = sm(_LORDCO_FILE.y26), prv = sm(_LORDCO_FILE.y25);
+      nd.order += cur - uu.order; cc.order += cur - uu.order; uu.order = cur;
+      if (baselineOn) { nd.prev += prv - uu.prev; cc.prev += prv - uu.prev; uu.prev = prv; }
+    })();
     // Country-level Order Target — same dedup as deriveOrderTargets but grouped by
     // (region, campaign, country); Σ over countries equals the campaign target.
     const _seenT = new Set(), _tgtByRPC = {}, _tgtByRPCU = {}, _soByRPC = {}, _soByRPCU = {};
