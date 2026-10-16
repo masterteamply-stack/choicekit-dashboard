@@ -1803,7 +1803,7 @@ function sepMonth(A){
    +`<div class="tile"><div class="lab">순증액</div><div class="val">${fmtC(_g26-_g25)}</div></div>`
    +`<div class="tile"><div class="lab">오더 전환 SKU</div><div class="val">${_gosku.toLocaleString()}<span style="font-size:15px;color:var(--muted)">종</span></div><div class="sub2 sub3">ChoiceKit 오더 전환 품목</div></div>`
    +`<div class="tile"><div class="lab">성장 권역</div><div class="val">${_gr.filter(r=>r.a26>r.a25).length}<span style="font-size:16px;color:var(--muted)"> / ${_gr.length}</span></div></div>`
-   +`<div class="tile"><div class="lab">집행 캠페인</div><div class="val">${Tov.run}<span style="font-size:16px;color:var(--muted)"> / ${Tov.n}</span></div><div class="sub2">대상 고객 ${Tov.cust.size.toLocaleString()}곳</div></div>`
+   +`<div class="tile"><div class="lab">집행 캠페인</div><div class="val">${Tov.run}<span style="font-size:16px;color:var(--muted)"> / ${Tov.n}</span></div><div class="sub2">대상 고객 ${Tov.cust.size.toLocaleString()}곳${(()=>{const q=cumCust(+String(D.today).slice(5,7));return q?' · 오더 발생 '+q.ord+'곳 ('+q.conv+'%)':'';})()}</div></div>`
    +`<div class="tile"><div class="lab">달성률</div><div class="val">${Tov.prog.toFixed(0)}%</div><div class="sub2">관측 ${Tov.obs.toLocaleString()}일 / 계획 ${Tov.tot.toLocaleString()}일</div></div></div>`;
   const ov=`<h4 class="soh">2026 CK PROMOTION 연관 오더 현황</h4>`
    +`<p class="note" style="margin-top:-2px">ChoiceKit 캠페인 연관 오더(sell-in)의 전년 대비 증감 · 권역별 · USD</p>`
@@ -2067,13 +2067,38 @@ const AUGUST_ACTIVITY={_m:8,kind:'summary',generated_at:'8월 마감 (MRP 마감
   {name:'OCEANIA',sub:'Kailos Field Validation',points:['현지 행사·Brand Showroom으로 제품 노출·고객 반응·Survey Promotion 진행','Survey 회수·관심 제품군·행사 전후 오더 추이·Follow-up Order 추적']}
  ]
 };
+/* ══════════ 월별 누적 고객수 (대상·참여) ══════════
+   대상 고객 = 해당 월말까지 시작된 캠페인의 대상 고객 합집합 (캠페인이 추가되면 늘거나 같음)
+   참여(오더 발생) 고객 = 위 대상 고객 중, 캠페인 시작월~해당 월 사이 캠페인 대상 오더가 1건이라도 있었던 고객 (누적이라 줄지 않음)
+   원장 월별(series)은 D 스냅샷 마지막 월까지, 기준일 월은 연관 오더 집계(cust_delta) 기준으로 이어서 계산 */
+function cumCustAll(cs){
+  const sc=D.scopes||[], n2k={}; (D.customers||[]).forEach(c=>{(n2k[c.n]=n2k[c.n]||[]).push(c.k);});
+  const val=(v,scope)=>scope==='BRAKE+SHOCK'?(v[sc.indexOf('BRAKE')]||0)+(v[sc.indexOf('SHOCK')]||0):(sc.indexOf(scope)>=0?v[sc.indexOf(scope)]:v[0]);
+  const live=new Set((D.cust_delta||[]).filter(r=>r.a26>0).map(r=>r.name));
+  const lastS=+(D.months[D.months.length-1]||'2026-08').slice(5,7), mNow=+String(D.today||'2026-09-26').slice(5,7);
+  cs=cs||camps(); const out={}; let prev=new Set();
+  for(let M=1;M<=mNow;M++){
+    const eom='2026-'+String(M).padStart(2,'0')+'-31', T=new Set(), O=new Set(); let run=0;
+    cs.forEach(c=>{ if(!c.start||c.start>eom) return; run++; const sm=+c.start.slice(5,7);
+      (c.custs||[]).forEach(nm=>{ T.add(nm);
+        const codes=n2k[nm]||[]; let ok=false;
+        for(const code of codes){ for(const st of (c.streams||[])){ for(let m=sm;m<=Math.min(M,lastS)&&!ok;m++){
+          const v=(((D.series||{})[code]||{})[st]||{})['2026-'+String(m).padStart(2,'0')]; if(v&&val(v,c.scope)>0) ok=true; } } }
+        if(ok||(M===mNow&&live.has(nm))||prev.has(nm)) O.add(nm); }); });
+    out[M]={m:M,run,total:cs.length,target:T.size,ord:O.size,conv:T.size?Math.round(O.size/T.size*1000)/10:0,Ts:T,Os:O};
+    prev=O; }
+  return out;
+}
+function cumCust(M){ const a=cumCustAll(); return a[M]||null; }
 function monthSummary(A){
   const nf=v=>typeof v==='number'?v.toLocaleString():(v==null?'':v);
   const tile=(lab,val,sub,hero)=>`<div class="tile${hero?' hero':''}"><div class="lab">${esc(lab)}</div><div class="val">${val}</div>${sub?`<div class="sub2">${esc(sub)}</div>`:''}</div>`;
   const rhdr=(name,sub)=>`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">${esc(name)}</span>${sub?` <span style="font-size:12.5px;color:var(--ink2)">· ${esc(sub)}</span>`:''}</div>`;
-  const k=A.kpis||{}; let h='';
+  let k=A.kpis||{}; let h='';
+  const _cc=cumCust(A._m);
+  if(_cc&&(k.engaged!=null||k.ordering!=null)) k=Object.assign({},k,{engaged:_cc.target,ordering:_cc.ord,conversion:_cc.conv,active:_cc.run+'/'+_cc.total});
   h+=`<div class="card"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap"><span style="display:inline-block;width:6px;height:26px;background:var(--brand);border-radius:2px"></span><h3 style="margin:0;border:0;padding:0;font-size:20px">${A._m}월 Choice Kit 월간 요약</h3><span style="color:var(--muted);font-size:12px">· ${esc(A.generated_at||'')}</span></div><p class="note" style="padding-left:0;margin:0;font-size:13.5px;line-height:1.6">${esc(A.headline||'')}</p></div>`;
-  const T=A.tiles?A.tiles.slice():[];
+  const T=A.tiles?A.tiles.map(t=>(t[0]==='참여 → 오더 고객'&&_cc)?['참여 → 오더 고객',nf(_cc.target)+' → '+nf(_cc.ord)+'개사','누적 기준 · 전환 '+_cc.conv+'%']:t):[];
   if(!A.tiles){if(k.order_amount!=null)T.push(['캠페인 오더','$'+nf(k.order_amount),k.order_label||'',true]);
   if(k.order_target!=null)T.push(['Order Target','$'+nf(k.order_target),k.achievement!=null?('달성 '+k.achievement+'%'):(k.target_progress!=null?('진행 '+k.target_progress+'%'):'')]);
   if(k.sellout_target!=null)T.push(['Sell-out Target','$'+nf(k.sellout_target),'ASIA sell-out']);
@@ -2127,11 +2152,49 @@ function monthSummary(A){
 const MONTHLY_ACTIVITY = { 5: MAY_ACTIVITY, 6: JUNE_ACTIVITY, 7: JULY_ACTIVITY, 8: AUGUST_ACTIVITY, 9: SEPTEMBER_ACTIVITY };
 let sepSel = 9;
 function sepAllOverview(months){
-  let h=`<div class="card"><h3>월별 활동 리포트 · 종합</h3><p class="note">상단 드롭다운에서 월을 선택하면 해당 월 리포트가 표시됨. 데이터가 입력된 월만 노출됨.</p>
-   <div class="tblwrap"><table class="lts"><thead><tr><th>월</th><th>상태</th><th>주요 섹션</th></tr></thead><tbody>`
-   +months.map(m=>`<tr><td>${m}월</td><td style="text-align:center">${MONTHLY_ACTIVITY[m]?'<span class="sbadge ok">입력 완료</span>':'<span class="sbadge wn">미입력</span>'}</td><td style="text-align:left">${MONTHLY_ACTIVITY[m]?'CIS · ASIA · MENA · LATAM · SteerStar · Action Plan':'–'}</td></tr>`).join('')
+  const cs=camps(), cum=cumCustAll(cs), ks=Object.keys(cum).map(Number).filter(m=>cum[m].run>0), mNow=ks.length?ks[ks.length-1]:null;
+  const last=months.length?months[months.length-1]:null, A=last?MONTHLY_ACTIVITY[last]:null;
+  if(mNow==null) return '<div class="card"><p class="note">집계할 캠페인이 없음.</p></div>';
+  const now=cum[mNow], T=agg(cs), rr=regRows();
+  const verdict=y=>y==null?'기준 없음':y>=10?'성장':y<=-10?'감소':'보합';
+  const vcls=y=>y==null?'':y>=10?'up':y<=-10?'dn':'';
+  const reg=r=>{const c=cumCustAll(cs.filter(x=>x.region===r))[mNow]||{target:0,ord:0,conv:0,run:0,total:0,Ts:new Set(),Os:new Set()};return c;};
+  const byNet=rr.map(r=>({k:r.k,net:r.a26-r.a25,yoy:r.yoy,a25:r.a25,a26:r.a26})).sort((x,y)=>y.net-x.net);
+  const top=byNet[0], bot=byNet[byNet.length-1];
+  const rows=(D.cust_delta||[]).filter(r=>cs.some(c=>c.region===r.region&&c.program===r.program)).map(r=>({...r,net:r.a26-r.a25}));
+  const tot26=rows.reduce((a,r)=>a+r.a26,0), top3=rows.slice().sort((x,y)=>y.a26-x.a26).slice(0,3);
+  const top3s=tot26?top3.reduce((a,r)=>a+r.a26,0)/tot26*100:0;
+  const gain=rows.filter(r=>r.net>0).sort((x,y)=>y.net-x.net).slice(0,5), loss=rows.filter(r=>r.net<0).sort((x,y)=>x.net-y.net).slice(0,5);
+  const noOrd=[...now.Ts].filter(n=>!now.Os.has(n));
+  const noOrdBy={}; cs.forEach(c=>(c.custs||[]).forEach(n=>{if(noOrd.includes(n)){(noOrdBy[c.region]=noOrdBy[c.region]||new Set()).add(n);}}));
+  const starts=cs.filter(c=>c.start&&c.start>='2026-01-01').sort((x,y)=>x.start<y.start?-1:1);
+  const startTxt=ks.map(m=>({m,names:starts.filter(c=>+c.start.slice(5,7)===m).map(c=>c.region+' '+c.program)})).filter(x=>x.names.length);
+  const first=ks[0], at5=cum[ks.find(m=>m>=5)||first];
+  const bl=[], sp=t=>`<span>${t}</span>`;
+  bl.push(`<b>전체 성과</b>${sp(' · 캠페인 기간 연관 오더 '+fmtC(T.a25)+' → ')}<b>${fmtC(T.a26)}</b>${sp(' (')}<span class="${cls(T.yoy)}">${fmtPC(T.yoy)}</span>${sp(', 순증')} <span class="${cls(T.a26-T.a25)}">${fmtC(T.a26-T.a25)}</span>${sp('). 집행 캠페인 '+now.run+'/'+now.total+'.')}`);
+  if(top&&bot) bl.push(`<b>권역별 편차</b>${sp(' · 순증 기여 1위')} <b>${esc(top.k)}</b> <span class="${cls(top.net)}">${top.net>=0?'+':''}${fmtC(top.net)}</span>${sp(', 최대 감소')} <b>${esc(bot.k)}</b> <span class="dn">${fmtC(bot.net)}</span>${sp('. 성장 '+rr.filter(r=>r.yoy!=null&&r.yoy>=10).length+' · 보합 '+rr.filter(r=>r.yoy!=null&&r.yoy>-10&&r.yoy<10).length+' · 감소 '+rr.filter(r=>r.yoy!=null&&r.yoy<=-10).length+'개 권역(전년 대비 ±10% 기준).')}`);
+  bl.push(`<b>고객 참여</b>${sp(' · 대상 고객 '+now.target+'곳 중 '+now.ord+'곳('+now.conv+'%)이 캠페인 대상 오더를 발생시킴.')}${first!==mNow&&at5?sp(' '+at5.m+'월 말 '+at5.conv+'% → 현재 '+now.conv+'%.'):''}${sp(noOrd.length?' 오더 미발생 '+noOrd.length+'곳은 권역별 후속 관리 필요(아래 표).':' 대상 고객 모두 오더 발생.')}`);
+  if(top3.length) bl.push(`<b>집중도</b>${sp(' · 상위 3개 고객이 당해 연관 오더의 '+top3s.toFixed(0)+'%를 차지.')}${top3s>=60?sp(' 소수 고객 의존도가 높아 신규·저참여 고객 확장이 과제.'):''} <span class="sub3">(${top3.map(r=>esc(r.name)).join(' · ')})</span>`);
+  if(startTxt.length) bl.push(`<b>캠페인 확장</b> · ${startTxt.map(x=>x.names.length?`${sp(x.m+'월')} <b>${x.names.map(esc).join(' · ')}</b> ${sp('시작')}`:'').filter(Boolean).join(' / ')}${sp('. 대상 고객은 캠페인이 추가될 때만 늘고 이후 유지됨('+cum[first].target+' → '+now.target+'곳).')}`);
+  if(A&&A.summary) bl.push(`<b>${last}월 보고 요지</b> · ${sp(esc(A.summary))}`);
+  let h=`<div class="card"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="display:inline-block;width:6px;height:26px;background:var(--brand);border-radius:2px"></span><h3 style="margin:0;border:0;padding:0;font-size:20px">월별 활동 리포트 · 종합 분석 (최종 누적)</h3><span style="color:var(--muted);font-size:12px">· 기준일 ${esc(D.today)} · 월별 리포트는 개별로 나열하지 않고 누적·변화 중심으로 해석</span>${last?`<button class="xbtn" style="margin-left:auto" onclick="sepReport(${last})">${last}월 상세 리포트 보기</button>`:''}</div>
+   <ul class="slist" style="margin:12px 0 0">${bl.map(x=>`<li>${x}</li>`).join('')}</ul></div>`;
+  // 월말 누적 추이
+  h+=`<div class="card"><h3>월말 누적 추이 · 캠페인·고객</h3><p class="note">월이 지나며 줄어들지 않는 누적 기준. 대상 고객은 캠페인 추가 시 증가, 참여 고객은 오더 발생 시 증가.</p><div class="tblwrap"><table class="lts"><thead><tr><th>월말</th><th>집행 캠페인</th><th>대상 고객</th><th>신규 대상</th><th>참여(오더 발생)</th><th>신규 참여</th><th>전환율</th><th>월 리포트</th></tr></thead><tbody>`
+   +ks.map((m,i)=>{const c=cum[m],p=i?cum[ks[i-1]]:null,dT=c.target-(p?p.target:0),dO=c.ord-(p?p.ord:0);return `<tr${m===mNow?' style="font-weight:700"':''}><td>${m}월</td><td class="num">${c.run} / ${c.total}</td><td class="num">${c.target}곳</td><td class="num sub3">${dT>0?'+'+dT:'–'}</td><td class="num">${c.ord}곳</td><td class="num sub3">${dO>0?'+'+dO:'–'}</td><td class="num">${c.conv}%</td><td style="text-align:center">${MONTHLY_ACTIVITY[m]?'<span class="sbadge ok">입력 완료</span>':'<span class="sbadge wn">미입력</span>'}</td></tr>`;}).join('')
+   +`</tbody></table></div><p class="note" style="margin:8px 0 0;font-size:11.5px;color:var(--muted)">대상 고객 = 월말까지 시작된 캠페인의 대상 고객 합집합 · 참여 고객 = 대상 고객 중 캠페인 시작월부터 해당 월까지 대상 오더가 있었던 고객(누적) · 기준일 월은 연관 오더 집계 기준.</p></div>`;
+  // 권역 판정
+  h+=`<div class="card"><h3>권역별 종합 판정</h3><div class="tblwrap"><table class="lts"><thead><tr><th>권역</th><th>집행 캠페인</th><th>대상 고객</th><th>참여 고객</th><th>전환율</th><th>연관 오더 (전년 → 당해)</th><th>전년 대비</th><th>순증액</th><th>판정</th></tr></thead><tbody>`
+   +rr.map(r=>{const c=reg(r.k);return `<tr><td>${esc(r.k)}</td><td class="num">${c.run} / ${c.total}</td><td class="num">${c.target}곳</td><td class="num">${c.ord}곳</td><td class="num">${c.conv}%</td><td class="num">${fmtC(r.a25)} → <b>${fmtC(r.a26)}</b></td><td class="num ${cls(r.yoy)}">${fmtPC(r.yoy)}</td><td class="num ${cls(r.a26-r.a25)}">${fmtC(r.a26-r.a25)}</td><td style="text-align:center"><span class="${vcls(r.yoy)}"><b>${verdict(r.yoy)}</b></span></td></tr>`;}).join('')
+   +`<tr style="font-weight:700;border-top:2px solid var(--line)"><td>합계</td><td class="num">${now.run} / ${now.total}</td><td class="num">${now.target}곳</td><td class="num">${now.ord}곳</td><td class="num">${now.conv}%</td><td class="num">${fmtC(T.a25)} → ${fmtC(T.a26)}</td><td class="num ${cls(T.yoy)}">${fmtPC(T.yoy)}</td><td class="num ${cls(T.a26-T.a25)}">${fmtC(T.a26-T.a25)}</td><td></td></tr>`
    +`</tbody></table></div></div>`;
-  months.filter(m=>MONTHLY_ACTIVITY[m]).forEach(m=>{const _A=MONTHLY_ACTIVITY[m];h+=(_A&&_A.kind==='summary')?monthSummary(_A):sepMonth(_A);});
+  // 고객 증감 + 미참여
+  const cl=(l,sgn)=>l.length?l.map(r=>`<tr><td>${esc(r.region)}</td><td style="text-align:left">${esc(r.name)}</td><td class="num">${fmtC(r.a25)} → ${fmtC(r.a26)}</td><td class="num ${cls(r.net)}">${fmtC(r.net)}</td></tr>`).join(''):`<tr><td colspan="4" class="sub3">해당 없음</td></tr>`;
+  h+=`<div class="card"><h3>성장 동력 · 리스크 고객</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:14px"><div><div class="sub3" style="font-weight:700;margin-bottom:4px">순증 상위 5 (성장 동력)</div><div class="tblwrap"><table class="lts"><thead><tr><th>권역</th><th style="text-align:left">고객</th><th>전년 → 당해</th><th>증감</th></tr></thead><tbody>${cl(gain)}</tbody></table></div></div><div><div class="sub3" style="font-weight:700;margin-bottom:4px">감소 상위 5 (회복 필요)</div><div class="tblwrap"><table class="lts"><thead><tr><th>권역</th><th style="text-align:left">고객</th><th>전년 → 당해</th><th>증감</th></tr></thead><tbody>${cl(loss)}</tbody></table></div></div></div>`
+   +(noOrd.length?`<p class="note" style="margin:10px 0 0;padding-left:0"><b>오더 미발생 대상 고객 ${noOrd.length}곳</b> · ${Object.entries(noOrdBy).map(([r,set])=>esc(r)+': '+[...set].map(esc).join(', ')).join(' / ')}</p>`:'')+`</div>`;
+  // 다음 액션
+  const ap=(A&&A.action_plan)||[];
+  if(ap.length) h+=`<div class="card"><h3>다음 단계 · 액션 플랜 (${last}월 리포트 기준)</h3><div class="tblwrap"><table class="lts"><thead><tr><th>권역</th><th style="text-align:left">액션</th><th style="text-align:left">대상</th><th>시기</th></tr></thead><tbody>`+ap.map(x=>`<tr><td>${esc(x.region)}</td><td style="text-align:left">${esc(x.action)}</td><td style="text-align:left;font-size:12px">${esc(String(x.owner||'').replace(/\*\*/g,''))}</td><td>${esc(x.timing||'')}</td></tr>`).join('')+`</tbody></table></div></div>`;
   return h;
 }
 function sepReport(sel){
@@ -2139,10 +2202,10 @@ function sepReport(sel){
   const months=[1,2,3,4,5,6,7,8,9];
   const have=months.filter(m=>MONTHLY_ACTIVITY[m]);
   if(sepSel!=='all' && !MONTHLY_ACTIVITY[sepSel]) sepSel=have.length?have[have.length-1]:'all';
-  const opts=`<option value="all"${sepSel==='all'?' selected':''}>전체 (월간 종합)</option>`
+  const opts=`<option value="all"${sepSel==='all'?' selected':''}>종합 (최종 누적)</option>`
     +have.map(m=>`<option value="${m}"${sepSel===m?' selected':''}>${m}월 리포트</option>`).join('');
   const _Acur=MONTHLY_ACTIVITY[sepSel];
-  const _hdr=_Acur?`<span class="sepfhdr"><b>${_Acur._m}월 활동 리포트 · Activity Layer</b> · 데이터 기준 ${_Acur.generated_at}</span>`:`<span class="sepfhdr"><b>월간 종합</b> · 입력된 월 전체</span>`;
+  const _hdr=_Acur?`<span class="sepfhdr"><b>${_Acur._m}월 활동 리포트 · Activity Layer</b> · 데이터 기준 ${_Acur.generated_at}</span>`:`<span class="sepfhdr"><b>월간 종합</b> · 최종 누적(최신 월 기준)</span>`;
   $('#sepFilter').innerHTML=`<label class="sepdd">월 선택 <select id="sepSelDd">${opts}</select></label>`+_hdr;
   let body;
   if(sepSel==='all') body=sepAllOverview(have);
@@ -2339,6 +2402,6 @@ function copyTabLink(pg){var url=tabLinkURL(pg);var ok=function(){toast('탭 링
 (function(){var PG=['p7','p6','p1','p5','p3','p8','p9'];function fromHash(){var h=(location.hash||'').replace('#','');if(PG.indexOf(h)<0)return null;return document.querySelector('#nav button[data-pg="'+h+'"]');}var b=fromHash();if(b)activateTab(b);addEventListener('hashchange',function(){var bb=fromHash();if(bb&&!bb.classList.contains('on'))activateTab(bb);});})();
 </script>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script src="i18n.js?v=20261016a"></script>
+<script src="i18n.js?v=20261016b"></script>
 </body>
 </html>

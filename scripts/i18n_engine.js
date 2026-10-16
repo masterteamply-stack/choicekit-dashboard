@@ -16,15 +16,15 @@
   try { var sv = localStorage.getItem(KEY); if (LANGS.indexOf(sv) >= 0) lang = sv; } catch (e) {}
 
   function tpl(s) { var nums = []; var t = s.replace(NUM, function (m) { nums.push(m); return '{' + nums.length + '}'; }); return { t: t, n: nums }; }
-  function fill(str, nums) { return str.replace(/\{(\d+)\}/g, function (m, i) { return nums[i - 1] != null ? nums[i - 1] : m; }); }
+  function fill(str, nums, L) { return str.replace(/\{(\d+)(:mon)?\}/g, function (m, i, mon) { var v = nums[i - 1]; if (v == null) return m; if (mon && +v >= 1 && +v <= 12 && MON[L]) return MON[L][+v - 1]; return v; }); }
   function core(c, L) {
     var x = tpl(c), hit = DICT[x.t], i = L === 'en' ? 0 : 1;
-    if (hit) return fill(hit[i], x.n);
+    if (hit) return fill(hit[i], x.n, L);
     var mm = /^(\d{1,2})월$/.exec(c); if (mm && +mm[1] >= 1 && +mm[1] <= 12) return MON[L][+mm[1] - 1];
     if (c.indexOf(' · ') > 0) { var parts = c.split(' · '), ok = true, out = parts.map(function (p) { var r = core1(p, L); if (r == null) ok = false; return r; }); if (ok) return out.join(' · '); }
     return null;
   }
-  function core1(p, L) { var x = tpl(p), hit = DICT[x.t]; if (hit) return fill(hit[L === 'en' ? 0 : 1], x.n); if (!HAN.test(p)) return p; return null; }
+  function core1(p, L) { var x = tpl(p), hit = DICT[x.t]; if (hit) return fill(hit[L === 'en' ? 0 : 1], x.n, L); if (!HAN.test(p)) return p; return null; }
   function tr(s, L) {
     if (!s || !(HAN.test(s) || (L === 'ru' && LAT.test(s)))) return s;
     var m = /^(\s*)([\s\S]*?)(\s*)$/.exec(s), c = m[2].replace(/\s+/g, ' ');
