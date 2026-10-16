@@ -6772,7 +6772,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
     (function(){
       const nd = agg.NA && agg.NA['Strategic Partner Program']; if (!nd) return;
       let cc = null, uu = null;
-      Object.keys(nd.countries || {}).forEach(k => { const c = nd.countries[k]; if (c.customers && c.customers[_LORDCO_FILE.cust]) { cc = c; uu = c.customers[_LORDCO_FILE.cust]; } });
+      Object.keys(nd.countries || {}).forEach(k => { const c = nd.countries[k]; if (!c.customers) return; const ck = Object.keys(c.customers).find(n => String(n).toLowerCase().indexOf('lordco') >= 0); if (ck) { cc = c; uu = c.customers[ck]; } });
       if (!cc) return;
       const sm = a => a.reduce((x, y) => x + y, 0) * usdToDisp;
       const cur = sm(_LORDCO_FILE.y26), prv = sm(_LORDCO_FILE.y25);
