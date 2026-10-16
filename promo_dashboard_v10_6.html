@@ -1101,13 +1101,23 @@ function cdetMissionCell(m){
  const r=m.rate!=null?m.rate:(m.got||0)/m.tgt*100;
  return `<span class="${r>=100?'up':r>=50?'':'dn'}"><b>${r.toFixed(0)}%</b></span> <span class="sub3">${fmtC(m.got||0)} / ${fmtC(m.tgt)}</span>`;
 }
+function cdetSales(c){ const code=c&&c.code; const rv=(typeof REV!=='undefined'&&code&&REV[code])||null; if(!rv) return null;
+ const w=(typeof REVW!=='undefined'&&REVW[code])||null; return {r25:rv[0]||0,r26:rv[1]||0,w,yoy:rv[0]>0?(rv[1]-rv[0])/rv[0]*100:null}; }
+function cdetSalesRow(c){ const sl=cdetSales(c);
+ if(!sl) return `<p class="note" style="margin:8px 0 2px;padding-left:0;font-size:12px;color:var(--muted)"><b>매출</b> · 이 고객사는 AM 실적표(매출)에 없어 오더만 표시함.</p>`;
+ const t=(lab,val,sub,hero)=>`<div class="tile${hero?' hero':''}"><div class="lab">${lab}</div><div class="val">${val}</div>${sub?`<div class="sub2">${sub}</div>`:''}</div>`;
+ return `<div class="sub3" style="margin:10px 0 2px"><b>매출</b> · AM 실적표 기준(출하·청구) · 위 오더(수주)와 집계 기준이 다름</div><div class="kpis k4">`
+  +t('2025 매출',fmtC(sl.r25))+t('2026 매출',fmtC(sl.r26),sl.yoy==null?'':`전년 대비 <span class="${cls(sl.yoy)}">${fmtPC(sl.yoy)}</span>`,true)
+  +t('매출 증감',`<span class="${cls(sl.r26-sl.r25)}">${(sl.r26-sl.r25>=0?'+':'')+fmtC(sl.r26-sl.r25)}</span>`)
+  +(sl.w!=null?t('동기간 매출 2026',fmtC(sl.w),'캠페인 구간'):t('캠페인 구간 매출','–','자료 없음'))+`</div>`; }
 function cdetSummary(rows){
- const th=`<tr><th style="text-align:left">권역</th><th style="text-align:left">고객사</th><th style="text-align:left">국가</th><th>2025 연간 오더</th><th>2026 YTD 오더</th><th>동기 전년 대비</th><th>SteerStar 오더 미션</th><th>설문 리드</th></tr>`;
+ const th=`<tr><th style="text-align:left">권역</th><th style="text-align:left">고객사</th><th style="text-align:left">국가</th><th>2025 연간 오더</th><th>2026 YTD 오더</th><th>동기 전년 대비</th><th>2026 매출 (AM)</th><th>매출 전년 대비</th><th>SteerStar 오더 미션</th><th>설문 리드</th></tr>`;
  const tr=rows.map(c=>{const s=cdetStat(c), y=cdetYoy(s), m=c.mission;
   return `<tr class="cdet-row" data-id="${c.id}" style="cursor:pointer" title="클릭하면 아래 상세 카드로 이동">`
    +`<td style="text-align:left"><b>${esc(c.region)}</b></td><td style="text-align:left">${esc(c.name)}${m.dropped?' <span class="pill na">제외</span>':''}</td><td style="text-align:left" class="sub3">${esc(c.country_ko)}</td>`
    +`<td class="num sub3">${s.annual25?fmtC(s.annual25):'–'}</td><td class="num">${s.ytd26?fmtC(s.ytd26):'$0'} <span class="sub3">1~${s.last26}월</span></td>`
    +`<td class="num">${y==null?(s.cum26>0?'<span class="pill na">신규</span>':'–'):`<span class="${cls(y)}">${fmtPC(y)}</span>`}</td>`
+   +(()=>{const sl=cdetSales(c);return sl?`<td class="num">${fmtC(sl.r26)}</td><td class="num">${sl.yoy==null?'–':`<span class="${cls(sl.yoy)}">${fmtPC(sl.yoy)}</span>`}</td>`:`<td class="num sub3">–</td><td class="num sub3">–</td>`;})()
    +`<td class="num">${cdetMissionCell(m)}</td><td class="num">${m.lead_tgt?`${(m.leads||0).toLocaleString()} <span class="sub3">/ ${m.lead_tgt}</span>`:'<span class="sub3">–</span>'}</td></tr>`;}).join('');
  return `<div class="tblwrap"><table class="lts" style="font-size:12.5px"><thead>${th}</thead><tbody>${tr}</tbody></table></div>`;
 }
@@ -1132,6 +1142,7 @@ function custCard(c){const C25='var(--s1)',C26b='var(--brand)';
      {lab:'2026 YTD 오더',val:'$'+c.ytd26.toLocaleString(),sub:`1~${c.last26}월`},
      {lab:`동기(1~${c.last26}월) 전년 대비`,val:yoy==null?(c.cum26>0?'신규':'–'):fmtPC(yoy),sub:`${fmtC(c.cum25)} → ${fmtC(c.cum26)}`,hero:true},
      {lab:'SteerStar 오더 미션',val:dropped?'제외':(m.tgt?((m.rate!=null?m.rate:(m.got||0)/m.tgt*100).toFixed(0)+'%'):'–'),sub:dropped?'':(m.tgt?`${fmtC(m.got||0)} / 목표 ${fmtC(m.tgt)} · 3월부터`:'목표 미설정')}],'k4')
+   +cdetSalesRow(c)
    +mtable(c.y25,c.y26,'오더');
  if(c.so&&(c.so.y25.some(v=>v)||c.so.y26.some(v=>v))){
    h+=`<h4 class="soh">월별 Sell-out(현지 판매) · 전년 1:1</h4><p class="note">같은 원장 스냅샷의 SELL_OUT 스트림 · 고객사가 현지에서 판매한 CTR 제품 기준이라 위 오더(sell-in)와 집계 범위가 다름.</p>`
@@ -1224,10 +1235,16 @@ function lordcoCard(lo){const C25='var(--s1)',C26b='var(--brand)';
    const yoy=(lo.cum26-lo.cum25)/lo.cum25*100;
    const ML=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
  let h=`<div class="card"><h3>NA · Lordco (캐나다) 월별 오더 추이</h3>
-    <p class="note">전 품목 오더(USD) · 2025 연간 $${lo.annual25.toLocaleString()} · 2026 YTD(1~${lo.last26}월) $${lo.ytd26.toLocaleString()}. Lordco는 소수 대형 단건 중심이라 월별·품목별로 무엇이 줄었는지 함께 봄.</p>` +`<div style="margin:8px 0 2px;padding:9px 14px;background:rgba(0,122,76,.08);border-left:5px solid var(--good);border-radius:0 6px 6px 0;font-size:13px"><b style="color:var(--good)">매출 성과 (AM 실적표 기준)</b> · 2026 <b>$${Math.round((REV['289029']||[0,0])[1]).toLocaleString()}</b> · 전년 $${Math.round((REV['289029']||[0,0])[0]).toLocaleString()} 대비 <b>${fmtPC(((REV['289029']||[1,1])[1]/(REV['289029']||[1,1])[0]-1)*100)}</b> <span style="color:var(--ink2)">· 아래 <b>월별 매출</b> 표는 Lordco Sales Raw(반품·정산 조정 포함) 기준이라 합계가 다름 — 두 수치는 집계 범위가 다른 별개 자료임</span></div>`
+    <p class="note">전 품목 오더(USD) · 2025 연간 $${lo.annual25.toLocaleString()} · 2026 YTD(1~${lo.last26}월) $${lo.ytd26.toLocaleString()}. Lordco는 소수 대형 단건 중심이라 월별·품목별로 무엇이 줄었는지 함께 봄.</p>` 
    +kgrid([{lab:'2025 연간 오더',val:'$'+lo.annual25.toLocaleString()},
      {lab:'2026 YTD 오더',val:'$'+lo.ytd26.toLocaleString(),sub:`1~${lo.last26}월`},
      {lab:`동기(1~${lo.last26}월) 전년 대비`,val:fmtPC(yoy),cls:yoy>=0?'up':'dn',sub:`${fmtC(lo.cum25)} → ${fmtC(lo.cum26)}`,hero:true}],'k3')
+   +(()=>{const rv=(REV['289029']||[0,0]),ry=rv[0]>0?(rv[1]-rv[0])/rv[0]*100:null,sy=lo.qcum25>0?(lo.qcum26/lo.qcum25-1)*100:null;
+     return `<div class="sub3" style="margin:12px 0 2px"><b>매출</b> · 위 오더(수주)와 별개 자료 · 월별 매출 표는 아래 오더 표 바로 밑</div>`
+      +kgrid([{lab:'2026 매출 (AM 실적표)',val:fmtC(rv[1]),sub:`전년 ${fmtC(rv[0])} 대비 <span class="${cls(ry)}">${fmtPC(ry)}</span>`,hero:true},
+        {lab:`2026 YTD 매출 (Sales Raw 1~${lo.slast26}월)`,val:fmtC(lo.scum26),sub:`동기 전년 ${fmtC(lo.scum25)} · 반품·정산 조정 포함`},
+        {lab:`매출 수량 (1~${lo.slast26}월)`,val:lo.qcum26.toLocaleString(),sub:`전년 ${lo.qcum25.toLocaleString()} · <span class="${cls(sy)}">${fmtPC(sy)}</span>`}],'k3')
+      +`<p class="note" style="margin:6px 0 0;padding-left:0;font-size:11.5px;color:var(--muted)">AM 실적표 매출과 Sales Raw 합계는 집계 범위(반품·정산 조정 포함 여부)가 달라 금액이 다름.</p>`;})()
    +`<div class="grid2"><div><div class="sub3" style="margin:6px 0 2px">월별 오더 · 전년 대비 (USD)</div>`
    +`<div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr><th>월</th><th>2025</th><th>2026</th><th>증감</th></tr></thead><tbody>`
    +ML.map((mm,i)=>{const a=lo.y25[i]||0,b=lo.y26[i]||0; if(!a&&!b)return ''; const within=(i+1)<=lo.last26; const dd=b-a;
@@ -2402,6 +2419,6 @@ function copyTabLink(pg){var url=tabLinkURL(pg);var ok=function(){toast('탭 링
 (function(){var PG=['p7','p6','p1','p5','p3','p8','p9'];function fromHash(){var h=(location.hash||'').replace('#','');if(PG.indexOf(h)<0)return null;return document.querySelector('#nav button[data-pg="'+h+'"]');}var b=fromHash();if(b)activateTab(b);addEventListener('hashchange',function(){var bb=fromHash();if(bb&&!bb.classList.contains('on'))activateTab(bb);});})();
 </script>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script src="i18n.js?v=20261016b"></script>
+<script src="i18n.js?v=20261016c"></script>
 </body>
 </html>
