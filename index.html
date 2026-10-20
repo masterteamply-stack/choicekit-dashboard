@@ -3087,9 +3087,18 @@ function _ensureCustomerMap() {
   _customerMapKey = key;
   return m;
 }
+// 같은 회사가 두 코드로 들어와 고객사 집계가 쪼개지는 경우를 여기서 합친다.
+// GTB LIMITED.,CO(200770) = GTA VIET NAM(289997). 원본 데이터(data/·new_data/·
+// baseline_data/·pre_orders_bundle)는 그대로 두고 표기만 통합한다.
+const CUSTOMER_ALIAS = {
+  'GTB LIMITED.,CO': 'GTA VIET NAM',
+  'GTB': 'GTA VIET NAM',
+  '200770': 'GTA VIET NAM',
+};
+function applyCustomerAlias(name) { return CUSTOMER_ALIAS[name] || name; }
 function normalizeCustomer(o) {
   if (!o) return '';
-  let raw = String(o.customer || '').trim();
+  let raw = applyCustomerAlias(String(o.customer || '').trim());
   // Legacy IndexedDB cache may still hold 'VC288357' from a previous bundle —
   // strip the VC prefix so the rest of this function can map the bare code.
   if (/^VC\d+$/i.test(raw)) raw = raw.slice(2);
@@ -3098,7 +3107,7 @@ function normalizeCustomer(o) {
   // Pure-digit value (or empty) → try mappings.
   const code = /^\d+$/.test(raw) ? raw : String(o.customer_no || '').trim();
   if (!code) return raw;
-  return NA_CUSTOMER_MAP[code] || _ensureCustomerMap()[code] || code;
+  return applyCustomerAlias(NA_CUSTOMER_MAP[code] || _ensureCustomerMap()[code] || code);
 }
 
 
