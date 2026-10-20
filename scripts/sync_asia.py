@@ -11,10 +11,16 @@ rows = []
 for r in src['rows']:
     a25, tgt, got = r['a25'], r['tgt'], r['got']
     y25, y25t, y26t = r['y25'], r['y25t'], r['y26t']
+    s25, s26pre, s26 = r.get('s25', 0), r.get('s26pre', 0), r.get('s26', 0)
     rows.append(dict(
         k=r['k'], code=r['code'], codes=r.get('codes') or [r['code']],
         name=r['name'], country=r['country'], period=r['period'],
-        note=r.get('note', ''), a25=a25, tgt=tgt, got=got,
+        note=r.get('note', ''), ship_note=r.get('ship_note', ''),
+        s25=s25, s26pre=s26pre, s26=s26,
+        sratio=(round(s26 / s25 * 100) if s25 else None),
+        syoy=(round((s26 - s25) / s25 * 100, 1) if s25 else None),
+        scut=(round((s26pre - s26) / s26pre * 100, 1) if s26pre else None),
+        a25=a25, tgt=tgt, got=got,
         ratio=(round(got / a25 * 100) if a25 else None),
         yoy=(round((got - a25) / a25 * 100, 1) if a25 else None),
         att=(round(got / tgt * 100, 1) if tgt else None),
@@ -25,7 +31,11 @@ for r in src['rows']:
         share=(round(got / y26t * 100, 1) if y26t else None)))
 rows.sort(key=lambda r: -r['got'])
 S = lambda f: sum(r[f] for r in rows)
-tot = dict(a25=S('a25'), tgt=S('tgt'), got=S('got'), y25=S('y25'), y25t=S('y25t'), y26t=S('y26t'))
+tot = dict(a25=S('a25'), tgt=S('tgt'), got=S('got'), y25=S('y25'), y25t=S('y25t'), y26t=S('y26t'),
+           s25=S('s25'), s26pre=S('s26pre'), s26=S('s26'))
+tot.update(sratio=round(tot['s26'] / tot['s25'] * 100) if tot['s25'] else None,
+           syoy=round((tot['s26'] - tot['s25']) / tot['s25'] * 100, 1) if tot['s25'] else None,
+           scut=round((tot['s26pre'] - tot['s26']) / tot['s26pre'] * 100, 1) if tot['s26pre'] else None)
 tot.update(ratio=round(tot['got'] / tot['a25'] * 100),
            yoy=round((tot['got'] - tot['a25']) / tot['a25'] * 100, 1),
            att=round(tot['got'] / tot['tgt'] * 100, 1),
@@ -34,6 +44,7 @@ tot.update(ratio=round(tot['got'] / tot['a25'] * 100),
            vs25=round(tot['y26t'] / tot['y25'] * 100),
            share=round(tot['got'] / tot['y26t'] * 100, 1))
 AS = dict(src=src['source_file'], asof=src['asof'], n=len(rows), rows=rows, tot=tot,
+          note_ship=src.get('note_ship', ''),
           hit=sum(1 for r in rows if (r['att'] or 0) >= 100),
           up=sum(1 for r in rows if (r['ratio'] or 0) >= 100))
 
