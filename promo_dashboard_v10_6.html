@@ -1102,17 +1102,28 @@ function cdetMissionCell(m){
  const r=m.rate!=null?m.rate:(m.got||0)/m.tgt*100;
  return `<span class="${r>=100?'up':r>=50?'':'dn'}"><b>${r.toFixed(0)}%</b></span> <span class="sub3">${fmtC(m.got||0)} / ${fmtC(m.tgt)}</span>`;
 }
-function cdetSales(c){ const code=c&&c.code; const rv=(typeof REV!=='undefined'&&code&&REV[code])||null; if(!rv) return null;
- const w=(typeof REVW!=='undefined'&&REVW[code])||null; return {r25:rv[0]||0,r26:rv[1]||0,w,yoy:rv[0]>0?(rv[1]-rv[0])/rv[0]*100:null}; }
+function cdetSales(c){ const code=c&&c.code;
+ /* ASIA 초이스킷 참여 고객사는 SAP 선적(asia_choicekit.json)을 쓴다.
+    AM 실적표는 SERI 2025 가 $32,992 로 실제 선적 $358,093 과 크게 어긋나 있어
+    같은 고객사가 탭마다 다른 매출로 보였다. */
+ if(typeof AS!=='undefined'&&AS.rows&&code){
+  const a=AS.rows.find(r=>(r.codes||[r.code]).indexOf(String(code))>=0);
+  if(a&&(a.s25||a.s26)) return {r25:a.s25||0,r26:a.s26||0,w:null,
+    yoy:a.s25>0?((a.s26-a.s25)/a.s25*100):null,
+    src:'선적(SAP) 기준 · 2026 YTD 차감 후'};
+ }
+ const rv=(typeof REV!=='undefined'&&code&&REV[code])||null; if(!rv) return null;
+ const w=(typeof REVW!=='undefined'&&REVW[code])||null;
+ return {r25:rv[0]||0,r26:rv[1]||0,w,yoy:rv[0]>0?(rv[1]-rv[0])/rv[0]*100:null,src:'AM 실적표 기준(출하·청구)'}; }
 function cdetSalesRow(c){ const sl=cdetSales(c);
  if(!sl) return `<p class="note" style="margin:8px 0 2px;padding-left:0;font-size:12px;color:var(--muted)"><b>매출</b> · 이 고객사는 AM 실적표(매출)에 없어 오더만 표시함.</p>`;
  const t=(lab,val,sub,hero)=>`<div class="tile${hero?' hero':''}"><div class="lab">${lab}</div><div class="val">${val}</div>${sub?`<div class="sub2">${sub}</div>`:''}</div>`;
- return `<div class="sub3" style="margin:10px 0 2px"><b>매출</b> · AM 실적표 기준(출하·청구) · 위 오더(수주)와 집계 기준이 다름</div><div class="kpis k4">`
+ return `<div class="sub3" style="margin:10px 0 2px"><b>매출</b> · ${esc(sl.src||'AM 실적표 기준(출하·청구)')} · 위 오더(수주)와 집계 기준이 다름</div><div class="kpis k4">`
   +t('2025 매출',fmtC(sl.r25))+t('2026 매출',fmtC(sl.r26),sl.yoy==null?'':`전년 대비 <span class="${cls(sl.yoy)}">${fmtPC(sl.yoy)}</span>`,true)
   +t('매출 증감',`<span class="${cls(sl.r26-sl.r25)}">${(sl.r26-sl.r25>=0?'+':'')+fmtC(sl.r26-sl.r25)}</span>`)
   +(sl.w!=null?t('동기간 매출 2026',fmtC(sl.w),'캠페인 구간'):t('캠페인 구간 매출','–','자료 없음'))+`</div>`; }
 function cdetSummary(rows){
- const th=`<tr><th style="text-align:left">권역</th><th style="text-align:left">고객사</th><th style="text-align:left">국가</th><th>2025 연간 오더</th><th>2026 YTD 오더</th><th>동기 전년 대비</th><th>2026 매출 (AM)</th><th>매출 전년 대비</th><th>SteerStar 오더 미션</th><th>설문 리드</th></tr>`;
+ const th=`<tr><th style="text-align:left">권역</th><th style="text-align:left">고객사</th><th style="text-align:left">국가</th><th>2025 연간 오더</th><th>2026 YTD 오더</th><th>동기 전년 대비</th><th>2026 매출</th><th>매출 전년 대비</th><th>SteerStar 오더 미션</th><th>설문 리드</th></tr>`;
  const tr=rows.map(c=>{const s=cdetStat(c), y=cdetYoy(s), m=c.mission;
   return `<tr class="cdet-row" data-id="${c.id}" style="cursor:pointer" title="클릭하면 아래 상세 카드로 이동">`
    +`<td style="text-align:left"><b>${esc(c.region)}</b></td><td style="text-align:left">${esc(c.name)}${m.dropped?' <span class="pill na">제외</span>':''}</td><td style="text-align:left" class="sub3">${esc(c.country_ko)}</td>`
