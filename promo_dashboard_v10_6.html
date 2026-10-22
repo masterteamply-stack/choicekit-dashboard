@@ -1911,7 +1911,7 @@ function sepMonth(A){
   const kpirow=`<div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin:12px 0 10px">`
    +`<div class="tile hero" style="grid-column:span 2"><div class="lab">연관 오더 (전년 → 당해)</div><div class="val">${fmtC(Tov.a25)} <span style="color:var(--muted);font-weight:400">→</span> ${fmtC(Tov.a26)}</div><div class="sub2">전년 대비 <span class="${cls(Tov.yoy)}">${fmtPC(Tov.yoy)}</span> · 캠페인 기간 기준</div></div>`
    +`<div class="tile"><div class="lab">순증액</div><div class="val">${fmtC(_g26-_g25)}</div></div>`
-   +`<div class="tile"><div class="lab">오더 전환 SKU</div><div class="val">${_gosku.toLocaleString()}<span style="font-size:15px;color:var(--muted)">종</span></div><div class="sub2 sub3">ChoiceKit 오더 전환 품목</div></div>`
+   +`<div class="tile"><div class="lab">오더 전환 SKU</div><div class="val">${_gosku.toLocaleString()}<span style="font-size:15px;color:var(--muted)">종</span></div><div class="sub2 sub3">대상 SKU 지정 캠페인은 전환, 전 품목 캠페인은 오더 발생 SKU</div></div>`
    +`<div class="tile"><div class="lab">성장 권역</div><div class="val">${_gr.filter(r=>r.a26>r.a25).length}<span style="font-size:16px;color:var(--muted)"> / ${_gr.length}</span></div></div>`
    +`<div class="tile"><div class="lab">집행 캠페인</div><div class="val">${Tov.run}<span style="font-size:16px;color:var(--muted)"> / ${Tov.n}</span></div><div class="sub2">대상 고객 ${Tov.cust.size.toLocaleString()}곳${(()=>{const q=cumCust(+String(D.today).slice(5,7));return q?' · 오더 발생 '+q.ord+'곳 ('+q.conv+'%)':'';})()}</div></div>`
    +`<div class="tile"><div class="lab">달성률</div><div class="val">${Tov.prog.toFixed(0)}%</div><div class="sub2">관측 ${Tov.obs.toLocaleString()}일 / 계획 ${Tov.tot.toLocaleString()}일</div></div></div>`;
@@ -1936,13 +1936,19 @@ function sepMonth(A){
    +(()=>{const SO=new Set(['SELL-OUT Promotion','Sell-Out Promotion','Trade promotion']);
      const cs=(D.campaigns||[]).slice().sort((a,b)=>(a.region+'').localeCompare(b.region+'')||(b.a26||0)-(a.a26||0));
      const fx=D.fx||1470;
-     let t=`<div class="tblwrap"><table class="lts" style="table-layout:fixed;width:100%;font-size:12px"><colgroup><col style="width:6%"><col style="width:19%"><col style="width:5%"><col style="width:10%"><col style="width:9%"><col style="width:6%"><col style="width:15%"><col style="width:12%"><col style="width:9%"><col style="width:9%"></colgroup><thead><tr><th rowspan="2">권역</th><th rowspan="2">캠페인</th><th rowspan="2">Sell</th><th colspan="3" style="background:var(--head);border-bottom:2px solid var(--brand)">Sell-in 오더 실적</th><th rowspan="2">Sell-out 목표→실적</th><th rowspan="2">오더 전환 SKU</th><th rowspan="2">집행비용</th><th rowspan="2">회수배수</th></tr><tr><th>기간 오더</th><th>전년 동기</th><th>YoY</th></tr></thead><tbody>`;
-     cs.forEach(c=>{const so=SO.has(c.program);const cu=c.cost>0?c.cost/fx:0;const _so=soLive(c);const _td=c.tgt_sku?`대상 ${c.tgt_sku.toLocaleString()}종`:(c.scope==='SELLOUT'?`목표 ${_so.t?fmtC(_so.t):'–'}`:'전품목');let _conv;if(c.ord_sku!=null&&c.tgt_sku&&c.ord_sku<=c.tgt_sku){const _p=c.ord_sku/c.tgt_sku*100;_conv=`<b>${c.ord_sku}</b><span class="sub3"> / ${c.tgt_sku}종</span><div class="sub3"><b class="${_p>=70?'up':(_p>=30?'':'dn')}">${_p.toFixed(0)}% 전환</b></div>`;}else if(c.ord_sku!=null){_conv=`<b>${c.ord_sku.toLocaleString()}</b>종<div class="sub3">오더 전환</div>`;}else if(c.tgt_sku){_conv=`<span class="sub3">대상 ${c.tgt_sku}종</span>`;}else _conv='–';
+     let t=`<div class="tblwrap"><table class="lts" style="table-layout:fixed;width:100%;font-size:12px"><colgroup><col style="width:6%"><col style="width:18%"><col style="width:4%"><col style="width:9%"><col style="width:8%"><col style="width:6%"><col style="width:19%"><col style="width:11%"><col style="width:9%"><col style="width:9%"></colgroup><thead><tr><th rowspan="2">권역</th><th rowspan="2">캠페인</th><th rowspan="2">Sell</th><th colspan="3" style="background:var(--head);border-bottom:2px solid var(--brand)">Sell-in 오더 실적</th><th rowspan="2">캠페인 목표 → 실적</th><th rowspan="2">SKU</th><th rowspan="2">집행비용</th><th rowspan="2">회수배수</th></tr><tr><th>기간 오더</th><th>전년 동기</th><th>YoY</th></tr></thead><tbody>`;
+     cs.forEach(c=>{const so=SO.has(c.program);const cu=c.cost>0?c.cost/fx:0;const _so=soLive(c);const _td=c.tgt_sku?`대상 ${c.tgt_sku.toLocaleString()}종`:((so&&_so.t)?`Sell-out 목표 ${fmtC(_so.t)}`:'전품목');let _conv;if(c.ord_sku!=null&&c.tgt_sku&&c.ord_sku<=c.tgt_sku){const _p=c.ord_sku/c.tgt_sku*100;_conv=`<b>${c.ord_sku}</b><span class="sub3"> / ${c.tgt_sku}종</span><div class="sub3"><b class="${_p>=70?'up':(_p>=30?'':'dn')}">${_p.toFixed(0)}% 전환</b></div>`;}else if(c.ord_sku!=null){_conv=`<b>${c.ord_sku.toLocaleString()}</b>종<div class="sub3">오더 발생 SKU</div>`;}else if(c.tgt_sku){_conv=`<span class="sub3">대상 ${c.tgt_sku}종</span>`;}else _conv='–';
        const yoy=c.yoy==null?(c.a26>0?'<span class="pill na">신규</span>':'–'):`<span class="${cls(c.yoy)}">${fmtPC(c.yoy)}</span>`;
-       const sell=_so.t>0?`${fmtC(_so.t)} → <b>${fmtC(_so.r)}</b> (${(_so.r/_so.t*100).toFixed(0)}%)`:'–';
+       /* Sell-out 프로모션은 sell-out 목표만, 나머지는 캠페인 오더 목표만 본다.
+   한 칸에 두 기준을 섞지 않으려고 캠페인 성격으로 갈라 쓴다. */
+       const _rate=(x,y)=>`<span class="${x/y>=1?'up':(x/y>=0.5?'':'dn')}">${(x/y*100).toFixed(0)}%</span>`;
+       const _ot=so?0:sellinGoal(c);
+       const sell=so
+         ?(_so.t>0?`${fmtC(_so.t)} → <b>${fmtC(_so.r)}</b> ${_rate(_so.r,_so.t)}<div class="sub3">Sell-out 목표·실적</div>`:'<span class="sub3">–</span>')
+         :(_ot>0?`${fmtC(_ot)} → <b>${fmtC(c.a26||0)}</b> ${_rate(c.a26||0,_ot)}<div class="sub3">Sell-in 목표 = 전년 ×1.2 · 기간 진행 ${(c.progress||0).toFixed(0)}%</div>`:'<span class="sub3">전년 동기 없음</span>');
        const mult=cu>0?'<b>'+(c.a26/cu).toFixed(1)+'배</b>':'–';
        t+=`<tr><td style="white-space:nowrap">${esc(c.region)}</td><td style="font-size:11.5px;word-break:keep-all;overflow-wrap:anywhere">${esc(c.program)}<div class="sub3" style="font-size:10px;color:var(--ink2);font-weight:400">${c.loc?esc(c.loc)+' · ':''}고객 ${c.n_cust}곳 · ${_td}</div></td><td style="font-size:11px">${so?'<span class="pill">OUT</span>':'IN'}</td><td class="num">${c.a26?fmtC(c.a26):'–'}</td><td class="num sub3">${c.a25?fmtC(c.a25):'–'}</td><td class="num">${yoy}</td><td class="num" style="font-size:11px;word-break:break-word">${sell}</td><td class="num" style="font-size:10.5px">${_conv}</td><td class="num sub3">${cu>0?fmtC(cu):'–'}</td><td class="num">${mult}</td></tr>`;});
-     return t+`</tbody></table></div><p class="note" style="font-size:11px;padding-left:0;margin:4px 0 0">회수배수 = 기간 오더 ÷ 집행비용(매출 기준, 마진 미반영) · Sell-out 목표→실적은 marketing.csv SELL-OUT Target/Result 를 직접 읽은 값${MKLIVE?'':(MKLIVE_ERR?' (읽기 실패: '+esc(MKLIVE_ERR)+' · 스냅샷 값)':' (스냅샷 값)')} · 집행비용 환율 KRW/USD ${(D.fx||1470).toLocaleString()}</p>`;})()
+     return t+`</tbody></table></div><p class="note" style="font-size:11px;padding-left:0;margin:4px 0 0">회수배수 = 기간 오더 ÷ 집행비용(매출 기준, 마진 미반영) · 목표 → 실적은 marketing.csv 를 직접 읽은 값 — Sell-out 프로모션은 SELL-OUT Target/Result, 그 외 캠페인은 <b>전년 동기 오더 ×1.2</b>(전년 대비 20% 증진 미션) 대비 기간 오더 · 캠페인이 진행 중이라 달성률은 기간 진행률과 같이 봐야 함 · SKU 칸은 대상 SKU 가 지정된 캠페인만 전환율이고, 전 품목 캠페인은 오더가 발생한 SKU 종수${MKLIVE?'':(MKLIVE_ERR?' (읽기 실패: '+esc(MKLIVE_ERR)+' · 스냅샷 값)':' (스냅샷 값)')} · 집행비용 환율 KRW/USD ${(D.fx||1470).toLocaleString()}</p>`;})()
    +`<div class="sub3" style="color:var(--ink2);font-size:12px;margin:12px 0 3px"><b>권역별 핵심 성과 · 다음 단계</b></div>`
    +`<div class="tblwrap"><table class="lts" style="table-layout:fixed;width:100%"><colgroup><col style="width:15%"><col style="width:42%"><col style="width:13%"><col style="width:30%"></colgroup><thead><tr><th>권역 · 프로그램</th><th style="background:var(--brand);color:#fff">핵심 성과 (9월)</th><th>상태</th><th>다음 단계</th></tr></thead><tbody>`
    +[
@@ -2316,8 +2322,10 @@ async function mkLoad(){
   const t=await fetch('marketing.csv',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('marketing.csv '+r.status);return r.text();});
   const nz=v=>{const n=parseFloat(String(v==null?'':v).replace(/[, ]/g,'')); return isFinite(n)?n:0;};
   const m={};
+  /* marketing.csv 는 한국을 'Korea', 캠페인 쪽은 'KR' 로 적어 키가 어긋난다. */
+  const rg=s=>{s=String(s||'').trim().toUpperCase(); return s==='KOREA'?'KR':s;};
   cdetCsv(t).forEach(r=>{
-   const k=String(r.region||'').trim()+'|'+String(r.promotion_category||'').trim();
+   const k=rg(r.region)+'|'+String(r.promotion_category||'').trim();
    const o=m[k]||(m[k]={t:0,r:0,n:0});
    o.t+=nz(r['SELL-OUT Target($)']); o.r+=nz(r['SELL-OUT Result($)']); o.n++;});
   MKLIVE=m; MKLIVE_ERR='';
@@ -2326,10 +2334,17 @@ async function mkLoad(){
 }
 /* marketing.csv 에 sell-out 수치가 있는 조합만 덮어쓴다.
    NA·MENA 처럼 CSV 에 sell-out 항목이 없는 캠페인은 스냅샷 값을 지키기 위해서다. */
+function mkRow(c){
+ const rg=String(c.region||'').trim().toUpperCase();
+ return MKLIVE&&MKLIVE[(rg==='KOREA'?'KR':rg)+'|'+String(c.program||'')];
+}
 function soLive(c){
- const v=MKLIVE&&MKLIVE[String(c.region||'')+'|'+String(c.program||'')];
+ const v=mkRow(c);
  return (v&&(v.t>0||v.r>0))?{t:v.t,r:v.r,live:true}:{t:c.so_t,r:c.so_r,live:false};
 }
+/* Sell-in 목표 = 전년 동기 오더 × 1.2 (전년 대비 20% 증진). 영업 오더 타깃이 아니라 캠페인 성장 미션이다. */
+const SELLIN_GROWTH=1.2;
+function sellinGoal(c){ return (c.a25>0)?c.a25*SELLIN_GROWTH:0; }
 
 function sepReport(sel){
   if(sel!==undefined) sepSel=sel;
