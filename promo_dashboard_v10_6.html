@@ -944,10 +944,10 @@ function tblDetail(){
 /* ══════════ 12. 고객 Sell-out 연계 — 두 고객을 한 템플릿으로 ══════════ */
 /* 고객별 데이터는 cust.py 에서 모두 같은 모양(kpi/sellin/flow/buckets/veh/prod/watch/full)으로
    환산해 두었다. 여기서는 고객 구분 없이 그 모양만 그린다. */
-/* ASIA Sell-out 종합은 월간 리포트 쪽(ASIA 묶음·프로그램 표)에서 보여주므로
-   이 탭에서는 뺀다. 이 탭은 고객사별 원자료(재고표·Sell-out 원장)만 다룬다. */
-const SO_SKIP=new Set(['asia']);
-const SOC=(C.customers||[]).filter(o=>!SO_SKIP.has(o.id)).map(o=>({...o,
+/* ASIA 는 고객사 한 곳이 아니라 권역 전체의 Sell-out 프로모션이라, 같은 자리에
+   붙이되 전용 패널(asiaSoPanel)로 그린다. Sell-out 실제 데이터와 달마다 쌓는
+   분석은 월간 리포트가 아니라 이 탭에 모은다. */
+const SOC=(C.customers||[]).map(o=>({...o,
   progs:[...new Set((D.campaigns||[]).filter(c=>(c.custs||[]).includes(o.code)).map(c=>c.program))]}));
 let soSel=SOC.length?SOC[0].id:null;
 
@@ -1043,6 +1043,72 @@ function sellinSvg(o,W){
   ms.forEach((m,j)=>{g+=`<rect class="hit" x="${ml+j*bw}" y="${mt}" width="${bw}" height="${H-mt-mb}" data-m="${m}"/>`;});
   return `<svg id="c61" height="${H}" viewBox="0 0 ${W} ${H}">${g}</svg>`;
 }
+/* ══════════ ASIA — Sell-out 탭 전용 패널 ══════════
+   월간 리포트에는 고객사별 요약 한 장만 두고, Sell-out 실제 데이터(프로그램 참여·현황,
+   월별 Sell-out, Sell-in 수량·품목)와 달마다 쌓는 분석은 여기 한곳에 모은다. */
+
+/* 월별 분석 누적 — 새 달 분석은 이 배열 맨 앞에 한 덩어리 추가하면 그대로 쌓인다. */
+const ASIA_SO_LOG=[
+ {m:'2026-10', t:'10월 집계 (9월까지 실적)', li:[
+   '프로그램 단위 합계와 고객사 단위 합계를 같이 본다 — 한 고객사가 Sales Champion Award(영업사원 단위)와 Order to Earn POSM(매장·딜러 단위)에 동시에 걸리면 같은 판매가 두 번 잡힌다. 대외 보고 수치는 중복을 걷어낸 고객사 단위를 쓴다.',
+   'Chuan Lam·Young Auto 는 월별 Sell-out 원장에는 실적이 있는데 리워드 지급 기준표에는 아직 0으로 올라와 있다. 둘 중 어느 쪽이 지급 근거인지 확인이 필요하다.',
+   'SERI·Zentralink 는 CTR Display & Visibility 단독 참여라 Sell-out 목표가 없다. 예산은 집행 중이므로 달성률 계산에서는 빠지되 비용에는 잡힌다.',
+   '지급 리워드는 전액 Sales Champion Award 에서 나간다. POSM·Loyalty·New Product 는 목표 미달이거나 지급 조건 미충족이다.']}
+];
+
+function asiaSoPanel(o){
+ const P=(typeof AP!=='undefined'&&AP.tot)?AP.tot:null;
+ const O=(typeof AO!=='undefined'&&AO.tot)?AO.tot:null;
+ const MN=(typeof AO!=='undefined'&&AO.months)?AO.months:[];
+ /* 집계 범위는 '자료가 들어온' 마지막 달까지 — 빈 달을 범위에 넣으면 0 인 열만 늘어난다. */
+ const li=(O&&O.m)?O.m.reduce((a,v,i)=>v>0?i:a,-1):MN.length-1;
+ const cut=(MN.length&&li>=0)?+MN[li].slice(5):null;
+ const nCust=(typeof AP!=='undefined'&&AP.rows)?new Set(AP.rows.map(r=>r.k)).size:0;
+ const live=(typeof AO!=='undefined'&&AO.rows)?AO.rows.filter(r=>r.usd>0).length:0;
+ const lastM=(typeof AO!=='undefined'&&AO.rows)?AO.rows.map(r=>r.last).filter(Boolean).sort().pop():null;
+ const gap=(P&&O)?P.act-O.usd:null;
+
+ let H=`<div class="warnbox"><b>ASIA Sell-out Promotion</b> · ${esc(o.region)} / ${esc(o.country)}
+   · ${esc(o.kind)}${lastM?` · Sell-out 집계 ~${esc(lastM)}`:''}${(typeof AP!=='undefined'&&AP.asof)?` · 자료 ${esc(AP.asof)}`:''}
+   <br>Sell-out 이 이 권역의 주력 프로모션이다. 여기 수치는 <b>매장 Sell-out 실적</b>이고, Sell-in 오더는 뒤따라왔는지 보는 추적용이다.
+   <br>월간 리포트의 ASIA 요약은 고객사별 한 줄 요약만 두고, 프로그램별 상세와 월별 추이는 이 화면에서 본다.</div>`;
+
+ /* kpiTile 은 val 을 escape 하므로(평문 전용) 여기서는 자체 타일을 쓴다. */
+ const tile=k=>`<div class="tile${k.hero?' hero':''}"><div class="lab">${esc(k.lab)}</div>
+   <div class="val">${k.val}</div>${k.sub?`<div class="sub2">${k.sub}</div>`:''}
+   ${k.meter!=null?`<div class="meter"><i style="width:${Math.min(k.meter,100)}%"></i></div>`:''}</div>`;
+ if(O||P) H+=`<div class="kpis k6">`+[
+   O?{lab:'Sell-out 실적 (고객사 단위)',hero:1,
+      val:`${fmtC(O.usd)} <span style="font-size:16px;color:var(--muted);font-weight:400">/ ${O.att}%</span>`,
+      sub:`목표 ${fmtC(O.tgt)} · 중복을 걷어낸 값`,meter:O.att}:null,
+   (P&&gap!=null)?{lab:'프로그램 단위 합계',val:fmtC(P.act),
+      sub:`중복분 ${fmtC(gap)} 포함 · 달성률 ${P.att}%`}:null,
+   {lab:'참여',val:`${nCust}곳`,sub:`프로그램 참여 ${P?P.n:0}건 · Sell-out 실적 수령 ${live}곳`},
+   P?{lab:'마케팅 예산',val:fmtC(P.bud),sub:'프로그램별 배정 합계'}:null,
+   P?{lab:'지급 리워드',val:fmtC(P.rew),sub:`예산 대비 ${P.bud?(P.rew/P.bud*100).toFixed(1):0}%`}:null,
+   cut?{lab:'집계 범위',val:`${+MN[0].slice(5)}~${cut}월`,sub:'고객사마다 자료가 들어온 마지막 달이 다름'}:null
+ ].filter(Boolean).map(tile).join('')+`</div>`;
+
+ H+=`<div class="card">`+apTable()+`</div>`;
+ H+=`<div class="card">`+aoTable(cut)+`</div>`;
+ const aq=aqTable(cut);
+ if(aq) H+=`<div class="card">`
+   +`<p class="note" style="margin:0 0 6px">Sell-in 은 Sell-out 을 따라 오더가 붙었는지 보는 추적 지표다 — 캠페인 목표가 아니다.</p>`
+   +aq+`</div>`;
+
+ H+=`<div class="card">`+asiaInsight()+`</div>`;
+
+ if(ASIA_SO_LOG.length) H+=`<div class="card"><div class="chead"><div>
+    <h3>분석 누적</h3><p class="note">달마다 한 덩어리씩 쌓는다 — 최신이 위.</p></div></div>`
+   +ASIA_SO_LOG.map(e=>`<div style="border-left:3px solid var(--brand);padding:2px 0 2px 11px;margin:12px 0">
+      <div style="font-weight:800;font-size:14px">${esc(e.t)} <span class="sub3" style="font-weight:400">· ${esc(e.m)}</span></div>
+      <ul style="margin:6px 0 0;padding-left:17px">`
+      +e.li.map(x=>`<li class="note" style="padding-left:0;margin:5px 0;font-size:13.5px;line-height:1.55">${x}</li>`).join('')
+      +`</ul></div>`).join('')
+   +`</div>`;
+ return H;
+}
+
 function soMatch(){const f=F();
   return SOC.filter(o=>(f.region==='ALL'||o.region===f.region));}
 function soPage(){
@@ -1060,6 +1126,7 @@ function soPage(){
       +`현재 보유: ${SOC.map(o=>`${esc(o.name)} (${esc(o.region)})`).join(' · ')}`;
     $('#soBody').innerHTML=''; return;}
   const o=m.find(x=>x.id===soSel), W=Math.max(720,($('#soBody').clientWidth||1000)-40);
+  if(o.id==='asia'){ $('#soBody').innerHTML=asiaSoPanel(o); return; }
   let H=`<div class="warnbox"><b>${esc(o.name)}</b> · 고객코드 ${esc(o.code)} · ${esc(o.region)} / ${esc(o.country)}
       · ${esc(o.kind)} · 기준 ${esc(o.asof)}${o.progs.length?` · ${esc(o.progs.join(' · '))}`:''}
       ${o.meta?`<br>${o.meta}`:''}${o.warn?`<br>${o.warn}`:''}</div>`;
@@ -2618,7 +2685,7 @@ function octMonth(A){
 
   /* ── 이달의 주요 성과 — ASIA ── */
   if(S||O||Q){
-    h+=`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">ASIA</span> <span style="font-size:12.5px;color:var(--ink2)">· <b style="color:var(--brand)">Sell-out 프로모션이 주력</b> · 10월까지 · 고객사별 Sell-out · 오더 · 선적 · 품목</span></div><div class="card">`
+    h+=`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">ASIA</span> <span style="font-size:12.5px;color:var(--ink2)">· <b style="color:var(--brand)">Sell-out 프로모션이 주력</b> · 10월까지 · 고객사별 한 장 요약 (Sell-out · 오더 · 선적) · 상세는 Sell-out 탭</span></div><div class="card">`
      +kgrid([
        O?{lab:'Sell-out 실적 (주력 프로모션)',hero:1,
           val:`${fmtC(O.usd)} <span style="font-size:16px;color:var(--muted);font-weight:400">/ ${O.att}%</span>`,
@@ -2633,7 +2700,9 @@ function octMonth(A){
      ].filter(Boolean))
      +aiTable()
      +asiaInsight()
-     +aoTable(10)+apTable()+aqTable(10)
+     +`<p class="note" style="margin:12px 0 0;border-left:3px solid var(--brand);padding-left:10px">`
+      +`프로그램별 참여·현황, 고객사별 월별 Sell-out, Sell-in 수량·품목 표와 달마다 쌓는 분석은 `
+      +`<b>고객 Sell-out 연계 탭 › ASIA</b> 로 옮겼다. 여기에는 고객사별 요약 한 장만 둔다.</p>`
      +`</div>`;
   }
   h+=mfTable();
