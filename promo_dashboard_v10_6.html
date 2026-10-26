@@ -1514,6 +1514,37 @@ function asiaBox(){
   const b3=$('#btnCsvAS3'); if(b3) b3.onclick=()=>csv('asia_shipment.csv',C3);
 }
 
+/* ASIA Sell-in 오더 (금액 기준) — 단일 소스: asia_choicekit.json
+   수량 자료(Customer_order_data_SEA)는 2026 추출이 비어 있는 달이 많아 쓰지 않는다. */
+function aiTable(){
+ if(typeof AS==='undefined'||!(AS.rows||[]).length) return '';
+ const T=AS.tot;
+ const rows=AS.rows.slice().sort((a,b)=>b.y26t-a.y26t);
+ const mx=Math.max(...rows.map(r=>Math.max(r.y25t,r.y26t)),1);
+ const pair=(a,b)=>`<div style="display:flex;gap:3px;align-items:center">`
+   +`<div style="flex:1"><div style="height:7px;background:var(--track);border-radius:2px;overflow:hidden"><div style="height:100%;width:${Math.min(a/mx*100,100)}%;background:var(--s1)"></div></div>`
+   +`<div style="height:7px;background:var(--track);border-radius:2px;overflow:hidden;margin-top:2px"><div style="height:100%;width:${Math.min(b/mx*100,100)}%;background:var(--brand)"></div></div></div></div>`;
+ const rt=v=>v==null?'<span class="sub3">–</span>':`<span class="${v>=100?'up':'dn'}">${v}%</span>`;
+ const pc=v=>v==null?'<span class="sub3">–</span>':`<span class="${cls(v)}">${fmtPC(v)}</span>`;
+ const tr=r=>`<tr><td style="text-align:left"><b>${esc(r.k)}</b>
+   <div class="sub3" style="font-size:10.5px;font-weight:400">${esc(r.country)}</div></td>
+   <td class="num sub3">${fmtC(r.y25)}</td><td class="num sub3">${fmtC(r.y25t)}</td>
+   <td class="num"><b>${fmtC(r.y26t)}</b></td><td style="min-width:90px">${pair(r.y25t,r.y26t)}</td>
+   <td class="num">${rt(r.aratio)}</td><td class="num">${pc(r.ayoy)}</td>
+   <td class="num sub3">${r.share==null?'–':r.share+'%'}</td></tr>`;
+ return `<h4 class="soh">Sell-in 오더 — 2025 vs 2026 (금액 기준)</h4>`
+  +`<p class="sub3" style="margin:-4px 0 9px;line-height:1.5">참여 12곳의 전체 오더. 2026 은 1~10월이라 전년도 같은 구간(1~10월)과 맞춰 비교함 · 자료 ${esc(AS.src||'')}<br>초이스킷 비중은 각 고객사의 당해 전체 오더 중 캠페인 기간에 들어온 몫.</p>`
+  +`<div class="legend"><span><i class="sw" style="background:var(--s1)"></i>2025 1~10월</span><span><i class="sw" style="background:var(--brand)"></i>2026 1~10월</span></div>`
+  +`<div class="tblwrap"><table class="lts"><thead><tr><th style="text-align:left">고객사</th>
+     <th>2025 연간</th><th>2025 1~10월</th><th>2026 1~10월</th><th>추이</th>
+     <th>동기 비율</th><th>증감률</th><th>초이스킷 비중</th></tr></thead><tbody>`
+  +rows.map(tr).join('')
+  +`</tbody><tfoot><tr><td style="text-align:left">합계</td>
+     <td class="num">${fmtC(T.y25)}</td><td class="num">${fmtC(T.y25t)}</td><td class="num">${fmtC(T.y26t)}</td>
+     <td></td><td class="num">${T.aratio}%</td><td class="num">${(T.ayoy>=0?'+':'')+T.ayoy}%</td>
+     <td class="num">${T.share}%</td></tr></tfoot></table></div>`;
+}
+
 /* ASIA Sell-out 고객사별 월별 (단일 소스: asia_sellout.json) */
 function aoTable(){
  if(typeof AO==='undefined'||!(AO.rows||[]).length) return '';
@@ -2134,6 +2165,7 @@ function sepMonth(A){
      {lab:'참여 프로그램',val:sea.programs_count+'종',sub:'Sales Champion·POSM·New Product·Loyalty·Display'},
      {lab:'sell-out 데이터 수령',val:(typeof AO!=='undefined'&&AO.have!=null)?`${AO.have} / ${AO.n}`:'5 / 10',sub:(typeof AO!=='undefined'&&AO.pending)?`미수령 ${AO.pending.join('·')}`:'VN Mast·Nam Bac·GTA · TH GP · MY Marboro'},
      {lab:'관측 기간',val:(typeof AO!=='undefined'&&AO.months&&AO.months.length)?`${+AO.months[0].slice(5)}~${+AO.months[AO.months.length-1].slice(5)}월`:'5~8월',sub:'고객사마다 자료가 들어온 마지막 달이 다름'}])
+   +aiTable()
    +aoTable()
    +`<h4 class="soh">프로그램별 성과</h4><p class="sub3" style="margin:-4px 0 9px;line-height:1.5">각 프로그램 조건(대상 SKU·차종·기간)에 해당하는 오더만 집계 · 고객사 전체 sell-out과 범위가 다름</p><div class="tblwrap"><table class="lts"><thead><tr><th>프로그램</th><th>참여</th><th>Target</th><th>실적 (USD)</th><th>달성률</th><th>해석</th></tr></thead><tbody>`
    +sea.programs.map(p=>{const _d={"Sales Champion Award":"기간 내 Sell-out 목표 달성 우수 고객사 시상 (판매왕 인센티브)","Long-Term Loyalty":"장기 거래 고객 로열티 리워드 (안정적 재구매 유도)","Order to Earn POSM":"일정 오더 달성 시 POSM(판촉물) 지급","New Product Sell-Out":"신제품 Sell-out 촉진 프로모션","Display & Visibility":"매장 전시·진열 가시성 확보 (전시·사진 증빙)","CTR Display & Visibility":"매장 전시·진열 가시성 확보 (전시·사진 증빙)"};return `<tr><td style="text-align:left"><b>${esc(p.program)}</b><div class="sub3" style="font-size:10.5px;font-weight:400;margin-top:1px">${esc(_d[p.program]||"")}</div></td><td style="text-align:center">${p.customers}</td><td class="num sub3">${p.target==null?'–':'$'+p.target.toLocaleString()}</td><td>${p.actual==null?'<span style="color:var(--muted)">미제공</span>':'$'+Math.round(p.actual).toLocaleString()}</td><td style="min-width:120px">${p.achievement==null?'<span class="sub3">–</span>':(()=>{const _c=p.achievement>=1?'var(--good)':p.achievement>=.5?'var(--warn)':'var(--serious)';return `<div style="display:flex;align-items:center;gap:6px"><div style="flex:1;min-width:46px;height:12px;background:var(--track);border-radius:3px;overflow:hidden"><div style="height:100%;width:${Math.min(p.achievement*100,200)/2}%;background:${_c};border-radius:3px"></div></div><b style="color:${_c};font-size:11.5px;white-space:nowrap">${(p.achievement*100).toFixed(0)}%</b></div>`;})()}</td><td style="text-align:left;font-size:12.5px">${esc(p.note)}</td></tr>`;}).join('')
