@@ -1,0 +1,220 @@
+{
+ "_readme": "LATAM CTR MarketFit 대상 SKU · 모델군별 게시일(프로모션 적용 시작일). 수정 후 `python3 scripts/sync_latam_marketfit.py`.",
+ "source_file": "LATAM_MarketFit_SKU_1_1.xlsx (2026-10-26 제공)",
+ "asof": "2026-10-26",
+ "ledger": "orders.csv (연관 오더 원장 · ~2026-09-21)",
+ "cut": "2026-09-21",
+ "note": "게시날짜 = 그 모델군 품번의 프로모션 적용 시작일. 각 품번은 자기 게시일 이후 오더만 집계한다.",
+ "note_pre": "게시일 이전 오더는 캠페인 실적에서 뺐다 — 9종 $58,193.",
+ "rows": [
+  {
+   "make": "NISSAN",
+   "model": "Versa",
+   "yr": "2012~2019",
+   "start": "2026-02-11",
+   "n": 7,
+   "hit": 7,
+   "skus": [
+    "CQ0280L",
+    "CQ0280R",
+    "CL0477",
+    "CR0490",
+    "CE0536L",
+    "CE0536R",
+    "CB0336"
+   ],
+   "q": 14438,
+   "a": 87273,
+   "cust": 25,
+   "started": true
+  },
+  {
+   "make": "CHEVROLET",
+   "model": "Aveo",
+   "yr": "2008~2017",
+   "start": "2026-03-24",
+   "n": 9,
+   "hit": 9,
+   "skus": [
+    "CQ0096L",
+    "CQ0096R",
+    "CE0287L",
+    "CE0287R",
+    "GV0130",
+    "CL0240",
+    "GV0131",
+    "GV0135",
+    "CB0161"
+   ],
+   "q": 53012,
+   "a": 224832,
+   "cust": 20,
+   "started": true
+  },
+  {
+   "make": "NISSAN",
+   "model": "Tiida",
+   "yr": "2007~2013",
+   "start": "2026-07-21",
+   "n": 9,
+   "hit": 8,
+   "skus": [
+    "CB0331",
+    "CE0507",
+    "CE0508",
+    "CL0477",
+    "CQ0273L",
+    "CQ0273R",
+    "CR0476",
+    "GV1043",
+    "PL0477"
+   ],
+   "q": 10101,
+   "a": 49269,
+   "cust": 22,
+   "started": true
+  },
+  {
+   "make": "TOYOTA",
+   "model": "Corolla",
+   "yr": "2007~2014",
+   "start": "2026-07-29",
+   "n": 11,
+   "hit": 5,
+   "skus": [
+    "CB0418",
+    "CE0187",
+    "CE0788",
+    "CQ0312R",
+    "CQ0312L",
+    "PL0586",
+    "CL0586",
+    "GV0497",
+    "GV1091",
+    "GV1048R",
+    "GV1048L"
+   ],
+   "q": 1304,
+   "a": 8983,
+   "cust": 14,
+   "started": true
+  },
+  {
+   "make": "VOLKSWAGEN",
+   "model": "Amarok",
+   "yr": "2011~2023",
+   "start": "2026-08-11",
+   "n": 6,
+   "hit": 4,
+   "skus": [
+    "CB0459",
+    "CB0450",
+    "CE0909L",
+    "CE0909R",
+    "GV1447",
+    "GY1758G"
+   ],
+   "q": 85,
+   "a": 587,
+   "cust": 2,
+   "started": true
+  },
+  {
+   "make": "RENAULT",
+   "model": "Logan",
+   "yr": "2004~",
+   "start": "2026-08-26",
+   "n": 8,
+   "hit": 0,
+   "skus": [
+    "CB0345",
+    "CE0611L",
+    "CE0611R",
+    "CR0522",
+    "CL0953",
+    "CQ0287L",
+    "CQ0287R",
+    "GV0587"
+   ],
+   "q": 0,
+   "a": 0,
+   "cust": 0,
+   "started": true
+  },
+  {
+   "make": "CHEVROLET",
+   "model": "Sonic",
+   "yr": "2011~",
+   "start": "2026-09-08",
+   "n": 6,
+   "hit": 0,
+   "skus": [
+    "CB0166",
+    "CE0295",
+    "CQ0102L",
+    "CQ0102R",
+    "CL0250",
+    "CR0245"
+   ],
+   "q": 0,
+   "a": 0,
+   "cust": 0,
+   "started": true
+  },
+  {
+   "make": "HYUNDAI",
+   "model": "H1",
+   "yr": "2007~",
+   "start": "2026-09-23",
+   "n": 11,
+   "hit": 0,
+   "skus": [
+    "CE0334R",
+    "CE0334L",
+    "CR0277",
+    "CL0309R",
+    "CL0309L",
+    "CL0283R",
+    "CL0283L",
+    "CL0282R",
+    "CL0282L",
+    "CQ0143R",
+    "CQ0143L"
+   ],
+   "q": 0,
+   "a": 0,
+   "cust": 0,
+   "started": false
+  },
+  {
+   "make": "SUZUKI",
+   "model": "VITARA",
+   "yr": "2005~",
+   "start": "2026-10-21",
+   "n": 6,
+   "hit": 0,
+   "skus": [
+    "CE0619",
+    "CR0542",
+    "CL0530",
+    "GV0752",
+    "GV1201",
+    "GV0417"
+   ],
+   "q": 0,
+   "a": 0,
+   "cust": 0,
+   "started": false
+  }
+ ],
+ "tot": {
+  "n": 72,
+  "hit": 32,
+  "groups": 9,
+  "q": 69642,
+  "a": 326265,
+  "cust": 29,
+  "pre_n": 9,
+  "pre_a": 58193
+ }
+}
