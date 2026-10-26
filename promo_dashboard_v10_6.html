@@ -365,7 +365,7 @@ details.cdet-c>.cdet-body{margin:0;padding:10px 12px 4px}
     <div class="warnbox" id="w3"></div>
     <div class="grid2">
       <div class="card"><h3>프로그램별 비용 (실집행 / 예상)</h3>
-        <p class="note">진한 막대가 실집행, 연한 막대가 예상임. 건수는 marketing.xlsx의 활동 행 수로, 같은 활동이라도 국가·고객사가 다르면 따로 셈. 국가를 지정하지 않은 활동은 권역 공통으로 셈.</p>
+        <p class="note">진한 막대가 실집행, 연한 막대가 예상임. 건수는 marketing.xlsx의 활동 행 수로, 같은 활동이라도 국가·고객사가 다르면 따로 셈. 국가를 지정하지 않은 활동은 권역 공통으로 셈.<br>ASIA Sell-out 은 리워드 지급 기준표를 그대로 씀 — <b>예산과 실제 지급 리워드</b>이고, 건수는 참여 고객사 수임.</p>
         <div id="costBars"></div></div>
       <div class="card"><h3>권역별 회수 배수</h3>
         <p class="note">회수 배수 = <b>순증 오더 ÷ 실집행 비용</b> (둘 다 USD). 마진율을 가정하지 않은 <b>매출 기준</b> 배수임 — 1.0배면 쓴 돈만큼 오더가 늘었다는 뜻임. 순증 오더는 대조군 증감으로 보정한 값이며, 실집행 비용이 $10K 미만인 권역은 배수가 크게 흔들리므로 방향만 봐야 함.</p>
@@ -758,6 +758,15 @@ function costRomi(){
     o.exp+=a.exp;o.act+=a.act;o.n++;
     const c=String(a.country||'').trim();
     if(!c||c.toUpperCase()===rg) o.wide++; else o.ct[c]=(o.ct[c]||0)+1;});
+  /* ASIA Sell-out 은 리워드 지급 기준표(asia_sellout_programs.json)가 더 정확하다.
+     marketing.csv 는 프로그램 이름이 '/' 로 붙어 있고 실집행이 예산과 같게 들어와,
+     실제 지급액($5,026)이 드러나지 않았다. 그 행들을 프로그램 단위로 갈아끼운다. */
+  if(typeof AP!=='undefined'&&(AP.groups||[]).length&&(F().region==='ALL'||F().region==='ASIA')){
+    Object.keys(g).forEach(k=>{ if(g[k].reg==='ASIA') delete g[k]; });
+    AP.groups.forEach(p=>{
+      const ct={}; AP.rows.filter(r=>r.p===p.p).forEach(r=>{ct[r.c]=(ct[r.c]||0)+1;});
+      g['ASIA|'+p.p]={exp:p.bud*FX, act:p.rew*FX, n:p.n, reg:'ASIA', prog:p.p, ct, wide:0, rew:true};});
+  }
   const rows=Object.values(g).sort((a,b)=>b.exp-a.exp).slice(0,14);
   const mx=Math.max(...rows.map(r=>r.exp),1);
   const ctLine=r=>{
@@ -768,7 +777,7 @@ function costRomi(){
   $('#costBars').innerHTML=rows.map(r=>`<div style="margin:12px 0">
     <div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;margin-bottom:3px">
       <span><span class="pill rg" style="margin-right:6px">${esc(r.reg)}</span><b>${esc(r.prog)}</b></span>
-      <span class="sub3" style="white-space:nowrap">활동 ${r.n}건 · ${r.act?fmtC(r.act/FX):'미기록'} / ${fmtC(r.exp/FX)}</span></div>
+      <span class="sub3" style="white-space:nowrap">${r.rew?`고객사 ${r.n}곳 · 지급 ${r.act?fmtC(r.act/FX):'없음'} / 예산 ${fmtC(r.exp/FX)}`:`활동 ${r.n}건 · ${r.act?fmtC(r.act/FX):'미기록'} / ${fmtC(r.exp/FX)}`}</span></div>
     <div style="font-size:12.5px;color:var(--ink2);margin:0 0 5px 2px;line-height:1.45">${ctLine(r)}</div>
     <div style="height:13px;background:var(--track);border-radius:3px;position:relative;overflow:hidden">
       <div style="position:absolute;left:0;top:0;bottom:0;width:${r.exp/mx*100}%;background:var(--o2)"></div>
