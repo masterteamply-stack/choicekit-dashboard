@@ -1611,30 +1611,47 @@ function aiTable(){
  if(typeof AS==='undefined'||!(AS.rows||[]).length) return '';
  const T=AS.tot;
  const rows=AS.rows.slice().sort((a,b)=>b.got-a.got);
+ /* Sell-out 타깃은 리워드 지급 기준표(AP)를 고객사로 합치고, 실적은 고객사 단위로
+    중복을 걷어낸 값(AO)을 쓴다. 둘 다 없으면 칸을 비운다. */
+ const soT=k=>(typeof AP!=='undefined'&&AP.rows)?AP.rows.filter(r=>r.k===k).reduce((a,r)=>a+(r.tgt||0),0):0;
+ const soA=k=>{const r=(typeof AO!=='undefined'&&AO.rows)?AO.rows.find(x=>x.k===k):null; return r?r.usd:null;};
  const mx=Math.max(...rows.map(r=>Math.max(r.a25,r.got)),1);
  const pair=(a,b)=>`<div><div style="height:7px;background:var(--track);border-radius:2px;overflow:hidden"><div style="height:100%;width:${Math.min(a/mx*100,100)}%;background:var(--s1)"></div></div>`
    +`<div style="height:7px;background:var(--track);border-radius:2px;overflow:hidden;margin-top:2px"><div style="height:100%;width:${Math.min(b/mx*100,100)}%;background:var(--brand)"></div></div></div>`;
  const rt=v=>v==null?'<span class="sub3">–</span>':`<span class="${v>=100?'up':'dn'}">${v}%</span>`;
+ const at=(x,y)=>y?`<span class="${x/y>=1?'up':(x/y>=0.5?'':'dn')}">${(x/y*100).toFixed(0)}%</span>`:'<span class="sub3">–</span>';
  const pc=v=>v==null?'<span class="sub3">–</span>':`<span class="${cls(v)}">${fmtPC(v)}</span>`;
- const tr=r=>`<tr><td style="text-align:left"><b>${esc(r.k)}</b>
+ const tr=r=>{const st=soT(r.k), sa=soA(r.k);
+  return `<tr><td style="text-align:left"><b>${esc(r.k)}</b>
    <div class="sub3" style="font-size:10.5px;font-weight:400">${esc(r.country)}</div></td>
    <td class="small" style="text-align:left;white-space:nowrap;font-size:11px">${esc(r.period)}</td>
    <td class="num sub3">${fmtC(r.a25)}</td><td class="num"><b>${fmtC(r.got)}</b></td>
-   <td style="min-width:80px">${pair(r.a25,r.got)}</td>
+   <td style="min-width:70px">${pair(r.a25,r.got)}</td>
    <td class="num">${rt(r.ratio)}</td><td class="num">${pc(r.yoy)}</td>
-   <td class="num sub3">${fmtC(r.s26)}</td></tr>`;
- return `<h4 class="soh">Sell-in 오더 — 초이스킷 참여 기간 (2025 vs 2026)</h4>`
-  +`<p class="sub3" style="margin:-4px 0 9px;line-height:1.5">고객사마다 초이스킷 참여 기간이 달라, 전년(2025)도 각자의 같은 날짜 구간으로 맞추어 비교함 · 자료 ${esc(AS.src||'')}<br>
-     금액은 모두 초이스킷 참여 기간에 들어온 오더만 집계한 것임 · 맨 오른쪽 매출은 참고용으로, SAP 선적 YTD(차감 후)라 기간·기준이 캠페인 오더와 다름.</p>`
+   <td class="num sub3">${fmtC(r.tgt)}</td><td class="num">${at(r.got,r.tgt)}</td>
+   <td class="num sub3 rvcol">${st?fmtC(st):'–'}</td>
+   <td class="num rvcol">${sa==null?'–':fmtC(sa)}</td>
+   <td class="num rvcol">${(st&&sa!=null)?at(sa,st):'<span class="sub3">–</span>'}</td>
+   <td class="num sub3">${fmtC(r.s26)}</td></tr>`;};
+ const TS=rows.reduce((a,r)=>a+soT(r.k),0), TA=rows.reduce((a,r)=>a+(soA(r.k)||0),0);
+ return `<h4 class="soh">Sell-in · Sell-out — 초이스킷 참여 기간 (2025 vs 2026)</h4>`
+  +`<p class="sub3" style="margin:-4px 0 9px;line-height:1.5">고객사마다 참여 기간이 달라, 전년(2025)도 각자의 같은 날짜 구간으로 맞추어 비교함 · 금액은 모두 참여 기간에 들어온 오더만 집계한 것임<br>
+     Sell-out 타깃은 리워드 지급 기준표를 고객사로 합친 값, 실적은 두 프로그램에 겹친 몼을 걷어낸 고객사 단위 수치 · 맨 오른쪽 매출은 SAP 선적 YTD(차감 후)라 기간·기준이 다름.</p>`
   +`<div class="legend"><span><i class="sw" style="background:var(--s1)"></i>2025 동기</span><span><i class="sw" style="background:var(--brand)"></i>2026 실적</span></div>`
-  +`<div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr>
-     <th style="text-align:left">고객사</th><th style="text-align:left">초이스킷 기간</th>
-     <th>2025 동기</th><th>2026 실적</th><th>추이</th><th>전년 비율</th><th>증감률</th>
-     <th>2026 매출 (선적 YTD)</th></tr></thead><tbody>`
+  +`<div class="tblwrap"><table class="lts" style="font-size:12px"><thead>
+     <tr><th rowspan="2" style="text-align:left">고객사</th><th rowspan="2" style="text-align:left">초이스킷 기간</th>
+       <th colspan="7" style="border-bottom:2px solid var(--brand)">Sell-in 오더</th>
+       <th colspan="3" class="rvcol" style="border-bottom:2px solid var(--brand)">Sell-out</th>
+       <th rowspan="2">2026 매출<div class="sub3" style="font-weight:400">선적 YTD</div></th></tr>
+     <tr><th>2025 동기</th><th>2026 실적</th><th>추이</th><th>전년 비율</th><th>증감률</th><th>타깃</th><th>달성률</th>
+       <th class="rvcol">타깃</th><th class="rvcol">실적</th><th class="rvcol">달성률</th></tr></thead><tbody>`
   +rows.map(tr).join('')
   +`</tbody><tfoot><tr><td style="text-align:left">합계</td><td></td>
      <td class="num">${fmtC(T.a25)}</td><td class="num">${fmtC(T.got)}</td><td></td>
      <td class="num">${T.ratio}%</td><td class="num">${(T.yoy>=0?'+':'')+T.yoy}%</td>
+     <td class="num">${fmtC(T.tgt)}</td><td class="num">${T.att}%</td>
+     <td class="num">${fmtC(TS)}</td><td class="num">${fmtC(TA)}</td>
+     <td class="num">${(TA/TS*100).toFixed(1)}%</td>
      <td class="num">${fmtC(T.s26)}</td></tr></tfoot></table></div>`;
 }
 
