@@ -1610,22 +1610,20 @@ function aiTable(){
    <td class="num sub3">${fmtC(r.a25)}</td><td class="num"><b>${fmtC(r.got)}</b></td>
    <td style="min-width:80px">${pair(r.a25,r.got)}</td>
    <td class="num">${rt(r.ratio)}</td><td class="num">${pc(r.yoy)}</td>
-   <td class="num sub3">${fmtC(r.y26t)}</td><td class="num sub3">${fmtC(r.s26)}</td>
-   <td class="num sub3">${r.share==null?'–':r.share+'%'}</td></tr>`;
+   <td class="num sub3">${fmtC(r.s26)}</td></tr>`;
  return `<h4 class="soh">Sell-in 오더 — 초이스킷 참여 기간 (2025 vs 2026)</h4>`
   +`<p class="sub3" style="margin:-4px 0 9px;line-height:1.5">고객사마다 초이스킷 참여 기간이 달라, 전년(2025)도 각자의 같은 날짜 구간으로 맞추어 비교함 · 자료 ${esc(AS.src||'')}<br>
-     오른쪽 두 칸은 참고용 — 2026 오더는 그 고객사의 1~10월 전체 오더, 매출은 SAP 선적 YTD(차감 후)라 캠페인 기간 오더와 범위가 다름.</p>`
+     금액은 모두 초이스킷 참여 기간에 들어온 오더만 집계한 것임 · 맨 오른쪽 매출은 참고용으로, SAP 선적 YTD(차감 후)라 기간·기준이 캠페인 오더와 다름.</p>`
   +`<div class="legend"><span><i class="sw" style="background:var(--s1)"></i>2025 동기</span><span><i class="sw" style="background:var(--brand)"></i>2026 실적</span></div>`
   +`<div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr>
      <th style="text-align:left">고객사</th><th style="text-align:left">초이스킷 기간</th>
      <th>2025 동기</th><th>2026 실적</th><th>추이</th><th>전년 비율</th><th>증감률</th>
-     <th>2026 오더 (1~10월)</th><th>2026 매출 (선적 YTD)</th><th>캠페인 비중</th></tr></thead><tbody>`
+     <th>2026 매출 (선적 YTD)</th></tr></thead><tbody>`
   +rows.map(tr).join('')
   +`</tbody><tfoot><tr><td style="text-align:left">합계</td><td></td>
      <td class="num">${fmtC(T.a25)}</td><td class="num">${fmtC(T.got)}</td><td></td>
      <td class="num">${T.ratio}%</td><td class="num">${(T.yoy>=0?'+':'')+T.yoy}%</td>
-     <td class="num">${fmtC(T.y26t)}</td><td class="num">${fmtC(T.s26)}</td>
-     <td class="num">${T.share}%</td></tr></tfoot></table></div>`;
+     <td class="num">${fmtC(T.s26)}</td></tr></tfoot></table></div>`;
 }
 
 /* ASIA Sell-out 고객사별 월별 (단일 소스: asia_sellout.json) */
@@ -2411,7 +2409,7 @@ function monthSummary(A){
    9월 리포트는 손대지 않는다. 10월 리포트는 손으로 적은 활동 수치 대신
    단일 소스(asia_choicekit / asia_sellout / asia_sellin_qty / SteerStar)를
    그대로 읽어 그린다. 자료가 안 들어온 칸은 비워 두고 그렇게 적는다. */
-const OCTOBER_ACTIVITY = { _m: 10, kind: 'october', generated_at: '2026-10-26',
+const OCTOBER_ACTIVITY = { _m: 10, kind: 'october', generated_at: '2026-10-26', wip: '업데이트 중',
   cut: '2026-10',
   note: 'ASIA 는 10월분까지 반영. 연관 오더 원장(orders.csv)은 9/25 까지라 캠페인 오더·SKU 는 그 기준이고, ASIA 고객사 수치는 제공받은 10월 자료 기준이다.',
   issues: [] };
@@ -2431,6 +2429,7 @@ function octMonth(A){
   let h=`<div class="card">`
    +`<div style="display:flex;align-items:center;gap:10px;margin:0 0 10px"><span style="width:6px;height:26px;background:var(--brand);border-radius:2px;display:inline-block"></span>`
    +`<h3 style="margin:0;font-size:22px;font-weight:800;letter-spacing:-0.5px">10월 리포트</h3>`
+   +(A.wip?`<span style="background:var(--warn);color:#fff;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap">${esc(A.wip)}</span>`:'')
    +`<span class="sub3" style="font-size:12px">데이터 기준 ${esc(A.generated_at)}</span></div>`
    +`<p class="note" style="margin-top:-2px">${esc(A.note)}</p>`
    +kgrid([
@@ -2450,9 +2449,10 @@ function octMonth(A){
   if(S||O||Q){
     h+=`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">ASIA</span> <span style="font-size:12.5px;color:var(--ink2)">· 10월까지 · 고객사별 오더 · 선적 · Sell-out · 품목</span></div><div class="card">`
      +kgrid([
-       S?{lab:'오더 (1~10월)',hero:1,val:`${fmtC(S.y25t)} <span style="color:var(--muted);font-weight:400">→</span> ${fmtC(S.y26t)}`,
-          sub:`전년 동기 대비 <span class="${cls(S.ayoy)}">${fmtPC(S.ayoy)}</span> · 참여 12곳 전체 오더`}:null,
-       S?{lab:'초이스킷 기간 오더',val:fmtC(S.got),sub:`타깃 ${fmtC(S.tgt)} · 달성 ${S.att}%`,meter:S.att}:null,
+       S?{lab:'초이스킷 기간 오더 (전년 동기 → 당해)',hero:1,
+          val:`${fmtC(S.a25)} <span style="color:var(--muted);font-weight:400">→</span> ${fmtC(S.got)}`,
+          sub:`전년 동기 대비 <span class="${cls(S.yoy)}">${fmtPC(S.yoy)}</span> · 참여 12곳 캠페인 기간 오더 합계`}:null,
+       S?{lab:'타깃 대비 달성',val:`${S.att}%`,sub:`초이스킷 캠페인 타깃 ${fmtC(S.tgt)}`,meter:S.att}:null,
        O?{lab:'Sell-out',val:fmtC(O.usd),sub:`목표 ${fmtC(O.tgt)} · 달성 ${O.att}%`,meter:O.att}:null,
        S?{lab:'선적 (SAP · YTD)',val:fmtC(S.s26),sub:`전년 연간 ${fmtC(S.s25)} 대비 ${S.sratio}%`}:null,
        Q?{lab:'신규 품목',val:Q.new.toLocaleString()+'종',sub:'2025 에 없던 품번이 2026 에 처음 오더'}:null,
@@ -2613,9 +2613,9 @@ function sepReport(sel){
   const have=months.filter(m=>MONTHLY_ACTIVITY[m]);
   if(sepSel!=='all' && !MONTHLY_ACTIVITY[sepSel]) sepSel=have.length?have[have.length-1]:'all';
   const opts=`<option value="all"${sepSel==='all'?' selected':''}>종합 (최종 누적)</option>`
-    +have.map(m=>`<option value="${m}"${sepSel===m?' selected':''}>${m}월 리포트</option>`).join('');
+    +have.map(m=>`<option value="${m}"${sepSel===m?' selected':''}>${m}월 리포트${MONTHLY_ACTIVITY[m]&&MONTHLY_ACTIVITY[m].wip?' ('+MONTHLY_ACTIVITY[m].wip+')':''}</option>`).join('');
   const _Acur=MONTHLY_ACTIVITY[sepSel];
-  const _hdr=_Acur?`<span class="sepfhdr"><b>${_Acur._m}월 활동 리포트 · Activity Layer</b> · 데이터 기준 ${_Acur.generated_at}</span>`:`<span class="sepfhdr"><b>월간 종합</b> · 최종 누적(최신 월 기준)</span>`;
+  const _hdr=_Acur?`<span class="sepfhdr"><b>${_Acur._m}월 활동 리포트 · Activity Layer</b> · 데이터 기준 ${_Acur.generated_at}${_Acur.wip?` · <b style="color:var(--warn)">${esc(_Acur.wip)}</b>`:''}</span>`:`<span class="sepfhdr"><b>월간 종합</b> · 최종 누적(최신 월 기준)</span>`;
   $('#sepFilter').innerHTML=`<label class="sepdd">월 선택 <select id="sepSelDd">${opts}</select></label>`+_hdr;
   let body;
   if(sepSel==='all') body=sepAllOverview(have);
