@@ -413,6 +413,10 @@ details.cdet-c>.cdet-body{margin:0;padding:10px 12px 4px}
 /* ══════════ 0. 유틸 ══════════ */
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const A=D.activities, SCM=D.scope_meta;
+/* D 스냅샷에 없는 스코프 보강 — ASIA 는 Sell-out 프로모션이라 대상 SKU 지정이 없다.
+   보강하지 않으면 '대상 SKU' 칸에 코드(SELLOUT)가, '스코프 규칙' 칸에 '–' 가 그대로 뜬다. */
+if(SCM&&!SCM.SELLOUT) SCM.SELLOUT={label:'전 품목 (Sell-out 프로모션)',
+  rule:'대상 SKU 지정 없음 — 참여 고객사의 매장 Sell-out 실적이 캠페인 기준이고, 여기 금액은 그 고객사의 Sell-in 오더 추적치다.'};
 const FX=(D.fx||1470);   /* 고정 환율 — 화면에서 조정하지 않는다 */
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function fmtC(v){const a=Math.abs(v);
@@ -802,6 +806,12 @@ function costRomi(){
       <td class="num">${TT.so_t?`${fmtC(TT.so_t)} → ${fmtC(TT.so_r)}`:'–'}</td></tr></tfoot></table>`;
 }
 
+/* '이달' 은 원장 마감월(캠페인별 cut 중 가장 늦은 달)에서 뽑는다 — 고정 표기 금지. */
+function moLabel(){
+  const cs=(D.campaigns||[]).map(c=>c.cut).filter(Boolean).sort();
+  return cs.length?(+cs[cs.length-1].slice(5,7))+'월':'이달';
+}
+
 /* ══════════ 3+9. 권역별 · 캠페인 효과 (통합) ══════════ */
 function tblMerged(){
   const C=camps(), run=C.filter(c=>c.started), wait=C.filter(c=>!c.started);
@@ -851,7 +861,7 @@ function tblMerged(){
   regRows().slice().sort((a,b)=>(a.k==='ASIA'?1:0)-(b.k==='ASIA'?1:0)).forEach(R=>{
     const cs=run.filter(c=>c.region===R.k).sort((a,b)=>(b.a26||0)-(a.a26||0));
     if(!cs.length) return;
-    body+=`<tr class="rgrp"><td colspan="8" style="text-align:left;background:var(--head);color:#fff;font-weight:700">${esc(R.k)}</td></tr>`;
+    body+=`<tr class="rgrp"><td colspan="9" style="text-align:left;background:var(--head);color:#fff;font-weight:700">${esc(R.k)}</td></tr>`;
     body+=cs.map(campRow).join('');
     if(cs.length>1) body+=subRow(R);
   });
@@ -863,7 +873,7 @@ function tblMerged(){
     <td class="num"><span class="${cls(T.yoy)}"><b>${T.yoy==null?'–':fmtPC(T.yoy)}</b></span></td></tr>`;
   $('#tMerged').innerHTML='<table><thead><tr>'
     +'<th class="nos">캠페인 · 고객</th><th class="nos">대상 SKU</th><th class="nos">스코프 규칙</th><th class="nos">기간</th><th class="nos">기간 경과율</th>'
-    +'<th class="nos">전년</th><th class="nos">당해</th><th class="nos">이달(9월)</th><th class="nos">YoY</th>'
+    +`<th class="nos">전년</th><th class="nos">당해</th><th class="nos">이달(${moLabel()})</th><th class="nos">YoY</th>`
     +'</tr></thead><tbody>'
     +(body||'<tr><td colspan="9" class="empty">시작된 캠페인이 없음.</td></tr>')
     +(wait.length?`<tr><td colspan="9" class="small sub3" style="text-align:left"><b>시작 전 · 원장 미도달 ${wait.length}건</b> — ${wait.map(c=>`${c.region} ${esc(c.program)} (${c.start}~)`).join(', ')}</td></tr>`:'')
