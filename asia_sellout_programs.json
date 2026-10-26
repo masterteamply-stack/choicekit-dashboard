@@ -1,0 +1,201 @@
+{
+ "_readme": "ASIA Sell-out 프로그램 × 고객사 (리워드 지급 기준). 값 수정 후 `python3 scripts/sync_asia_programs.py`.",
+ "source_file": "ASIA Sell-out 프로그램별 실적·리워드 (9월까지 · 2026-10-26 제공)",
+ "asof": "2026-10-26",
+ "note": "리워드 지급 산정 기준표 · 9월까지 실적. 한 고객사가 여러 프로그램에 걸리면 같은 판매가 프로그램마다 잡혀, 이 표의 합계는 고객사 단위로 중복을 걷어낸 Sell-out 합계보다 크다.",
+ "note_dup": "프로그램 단위 합계 $864,046 ↔ 고객사 단위(중복 제거) $804,215. 차이 $59,831 이 두 프로그램에 겹쳐 잡힌 몫이다.",
+ "rows": [
+  {
+   "p": "Order to Earn POSM",
+   "c": "VN",
+   "k": "Mast",
+   "period": "2026.06.01~10.31",
+   "tgt": 207692.31,
+   "act": 82839.11,
+   "bud": 2308,
+   "rew": 0
+  },
+  {
+   "p": "Order to Earn POSM",
+   "c": "VN",
+   "k": "Nam Bac",
+   "period": "2026.06.01~10.31",
+   "tgt": 207692.31,
+   "act": 92194.04,
+   "bud": 2308,
+   "rew": 0
+  },
+  {
+   "p": "Order to Earn POSM",
+   "c": "VN",
+   "k": "GTA",
+   "period": "2026.06.01~10.31",
+   "tgt": 80769.23,
+   "act": 82785.98,
+   "bud": 1154,
+   "rew": 0
+  },
+  {
+   "p": "Sales Champion Award",
+   "c": "VN",
+   "k": "Mast",
+   "period": "2026.05.01~10.31",
+   "tgt": 38461.54,
+   "act": 228669.02,
+   "bud": 4077,
+   "rew": 1923.08
+  },
+  {
+   "p": "Sales Champion Award",
+   "c": "VN",
+   "k": "Nam Bac",
+   "period": "2026.05.01~10.31",
+   "tgt": 38461.54,
+   "act": 110677.46,
+   "bud": 4077,
+   "rew": 1923.08
+  },
+  {
+   "p": "Sales Champion Award",
+   "c": "VN",
+   "k": "GTA",
+   "period": "2026.05.01~10.31",
+   "tgt": 19230.77,
+   "act": 107345.59,
+   "bud": 2038,
+   "rew": 769.23
+  },
+  {
+   "p": "Sales Champion Award",
+   "c": "TH",
+   "k": "GP",
+   "period": "2026.05.01~10.31",
+   "tgt": 12638.23,
+   "act": 55899.57,
+   "bud": 822,
+   "rew": 410.74
+  },
+  {
+   "p": "Sales Champion Award",
+   "c": "TH",
+   "k": "CSH",
+   "period": "2026.05.01~10.31",
+   "tgt": 15797.79,
+   "act": 27431.58,
+   "bud": 1264,
+   "rew": 0
+  },
+  {
+   "p": "Sales Champion Award",
+   "c": "TH",
+   "k": "ATC",
+   "period": "2026.05.01~10.31",
+   "tgt": 15797.79,
+   "act": 1131.15,
+   "bud": 1264,
+   "rew": 0
+  },
+  {
+   "p": "Sales Champion Award",
+   "c": "PH",
+   "k": "Chuan Lam",
+   "period": "2026.06.01~10.31",
+   "tgt": 87719.3,
+   "act": 0,
+   "bud": 4316,
+   "rew": 0
+  },
+  {
+   "p": "Sales Champion Award",
+   "c": "PH",
+   "k": "Young Auto",
+   "period": "2026.06.01~10.31",
+   "tgt": 43859.65,
+   "act": 0,
+   "bud": 2175,
+   "rew": 0
+  },
+  {
+   "p": "Long-Term Loyalty",
+   "c": "TH",
+   "k": "GP",
+   "period": "2026.05.01~11.30",
+   "tgt": 19905.21,
+   "act": 44932.02,
+   "bud": 2590,
+   "rew": 0
+  },
+  {
+   "p": "Long-Term Loyalty",
+   "c": "ID",
+   "k": "PT Densocentra",
+   "period": "2026.05.01~11.30",
+   "tgt": 22567.16,
+   "act": 18201.26,
+   "bud": 2418,
+   "rew": 0
+  },
+  {
+   "p": "Long-Term Loyalty",
+   "c": "MY",
+   "k": "Marboro",
+   "period": "2026.06.01~11.30",
+   "tgt": 12307.69,
+   "act": 11938.72,
+   "bud": 2154,
+   "rew": 0
+  },
+  {
+   "p": "New Product Sell-Out",
+   "c": "TH",
+   "k": "GP",
+   "period": "2026.07.01~11.30",
+   "tgt": 6319.12,
+   "act": 0,
+   "bud": 633,
+   "rew": 0
+  },
+  {
+   "p": "New Product Sell-Out",
+   "c": "TH",
+   "k": "ATC",
+   "period": "2026.07.01~11.30",
+   "tgt": 6319.12,
+   "act": 0,
+   "bud": 633,
+   "rew": 0
+  },
+  {
+   "p": "CTR Display & Visibility",
+   "c": "TH",
+   "k": "SERI",
+   "period": "2026.07.01~11.30",
+   "tgt": null,
+   "act": null,
+   "bud": 6319,
+   "rew": 0
+  },
+  {
+   "p": "CTR Display & Visibility",
+   "c": "PH",
+   "k": "Chuan Lam",
+   "period": "2026.07.01~11.30",
+   "tgt": null,
+   "act": null,
+   "bud": 2632,
+   "rew": 0
+  },
+  {
+   "p": "CTR Display & Visibility",
+   "c": "ID",
+   "k": "Zentralink",
+   "period": "2026.07.01~11.30",
+   "tgt": null,
+   "act": null,
+   "bud": 2418,
+   "rew": 0
+  }
+ ],
+ "dedup_total": 804215,
+ "cut": "2026-09"
+}
