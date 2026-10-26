@@ -11,12 +11,15 @@ rows = src['rows']
 S = lambda f: sum(r[f] for r in rows)
 M26 = src['months26']
 tot = dict(q25=S('q25'), q26=S('q26'), new=S('new'),
+           q26_9=S('q26_9'), new_9=S('new_9'), q25_9=S('q25_9'),
+           avg26_9=round(sum(r['have26_9'] for r in rows) / max(len(rows), 1), 1),
            m26=[sum(r['m26'][i] for r in rows) for i in range(len(M26))],
            avg26=round(sum(r['have26'] for r in rows) / max(len(rows), 1), 1),
            full26=sum(1 for r in rows if r['have26'] >= len(M26) * 0.7))
 # 품목 종수 합계는 고객사끼리 겹쳐 단순 합산이 아니므로 따로 적지 않는다.
 AQ = dict(src=src['source_file'], asof=src['asof'], months26=M26, n=len(rows),
-          rows=rows, tot=tot, note=src.get('note', ''), note_gap=src.get('note_gap', ''))
+          rows=rows, tot=tot, note=src.get('note', ''), note_gap=src.get('note_gap', ''),
+          note_cut=src.get('note_cut', ''))
 
 f = os.path.join(ROOT, 'promo_dashboard_v10_6.html')
 html = open(f, encoding='utf-8', newline='').read()
