@@ -269,7 +269,7 @@ details.cdet-c>summary{border-left:0;padding:10px 14px;border-radius:8px}
 details.cdet-c[open]>summary{border-bottom:1px solid var(--ring);border-radius:8px 8px 0 0}
 details.cdet-c>.cdet-body{margin:0;padding:10px 12px 4px}
 </style>
-<style>.lts th{background:var(--head);color:#fff;font-weight:700;text-align:right;font-size:14px;padding:4px 8px;border:1px solid var(--headbd);position:static;cursor:default}.lts[style*="table-layout:fixed"] th{white-space:normal;word-break:keep-all;overflow-wrap:anywhere}.lts th:first-child,.lts td:first-child{text-align:left}.rvcol{background:rgba(37,111,235,0.08)}.rvcol2{background:rgba(13,148,136,0.13);border-left:1px solid rgba(13,148,136,0.4)}.lts th.rvcol{font-weight:800;box-shadow:inset 0 -3px 0 #2563eb}.lts th.rvcol2{font-weight:800;box-shadow:inset 0 -3px 0 #0d9488}[data-theme="dark"] .rvcol{background:rgba(96,165,250,0.13)}[data-theme="dark"] .rvcol2{background:rgba(45,212,191,0.15)}[data-theme="dark"] .lts th.rvcol{box-shadow:inset 0 -3px 0 #60a5fa}[data-theme="dark"] .lts th.rvcol2{box-shadow:inset 0 -3px 0 #4fd1c5}.lts{margin:2px 0 6px}</style>
+<style>.lts th{background:var(--head);color:#fff;font-weight:700;text-align:right;font-size:14px;padding:4px 8px;border:1px solid var(--headbd);position:static;cursor:default}.lts[style*="table-layout:fixed"] th{white-space:normal;word-break:keep-all;overflow-wrap:anywhere}.lts th:first-child,.lts td:first-child{text-align:left}.rvcol{background:rgba(37,111,235,0.08)}.rvcol2{background:rgba(13,148,136,0.13);border-left:1px solid rgba(13,148,136,0.4)}.lts th.rvcol{font-weight:800;box-shadow:inset 0 -3px 0 #2563eb}.lts th.rvcol2{font-weight:800;box-shadow:inset 0 -3px 0 #0d9488}[data-theme="dark"] .rvcol{background:rgba(96,165,250,0.13)}[data-theme="dark"] .rvcol2{background:rgba(45,212,191,0.15)}[data-theme="dark"] .lts th.rvcol{box-shadow:inset 0 -3px 0 #60a5fa}[data-theme="dark"] .lts th.rvcol2{box-shadow:inset 0 -3px 0 #4fd1c5}.lts{margin:2px 0 6px}.sowrap{border:1.5px solid var(--brand);border-radius:10px;overflow:hidden;box-shadow:0 1px 10px rgba(206,14,45,.13);margin:2px 0 8px}.sowrap table.lts{margin:0}.sotbl th{background:linear-gradient(180deg,var(--brand),var(--brand2));border-color:rgba(255,255,255,.3);box-shadow:inset 0 -3px 0 rgba(0,0,0,.18)}.sotbl tr.cgrp>td{background:rgba(206,14,45,.085);border-top:2px solid var(--brand)}.sotbl tr.cgrp:first-child>td{border-top:none}.sotbl tr.sochild>td{background:rgba(206,14,45,.022)}.sotbl tr.sochild>td:first-child{border-left:3px solid rgba(206,14,45,.35)}.sotbl tfoot td{background:linear-gradient(180deg,var(--brand),var(--brand2));font-weight:800;border-color:rgba(255,255,255,.3)}[data-theme="dark"] .sowrap{box-shadow:0 1px 10px rgba(232,71,95,.16)}[data-theme="dark"] .sotbl tr.cgrp>td{background:rgba(232,71,95,.15)}[data-theme="dark"] .sotbl tr.sochild>td{background:rgba(232,71,95,.05)}[data-theme="dark"] .sotbl tr.sochild>td:first-child{border-left-color:rgba(232,71,95,.4)}</style>
 <style>.brc{display:inline-block;background:var(--o1);color:var(--o6);border:1px solid var(--o2);border-radius:3px;padding:0 5px;margin-right:6px;font-size:12.5px;font-weight:700;vertical-align:1px}</style>
 <style>.sbadge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12.5px;font-weight:700;margin:2px 4px 2px 0;background:var(--o1);color:var(--o6);border:1px solid var(--o2)}.sbadge.ok{background:#e6f4ec;color:#0a7a44;border-color:#b8e0c8}.sbadge.wn{background:#fdf3d9;color:#8a6d00;border-color:#f0dca0}.slist{margin:5px 0 0;padding-left:18px;font-size:14px;line-height:1.7;color:var(--ink2)}
     .slist li.subli{list-style:none;margin-left:12px;color:var(--muted)}#p7 .kpis{margin-bottom:10px}</style>
@@ -1723,9 +1723,9 @@ function asiaInsight(){
     +`</ul>`;
 }
 
-/* ASIA Sell-out 프로그램 × 고객사 (단일 소스: asia_sellout_programs.json)
-   리워드 지급 산정 기준표. 한 고객사가 두 프로그램에 걸리면 같은 판매가
-   프로그램마다 잡혀, 합계가 고객사 단위 Sell-out 합계보다 크다. */
+/* ASIA Sell-out — 고객사별 참여 프로그램·현황 (단일 소스: asia_sellout_programs.json)
+   리워드 지급 산정 기준표를 고객사 중심으로 묶었다. 한 고객사가 두 프로그램에
+   걸리면 같은 판매가 프로그램마다 잡혀, 프로그램 행 합계가 고객사 단위(AO)보다 크다. */
 function apTable(){
  if(typeof AP==='undefined'||!(AP.rows||[]).length) return '';
  const T=AP.tot;
@@ -1736,31 +1736,57 @@ function apTable(){
    "Long-Term Loyalty":"장기 거래 고객 로열티 리워드",
    "New Product Sell-Out":"신제품 Sell-out 촉진",
    "CTR Display & Visibility":"매장 전시·진열 가시성 확보"};
+ /* 고객사 단위 실적은 두 프로그램에 겹친 몫을 걷어낸 값(AO)을 쓴다.
+    프로그램 행을 더하면 그보다 커지므로 머리행에 둘을 같이 적는다. */
+ const co=k=>(typeof AO!=='undefined'&&AO.rows)?AO.rows.find(x=>x.k===k):null;
+ const dedup=k=>{const r=co(k); return r?r.usd:null;};
+ const bar=v=>`<div style="height:5px;margin-top:3px;background:var(--track);border-radius:3px;overflow:hidden">`
+   +`<div style="height:100%;width:${Math.min(v||0,100)}%;background:${v>=100?'var(--s1)':'var(--brand)'}"></div></div>`;
+ const ks=[]; AP.rows.forEach(r=>{if(ks.indexOf(r.k)<0) ks.push(r.k);});
+ ks.sort((a,b)=>(dedup(b)||0)-(dedup(a)||0));
  let body='';
- (AP.groups||[]).forEach(g=>{
-  body+=`<tr style="background:var(--hoverwash)"><td style="text-align:left" colspan="3"><b>${esc(g.p)}</b>
-    <span class="sub3" style="font-weight:400"> · ${esc(PD[g.p]||'')}</span></td>
-    <td class="num"><b>${m(g.tgt||null)}</b></td><td class="num"><b>${m(g.act)}</b></td>
-    <td class="num"><b>${at(g.att)}</b></td><td class="num sub3">${fmtC(g.bud)}</td>
-    <td class="num sub3">${g.rew?fmtC(g.rew):'·'}</td></tr>`;
-  AP.rows.filter(r=>r.p===g.p).forEach(r=>{
-   body+=`<tr><td style="text-align:left"></td><td style="text-align:left" class="sub3">${esc(r.c)}</td>
-     <td style="text-align:left">${esc(r.k)}<div class="sub3" style="font-size:10px;font-weight:400">${esc(r.period)}</div></td>
+ ks.forEach(k=>{
+  const rs=AP.rows.filter(r=>r.k===k), c=co(k);
+  const tgt=rs.reduce((a,r)=>a+(r.tgt||0),0), act=rs.reduce((a,r)=>a+(r.act||0),0);
+  const bud=rs.reduce((a,r)=>a+(r.bud||0),0), rew=rs.reduce((a,r)=>a+(r.rew||0),0);
+  const dd=dedup(k), real=dd!=null?dd:act;
+  const rate=tgt?Math.round(real/tgt*1000)/10:null;
+  const live=rs.filter(r=>(r.act||0)>0).length, one=rs.length===1;
+  /* 리워드 기준표에 실적이 아직 안 올라온 고객사는 월별 Sell-out 집계(AO)로 메운다. */
+  const note=act<1&&dd?'프로그램별 실적 미집계 · 월별 Sell-out 집계값':
+    ((dd!=null&&Math.abs(dd-act)>1)?`프로그램 합 ${fmtC(act)}`:'');
+  body+=`<tr class="cgrp"><td style="text-align:left"><b style="font-size:13px">${esc(k)}</b>
+    <div class="sub3" style="font-weight:400;font-size:10.5px">${esc((c&&c.country)||rs[0].c)} · 프로그램 ${rs.length}개${(live<rs.length&&live>0)?` (실적 ${live}개)`:''}${(c&&c.last)?` · 최근 Sell-out ${+c.last.slice(5)}월`:''}</div></td>
+    <td style="text-align:left"><b style="font-size:11.5px">${esc(rs.map(r=>r.p.replace('CTR ','')).join(' · '))}</b>
+    ${one?`<div class="sub3" style="font-weight:400;font-size:10.5px">${esc(rs[0].period)} · ${esc(PD[rs[0].p]||'')}</div>`:''}
+    ${(c&&c.status)?`<div class="sub3" style="font-weight:400;font-size:10.5px">${esc(c.status)}</div>`:''}</td>
+    <td class="num"><b>${m(tgt||null)}</b></td>
+    <td class="num"><b>${m(real||null)}</b>${note?`<div class="sub3" style="font-weight:400;font-size:10px">${note}</div>`:''}</td>
+    <td class="num"><b>${at(rate)}</b>${rate!=null?bar(rate):''}</td>
+    <td class="num sub3">${fmtC(bud)}</td>
+    <td class="num">${rew?`<b>${fmtC(rew)}</b>`:'<span class="sub3">·</span>'}</td></tr>`;
+  if(one) return;  /* 프로그램 하나면 머리행이 곧 그 프로그램이라 중복을 뺀다 */
+  rs.forEach(r=>{
+   body+=`<tr class="sochild"><td style="text-align:left"></td>
+     <td style="text-align:left">${esc(r.p)}
+       <div class="sub3" style="font-size:10px">${esc(r.period)} · ${esc(PD[r.p]||'')}</div></td>
      <td class="num sub3">${m(r.tgt)}</td><td class="num">${m(r.act)}</td>
      <td class="num">${at(r.att)}</td><td class="num sub3">${fmtC(r.bud)}</td>
      <td class="num">${r.rew?fmtC(r.rew):'<span class="sub3">·</span>'}</td></tr>`;});
  });
- return `<h4 class="soh">Sell-out 프로그램 x 고객사 — 리워드 지급 기준${AP.cut?' ('+(+AP.cut.slice(5))+'월까지)':''}</h4>`
-  +`<p class="sub3" style="margin:-4px 0 9px;line-height:1.5">${esc(AP.note)} · 자료 ${esc(AP.src)}<br><b>${esc(AP.note_dup)}</b></p>`
-  +`<div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr>
-     <th style="text-align:left">프로그램</th><th style="text-align:left">국가</th><th style="text-align:left">고객사 · 기간</th>
-     <th>Sell-out 목표</th><th>실적</th><th>달성률</th><th>마케팅 예산</th><th>지급 리워드</th></tr></thead><tbody>`
+ const fa=(typeof AO!=='undefined'&&AO.tot)?AO.tot.usd:T.act, fr=(typeof AO!=='undefined'&&AO.tot)?AO.tot.att:T.att;
+ return `<h4 class="soh" style="border-left:4px solid var(--brand);padding-left:8px">고객사별 Sell-out 프로그램 참여 · 현황${AP.cut?' ('+(+AP.cut.slice(5))+'월까지)':''}</h4>`
+  +`<p class="sub3" style="margin:-4px 0 9px;line-height:1.5">고객사마다 어느 프로그램에 들어가 있고 각각 어디까지 왔는지 한 줄에서 본다 · ${esc(AP.note)} · 자료 ${esc(AP.src)}<br><b>${esc(AP.note_dup)}</b> 그래서 고객사 머리행의 실적은 중복을 걷어낸 값이고, 아래 프로그램 행을 더하면 그보다 커진다.</p>`
+  +`<div class="tblwrap sowrap"><table class="lts sotbl" style="font-size:12px"><thead><tr>
+     <th style="text-align:left">고객사</th><th style="text-align:left">참여 프로그램 · 기간 · 현황</th>
+     <th>Sell-out 목표</th><th>Sell-out 실적</th><th>달성률</th><th>마케팅 예산</th><th>지급 리워드</th></tr></thead><tbody>`
   +body
-  +`</tbody><tfoot><tr><td style="text-align:left" colspan="3">합계 · ${AP.tot.n}건</td>
-     <td class="num">${fmtC(T.tgt)}</td><td class="num">${fmtC(T.act)}</td><td class="num">${T.att}%</td>
+  +`</tbody><tfoot><tr><td style="text-align:left">합계 · 고객사 ${ks.length}곳</td><td style="text-align:left">프로그램 참여 ${T.n}건</td>
+     <td class="num">${fmtC(T.tgt)}</td>
+     <td class="num">${fmtC(fa)}<div class="sub3" style="font-weight:400;font-size:10px">프로그램 합 ${fmtC(T.act)}</div></td>
+     <td class="num">${fr}%</td>
      <td class="num">${fmtC(T.bud)}</td><td class="num">${fmtC(T.rew)}</td></tr></tfoot></table></div>`;
 }
-
 /* ASIA Sell-out 고객사별 월별 (단일 소스: asia_sellout.json) */
 function aoTable(cut){
  if(typeof AO==='undefined'||!(AO.rows||[]).length) return '';
