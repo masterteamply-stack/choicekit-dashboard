@@ -1598,29 +1598,33 @@ function aqTable(cut){
 function aiTable(){
  if(typeof AS==='undefined'||!(AS.rows||[]).length) return '';
  const T=AS.tot;
- const rows=AS.rows.slice().sort((a,b)=>b.y26t-a.y26t);
- const mx=Math.max(...rows.map(r=>Math.max(r.y25t,r.y26t)),1);
- const pair=(a,b)=>`<div style="display:flex;gap:3px;align-items:center">`
-   +`<div style="flex:1"><div style="height:7px;background:var(--track);border-radius:2px;overflow:hidden"><div style="height:100%;width:${Math.min(a/mx*100,100)}%;background:var(--s1)"></div></div>`
-   +`<div style="height:7px;background:var(--track);border-radius:2px;overflow:hidden;margin-top:2px"><div style="height:100%;width:${Math.min(b/mx*100,100)}%;background:var(--brand)"></div></div></div></div>`;
+ const rows=AS.rows.slice().sort((a,b)=>b.got-a.got);
+ const mx=Math.max(...rows.map(r=>Math.max(r.a25,r.got)),1);
+ const pair=(a,b)=>`<div><div style="height:7px;background:var(--track);border-radius:2px;overflow:hidden"><div style="height:100%;width:${Math.min(a/mx*100,100)}%;background:var(--s1)"></div></div>`
+   +`<div style="height:7px;background:var(--track);border-radius:2px;overflow:hidden;margin-top:2px"><div style="height:100%;width:${Math.min(b/mx*100,100)}%;background:var(--brand)"></div></div></div>`;
  const rt=v=>v==null?'<span class="sub3">–</span>':`<span class="${v>=100?'up':'dn'}">${v}%</span>`;
  const pc=v=>v==null?'<span class="sub3">–</span>':`<span class="${cls(v)}">${fmtPC(v)}</span>`;
  const tr=r=>`<tr><td style="text-align:left"><b>${esc(r.k)}</b>
    <div class="sub3" style="font-size:10.5px;font-weight:400">${esc(r.country)}</div></td>
-   <td class="num sub3">${fmtC(r.y25)}</td><td class="num sub3">${fmtC(r.y25t)}</td>
-   <td class="num"><b>${fmtC(r.y26t)}</b></td><td style="min-width:90px">${pair(r.y25t,r.y26t)}</td>
-   <td class="num">${rt(r.aratio)}</td><td class="num">${pc(r.ayoy)}</td>
+   <td class="small" style="text-align:left;white-space:nowrap;font-size:11px">${esc(r.period)}</td>
+   <td class="num sub3">${fmtC(r.a25)}</td><td class="num"><b>${fmtC(r.got)}</b></td>
+   <td style="min-width:80px">${pair(r.a25,r.got)}</td>
+   <td class="num">${rt(r.ratio)}</td><td class="num">${pc(r.yoy)}</td>
+   <td class="num sub3">${fmtC(r.y26t)}</td><td class="num sub3">${fmtC(r.s26)}</td>
    <td class="num sub3">${r.share==null?'–':r.share+'%'}</td></tr>`;
- return `<h4 class="soh">Sell-in 오더 — 2025 vs 2026 (금액 기준)</h4>`
-  +`<p class="sub3" style="margin:-4px 0 9px;line-height:1.5">참여 12곳의 전체 오더. 2026 은 1~10월이라 전년도 같은 구간(1~10월)과 맞춰 비교함 · 자료 ${esc(AS.src||'')}<br>초이스킷 비중은 각 고객사의 당해 전체 오더 중 캠페인 기간에 들어온 몫.</p>`
-  +`<div class="legend"><span><i class="sw" style="background:var(--s1)"></i>2025 1~10월</span><span><i class="sw" style="background:var(--brand)"></i>2026 1~10월</span></div>`
-  +`<div class="tblwrap"><table class="lts"><thead><tr><th style="text-align:left">고객사</th>
-     <th>2025 연간</th><th>2025 1~10월</th><th>2026 1~10월</th><th>추이</th>
-     <th>동기 비율</th><th>증감률</th><th>초이스킷 비중</th></tr></thead><tbody>`
+ return `<h4 class="soh">Sell-in 오더 — 초이스킷 참여 기간 (2025 vs 2026)</h4>`
+  +`<p class="sub3" style="margin:-4px 0 9px;line-height:1.5">고객사마다 초이스킷 참여 기간이 달라, 전년(2025)도 각자의 같은 날짜 구간으로 맞추어 비교함 · 자료 ${esc(AS.src||'')}<br>
+     오른쪽 두 칸은 참고용 — 2026 오더는 그 고객사의 1~10월 전체 오더, 매출은 SAP 선적 YTD(차감 후)라 캠페인 기간 오더와 범위가 다름.</p>`
+  +`<div class="legend"><span><i class="sw" style="background:var(--s1)"></i>2025 동기</span><span><i class="sw" style="background:var(--brand)"></i>2026 실적</span></div>`
+  +`<div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr>
+     <th style="text-align:left">고객사</th><th style="text-align:left">초이스킷 기간</th>
+     <th>2025 동기</th><th>2026 실적</th><th>추이</th><th>전년 비율</th><th>증감률</th>
+     <th>2026 오더 (1~10월)</th><th>2026 매출 (선적 YTD)</th><th>캠페인 비중</th></tr></thead><tbody>`
   +rows.map(tr).join('')
-  +`</tbody><tfoot><tr><td style="text-align:left">합계</td>
-     <td class="num">${fmtC(T.y25)}</td><td class="num">${fmtC(T.y25t)}</td><td class="num">${fmtC(T.y26t)}</td>
-     <td></td><td class="num">${T.aratio}%</td><td class="num">${(T.ayoy>=0?'+':'')+T.ayoy}%</td>
+  +`</tbody><tfoot><tr><td style="text-align:left">합계</td><td></td>
+     <td class="num">${fmtC(T.a25)}</td><td class="num">${fmtC(T.got)}</td><td></td>
+     <td class="num">${T.ratio}%</td><td class="num">${(T.yoy>=0?'+':'')+T.yoy}%</td>
+     <td class="num">${fmtC(T.y26t)}</td><td class="num">${fmtC(T.s26)}</td>
      <td class="num">${T.share}%</td></tr></tfoot></table></div>`;
 }
 
