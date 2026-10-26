@@ -16,6 +16,7 @@ for r in src['rows']:
         k=r['k'], code=r['code'], codes=r.get('codes') or [r['code']],
         name=r['name'], country=r['country'], period=r['period'],
         note=r.get('note', ''), ship_note=r.get('ship_note', ''),
+        order_note=r.get('order_note', ''), oct=r.get('oct', 0),
         s25=s25, s26pre=s26pre, s26=s26,
         sratio=(round(s26 / s25 * 100) if s25 else None),
         syoy=(round((s26 - s25) / s25 * 100, 1) if s25 else None),
@@ -45,6 +46,8 @@ tot.update(ratio=round(tot['got'] / tot['a25'] * 100),
            share=round(tot['got'] / tot['y26t'] * 100, 1))
 AS = dict(src=src['source_file'], asof=src['asof'], n=len(rows), rows=rows, tot=tot,
           note_ship=src.get('note_ship', ''),
+          src_order=src.get('source_order', ''), note_order=src.get('note_order', ''),
+          cut_order=src.get('cut_order', ''), last_month=src.get('last_month', 10),
           hit=sum(1 for r in rows if (r['att'] or 0) >= 100),
           up=sum(1 for r in rows if (r['ratio'] or 0) >= 100))
 
