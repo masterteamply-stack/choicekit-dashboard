@@ -13,16 +13,17 @@
   CTR EUROPE 판매문서 4건(802887·802888·802892·802893, 커버 품번 $17,584)이 통째로
   빠져 있었다. 오더라인 시트는 원장 3개년을 다 보고 만든 것이라 이쪽을 정본으로 쓴다.
 
-신규(③) 두 가지를 같이 담는다
-  it[2] = ③  중국 전용 품번만 — 지금까지 대시보드가 쓰던 정의
-  it[6] = ③+ 공용 품번까지 — 237 코드 전체에 같은 규칙을 적용한 것
+신규(③) 판정
+  it[2] = 커버 237 코드 전체 기준 — 2024·2025 오더 이력이 없고 2026 첫 오더가
+          5월 이후인 품번. 타 브랜드와 공용인 품번도 과거 구매 이력이 없다면
+          카탈로그 효과로 보고 같이 센다(중국 전용 한정 정의는 쓰지 않는다).
 """
 import json, os, re, sys, collections
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HTML = os.path.join(ROOT, 'promo_dashboard_v10_6.html')
 NEED = ['월', '매칭 코드', '중국 브랜드', '권역 (대시보드 기준)', '정가(USD)',
-        '② 중국전용', '③ 신규 (237 기준)', '③b 신규 (중국전용 한정)']
+        '② 중국전용', '③ 신규 (237 기준)']
 
 if '--lines' not in sys.argv:
     print('--lines <오더라인 xlsx> 가 필요합니다.'); sys.exit(1)
@@ -60,8 +61,7 @@ for r in rows[1:]:
     per[(c, rg, mm)] += v
     meta.setdefault(c, dict(cn=str(r[H['중국 브랜드']] or '').strip(),
                             only=Y(r[H['② 중국전용']]),
-                            new237=Y(r[H['③ 신규 (237 기준)']]),
-                            newonly=Y(r[H['③b 신규 (중국전용 한정)']])))
+                            new=Y(r[H['③ 신규 (237 기준)']])))
 
 items = []
 for c, m in sorted(meta.items()):
@@ -71,8 +71,8 @@ for c, m in sorted(meta.items()):
     for (cc, rg, mm), v in per.items():
         if cc == c and v: g.setdefault(rg, {})[mm] = round(v, 2)
     for rg in g: g[rg] = {k: g[rg][k] for k in sorted(g[rg])}
-    items.append([c, 1 if m['only'] else 0, 1 if m['newonly'] else 0,
-                  m['cn'] or (o[3] if o else ''), st, g, 1 if m['new237'] else 0])
+    items.append([c, 1 if m['only'] else 0, 1 if m['new'] else 0,
+                  m['cn'] or (o[3] if o else ''), st, g])
 
 ORD = ['CIS', 'ASIA', 'MENA', 'LATAM', 'NA', 'EU', 'OC']
 regions = [r for r in ORD if r in regions] + [r for r in regions if r not in ORD]
@@ -82,10 +82,10 @@ CN.pop('src_month', None)
 
 S = lambda mm, pred: round(sum(v for (c, rg, m2), v in per.items() if m2 == mm and pred(c)), 2)
 print(f"{sh} · {len(rows)-1:,}행 · 품번 {len(items)}개 · 월 {','.join(sorted(months))}")
-print(f"{'월':>4}{'① 커버 전체':>15}{'② 중국 전용':>14}{'③ 중국전용 신규':>16}{'③+ 공용 포함':>14}")
+print(f"{'월':>4}{'① 커버 전체':>15}{'② 중국 전용':>14}{'③ 신규 SKU 확대':>16}")
 for mm in sorted(months):
     print(f"{int(mm):>3}월{S(mm, lambda c: True):>15,.2f}{S(mm, lambda c: meta[c]['only']):>14,.2f}"
-          f"{S(mm, lambda c: meta[c]['newonly']):>16,.2f}{S(mm, lambda c: meta[c]['new237']):>14,.2f}")
+          f"{S(mm, lambda c: meta[c]['new']):>16,.2f}")
 print(f"{'합계':>4}{S(None, lambda c: True) if False else sum(per.values()):>15,.2f}")
 
 out = html[:mC.start()] + 'const CNORD=' + json.dumps(CN, ensure_ascii=False, separators=(',', ':')) + ';\n' + html[mC.end():]
