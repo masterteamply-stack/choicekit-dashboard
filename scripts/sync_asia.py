@@ -22,6 +22,9 @@ for r in src['rows']:
         syoy=(round((s26 - s25) / s25 * 100, 1) if s25 else None),
         scut=(round((s26pre - s26) / s26pre * 100, 1) if s26pre else None),
         a25=a25, tgt=tgt, got=got,
+        a25q=r.get('a25q', 0), gotq=r.get('gotq', 0),
+        qratio=(round(r.get('gotq', 0) / r['a25q'] * 100) if r.get('a25q') else None),
+        y25q=r.get('y25q', 0), y25tq=r.get('y25tq', 0), y26tq=r.get('y26tq', 0),
         ratio=(round(got / a25 * 100) if a25 else None),
         yoy=(round((got - a25) / a25 * 100, 1) if a25 else None),
         att=(round(got / tgt * 100, 1) if tgt else None),
@@ -33,7 +36,9 @@ for r in src['rows']:
 rows.sort(key=lambda r: -r['got'])
 S = lambda f: sum(r[f] for r in rows)
 tot = dict(a25=S('a25'), tgt=S('tgt'), got=S('got'), y25=S('y25'), y25t=S('y25t'), y26t=S('y26t'),
-           s25=S('s25'), s26pre=S('s26pre'), s26=S('s26'))
+           s25=S('s25'), s26pre=S('s26pre'), s26=S('s26'),
+           a25q=S('a25q'), gotq=S('gotq'), y25q=S('y25q'), y25tq=S('y25tq'), y26tq=S('y26tq'))
+tot['qratio'] = round(tot['gotq'] / tot['a25q'] * 100) if tot['a25q'] else None
 tot.update(sratio=round(tot['s26'] / tot['s25'] * 100) if tot['s25'] else None,
            syoy=round((tot['s26'] - tot['s25']) / tot['s25'] * 100, 1) if tot['s25'] else None,
            scut=round((tot['s26pre'] - tot['s26']) / tot['s26pre'] * 100, 1) if tot['s26pre'] else None)

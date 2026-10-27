@@ -71,7 +71,7 @@ def extract(path):
     ep = datetime.date(*map(int, D['meta']['epoch'].split('-')))
     CUS, CTY, NOPACK = D['cus'], D['cty'], -99999
     keep = {c for cs in list(ASIA.values()) + list(CD_CUST.values()) for c in cs}
-    per = collections.defaultdict(lambda: collections.defaultdict(float))
+    per = collections.defaultdict(lambda: collections.defaultdict(lambda: [0.0, 0.0]))
     info, mx = {}, ''
     for r in D['ord']:
         rd = r[2]
@@ -81,31 +81,35 @@ def extract(path):
         c = CUS[r[1]]
         if c[3] not in keep: continue
         info.setdefault(c[3], dict(name=c[0], country=CTY[c[2]]))
-        per[c[3]][d] += r[9]
-    rows = {k: dict(info[k], d={d: round(v, 2) for d, v in sorted(v.items())}) for k, v in per.items()}
+        v = per[c[3]][d]; v[0] += r[9]; v[1] += r[7]
+    rows = {k: dict(info[k], d={d: [round(v[0], 2), round(v[1])] for d, v in sorted(v.items())})
+            for k, v in per.items()}
     return dict(_readme='KV_Orders 원장(SAP ORD_Progress · CTR K + CTR V)에서 뽑은 고객사별 일자 오더. '
-                        '전 품목 · USD 환산. 재생성: python3 scripts/sync_customer_orders.py --html <KV html>',
+                        '전 품목 · [USD 환산 금액, 수량]. '
+                        '재생성: python3 scripts/sync_customer_orders.py --html <KV html>',
                 source=D['meta'].get('srcOrder', ''), snap=D['meta'].get('snap', ''),
                 gen=D['meta'].get('gen', ''), entities=sorted(D['meta'].get('entStat', {})),
                 max_order_date=mx, rows=rows)
 
 
 def series(src, codes):
-    out = collections.defaultdict(float)
+    """일자 -> [금액, 수량]. 예전 형식(금액만)도 읽는다."""
+    out = collections.defaultdict(lambda: [0.0, 0.0])
     for c in codes:
         for d, v in src['rows'].get(c, {}).get('d', {}).items():
-            out[d] += v
+            if not isinstance(v, list): v = [v, 0]
+            out[d][0] += v[0]; out[d][1] += v[1]
     return out
 
 
-def rng(dd, a, b):
-    return round(sum(v for d, v in dd.items() if a <= d <= b))
+def rng(dd, a, b, i=0):
+    return round(sum(v[i] for d, v in dd.items() if a <= d <= b))
 
 
-def months(dd, year):
+def months(dd, year, i=0):
     m = [0.0] * 12
     for d, v in dd.items():
-        if d[:4] == str(year): m[int(d[5:7]) - 1] += v
+        if d[:4] == str(year): m[int(d[5:7]) - 1] += v[i]
     return [round(x) for x in m]
 
 
@@ -128,11 +132,16 @@ for r in aj['rows']:
     s, e = r['period'].split('~')                 # 2026.05.01~10.31
     s = s.replace('.', '-'); e = '2026-' + e.replace('.', '-')
     e = min(e, MX)                                # 원장이 닿은 날까지만
+    s25, e25 = str(int(s[:4]) - 1) + s[4:], str(int(e[:4]) - 1) + e[4:]
     got = rng(dd, s, e)
-    a25 = rng(dd, str(int(s[:4]) - 1) + s[4:], str(int(e[:4]) - 1) + e[4:])
+    a25 = rng(dd, s25, e25)
     m25, m26 = months(dd, 2025), months(dd, 2026)
+    q25, q26 = months(dd, 2025, 1), months(dd, 2026, 1)
     old = (r['a25'], r['got'], r['y26t'])
     r.update(a25=a25, got=got, y25=sum(m25), y25t=sum(m25[:L]), y26t=sum(m26[:L]),
+             # 같은 구간의 수량 — 금액과 한 원장에서 같이 뽑아 기준이 어긋나지 않는다
+             a25q=rng(dd, s25, e25, 1), gotq=rng(dd, s, e, 1),
+             y25q=sum(q25), y25tq=sum(q25[:L]), y26tq=sum(q26[:L]),
              codes=ASIA[r['k']], m26=m26, oct=m26[9] if L >= 10 else 0)
     if MISSING.get(r['k']): r['order_note'] = MISSING[r['k']]
     log.append((r['k'], old, (a25, got, r['y26t'])))
