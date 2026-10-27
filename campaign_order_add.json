@@ -1,0 +1,24 @@
+{
+ "_readme": "월 오더 export 에서 뽑은 캠페인별 월 추가분. scripts/sync_campaign_month.py 로 만든다.",
+ "camps": {
+  "MENA|Portfolio Expansion Program": {
+   "2026-10": {
+    "usd": 10589.32,
+    "qty": 1232,
+    "lines": 33,
+    "n_sku": 33,
+    "cut": "2026-10-20",
+    "custs": [
+     "AL ZAIM UNITED CO.,LTD"
+    ],
+    "by_cust": {
+     "AL ZAIM UNITED CO.,LTD": {
+      "code": "200411",
+      "usd": 10589.32
+     }
+    },
+    "src": "a58a85bd-export.XLSX"
+   }
+  }
+ }
+}
