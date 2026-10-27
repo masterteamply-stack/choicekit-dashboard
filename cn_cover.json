@@ -1,0 +1,1191 @@
+{
+ "_readme": "중국차 커버 품번(브랜드커버 파일). scripts/sync_cn_orders.py 로 만든다.",
+ "n": 237,
+ "codes": {
+  "CB0393": {
+   "cn": "BYD",
+   "ex": "TOYOTA",
+   "st": "Mass Production"
+  },
+  "CB0659": {
+   "cn": "SOUEAST",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CB0670": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CB0671": {
+   "cn": "HAVAL / GREAT WALL",
+   "ex": "-",
+   "st": "Discontinued"
+  },
+  "CB0672": {
+   "cn": "HAVAL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CB0675": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CB0676": {
+   "cn": "MG / MG (SAIC)",
+   "ex": "-",
+   "st": "Under Development"
+  },
+  "CB0677L": {
+   "cn": "MG / MG (SAIC)",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CB0677R": {
+   "cn": "MG / MG (SAIC)",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CB0686": {
+   "cn": "SAIC",
+   "ex": "CHEVROLET",
+   "st": "Mass Production"
+  },
+  "CB0689": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CB0690": {
+   "cn": "BYD",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CB0694": {
+   "cn": "MG / MG (SAIC)",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CB0696L": {
+   "cn": "MG (SAIC) / MG",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CB0696R": {
+   "cn": "MG (SAIC) / MG / SAIC",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CB0710L": {
+   "cn": "EXEED",
+   "ex": "-",
+   "st": "Under Development"
+  },
+  "CB0710R": {
+   "cn": "EXEED",
+   "ex": "-",
+   "st": "Under Development"
+  },
+  "CE0193L": {
+   "cn": "MG",
+   "ex": "ACURA / HONDA / ROVER / ISUZU",
+   "st": "Mass Production"
+  },
+  "CE0193R": {
+   "cn": "MG",
+   "ex": "ACURA / HONDA / ROVER / ISUZU",
+   "st": "Mass Production"
+  },
+  "CE0228": {
+   "cn": "HAVAL",
+   "ex": "HONDA",
+   "st": "Mass Production"
+  },
+  "CE0264": {
+   "cn": "HAVAL",
+   "ex": "ISUZU / ISUZU (GM) / CHEVROLET",
+   "st": "Mass Production"
+  },
+  "CE0841L": {
+   "cn": "CHERY",
+   "ex": "VOLKSWAGEN / SEAT / VW",
+   "st": "Mass Production"
+  },
+  "CE0841R": {
+   "cn": "CHERY",
+   "ex": "VOLKSWAGEN / SEAT / VW",
+   "st": "Mass Production"
+  },
+  "CE1080": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CE1081L": {
+   "cn": "SOUEAST",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CE1081R": {
+   "cn": "SOUEAST",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CE1082L": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CE1082R": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CE1083L": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CE1083R": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CE1084L": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Discontinued"
+  },
+  "CE1084R": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Discontinued"
+  },
+  "CE1085": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CE1086": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CE1087L": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CE1087R": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CE1093L": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CE1093R": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CE1095L": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CE1095R": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CE1097L": {
+   "cn": "MG (SAIC) / MG",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CE1097R": {
+   "cn": "MG (SAIC) / MG",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CE1121L": {
+   "cn": "SAIC",
+   "ex": "CHEVROLET",
+   "st": "Mass Production"
+  },
+  "CE1121R": {
+   "cn": "SAIC",
+   "ex": "CHEVROLET",
+   "st": "Mass Production"
+  },
+  "CE1122L": {
+   "cn": "SAIC",
+   "ex": "CHEVROLET",
+   "st": "Mass Production"
+  },
+  "CE1122R": {
+   "cn": "SAIC",
+   "ex": "CHEVROLET",
+   "st": "Mass Production"
+  },
+  "CE1123L": {
+   "cn": "MG",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CE1123R": {
+   "cn": "MG",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CE1124": {
+   "cn": "MG (SAIC) / MG",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CE1126L": {
+   "cn": "SAIC",
+   "ex": "CHEVROLET",
+   "st": "Mass Production"
+  },
+  "CE1126R": {
+   "cn": "SAIC",
+   "ex": "CHEVROLET",
+   "st": "Mass Production"
+  },
+  "CE1131L": {
+   "cn": "BYD",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CE1131R": {
+   "cn": "BYD",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CE1134L": {
+   "cn": "BYD",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CE1134R": {
+   "cn": "BYD",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CE1142": {
+   "cn": "MG",
+   "ex": "-",
+   "st": "Under Development"
+  },
+  "CE1144L": {
+   "cn": "HAVAL",
+   "ex": "-",
+   "st": "Under Development"
+  },
+  "CE1144R": {
+   "cn": "HAVAL",
+   "ex": "-",
+   "st": "Under Development"
+  },
+  "CE1145L": {
+   "cn": "GEELY",
+   "ex": "PROTON",
+   "st": "Under Development"
+  },
+  "CE1145R": {
+   "cn": "GEELY",
+   "ex": "PROTON",
+   "st": "Under Development"
+  },
+  "CE1146L": {
+   "cn": "MG",
+   "ex": "-",
+   "st": "Under Development"
+  },
+  "CE1146R": {
+   "cn": "MG",
+   "ex": "-",
+   "st": "Under Development"
+  },
+  "CE1147L": {
+   "cn": "JETOUR",
+   "ex": "-",
+   "st": "Under Development"
+  },
+  "CE1147R": {
+   "cn": "JETOUR",
+   "ex": "-",
+   "st": "Under Development"
+  },
+  "CE1148": {
+   "cn": "EXEED",
+   "ex": "-",
+   "st": "Under Development"
+  },
+  "CE1149": {
+   "cn": "CHANGAN",
+   "ex": "-",
+   "st": "Under Development"
+  },
+  "CE1150L": {
+   "cn": "GEELY",
+   "ex": "-",
+   "st": "Under Development"
+  },
+  "CE1150R": {
+   "cn": "GEELY",
+   "ex": "-",
+   "st": "Under Development"
+  },
+  "CL0106L": {
+   "cn": "MAXUS",
+   "ex": "CHEVROLET / ISUZU (GM) / ISUZU",
+   "st": "Mass Production"
+  },
+  "CL0106R": {
+   "cn": "MAXUS",
+   "ex": "CHEVROLET / ISUZU (GM) / ISUZU",
+   "st": "Mass Production"
+  },
+  "CL0194": {
+   "cn": "Haval",
+   "ex": "HONDA",
+   "st": "Mass Production"
+  },
+  "CL0195": {
+   "cn": "HAVAL",
+   "ex": "ACURA / HONDA",
+   "st": "Mass Production"
+  },
+  "CL0293": {
+   "cn": "MG / MG (SAIC)",
+   "ex": "KIA / HYUNDAI",
+   "st": "Mass Production"
+  },
+  "CL0375": {
+   "cn": "MG",
+   "ex": "MITSUBISHI / PROTON",
+   "st": "Mass Production"
+  },
+  "CL0387": {
+   "cn": "EXEED",
+   "ex": "MAZDA / MITSUBISHI",
+   "st": "Mass Production"
+  },
+  "CL0430": {
+   "cn": "MG (SAIC) / MG",
+   "ex": "FORD / LEXUS / MAZDA / MITSUBISHI / TOYOTA / FORD (Europe) / FORD ASIA & OCEANIA / PROTON / FORD USA / FORD (Asia & Oceania)",
+   "st": "Mass Production"
+  },
+  "CL0530": {
+   "cn": "MG (SAIC) / MG",
+   "ex": "SUZUKI",
+   "st": "Mass Production"
+  },
+  "CL0574": {
+   "cn": "JAC",
+   "ex": "LEXUS / TOYOTA / THAIRUNG",
+   "st": "Mass Production"
+  },
+  "CL0575": {
+   "cn": "JAC",
+   "ex": "LEXUS / TOYOTA / THAIRUNG",
+   "st": "Mass Production"
+  },
+  "CL0579": {
+   "cn": "CHERY",
+   "ex": "DAIHATSU / TOYOTA",
+   "st": "Mass Production"
+  },
+  "CL0843": {
+   "cn": "CHERY",
+   "ex": "NISSAN",
+   "st": "Mass Production"
+  },
+  "CL0973": {
+   "cn": "HAVAL",
+   "ex": "-",
+   "st": "Discontinued"
+  },
+  "CL0974": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Discontinued"
+  },
+  "CL0975": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Discontinued"
+  },
+  "CL0976L": {
+   "cn": "JAC",
+   "ex": "-",
+   "st": "Discontinued"
+  },
+  "CL0976R": {
+   "cn": "JAC",
+   "ex": "-",
+   "st": "Discontinued"
+  },
+  "CL0992": {
+   "cn": "MG / MG (SAIC)",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CL0994": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CL1017": {
+   "cn": "GEELY / POLESTAR",
+   "ex": "VOLVO",
+   "st": "Under Development"
+  },
+  "CL1018": {
+   "cn": "ORA / HAVAL",
+   "ex": "CHEVROLET",
+   "st": "Mass Production"
+  },
+  "CL1051": {
+   "cn": "MG",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CL1056": {
+   "cn": "GEELY",
+   "ex": "PROTON",
+   "st": "Under Development"
+  },
+  "CL1057": {
+   "cn": "BYD",
+   "ex": "-",
+   "st": "Under Development"
+  },
+  "CL1064": {
+   "cn": "MG",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CQ0166L": {
+   "cn": "JAC",
+   "ex": "KIA / HYUNDAI",
+   "st": "Mass Production"
+  },
+  "CQ0166R": {
+   "cn": "JAC",
+   "ex": "KIA / HYUNDAI",
+   "st": "Mass Production"
+  },
+  "CQ0893L": {
+   "cn": "SOUEAST",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CQ0893R": {
+   "cn": "SOUEAST",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CQ0894": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CQ0895": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CQ0896L": {
+   "cn": "HAVAL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CQ0896R": {
+   "cn": "HAVAL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CQ0897L": {
+   "cn": "HAVAL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CQ0897R": {
+   "cn": "HAVAL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CQ1067L": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CQ1067R": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CQ1236L": {
+   "cn": "MG",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CQ1236R": {
+   "cn": "MG",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CR0993": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CR0994": {
+   "cn": "HAVAL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CR0995": {
+   "cn": "HAVAL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CR0996": {
+   "cn": "HAVAL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CR0997": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CR0998": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CR0999": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CR1001": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CR1002": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CR1003": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CR1004": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CR1010": {
+   "cn": "WULING (SGMW)",
+   "ex": "CHEVROLET",
+   "st": "Mass Production"
+  },
+  "CR1012": {
+   "cn": "SAIC",
+   "ex": "CHEVROLET",
+   "st": "Mass Production"
+  },
+  "CR1014": {
+   "cn": "MG",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CR1015": {
+   "cn": "MG",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CR1016": {
+   "cn": "MG / MG (SAIC)",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CR1017": {
+   "cn": "MG",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CR1018": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CR1019": {
+   "cn": "MG (SAIC) / MG",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CR1033": {
+   "cn": "MG / MG (SAIC)",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CR1042": {
+   "cn": "BYD",
+   "ex": "-",
+   "st": "Under Development"
+  },
+  "CR1050": {
+   "cn": "BYD",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CR1051": {
+   "cn": "GEELY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CR1052": {
+   "cn": "GEELY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CR1071": {
+   "cn": "EXEED",
+   "ex": "-",
+   "st": "Under Development"
+  },
+  "CS0054L": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "CS0054R": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0105": {
+   "cn": "BYD / JAC",
+   "ex": "CITROEN / PEUGEOT / TOYOTA",
+   "st": "Mass Production"
+  },
+  "GD0137": {
+   "cn": "BAOJUN",
+   "ex": "CHEVROLET / DAEWOO",
+   "st": "Mass Production"
+  },
+  "GD0263": {
+   "cn": "GREAT WALL",
+   "ex": "TOYOTA",
+   "st": "Mass Production"
+  },
+  "GD0304": {
+   "cn": "CHANGAN",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0335": {
+   "cn": "EMGRAND",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0336": {
+   "cn": "EMGRAND",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0338": {
+   "cn": "GEELY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0339": {
+   "cn": "GEELY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0342": {
+   "cn": "GREAT WALL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0343": {
+   "cn": "GREAT WALL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0345": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0349": {
+   "cn": "MG",
+   "ex": "AUDI",
+   "st": "Mass Production"
+  },
+  "GD0396": {
+   "cn": "DONGFENG",
+   "ex": "NISSAN",
+   "st": "Mass Production"
+  },
+  "GD0437": {
+   "cn": "GEELY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0481": {
+   "cn": "GEELY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0482": {
+   "cn": "GEELY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0484": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0550": {
+   "cn": "Haval / GREAT WALL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0557": {
+   "cn": "GEELY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0580": {
+   "cn": "GREAT WALL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0599": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0600": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0601": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0602": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0603": {
+   "cn": "Haval",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0604": {
+   "cn": "Haval",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0605": {
+   "cn": "Haval",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0606": {
+   "cn": "BYD",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0607": {
+   "cn": "BYD",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0608": {
+   "cn": "BYD",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0609": {
+   "cn": "BYD",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GD0610": {
+   "cn": "BYD",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GK0309": {
+   "cn": "GREAT WALL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GK1486": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GK1490": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GK1496": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GK1533": {
+   "cn": "HAVAL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GK1534": {
+   "cn": "CHANGAN",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GK1536": {
+   "cn": "GEELY / DONGFENG",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GK1537": {
+   "cn": "GEELY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GK1538": {
+   "cn": "HAVAL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GK1539": {
+   "cn": "HAVAL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GK1542": {
+   "cn": "CHERY / ZOTYE",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GK1543": {
+   "cn": "JAC",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GK1545": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GK1546": {
+   "cn": "GREAT WALL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GK1547": {
+   "cn": "GREAT WALL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GK1548": {
+   "cn": "GREAT WALL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GK1549": {
+   "cn": "CHANGAN",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GK1569": {
+   "cn": "GEELY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GK1573": {
+   "cn": "BYD",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GK1574": {
+   "cn": "BYD",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GK1575": {
+   "cn": "Haval",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GV0236": {
+   "cn": "MG",
+   "ex": "ROVER / HONDA",
+   "st": "Mass Production"
+  },
+  "GY1725G": {
+   "cn": "GREAT WALL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY1726G": {
+   "cn": "GREAT WALL",
+   "ex": "TOYOTA",
+   "st": "Mass Production"
+  },
+  "GY1809G": {
+   "cn": "JMC",
+   "ex": "ISUZU",
+   "st": "Mass Production"
+  },
+  "GY1950G": {
+   "cn": "GEELY",
+   "ex": "TOYOTA",
+   "st": "Mass Production"
+  },
+  "GY1951G": {
+   "cn": "GEELY",
+   "ex": "TOYOTA",
+   "st": "Mass Production"
+  },
+  "GY2262G": {
+   "cn": "GREAT WALL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2548G": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2563G": {
+   "cn": "CHANGAN",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2590G": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2622G": {
+   "cn": "CHERY",
+   "ex": "TOYOTA",
+   "st": "Mass Production"
+  },
+  "GY2681G": {
+   "cn": "CHANGAN",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2693G": {
+   "cn": "GREAT WALL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2696G": {
+   "cn": "GREAT WALL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2708G": {
+   "cn": "GREAT WALL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2709G": {
+   "cn": "GREAT WALL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2710G": {
+   "cn": "GREAT WALL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2711G": {
+   "cn": "GREAT WALL",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2721G": {
+   "cn": "MAXUS",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2725G": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2790G": {
+   "cn": "BYD",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2793G": {
+   "cn": "BYD",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2802G": {
+   "cn": "GEELY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2812G": {
+   "cn": "JAC",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2815G": {
+   "cn": "ROEWE",
+   "ex": "NISSAN",
+   "st": "Mass Production"
+  },
+  "GY2816G": {
+   "cn": "ROEWE",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2818G": {
+   "cn": "LIFAN",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2821G": {
+   "cn": "FAW",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2832G": {
+   "cn": "BAOJUN",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2833G": {
+   "cn": "BAOJUN",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2836G": {
+   "cn": "GEELY",
+   "ex": "TOYOTA",
+   "st": "Mass Production"
+  },
+  "GY2846G": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2852G": {
+   "cn": "GREAT WALL",
+   "ex": "TOYOTA",
+   "st": "Mass Production"
+  },
+  "GY2853G": {
+   "cn": "BRILLIANCE",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2861G": {
+   "cn": "CHANGAN",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2869G": {
+   "cn": "MG",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2870G": {
+   "cn": "BAIC",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2871G": {
+   "cn": "BAIC",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "GY2887G": {
+   "cn": "MG",
+   "ex": "-",
+   "st": "Mass Production"
+  },
+  "PL0430": {
+   "cn": "GEELY / MG (SAIC) / MG",
+   "ex": "FORD / LEXUS / MAZDA / MITSUBISHI / TOYOTA / FORD (Europe) / FORD ASIA & OCEANIA / PROTON / FORD USA / FORD (Asia & Oceania)",
+   "st": "Mass Production"
+  },
+  "PL0530": {
+   "cn": "MG (SAIC) / MG",
+   "ex": "SUZUKI",
+   "st": "Mass Production"
+  },
+  "PL0579": {
+   "cn": "CHERY",
+   "ex": "DAIHATSU / TOYOTA",
+   "st": "Mass Production"
+  },
+  "CB0078": {
+   "cn": "GREAT WALL / HAVAL",
+   "ex": "CHEVROLET",
+   "st": "Mass Production"
+  },
+  "CE1094L": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "DELETED"
+  },
+  "CE1094R": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "DELETED"
+  },
+  "CE1096L": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "DELETED"
+  },
+  "CE1088L": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "DELETED"
+  },
+  "CE1096R": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "DELETED"
+  },
+  "CE1088R": {
+   "cn": "CHERY",
+   "ex": "-",
+   "st": "DELETED"
+  }
+ }
+}
