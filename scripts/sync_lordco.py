@@ -29,7 +29,10 @@ if write: open(p, 'w', encoding='utf-8', newline='').write(s2)
 p = os.path.join(ROOT, 'promo_dashboard_v10_6.html'); s = open(p, encoding='utf-8', newline='').read(); t = s
 lo = {'y25': o25, 'y26': o26, 's25': s25, 's26': s26, 'q25': q25, 'q26': q26, 'last26': L,
       'cum25': cum25, 'cum26': cum26, 'slast26': SL, 'scum25': sum(s25[:SL]), 'scum26': sum(s26[:SL]),
-      'qcum25': sum(q25[:SL]), 'qcum26': sum(q26[:SL]), 'annual25': sum(o25), 'sannual25': sum(s25), 'ytd26': sum(o26), 'prod': src['prod']}
+      'qcum25': sum(q25[:SL]), 'qcum26': sum(q26[:SL]), 'annual25': sum(o25), 'sannual25': sum(s25), 'ytd26': sum(o26), 'prod': src['prod'],
+      # 2025 매출이 음수인 까닭 — 유치 당시 지급한 lift 가 매출에서 차감된 것
+      'note_sales': src.get('note_sales', ''), 'lift_m25': src.get('lift_months25', []),
+      'lift25': src.get('lift_sum25', 0), 'ship25': src.get('ship_sum25', 0)}
 t, n = re.subn(r'lordco:\{"y25".*?"prod":\[.*?\]\}', lambda _: 'lordco:' + json.dumps(lo, ensure_ascii=False, separators=(',', ':')), t, count=1, flags=re.S); assert n == 1
 
 def edit_json(t, name, fn):
