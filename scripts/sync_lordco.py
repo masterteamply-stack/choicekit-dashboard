@@ -32,8 +32,26 @@ lo = {'y25': o25, 'y26': o26, 's25': s25, 's26': s26, 'q25': q25, 'q26': q26, 'l
       'qcum25': sum(q25[:SL]), 'qcum26': sum(q26[:SL]), 'annual25': sum(o25), 'sannual25': sum(s25), 'ytd26': sum(o26), 'prod': src['prod'],
       # 2025 매출이 음수인 까닭 — 유치 당시 지급한 lift 가 매출에서 차감된 것
       'note_sales': src.get('note_sales', ''), 'lift_m25': src.get('lift_months25', []),
-      'lift25': src.get('lift_sum25', 0), 'ship25': src.get('ship_sum25', 0)}
-t, n = re.subn(r'lordco:\{"y25".*?"prod":\[.*?\]\}', lambda _: 'lordco:' + json.dumps(lo, ensure_ascii=False, separators=(',', ':')), t, count=1, flags=re.S); assert n == 1
+      'lift25': src.get('lift_sum25', 0), 'ship25': src.get('ship_sum25', 0),
+      'note_oct26': src.get('note_oct26', '')}
+# lordco:{...} 는 키가 늘어도 깨지지 않게 괄호를 세어 끝을 찾는다
+def _obj_end(s, i):
+    d = 0; q = None; j = i
+    while j < len(s):
+        c = s[j]
+        if q:
+            if c == '\\': j += 2; continue
+            if c == q: q = None
+        else:
+            if c in '"\'': q = c
+            elif c in '{[': d += 1
+            elif c in '}]':
+                d -= 1
+                if d == 0: return j + 1
+        j += 1
+    raise ValueError('lordco 블록이 닫히지 않음')
+_i = t.index('lordco:{'); _s = _i + len('lordco:')
+t = t[:_s] + json.dumps(lo, ensure_ascii=False, separators=(',', ':')) + t[_obj_end(t, _s):]
 
 def edit_json(t, name, fn):
     m = re.search(r'<script>const %s = (\{.*?\});?</script>' % name, t, re.S); obj = json.loads(m.group(1)); fn(obj)
