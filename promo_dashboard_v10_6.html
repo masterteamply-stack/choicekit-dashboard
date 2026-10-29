@@ -359,6 +359,7 @@ details.cdet-c>.cdet-body{margin:0;padding:10px 12px 4px}
         <div id="custDn"></div></div>
     </div>
     <div id="asiaBox"></div>
+    <div id="cisBox"></div>
   </div>
 <!-- ══════════ P3 비용 · 회수 ══════════ -->
   <div class="page" id="p3">
@@ -1518,7 +1519,7 @@ function ssSvg(MS,W){
 function fill(id,vals,label){$('#'+id).innerHTML=`<option value="ALL">${label}</option>`
   +[...new Set(vals)].filter(Boolean).sort().map(v=>`<option>${esc(v)}</option>`).join('');}
 function draw(){
-  kpis(); campGrow(); tblMerged(); chartDid(); persist(); custBars(); skuBars(); costRomi(); soPage(); ssPage(); asiaBox(); sepReport();
+  kpis(); campGrow(); tblMerged(); chartDid(); persist(); custBars(); skuBars(); costRomi(); soPage(); ssPage(); asiaBox(); cisBox(); sepReport();
 }
 
 /* ══════════ ASIA 참여 고객사 오더 (단일 소스: asia_choicekit.json) ══════════ */
@@ -2666,205 +2667,259 @@ function monthSummary(A){
 }
 
 
-/* ══════════ CIS · Choice Kit Promotion Performance & Field Activation (10월) ══════════
+/* ══════════ CIS · Choice Kit 프로모션 ══════════
    단일 소스: cis_october.json(활동 글) + cis_october_orders.json(원천 엑셀 집계)
    → scripts/sync_cis_october.py 가 const CIS10 으로 합쳐 넣는다.
-   오더는 Choice Kit 대상 SKU 연관 오더(Sell-in)다. 캠페인 효과 탭의 CIS 수치와
-   집계 범위가 달라 서로 더하지 않는다. */
-function cisOct(){
- if(typeof CIS10==='undefined'||!CIS10.cust) return '';
- const C=CIS10, LM=+C.last_month.slice(5), q=v=>Math.round(v).toLocaleString();
- const ST={scheduled:['예정','var(--warn)'],planned:['계획','var(--muted)'],done:['완료','var(--good)']};
- const pill=s=>{const x=ST[s]||ST.planned; return `<span class="pill" style="background:${x[1]};color:#fff;border:0">${x[0]}</span>`;};
- const tile=(lab,val,sub,hero)=>`<div class="tile${hero?' hero':''}"><div class="lab">${esc(lab)}</div>
-   <div class="val">${val}</div>${sub?`<div class="sub2">${sub}</div>`:''}</div>`;
- const h4=(t,s)=>`<div style="font-size:15px;font-weight:800;letter-spacing:-0.3px;margin:20px 0 4px;padding-top:14px;border-top:1px solid var(--ring)">${esc(t)}</div>`
-   +(s?`<p class="sub3" style="margin:0 0 9px;line-height:1.55;font-size:12.5px">${s}</p>`:'');
 
- let h=`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px">
-   <span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">CIS</span>
-   <span style="font-size:12.5px;color:var(--ink2)">· <b style="color:var(--brand)">Choice Kit Promotion Performance &amp; Field Activation</b>
-   · 대상 SKU 연관 오더 ${esc(C.period)}</span></div><div class="card">`;
- h+=`<p class="note" style="margin:0 0 10px">${esc(C.headline)}</p>`;
+   ASIA 와 같은 구조로 나눠 둔다.
+     cisOct()  월간 리포트 › 10월 — 고객사별 요약 한 장 (KPI · 누적 오더 표 · 인사이트)
+     cisBox()  캠페인 효과 탭 — 상세 (오더 분해 · 협업 · Kit · 카탈로그 · 캘린더 · 액션)
 
- /* 1. Executive Summary */
- h+=`<div class="kpis k6">`
-  +tile('총 연관 오더',fmtC(C.total),`Asian ${fmtC(C.a)} + European ${fmtC(C.e)} · ${q(C.qty)}개`,1)
-  +tile('Asian SKU 연관 오더',fmtC(C.a),`${C.n_sku_a}종 · 전체의 ${(C.a/C.total*100).toFixed(1)}%`)
-  +tile('European SKU 연관 오더',fmtC(C.e),`${C.n_sku_e}종 · 전체의 ${(C.e/C.total*100).toFixed(1)}%`)
-  +tile('오더 집계 고객',`${C.n_cust}개사`,`4개국 · 상위 5곳이 ${C.top5}%`)
-  +tile('Mechanic Kit 지원',`${C.kit.kpi.cust}개사`,`${q(C.kit.kpi.total_set)}세트 · 11월부터 발송 예정`)
-  +tile('Catalogue 다운로드',q(C.cat.rows[1][2]),`웹사이트 조회 ${q(C.cat.rows[0][2])} · 전환 ${(C.cat.rows[1][2]/C.cat.rows[0][2]*100).toFixed(1)}%`)
-  +`</div>`
-  +`<p class="note" style="font-size:11.5px;padding-left:0;margin:8px 0 0">${esc(C.note_scope)}</p>`;
-
- /* 2. 오더 성과 */
- h+=h4(`고객사별 누적 오더 (${esc(C.period)})`,
-   `Asian 차종 대상 SKU 를 중심으로 오더가 형성돼 있고, 상위 고객사의 주문 실적을 바탕으로 현지 판매 활성화 프로그램을 넓히는 중이다.`
-   +`<br>자료 ${esc(C.src_a)} · ${esc(C.src_e)}`);
- const mx=Math.max(...C.cust.map(c=>c.t),1);
- h+=`<div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr>
-   <th>#</th><th style="text-align:left">고객사</th><th style="text-align:left">국가</th><th>Asian</th><th>European</th><th>합계</th>
-   <th>비중</th><th>SKU</th><th>수량</th><th>${LM}월 신규</th></tr></thead><tbody>`
-  +C.cust.map(c=>`<tr><td class="num sub3">${c.rank}</td>
-    <td style="text-align:left"><b>${esc(c.k)}</b></td>
-    <td class="small sub3" style="text-align:left">${esc(c.country)}</td>
-    <td class="num sub3">${c.a?fmtC(c.a):'<span class="sub3">–</span>'}</td>
-    <td class="num sub3">${c.e?fmtC(c.e):'<span class="sub3">–</span>'}</td>
-    <td class="num"><b>${fmtC(c.t)}</b></td>
-    <td style="min-width:70px"><div style="height:8px;background:var(--track);border-radius:3px;overflow:hidden"><div style="height:100%;width:${c.t/mx*100}%;background:var(--brand)"></div></div></td>
-    <td class="num sub3">${c.sku}</td><td class="num sub3">${q(c.q)}</td>
-    <td class="num">${c.oct?`<b class="up">${fmtC(c.oct)}</b>`:'<span class="sub3">·</span>'}</td></tr>`).join('')
-  +`</tbody><tfoot><tr><td></td><td style="text-align:left">합계 · ${C.n_cust}개사</td><td></td>
-    <td class="num">${fmtC(C.a)}</td><td class="num">${fmtC(C.e)}</td><td class="num">${fmtC(C.total)}</td>
-    <td></td><td class="num">${C.n_sku}</td><td class="num">${q(C.qty)}</td>
-    <td class="num">${fmtC(C.last.usd)}</td></tr></tfoot></table></div>`;
-
- /* 월별 추이 · 국가 · 제품군 */
- const mm=C.months, mmx=Math.max(...mm.map(x=>x.a+x.e),1);
- h+=`<div class="grid2" style="margin-top:14px">
-   <div><div class="sub3" style="margin:6px 0 4px"><b>월별 오더 추이</b> · Asian + European (USD)</div>
-   <div class="legend"><span><i class="sw" style="background:var(--brand)"></i>Asian</span><span><i class="sw" style="background:var(--s1)"></i>European</span></div>
-   <div class="tblwrap"><table class="lts" style="font-size:11.5px"><thead><tr><th>월</th><th>Asian</th><th>European</th><th>계</th><th>추이</th><th>수량</th></tr></thead><tbody>`
-  +mm.map(x=>`<tr><td style="text-align:left">${+x.m.slice(5)}월${x.m===C.last_month?' <span class="sub3">(~'+esc(C.last.last_date.slice(5))+')</span>':''}</td>
-     <td class="num sub3">${fmtC(x.a)}</td><td class="num sub3">${x.e?fmtC(x.e):'·'}</td><td class="num"><b>${fmtC(x.a+x.e)}</b></td>
-     <td style="min-width:72px"><div style="height:8px;background:var(--track);border-radius:3px;overflow:hidden;display:flex">
-       <div style="height:100%;width:${x.a/mmx*100}%;background:var(--brand)"></div>
-       <div style="height:100%;width:${x.e/mmx*100}%;background:var(--s1)"></div></div></td>
-     <td class="num sub3">${q(x.q)}</td></tr>`).join('')
-  +`</tbody></table></div></div>
-   <div><div class="sub3" style="margin:6px 0 4px"><b>국가별 오더</b></div>
-   <div class="tblwrap"><table class="lts" style="font-size:11.5px"><thead><tr><th style="text-align:left">국가</th><th>오더</th><th>비중</th><th>고객</th><th></th></tr></thead><tbody>`
-  +C.countries.map(x=>`<tr><td style="text-align:left"><b>${esc(x.k)}</b></td><td class="num">${fmtC(x.usd)}</td>
-     <td class="num">${x.share}%</td><td class="num sub3">${x.n}곳</td>
-     <td style="min-width:70px"><div style="height:8px;background:var(--track);border-radius:3px;overflow:hidden"><div style="height:100%;width:${x.share}%;background:var(--o4)"></div></div></td></tr>`).join('')
-  +`</tbody></table></div>
-   <div class="sub3" style="margin:12px 0 4px"><b>제품군별 오더</b></div>
-   <div class="tblwrap"><table class="lts" style="font-size:11.5px"><thead><tr><th style="text-align:left">제품군</th><th>오더</th><th>수량</th><th>SKU</th></tr></thead><tbody>`
-  +C.prods.map(x=>`<tr><td style="text-align:left">${esc(x.k)}</td><td class="num">${fmtC(x.usd)}</td>
-     <td class="num sub3">${q(x.q)}</td><td class="num sub3">${x.sku}종</td></tr>`).join('')
-  +`</tbody></table></div></div></div>`;
-
- /* 10월 단월 */
- h+=`<div class="warnbox" style="margin:14px 0 0"><b>${LM}월 단월 오더 — 누적과 섞지 않습니다</b><br>
-   9월 말 누적 ${fmtC(C.last.prev)} 에 ${LM}월 <b>${fmtC(C.last.usd)}</b> 가 더해져 ${fmtC(C.total)} 가 됐습니다 (누적 대비 +${C.last.pct}%).
-   ${LM}월 오더가 난 곳은 ${C.last.by.length}개사 — ${C.last.by.map(x=>`${esc(x.k)} ${fmtC(x.usd)}`).join(' · ')}.
-   원천 오더일은 ${esc(C.last.last_date)} 까지입니다.</div>`;
-
- /* 대상 SKU 소화 */
- h+=`<div class="kpis k4" style="margin-top:12px">`
-  +tile('Asian 대상 SKU 소화',`${C.target.A.got} / ${C.target.A.n}종`,`미오더 ${C.target.A.miss}종`)
-  +tile('European 대상 SKU 소화',`${C.target.E.got} / ${C.target.E.n}종`,`미오더 ${C.target.E.miss}종`)
-  +tile('상위 5개사 집중도',`${C.top5}%`,`상위 3개사 ${C.top3}%`)
-  +tile('오더 발생 SKU',`${C.n_sku}종`,`최다 ${esc(C.top_sku[0].k)} ${fmtC(C.top_sku[0].usd)}`)
-  +`</div>`;
-
- /* 3. 고객 협업 */
- h+=h4('Customer Collaboration & Sell-out Activation',
-   '상위 고객사와 함께 하는 현지 활동입니다. 모두 <b>아직 진행 전</b>이라 실적이 아니라 계획으로 적었습니다.');
- h+=`<div class="grid3">`+C.collab.map(c=>`<div class="card" style="margin:0;border-top:3px solid var(--brand)">
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-      <b style="font-size:14px">${esc(c.k)}</b>${pill(c.state)}
-      <span class="sub3" style="font-size:10.5px">누적 오더 ${c.rank}위</span></div>
-    <div class="sub3" style="margin:3px 0 6px;font-size:11.5px">${esc(c.title)} · ${esc(c.country)} ${esc(c.city)} · <b>${esc(c.when)}</b></div>
-    <div class="note" style="padding-left:0;margin:0">${esc(c.what)}</div></div>`).join('')+`</div>`;
-
- h+=`<div class="grid2" style="margin-top:12px">
-   <div class="card" style="margin:0"><h3 style="font-size:14px">테크 세미나 공통 프로그램</h3>
-     <p class="note" style="margin:2px 0 6px;padding-left:0">${esc(C.seminar_goal)}</p>
-     <ul style="margin:0;padding-left:17px">${C.seminar_program.map(x=>`<li class="note" style="padding-left:0;margin:3px 0;font-size:12.5px">${esc(x)}</li>`).join('')}</ul></div>
-   <div class="card" style="margin:0"><h3 style="font-size:14px">COMPLEX AUTO · 두 가지 별도 활동</h3>`
-  +[C.complex.event,C.complex.labor].map(x=>`<div style="margin:8px 0 0">
-      <div style="display:flex;align-items:center;gap:7px"><b style="font-size:12.5px">${esc(x.title)}</b>${pill(x.state)}</div>
-      <table class="lts" style="font-size:11.5px;margin:4px 0"><tbody>`
-     +x.rows.map(r=>`<tr><td style="text-align:left;width:34%">${esc(r[0])}</td><td style="text-align:left"><b>${esc(r[1])}</b></td><td class="sub3" style="text-align:left;width:18%">${esc(r[2])}</td></tr>`).join('')
-     +`</tbody></table>
-      <ul style="margin:2px 0 0;padding-left:17px">${x.detail.map(d=>`<li class="note" style="padding-left:0;margin:2px 0;font-size:12px">${esc(d)}</li>`).join('')}</ul></div>`).join('')
-  +`<p class="note" style="margin:10px 0 0;padding-left:0;font-size:12px">${esc(C.complex.insight)}</p></div></div>`;
-
- if((C.no_event||[]).length) h+=`<div class="warnbox" style="margin:12px 0 0">`
-   +C.no_event.map(x=>`<b>${esc(x.k)} — 이번 협업 이벤트 대상 아님</b><br>${esc(x.why)}`).join('<br><br>')+`</div>`;
-
- /* 4. Mechanic Support Kit */
- const K=C.kit;
- h+=h4('Mechanic Support Kit · Retail Activation Support', esc(K.purpose));
- h+=`<div class="kpis k6">`
-  +tile('대상 저실적 SKU',`${K.kpi.sku}개`,`Asian ${K.kpi.sku_a} · European ${K.kpi.sku_e}`,1)
-  +tile('지원 고객',`${K.kpi.cust}개사`,`${K.kpi.country}개국`)
-  +tile('고객당 지원',`${K.kpi.per_cust}세트`,'')
-  +tile('총 지원 물량',`${q(K.kpi.total_set)}세트`,'11월부터 순차 발송 예정')
-  +tile('배송',`예정`,esc(K.ship))
-  +tile('상태',`준비 완료`,'발송 전 — 수령 실적 없음')
-  +`</div>`;
- h+=`<div class="grid3" style="margin-top:10px">
-   <div class="card" style="margin:0"><h3 style="font-size:13.5px">선정 고객 ${K.kpi.cust}개사</h3>
-     <table class="lts" style="font-size:11.5px;margin:4px 0"><thead><tr><th style="text-align:left">국가</th><th style="text-align:left">고객사</th></tr></thead><tbody>`
-  +K.custs.map(r=>`<tr><td style="text-align:left" class="sub3">${esc(r[0])}</td><td style="text-align:left"><b>${esc(r[1])}</b></td></tr>`).join('')
-  +`</tbody></table></div>
-   <div class="card" style="margin:0"><h3 style="font-size:13.5px">선정 기준</h3>
-     <ul style="margin:4px 0 0;padding-left:17px">${K.rule.map(x=>`<li class="note" style="padding-left:0;margin:3px 0;font-size:12.5px">${esc(x)}</li>`).join('')}</ul>
-     <p class="note" style="margin:8px 0 0;padding-left:0;font-size:12px">${esc(K.note_pick)}</p></div>
-   <div class="card" style="margin:0"><h3 style="font-size:13.5px">Kit 구성</h3>
-     <ul style="margin:4px 0 0;padding-left:17px">${K.parts.map(x=>`<li class="note" style="padding-left:0;margin:3px 0;font-size:12.5px">${esc(x)}</li>`).join('')}</ul></div></div>`;
- h+=`<p class="note" style="margin:8px 0 0;padding-left:0">${esc(K.headline)}</p>`;
-
- /* 5. Catalogue */
- const CA=C.cat, cv=(d,v)=>d?((v/d)*100).toFixed(1)+'%':'–';
- h+=h4('CIS Catalogue Awareness & Retail Activation',
-   `${esc(CA.note)} · 콘텐츠 ${esc(CA.sns_sep)} → <b>${esc(CA.sns_oct)}</b>`);
- h+=`<div class="grid2">
-   <div><div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr>
-     <th style="text-align:left">지표</th><th>9월 리포트</th><th>10월 업데이트</th><th>증감</th></tr></thead><tbody>`
-  +CA.rows.map(r=>`<tr><td style="text-align:left"><b>${esc(r[0])}</b></td>
-     <td class="num sub3">${q(r[1])}</td><td class="num"><b>${q(r[2])}</b></td>
-     <td class="num"><span class="${cls(r[2]-r[1])}">+${q(r[2]-r[1])}</span>
-       <div class="sub3" style="font-weight:400;font-size:10px">${r[1]?'×'+(r[2]/r[1]).toFixed(1):''}</div></td></tr>`).join('')
-  +`<tr style="border-top:2px solid var(--ring)"><td style="text-align:left"><b>다운로드 전환율</b></td>
-     <td class="num sub3">${cv(CA.rows[0][1],CA.rows[1][1])}</td><td class="num"><b>${cv(CA.rows[0][2],CA.rows[1][2])}</b></td><td></td></tr>`
-  +`</tbody></table></div>
-   <div class="sub3" style="margin:10px 0 4px"><b>콘텐츠 활용 구조</b></div>
-   <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center">`
-  +CA.flow.map((s,i)=>`<span class="pill" style="${i<CA.flow_measured?'background:var(--brand);color:#fff;border:0':'opacity:.55'}">${esc(s)}</span>${i<CA.flow.length-1?'<span class="sub3">›</span>':''}`).join('')
-  +`</div><p class="note" style="margin:6px 0 0;padding-left:0;font-size:12px">${esc(CA.note_flow)}</p></div>
-   <div><div class="sub3" style="margin:6px 0 4px"><b>Meta 콘텐츠 발행</b> · ${esc(CA.sns_oct)}</div>
-   <div class="tblwrap"><table class="lts" style="font-size:11.5px"><thead><tr><th>#</th><th style="text-align:left">콘텐츠</th><th>발행일</th><th>상태</th><th>링크</th></tr></thead><tbody>`
-  +CA.contents.map(r=>`<tr><td class="num sub3">${r[0]}</td><td style="text-align:left">${esc(r[1])}</td>
-     <td class="num sub3">${esc(r[2])}</td><td class="num"><span class="up">${esc(r[3])}</span></td>
-     <td class="num"><a href="${esc(r[4])}" target="_blank" rel="noopener" class="sub3">보기</a></td></tr>`).join('')
-  +`</tbody></table></div>
-   <ul style="margin:10px 0 0;padding-left:17px">${CA.insight.map(x=>`<li class="note" style="padding-left:0;margin:3px 0;font-size:12.5px">${esc(x)}</li>`).join('')}</ul></div></div>`;
-
- /* 6. 캘린더 */
- h+=h4('November Field Activation Calendar','모두 앞으로의 일정입니다. 증빙이 들어오기 전까지 완료로 적지 않습니다.');
- h+=`<div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr>
-   <th style="text-align:left">일정</th><th style="text-align:left">고객사</th><th style="text-align:left">활동</th><th>장소</th><th>상태</th></tr></thead><tbody>`
-  +C.cal.map(r=>`<tr><td style="text-align:left"><b>${esc(r[0])}</b></td><td style="text-align:left">${esc(r[1])}</td>
-     <td style="text-align:left">${esc(r[2])}</td><td class="small sub3">${esc(r[3])}</td>
-     <td class="num">${pill(r[4])}</td></tr>`).join('')
-  +`</tbody></table></div>`;
-
- /* 7. 인사이트 · 액션 · 단계 */
- h+=h4('Key Insights & Action Plan','');
- h+=`<div class="grid3">`+C.insights.map(x=>`<div class="card" style="margin:0;border-left:3px solid var(--brand)">
-    <div style="font-weight:800;font-size:13px">Insight ${esc(x[0])}</div>
-    <p class="note" style="margin:5px 0 0;padding-left:0;font-size:12.5px">${esc(x[1])}</p></div>`).join('')+`</div>`;
- h+=`<div class="grid2" style="margin-top:12px">
-   <div><div class="sub3" style="margin:6px 0 4px"><b>October–November Action Plan</b></div>
-   <div class="tblwrap"><table class="lts" style="font-size:11.5px"><thead><tr><th style="text-align:left">영역</th><th style="text-align:left">우선 과제</th><th style="text-align:left">추적 지표</th></tr></thead><tbody>`
-  +C.actions.map(r=>`<tr><td style="text-align:left"><b>${esc(r[0])}</b></td><td style="text-align:left">${esc(r[1])}</td><td style="text-align:left" class="sub3">${esc(r[2])}</td></tr>`).join('')
-  +`</tbody></table></div></div>
-   <div><div class="sub3" style="margin:6px 0 4px"><b>9월 → 10월 → 11월</b></div>
-   <div class="tblwrap"><table class="lts" style="font-size:11.5px"><thead><tr><th>월</th><th style="text-align:left">초점</th><th>상태</th></tr></thead><tbody>`
-  +C.phase.map(r=>`<tr><td><b>${esc(r[0])}</b></td><td style="text-align:left">${esc(r[1])}</td><td class="num">${pill(r[2])}</td></tr>`).join('')
-  +`</tbody></table></div>
-   <p class="note" style="margin:6px 0 0;padding-left:0;font-size:12px">${esc(C.note_phase)}</p>
-   <div class="sub3" style="margin:12px 0 4px"><b>Data Validation</b></div>
-   <ul style="margin:0;padding-left:17px">${(C.validation||[]).map(x=>`<li class="note" style="padding-left:0;margin:3px 0;font-size:11.5px">${esc(x)}</li>`).join('')}</ul></div></div>`;
-
- return h+`</div>`;
+   오더는 Choice Kit 대상 SKU 연관 오더(Sell-in)다. 캠페인 효과 탭의 CIS 캠페인
+   수치와 집계 범위가 달라 서로 더하지 않는다. */
+const CISQ = v => Math.round(v).toLocaleString();
+function cisHead(sub){
+  return `<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px">`
+    +`<span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">CIS</span>`
+    +`<span style="font-size:12.5px;color:var(--ink2)"> · ${sub}</span></div>`;
+}
+function cisTile(lab,val,sub,hero){
+  return `<div class="tile${hero?' hero':''}"><div class="lab">${esc(lab)}</div>`
+    +`<div class="val">${val}</div>${sub?`<div class="sub2">${sub}</div>`:''}</div>`;
+}
+function cisPill(s){
+  const ST={scheduled:['예정','var(--warn)'],planned:['계획','var(--muted)'],done:['완료','var(--good)']};
+  const x=ST[s]||ST.planned;
+  return `<span class="pill" style="background:${x[1]};color:#fff;border:0">${x[0]}</span>`;
+}
+function cisH4(t,s){
+  return `<div style="font-size:15px;font-weight:800;letter-spacing:-0.3px;margin:20px 0 4px;padding-top:14px;border-top:1px solid var(--ring)">${esc(t)}</div>`
+    +(s?`<p class="sub3" style="margin:0 0 9px;line-height:1.55;font-size:12.5px">${s}</p>`:'');
 }
 
+/* ── 월간 리포트: 고객사별 요약 한 장 ── */
+function cisOct(){
+  if(typeof CIS10==='undefined'||!CIS10.cust) return '';
+  const C=CIS10, LM=+C.last_month.slice(5);
+  let h=cisHead(`<b style="color:var(--brand)">Choice Kit 프로모션</b> · 대상 SKU 연관 오더 ${esc(C.period)} · 고객사별 한 장 요약 · 상세는 캠페인 효과 탭`)
+   +`<div class="card">`
+   +`<div class="kpis k6">`
+    +cisTile('총 연관 오더',fmtC(C.total),`Asian ${fmtC(C.a)} + European ${fmtC(C.e)} · ${CISQ(C.qty)}개`,1)
+    +cisTile(`${LM}월 단월 오더`,fmtC(C.last.usd),`${C.last.by.length}개사 · 9월 말 누적 대비 +${C.last.pct}%`)
+    +cisTile('오더 집계 고객',`${C.n_cust}개사`,`4개국 · 상위 5곳이 ${C.top5}%`)
+    +cisTile('오더 발생 SKU',`${C.n_sku}종`,`Asian ${C.target.A.got}/${C.target.A.n} · European ${C.target.E.got}/${C.target.E.n}`)
+    +cisTile('Mechanic Kit 지원',`${C.kit.kpi.cust}개사`,`${CISQ(C.kit.kpi.total_set)}세트 · 11월부터 발송 예정`)
+    +cisTile('Catalogue 다운로드',CISQ(C.cat.rows[1][2]),`웹사이트 조회 ${CISQ(C.cat.rows[0][2])} · 콘텐츠 ${esc(C.cat.sns_oct)}`)
+    +`</div>`;
 
+  const mx=Math.max(...C.cust.map(c=>c.t),1);
+  h+=`<div class="sub3" style="color:var(--ink2);font-size:12px;margin:14px 0 3px"><b>고객사별 누적 오더</b> `
+   +`<span style="font-weight:400">· ${esc(C.period)} · Choice Kit 대상 SKU 연관 오더(Sell-in)</span></div>`
+   +`<div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr>`
+   +`<th>#</th><th style="text-align:left">고객사</th><th style="text-align:left">국가</th>`
+   +`<th>Asian</th><th>European</th><th>합계</th><th>비중</th><th>${LM}월 신규</th></tr></thead><tbody>`
+   +C.cust.map(c=>`<tr><td class="num sub3">${c.rank}</td>
+      <td style="text-align:left"><b>${esc(c.k)}</b></td>
+      <td class="small sub3" style="text-align:left">${esc(c.country)}</td>
+      <td class="num sub3">${c.a?fmtC(c.a):'<span class="sub3">–</span>'}</td>
+      <td class="num sub3">${c.e?fmtC(c.e):'<span class="sub3">–</span>'}</td>
+      <td class="num"><b>${fmtC(c.t)}</b></td>
+      <td style="min-width:80px"><div style="height:8px;background:var(--track);border-radius:3px;overflow:hidden"><div style="height:100%;width:${c.t/mx*100}%;background:var(--brand)"></div></div></td>
+      <td class="num">${c.oct?`<b class="up">${fmtC(c.oct)}</b>`:'<span class="sub3">·</span>'}</td></tr>`).join('')
+   +`</tbody><tfoot><tr><td></td><td style="text-align:left">합계 · ${C.n_cust}개사</td><td></td>
+      <td class="num">${fmtC(C.a)}</td><td class="num">${fmtC(C.e)}</td><td class="num">${fmtC(C.total)}</td>
+      <td></td><td class="num">${fmtC(C.last.usd)}</td></tr></tfoot></table></div>`
+   +cisInsight()
+   +`<p class="note" style="margin:12px 0 0;border-left:3px solid var(--brand);padding-left:10px">`
+    +`월별·국가별·제품군별 오더 분해, 고객사 협업 활동, Mechanic Support Kit, Catalogue 성과, `
+    +`11월 현장 캘린더와 Action Plan 은 <b>캠페인 효과 탭 › CIS</b> 로 옮겼다. 여기에는 고객사별 요약 한 장만 둔다.</p>`
+   +`</div>`;
+  return h;
+}
+
+/* 월간 리포트용 CIS 인사이트 — 수치에서 직접 뽑는다. 손으로 적지 않는다. */
+function cisInsight(){
+  if(typeof CIS10==='undefined'||!CIS10.cust) return '';
+  const C=CIS10, LM=+C.last_month.slice(5), li=[];
+  const top3=C.cust.slice(0,3);
+  li.push({t:'상위 고객 쏠림',d:`${top3.map(c=>`${esc(c.k)} ${fmtC(c.t)}`).join(' · ')} 가 전체의 <b>${C.top3}%</b>. `
+    +`상위 5곳까지 넓히면 ${C.top5}% 로, 협업 활동도 이 구간에 맞춰 짰다.`});
+  const pk=C.months.slice().sort((a,b)=>(b.a+b.e)-(a.a+a.e))[0];
+  li.push({t:'월별 흐름',d:`${+pk.m.slice(5)}월 <b>${fmtC(pk.a+pk.e)}</b> 가 가장 컸고, ${LM}월은 ${fmtC(C.last.usd)} 다. `
+    +`${LM}월 오더가 난 곳은 ${C.last.by.length}개사 — ${C.last.by.map(x=>`${esc(x.k)} ${fmtC(x.usd)}`).join(' · ')}. `
+    +`누적 ${fmtC(C.total)} 와 섞어 읽지 않는다.`});
+  li.push({t:'Asian 쏠림',d:`Asian ${fmtC(C.a)} (<b>${(C.a/C.total*100).toFixed(1)}%</b>) · European ${fmtC(C.e)} (${(C.e/C.total*100).toFixed(1)}%). `
+    +`대상 SKU 소화는 Asian ${C.target.A.got}/${C.target.A.n}종(미오더 ${C.target.A.miss}), European ${C.target.E.got}/${C.target.E.n}종(미오더 ${C.target.E.miss}) 로 `
+    +`European 쪽에 남은 품목이 더 많다.`});
+  const c1=C.countries[0];
+  li.push({t:'국가 집중',d:`${esc(c1.k)} ${fmtC(c1.usd)} 로 <b>${c1.share}%</b> (${c1.n}곳). `
+    +`제품군은 ${C.prods.slice(0,2).map(p=>`${esc(p.k)} ${fmtC(p.usd)}`).join(' · ')} 순이다.`});
+  return `<div class="sub3" style="color:var(--ink2);font-size:12px;margin:14px 0 3px"><b>CIS 인사이트</b> <span style="font-weight:400">· 수치에서 바로 뽑은 것</span></div>`
+    +`<ul style="list-style:none;padding:0;margin:4px 0 0">`
+    +li.map(x=>`<li class="note" style="margin:7px 0;padding-left:18px;position:relative;font-size:14px;line-height:1.55">`
+      +`<span style="position:absolute;left:0;top:0;color:var(--brand);font-weight:700">▪</span>`
+      +`<b>${x.t}</b> — ${x.d}</li>`).join('')
+    +`</ul>`;
+}
+
+/* ── 캠페인 효과 탭: 상세 ── */
+function cisBox(){
+  const box=$('#cisBox'); if(!box) return;
+  if(typeof CIS10==='undefined'||!CIS10.cust){box.innerHTML='';return;}
+  const f=F();
+  if(!(f.region==='ALL'||f.region==='CIS')){box.innerHTML='';return;}
+  const C=CIS10, LM=+C.last_month.slice(5), q=CISQ;
+
+  let h=cisHead(`<b style="color:var(--brand)">Choice Kit 프로모션 상세</b> · 대상 SKU 연관 오더 ${esc(C.period)} · 현장 활동`)
+   +`<div class="card">`
+   +`<p class="note" style="margin:0 0 4px">${esc(C.headline)}</p>`
+   +`<p class="note" style="font-size:11.5px;padding-left:0;margin:0">${esc(C.note_scope)} `
+    +`자료 ${esc(C.src_a)} · ${esc(C.src_e)} · ${C.lines.toLocaleString()}행.</p>`;
+
+  /* 1. 오더 분해 */
+  h+=cisH4('오더 분해 — 월별 · 국가별 · 제품군별','');
+  const mm=C.months, mmx=Math.max(...mm.map(x=>x.a+x.e),1);
+  h+=`<div class="grid2">
+    <div><div class="sub3" style="margin:2px 0 4px"><b>월별 오더 추이</b> · Asian + European (USD)</div>
+    <div class="legend"><span><i class="sw" style="background:var(--brand)"></i>Asian</span><span><i class="sw" style="background:var(--s1)"></i>European</span></div>
+    <div class="tblwrap"><table class="lts" style="font-size:11.5px"><thead><tr><th>월</th><th>Asian</th><th>European</th><th>계</th><th>추이</th><th>수량</th></tr></thead><tbody>`
+   +mm.map(x=>`<tr><td style="text-align:left">${+x.m.slice(5)}월${x.m===C.last_month?` <span class="sub3">(~${esc(C.last.last_date.slice(5))})</span>`:''}</td>
+      <td class="num sub3">${fmtC(x.a)}</td><td class="num sub3">${x.e?fmtC(x.e):'·'}</td><td class="num"><b>${fmtC(x.a+x.e)}</b></td>
+      <td style="min-width:72px"><div style="height:8px;background:var(--track);border-radius:3px;overflow:hidden;display:flex">
+        <div style="height:100%;width:${x.a/mmx*100}%;background:var(--brand)"></div>
+        <div style="height:100%;width:${x.e/mmx*100}%;background:var(--s1)"></div></div></td>
+      <td class="num sub3">${q(x.q)}</td></tr>`).join('')
+   +`</tbody></table></div>
+    <div class="sub3" style="margin:12px 0 4px"><b>오더 상위 SKU</b> · 금액 기준 ${Math.min(C.top_sku.length,10)}종</div>
+    <div class="tblwrap"><table class="lts" style="font-size:11.5px"><thead><tr><th style="text-align:left">CTR Code</th><th style="text-align:left">제품군</th><th>오더</th><th>수량</th></tr></thead><tbody>`
+   +C.top_sku.map(x=>`<tr><td style="text-align:left"><b>${esc(x.k)}</b></td><td style="text-align:left" class="sub3">${esc(x.p)}</td>
+      <td class="num">${fmtC(x.usd)}</td><td class="num sub3">${q(x.q)}</td></tr>`).join('')
+   +`</tbody></table></div></div>
+    <div><div class="sub3" style="margin:2px 0 4px"><b>국가별 오더</b></div>
+    <div class="tblwrap"><table class="lts" style="font-size:11.5px"><thead><tr><th style="text-align:left">국가</th><th>오더</th><th>비중</th><th>고객</th><th></th></tr></thead><tbody>`
+   +C.countries.map(x=>`<tr><td style="text-align:left"><b>${esc(x.k)}</b></td><td class="num">${fmtC(x.usd)}</td>
+      <td class="num">${x.share}%</td><td class="num sub3">${x.n}곳</td>
+      <td style="min-width:70px"><div style="height:8px;background:var(--track);border-radius:3px;overflow:hidden"><div style="height:100%;width:${x.share}%;background:var(--o4)"></div></div></td></tr>`).join('')
+   +`</tbody></table></div>
+    <div class="sub3" style="margin:12px 0 4px"><b>제품군별 오더</b></div>
+    <div class="tblwrap"><table class="lts" style="font-size:11.5px"><thead><tr><th style="text-align:left">제품군</th><th>오더</th><th>수량</th><th>SKU</th></tr></thead><tbody>`
+   +C.prods.map(x=>`<tr><td style="text-align:left">${esc(x.k)}</td><td class="num">${fmtC(x.usd)}</td>
+      <td class="num sub3">${q(x.q)}</td><td class="num sub3">${x.sku}종</td></tr>`).join('')
+   +`</tbody></table></div>
+    <div class="kpis" style="grid-template-columns:repeat(2,1fr);margin-top:12px">`
+    +cisTile('Asian 대상 SKU 소화',`${C.target.A.got} / ${C.target.A.n}종`,`미오더 ${C.target.A.miss}종`)
+    +cisTile('European 대상 SKU 소화',`${C.target.E.got} / ${C.target.E.n}종`,`미오더 ${C.target.E.miss}종`)
+    +`</div></div></div>`;
+
+  h+=`<div class="warnbox" style="margin:14px 0 0"><b>${LM}월 단월 오더 — 누적과 섞지 않습니다</b><br>
+    9월 말 누적 ${fmtC(C.last.prev)} 에 ${LM}월 <b>${fmtC(C.last.usd)}</b> 가 더해져 ${fmtC(C.total)} 가 됐습니다 (누적 대비 +${C.last.pct}%).
+    ${LM}월 오더가 난 곳은 ${C.last.by.length}개사 — ${C.last.by.map(x=>`${esc(x.k)} ${fmtC(x.usd)}`).join(' · ')}.
+    원천 오더일은 ${esc(C.last.last_date)} 까지입니다.</div>`;
+
+  /* 2. 고객 협업 */
+  h+=cisH4('Customer Collaboration & Sell-out Activation',
+    '상위 고객사와 함께 하는 현지 활동입니다. 모두 <b>아직 진행 전</b>이라 실적이 아니라 계획으로 적었습니다.');
+  h+=`<div class="grid3">`+C.collab.map(c=>`<div class="card" style="margin:0;border-top:3px solid var(--brand)">
+     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+       <b style="font-size:14px">${esc(c.k)}</b>${cisPill(c.state)}
+       <span class="sub3" style="font-size:10.5px">누적 오더 ${c.rank}위</span></div>
+     <div class="sub3" style="margin:3px 0 6px;font-size:11.5px">${esc(c.title)} · ${esc(c.country)} ${esc(c.city)} · <b>${esc(c.when)}</b></div>
+     <div class="note" style="padding-left:0;margin:0">${esc(c.what)}</div></div>`).join('')+`</div>`;
+
+  h+=`<div class="grid2" style="margin-top:12px">
+    <div class="card" style="margin:0"><h3 style="font-size:14px">테크 세미나 공통 프로그램</h3>
+      <p class="note" style="margin:2px 0 6px;padding-left:0">${esc(C.seminar_goal)}</p>
+      <ul style="margin:0;padding-left:17px">${C.seminar_program.map(x=>`<li class="note" style="padding-left:0;margin:3px 0;font-size:12.5px">${esc(x)}</li>`).join('')}</ul></div>
+    <div class="card" style="margin:0"><h3 style="font-size:14px">COMPLEX AUTO · 두 가지 별도 활동</h3>`
+   +[C.complex.event,C.complex.labor].map(x=>`<div style="margin:8px 0 0">
+       <div style="display:flex;align-items:center;gap:7px"><b style="font-size:12.5px">${esc(x.title)}</b>${cisPill(x.state)}</div>
+       <table class="lts" style="font-size:11.5px;margin:4px 0"><tbody>`
+      +x.rows.map(r=>`<tr><td style="text-align:left;width:34%">${esc(r[0])}</td><td style="text-align:left"><b>${esc(r[1])}</b></td><td class="sub3" style="text-align:left;width:18%">${esc(r[2])}</td></tr>`).join('')
+      +`</tbody></table>
+       <ul style="margin:2px 0 0;padding-left:17px">${x.detail.map(d=>`<li class="note" style="padding-left:0;margin:2px 0;font-size:12px">${esc(d)}</li>`).join('')}</ul></div>`).join('')
+   +`<p class="note" style="margin:10px 0 0;padding-left:0;font-size:12px">${esc(C.complex.insight)}</p></div></div>`;
+
+  if((C.no_event||[]).length) h+=`<div class="warnbox" style="margin:12px 0 0">`
+    +C.no_event.map(x=>`<b>${esc(x.k)} — 이번 협업 이벤트 대상 아님</b><br>${esc(x.why)}`).join('<br><br>')+`</div>`;
+
+  /* 3. Mechanic Support Kit */
+  const K=C.kit;
+  h+=cisH4('Mechanic Support Kit · Retail Activation Support',esc(K.purpose));
+  h+=`<div class="kpis k6">`
+   +cisTile('대상 저실적 SKU',`${K.kpi.sku}개`,`Asian ${K.kpi.sku_a} · European ${K.kpi.sku_e}`,1)
+   +cisTile('지원 고객',`${K.kpi.cust}개사`,`${K.kpi.country}개국`)
+   +cisTile('고객당 지원',`${K.kpi.per_cust}세트`,'')
+   +cisTile('총 지원 물량',`${q(K.kpi.total_set)}세트`,'11월부터 순차 발송 예정')
+   +cisTile('배송','예정',esc(K.ship))
+   +cisTile('상태','준비 완료','발송 전 — 수령 실적 없음')
+   +`</div>`;
+  h+=`<div class="grid3" style="margin-top:10px">
+    <div class="card" style="margin:0"><h3 style="font-size:13.5px">선정 고객 ${K.kpi.cust}개사</h3>
+      <table class="lts" style="font-size:11.5px;margin:4px 0"><thead><tr><th style="text-align:left">국가</th><th style="text-align:left">고객사</th></tr></thead><tbody>`
+   +K.custs.map(r=>`<tr><td style="text-align:left" class="sub3">${esc(r[0])}</td><td style="text-align:left"><b>${esc(r[1])}</b></td></tr>`).join('')
+   +`</tbody></table></div>
+    <div class="card" style="margin:0"><h3 style="font-size:13.5px">선정 기준</h3>
+      <ul style="margin:4px 0 0;padding-left:17px">${K.rule.map(x=>`<li class="note" style="padding-left:0;margin:3px 0;font-size:12.5px">${esc(x)}</li>`).join('')}</ul>
+      <p class="note" style="margin:8px 0 0;padding-left:0;font-size:12px">${esc(K.note_pick)}</p></div>
+    <div class="card" style="margin:0"><h3 style="font-size:13.5px">Kit 구성</h3>
+      <ul style="margin:4px 0 0;padding-left:17px">${K.parts.map(x=>`<li class="note" style="padding-left:0;margin:3px 0;font-size:12.5px">${esc(x)}</li>`).join('')}</ul></div></div>`;
+  h+=`<p class="note" style="margin:8px 0 0;padding-left:0">${esc(K.headline)}</p>`;
+
+  /* 4. Catalogue */
+  const CA=C.cat, cv=(d,v)=>d?((v/d)*100).toFixed(1)+'%':'–';
+  h+=cisH4('CIS Catalogue Awareness & Retail Activation',
+    `${esc(CA.note)} · 콘텐츠 ${esc(CA.sns_sep)} → <b>${esc(CA.sns_oct)}</b>`);
+  h+=`<div class="grid2">
+    <div><div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr>
+      <th style="text-align:left">지표</th><th>9월 리포트</th><th>10월 업데이트</th><th>증감</th></tr></thead><tbody>`
+   +CA.rows.map(r=>`<tr><td style="text-align:left"><b>${esc(r[0])}</b></td>
+      <td class="num sub3">${q(r[1])}</td><td class="num"><b>${q(r[2])}</b></td>
+      <td class="num"><span class="${cls(r[2]-r[1])}">+${q(r[2]-r[1])}</span>
+        <div class="sub3" style="font-weight:400;font-size:10px">${r[1]?'×'+(r[2]/r[1]).toFixed(1):''}</div></td></tr>`).join('')
+   +`<tr style="border-top:2px solid var(--ring)"><td style="text-align:left"><b>다운로드 전환율</b></td>
+      <td class="num sub3">${cv(CA.rows[0][1],CA.rows[1][1])}</td><td class="num"><b>${cv(CA.rows[0][2],CA.rows[1][2])}</b></td><td></td></tr>`
+   +`</tbody></table></div>
+    <div class="sub3" style="margin:10px 0 4px"><b>콘텐츠 활용 구조</b></div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center">`
+   +CA.flow.map((s,i)=>`<span class="pill" style="${i<CA.flow_measured?'background:var(--brand);color:#fff;border:0':'opacity:.55'}">${esc(s)}</span>${i<CA.flow.length-1?'<span class="sub3">›</span>':''}`).join('')
+   +`</div><p class="note" style="margin:6px 0 0;padding-left:0;font-size:12px">${esc(CA.note_flow)}</p></div>
+    <div><div class="sub3" style="margin:2px 0 4px"><b>Meta 콘텐츠 발행</b> · ${esc(CA.sns_oct)}</div>
+    <div class="tblwrap"><table class="lts" style="font-size:11.5px"><thead><tr><th>#</th><th style="text-align:left">콘텐츠</th><th>발행일</th><th>상태</th><th>링크</th></tr></thead><tbody>`
+   +CA.contents.map(r=>`<tr><td class="num sub3">${r[0]}</td><td style="text-align:left">${esc(r[1])}</td>
+      <td class="num sub3">${esc(r[2])}</td><td class="num"><span class="up">${esc(r[3])}</span></td>
+      <td class="num"><a href="${esc(r[4])}" target="_blank" rel="noopener" class="sub3">보기</a></td></tr>`).join('')
+   +`</tbody></table></div>
+    <ul style="margin:10px 0 0;padding-left:17px">${CA.insight.map(x=>`<li class="note" style="padding-left:0;margin:3px 0;font-size:12.5px">${esc(x)}</li>`).join('')}</ul></div></div>`;
+
+  /* 5. 캘린더 */
+  h+=cisH4('November Field Activation Calendar','모두 앞으로의 일정입니다. 증빙이 들어오기 전까지 완료로 적지 않습니다.');
+  h+=`<div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr>
+    <th style="text-align:left">일정</th><th style="text-align:left">고객사</th><th style="text-align:left">활동</th><th>장소</th><th>상태</th></tr></thead><tbody>`
+   +C.cal.map(r=>`<tr><td style="text-align:left"><b>${esc(r[0])}</b></td><td style="text-align:left">${esc(r[1])}</td>
+      <td style="text-align:left">${esc(r[2])}</td><td class="small sub3">${esc(r[3])}</td>
+      <td class="num">${cisPill(r[4])}</td></tr>`).join('')
+   +`</tbody></table></div>`;
+
+  /* 6. 인사이트 · 액션 · 단계 */
+  h+=cisH4('Key Insights & Action Plan','');
+  h+=`<div class="grid3">`+C.insights.map(x=>`<div class="card" style="margin:0;border-left:3px solid var(--brand)">
+     <div style="font-weight:800;font-size:13px">Insight ${esc(x[0])}</div>
+     <p class="note" style="margin:5px 0 0;padding-left:0;font-size:12.5px">${esc(x[1])}</p></div>`).join('')+`</div>`;
+  h+=`<div class="grid2" style="margin-top:12px">
+    <div><div class="sub3" style="margin:2px 0 4px"><b>October–November Action Plan</b></div>
+    <div class="tblwrap"><table class="lts" style="font-size:11.5px"><thead><tr><th style="text-align:left">영역</th><th style="text-align:left">우선 과제</th><th style="text-align:left">추적 지표</th></tr></thead><tbody>`
+   +C.actions.map(r=>`<tr><td style="text-align:left"><b>${esc(r[0])}</b></td><td style="text-align:left">${esc(r[1])}</td><td style="text-align:left" class="sub3">${esc(r[2])}</td></tr>`).join('')
+   +`</tbody></table></div></div>
+    <div><div class="sub3" style="margin:2px 0 4px"><b>9월 → 10월 → 11월</b></div>
+    <div class="tblwrap"><table class="lts" style="font-size:11.5px"><thead><tr><th>월</th><th style="text-align:left">초점</th><th>상태</th></tr></thead><tbody>`
+   +C.phase.map(r=>`<tr><td><b>${esc(r[0])}</b></td><td style="text-align:left">${esc(r[1])}</td><td class="num">${cisPill(r[2])}</td></tr>`).join('')
+   +`</tbody></table></div>
+    <p class="note" style="margin:6px 0 0;padding-left:0;font-size:12px">${esc(C.note_phase)}</p>
+    <div class="sub3" style="margin:12px 0 4px"><b>Data Validation</b></div>
+    <ul style="margin:0;padding-left:17px">${(C.validation||[]).map(x=>`<li class="note" style="padding-left:0;margin:3px 0;font-size:11.5px">${esc(x)}</li>`).join('')}</ul></div></div>`;
+
+  box.innerHTML=h+`</div>`;
+}
 /* ══════════ 10월 리포트 ══════════
    9월 리포트는 손대지 않는다. 10월 리포트는 손으로 적은 활동 수치 대신
    단일 소스(asia_choicekit / asia_sellout / asia_sellin_qty / SteerStar)를
