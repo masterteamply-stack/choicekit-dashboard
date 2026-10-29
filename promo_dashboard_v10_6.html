@@ -1346,7 +1346,7 @@ function lordcoCard(lo){const C25='var(--s1)',C26b='var(--brand)';
      return `<div class="sub3" style="margin:12px 0 2px"><b>매출</b> · 위 오더(수주)와 별개 자료 · 월별 매출 표는 아래 오더 표 바로 밑</div>`
       +kgrid([{lab:'2026 매출 (AM 실적표)',val:fmtC(rv[1]),sub:`전년 ${fmtC(rv[0])} 대비 <span class="${cls(ry)}">${fmtPC(ry)}</span>`,hero:true},
         {lab:`2026 YTD 매출 (Sales Raw 1~${lo.slast26}월)`,val:fmtC(lo.scum26),
-         sub:`동기 전년 ${fmtC(lo.scum25)}${lo.scum25<0?' — 유치 lift 차감이 들어가 음수. 증감률은 뜻이 없음':' · 반품·정산 조정 포함'}`},
+         sub:`동기 전년 ${fmtC(lo.scum25)}${lo.scum25<0?' · lift 차감 반영':' · 반품·정산 조정 포함'}`},
         {lab:`매출 수량 (1~${lo.slast26}월)`,val:lo.qcum26.toLocaleString(),sub:`전년 ${lo.qcum25.toLocaleString()} · <span class="${cls(sy)}">${fmtPC(sy)}</span>`}],'k3')
       +`<p class="note" style="margin:6px 0 0;padding-left:0;font-size:11.5px;color:var(--muted)">AM 실적표 매출과 Sales Raw 합계는 집계 범위(반품·정산 조정 포함 여부)가 달라 금액이 다름.</p>`;})()
    +`<div class="grid2"><div><div class="sub3" style="margin:6px 0 2px">월별 오더 · 전년 대비 (USD)</div>`
@@ -1358,10 +1358,10 @@ function lordcoCard(lo){const C25='var(--s1)',C26b='var(--brand)';
    +gbar(ML,[{name:'2025',color:C25,vals:lo.y25},{name:'2026',color:C26b,vals:lo.y26}],{W:500,H:220,delta:1,fmtV:v=>v?'$'+Math.round(v/1000)+'K':''})
    +`</div></div>`
    +`<h4 class="soh">월별 매출 · 전년 1:1 (출하·청구 기준)</h4>`
-   +`<div class="warnbox" style="margin:2px 0 10px"><b>2025 매출이 마이너스인 까닭</b><br>${esc(lo.note_sales||'')}
-      ${lo.lift_m25&&lo.lift_m25.length?`<br>2025 에 출하 수량 없이 금액만 빠진 달 — <b>${lo.lift_m25.map(m=>m+'월').join(' · ')}</b> 합계 <b>${fmtC(lo.lift25)}</b>.
-      같은 해 출하분 ${fmtC(lo.ship25)} 과 더해 연간 <b>${fmtC(lo.sannual25)}</b>, 1~${lo.slast26}월 동기로는 <b>${fmtC(lo.scum25)}</b> 가 남습니다.`:''}
-      <br>그래서 <b>증감률 대신 2026 실적과 매출 수량</b>으로 보십시오.</div>`
+   /* 2025 매출이 음수인 건 유치 lift 가 그해 매출에서 차감됐기 때문이다.
+      따로 박스를 세우지 않고 표 위에 한 줄로만 적는다 — 표 안의 'lift 차감' 표시가 어느 달인지 알려 준다. */
+   +`<p class="note" style="margin:2px 0 8px;padding-left:0;font-size:11.5px;color:var(--muted)">`
+    +`lift 금액 반영으로 작년 연간 매출이 마이너스로 잡혀 있는 탓${lo.lift_m25&&lo.lift_m25.length?` (${lo.lift_m25.map(m=>m+'월').join(' · ')} 합계 ${fmtC(lo.lift25)})`:''}.</p>`
    +(lo.note_oct26?`<p class="note" style="margin:-4px 0 8px;padding-left:0"><b>10월</b> · ${esc(lo.note_oct26)}</p>`:'')
    +`<div class="grid2"><div><div class="sub3" style="margin:6px 0 2px">월별 매출 · 전년 대비 (USD)</div>`
    +`<div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr><th>월</th><th>2025</th><th>2026</th><th>증감</th><th>수량 25→26</th></tr></thead><tbody>`
