@@ -2692,6 +2692,9 @@ function cisPill(s){
   const x=ST[s]||ST.planned;
   return `<span class="pill" style="background:${x[1]};color:#fff;border:0">${x[0]}</span>`;
 }
+/* 대상 SKU 대비 오더가 난 비율. 색 기준은 권역×캠페인 표의 전환율과 같게 둔다. */
+function cisConv(got,n){if(!n) return '<span class="sub3">–</span>';
+  const p=got/n*100; return `<b class="${p>=70?'up':(p>=30?'':'dn')}">${p.toFixed(1)}%</b>`;}
 function cisH4(t,s){
   return `<div style="font-size:15px;font-weight:800;letter-spacing:-0.3px;margin:20px 0 4px;padding-top:14px;border-top:1px solid var(--ring)">${esc(t)}</div>`
     +(s?`<p class="sub3" style="margin:0 0 9px;line-height:1.55;font-size:12.5px">${s}</p>`:'');
@@ -2701,13 +2704,14 @@ function cisH4(t,s){
 function cisOct(){
   if(typeof CIS10==='undefined'||!CIS10.cust) return '';
   const C=CIS10, LM=+C.last_month.slice(5);
+  const TN=C.target.A.n+C.target.E.n, TG=C.target.A.got+C.target.E.got;   /* 대상 SKU 합계 · 그중 오더 난 수 */
   let h=cisHead(`<b style="color:var(--brand)">Choice Kit 프로모션</b> · 대상 SKU 연관 오더 ${esc(C.period)} · 고객사별 한 장 요약 · 상세는 캠페인 효과 탭`)
    +`<div class="card">`
    +`<div class="kpis k6">`
     +cisTile('총 연관 오더',fmtC(C.total),`Asian ${fmtC(C.a)} + European ${fmtC(C.e)} · ${CISQ(C.qty)}개`,1)
     +cisTile(`${LM}월 단월 오더`,fmtC(C.last.usd),`${C.last.by.length}개사 · 9월 말 누적 대비 +${C.last.pct}%`)
     +cisTile('오더 집계 고객',`${C.n_cust}개사`,`4개국 · 상위 5곳이 ${C.top5}%`)
-    +cisTile('오더 발생 SKU',`${C.n_sku}종`,`Asian ${C.target.A.got}/${C.target.A.n} · European ${C.target.E.got}/${C.target.E.n}`)
+    +cisTile('오더 발생 SKU',`${C.n_sku}<span style="font-size:15px;color:var(--muted);font-weight:400"> / ${TN}종</span>`,`대상 SKU 전환율 ${cisConv(C.n_sku,TN)}` + `${C.n_sku>TG?` · 대상 외 ${C.n_sku-TG}종 포함`:''}` + `<br>Asian ${C.target.A.got}/${C.target.A.n} · European ${C.target.E.got}/${C.target.E.n}`)
     +cisTile('Mechanic Kit 지원',`${C.kit.kpi.cust}개사`,`${CISQ(C.kit.kpi.total_set)}세트 · 11월부터 발송 예정`)
     +cisTile('Catalogue 다운로드',CISQ(C.cat.rows[1][2]),`웹사이트 조회 ${CISQ(C.cat.rows[0][2])} · 콘텐츠 ${esc(C.cat.sns_oct)}`)
     +`</div>`;
@@ -2749,7 +2753,7 @@ function cisInsight(){
     +`${LM}월 오더가 난 곳은 ${C.last.by.length}개사 — ${C.last.by.map(x=>`${esc(x.k)} ${fmtC(x.usd)}`).join(' · ')}. `
     +`누적 ${fmtC(C.total)} 와 섞어 읽지 않는다.`});
   li.push({t:'Asian 쏠림',d:`Asian ${fmtC(C.a)} (<b>${(C.a/C.total*100).toFixed(1)}%</b>) · European ${fmtC(C.e)} (${(C.e/C.total*100).toFixed(1)}%). `
-    +`대상 SKU 소화는 Asian ${C.target.A.got}/${C.target.A.n}종(미오더 ${C.target.A.miss}), European ${C.target.E.got}/${C.target.E.n}종(미오더 ${C.target.E.miss}) 로 `
+    +`대상 SKU 전환은 Asian ${C.target.A.got}/${C.target.A.n}종(${cisConv(C.target.A.got,C.target.A.n)}), European ${C.target.E.got}/${C.target.E.n}종(${cisConv(C.target.E.got,C.target.E.n)}) 로 `
     +`European 쪽에 남은 품목이 더 많다.`});
   const c1=C.countries[0];
   li.push({t:'국가 집중',d:`${esc(c1.k)} ${fmtC(c1.usd)} 로 <b>${c1.share}%</b> (${c1.n}곳). `
@@ -2806,9 +2810,10 @@ function cisBox(){
    +C.prods.map(x=>`<tr><td style="text-align:left">${esc(x.k)}</td><td class="num">${fmtC(x.usd)}</td>
       <td class="num sub3">${q(x.q)}</td><td class="num sub3">${x.sku}종</td></tr>`).join('')
    +`</tbody></table></div>
-    <div class="kpis" style="grid-template-columns:repeat(2,1fr);margin-top:12px">`
-    +cisTile('Asian 대상 SKU 소화',`${C.target.A.got} / ${C.target.A.n}종`,`미오더 ${C.target.A.miss}종`)
-    +cisTile('European 대상 SKU 소화',`${C.target.E.got} / ${C.target.E.n}종`,`미오더 ${C.target.E.miss}종`)
+    <div class="kpis" style="grid-template-columns:1.2fr 1fr 1fr;margin-top:12px">`
+    +cisTile('대상 SKU 전환',`${C.target.A.got+C.target.E.got}<span style="font-size:15px;color:var(--muted);font-weight:400"> / ${C.target.A.n+C.target.E.n}종</span>`,`전환율 ${cisConv(C.target.A.got+C.target.E.got,C.target.A.n+C.target.E.n)} · 미오더 ${C.target.A.miss+C.target.E.miss}종`,1)
+    +cisTile('Asian',`${C.target.A.got} / ${C.target.A.n}종`,`전환율 ${cisConv(C.target.A.got,C.target.A.n)} · 미오더 ${C.target.A.miss}종`)
+    +cisTile('European',`${C.target.E.got} / ${C.target.E.n}종`,`전환율 ${cisConv(C.target.E.got,C.target.E.n)} · 미오더 ${C.target.E.miss}종`)
     +`</div></div></div>`;
 
   h+=`<div class="warnbox" style="margin:14px 0 0"><b>${LM}월 단월 오더 — 누적과 섞지 않습니다</b><br>
