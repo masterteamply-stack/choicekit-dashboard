@@ -1,0 +1,168 @@
+{
+ "_readme": "CIS Choice Kit Meta 광고 성과. 원천 리포트에서 매번 다시 뽑는다. 재생성: python3 scripts/sync_cis_ads.py --src <xlsx>",
+ "src": "PTKOREA_CTR_Choice_Kit_Promotion_광고성과_1029.xlsx",
+ "period": "9.16~10.27",
+ "n_round": 6,
+ "goal": "Traffic",
+ "media": "META · Facebook + Instagram",
+ "countries_txt": "카자흐스탄, 키르기스스탄, 타지키스탄, 투르크메니스탄",
+ "target": "M2564 · 자동차, AM 관련 관심사",
+ "landing": "https://aftermarket.ctr.co.kr/$$/catalogue-list/618",
+ "tot": {
+  "cost": 5999738,
+  "imp": 11615255,
+  "clk": 140647,
+  "eng": 133016,
+  "ctr": 1.21,
+  "cpc": 43,
+  "cpm": 517
+ },
+ "rounds": [
+  {
+   "k": "Asian Vehicles Vol.1",
+   "when": "9.16~9.22",
+   "grp": "Asian",
+   "cost": 999797,
+   "imp": 2213356,
+   "clk": 25980,
+   "eng": 24331,
+   "ctr": 1.17,
+   "cpc": 38
+  },
+  {
+   "k": "European Vehicles Vol.1",
+   "when": "9.23~9.29",
+   "grp": "European",
+   "cost": 999941,
+   "imp": 1618746,
+   "clk": 22287,
+   "eng": 22320,
+   "ctr": 1.38,
+   "cpc": 45
+  },
+  {
+   "k": "Asian Vehicles Vol.2",
+   "when": "9.30~10.6",
+   "grp": "Asian",
+   "cost": 1000000,
+   "imp": 2127790,
+   "clk": 25757,
+   "eng": 23662,
+   "ctr": 1.21,
+   "cpc": 39
+  },
+  {
+   "k": "European Vehicles Vol.2",
+   "when": "10.7~10.13",
+   "grp": "European",
+   "cost": 1000000,
+   "imp": 2079902,
+   "clk": 24380,
+   "eng": 23174,
+   "ctr": 1.17,
+   "cpc": 41
+  },
+  {
+   "k": "Asian Vehicles Vol.3",
+   "when": "10.14~10.20",
+   "grp": "Asian",
+   "cost": 1000000,
+   "imp": 1874830,
+   "clk": 21979,
+   "eng": 20501,
+   "ctr": 1.17,
+   "cpc": 45
+  },
+  {
+   "k": "European Vehicles Vol.3",
+   "when": "10.21~10.27",
+   "grp": "European",
+   "cost": 1000000,
+   "imp": 1700631,
+   "clk": 20264,
+   "eng": 19028,
+   "ctr": 1.19,
+   "cpc": 49
+  }
+ ],
+ "geo": [
+  {
+   "cc": "TJ",
+   "k": "타지키스탄",
+   "cost": 3293528,
+   "imp": 7153024,
+   "clk": 80917,
+   "share": 57.5,
+   "ctr": 1.13,
+   "cpc": 41,
+   "cpm": 460
+  },
+  {
+   "cc": "KG",
+   "k": "키르기스스탄",
+   "cost": 2305361,
+   "imp": 3988268,
+   "clk": 51166,
+   "share": 36.4,
+   "ctr": 1.28,
+   "cpc": 45,
+   "cpm": 578
+  },
+  {
+   "cc": "KZ",
+   "k": "카자흐스탄",
+   "cost": 312232,
+   "imp": 261485,
+   "clk": 5913,
+   "share": 4.2,
+   "ctr": 2.26,
+   "cpc": 53,
+   "cpm": 1194
+  },
+  {
+   "cc": "TM",
+   "k": "투르크메니스탄",
+   "cost": 88618,
+   "imp": 212470,
+   "clk": 2649,
+   "share": 1.9,
+   "ctr": 1.25,
+   "cpc": 33,
+   "cpm": 417
+  }
+ ],
+ "plat": [
+  {
+   "k": "Instagram",
+   "cost": 2699893,
+   "imp": 8174193,
+   "clk": 87856,
+   "share": 62.5,
+   "ctr": 1.07,
+   "cpc": 31,
+   "cpm": 330
+  },
+  {
+   "k": "Facebook",
+   "cost": 3299846,
+   "imp": 3441054,
+   "clk": 52789,
+   "share": 37.5,
+   "ctr": 1.53,
+   "cpc": 63,
+   "cpm": 959
+  }
+ ],
+ "best_clk": {
+  "k": "Asian Vehicles Vol.1",
+  "v": 25980
+ },
+ "best_ctr": {
+  "k": "European Vehicles Vol.1",
+  "v": 1.38
+ },
+ "ctr_lo": 1.17,
+ "ctr_hi": 1.38,
+ "note_scope": "Meta 클릭과 웹사이트 조회는 측정 주체가 달라 1:1로 잇지 않는다. 광고는 유입을 만든 쪽, 조회·다운로드는 받은 쪽 수치다.",
+ "note_geo": "국가별 합계는 Meta 의 국가 미식별(Unknown) 유저가 빠져 전체보다 2건 적다. 맞추지 않고 그대로 둔다."
+}

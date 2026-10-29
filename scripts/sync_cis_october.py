@@ -18,6 +18,7 @@ import json, os, re, sys, datetime, collections
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HTML = os.path.join(ROOT, 'promo_dashboard_v10_6.html')
 SRC = os.path.join(ROOT, 'cis_october.json')
+ADS = os.path.join(ROOT, 'cis_ads.json')
 AGG = os.path.join(ROOT, 'cis_october_orders.json')
 TGT = os.path.join(ROOT, 'campaign_target_skus.json')
 
@@ -119,6 +120,10 @@ CIS10 = dict(agg); CIS10.pop('_readme', None)
 CIS10.update({k: v for k, v in src.items() if not k.startswith('_')})
 # 파일명이 10/28 이라도 실제 마지막 오더일로 적는다 — 없는 날짜를 적지 않는다
 CIS10['period'] = f"{agg['t_from']} ~ {agg['t_to']}"
+# 광고 성과는 따로 뽑아 둔 것을 얹는다 — scripts/sync_cis_ads.py
+if os.path.exists(ADS):
+    CIS10['ads'] = {k: v for k, v in json.load(open(ADS, encoding='utf-8')).items()
+                    if not k.startswith('_')}
 CIS10['validation'] = [
     f"고객 15곳 합계 ${agg['total']:,.2f} — 보고용 표의 $1,560,053 과 센트 단위까지 맞음.",
     "보고용 표의 SHATE M KZ 합계가 1달러 어긋나 보이는 것은 Asian·European 을 먼저 반올림해 더했기 때문이다"
@@ -126,6 +131,8 @@ CIS10['validation'] = [
     f"원천 오더일은 {agg['t_from']} ~ {agg['t_to']} 다. 파일 이름의 10-28 까지가 아니라 "
     f"{agg['t_to']} 이 마지막 오더일이라, 화면에도 그대로 적었다.",
     "고객명·국가·중복 레코드 확인 — 보고용 표의 15곳과 원천의 고객 집합이 정확히 같고, 빠지거나 더 있는 곳이 없다.",
+    "광고 성과는 원천 리포트의 OVERVIEW 합계를 그대로 쓴다. 국가별 시트 합계가 클릭 2건 적은 것은 "
+    "Meta 의 국가 미식별(Unknown) 유저가 국가 집계에서 빠지기 때문이라 맞추지 않았다.",
 ]
 
 html = open(HTML, encoding='utf-8', newline='').read()
@@ -146,4 +153,8 @@ print(f"  상위 5곳 {agg['top5']}% · 상위 3곳 {agg['top3']}%")
 print(f"  대상 SKU — Asian {agg['target']['A']['got']}/{agg['target']['A']['n']}종 "
       f"(미오더 {agg['target']['A']['miss']}) · European {agg['target']['E']['got']}/{agg['target']['E']['n']}종 "
       f"(미오더 {agg['target']['E']['miss']})")
+if CIS10.get('ads'):
+    _a = CIS10['ads']['tot']
+    print(f"  광고 {CIS10['ads']['period']} · {CIS10['ads']['n_round']}회차 · 집행 \u20a9{_a['cost']:,} "
+          f"· 노출 {_a['imp']:,} · 클릭 {_a['clk']:,} · CTR {_a['ctr']}% · CPC \u20a9{_a['cpc']}")
 print('promo_dashboard_v10_6.html ' + ('갱신됨' if changed else '변경 없음'))
