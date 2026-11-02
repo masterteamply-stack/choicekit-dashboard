@@ -67,10 +67,12 @@ if '--src' in sys.argv:
     led = json.load(open(CO, encoding='utf-8')) if os.path.exists(CO) else {'rows': {}}
     LM = int(M26[-1][5:7])
     def amount(name):
+        """원장 금액. 원장은 [금액, 수량] 으로 바뀌었고 예전 형식(금액만)도 읽는다."""
         t = 0.0
         for c in LEDGER.get(name, []):
             for d, v in led['rows'].get(c, {}).get('d', {}).items():
-                if d[:4] == y26 and int(d[5:7]) <= LM: t += v
+                if d[:4] == y26 and int(d[5:7]) <= LM:
+                    t += v[0] if isinstance(v, list) else v
         return round(t)
     rows = []
     for o in cust.values():

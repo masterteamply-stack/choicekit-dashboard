@@ -70,6 +70,15 @@ def fix_SS(SS):
     for r in SS['rows']:
         if r['name'].strip() == src['customer']: r['yoy'] = round(yoy, 1)
 t = edit_json(t, 'SS', fix_SS)
+
+# CD.custs 의 lordco 도 같이 맞춘다. sync_customer_orders.py 는 Sell-out 원장인 Lordco 를
+# 건드리지 않으므로 여기서 안 쓰면 고객사 요약과 SteerStar 전년 대비가 카드와 어긋난다.
+def fix_CD(CD):
+    for c in CD['custs']:
+        if c.get('id') != 'lordco': continue
+        c.update(y25=o25, y26=o26, last26=L, cut='2026-%02d' % L,
+                 annual25=sum(o25), ytd26=sum(o26), cum25=cum25, cum26=cum26)
+t = edit_json(t, 'CD', fix_CD)
 if t != s: log.append('promo_dashboard_v10_6.html 변경')
 if write: open(p, 'w', encoding='utf-8', newline='').write(t)
 print(f'Lordco 오더 동기간 {cum25:,} → {cum26:,} ({yoy:+.1f}%) | 연간 2025 {sum(o25):,} | 2026 누적 {sum(o26):,}')
