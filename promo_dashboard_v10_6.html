@@ -1726,7 +1726,7 @@ const SO=new Set(['SELL-OUT Promotion','Sell-Out Promotion','Trade promotion']);
        <td class="num" style="font-size:11px">${T.sku.toLocaleString()}종<div class="sub3" style="font-weight:400">합산 · 중복 포함</div></td>
        <td class="num">${T.cost>0?fmtC(T.cost):'–'}</td>
        <td class="num">${T.cost>0?(T.a26/T.cost).toFixed(1)+'배':'–'}</td></tr></tfoot>`;
-     return t+`</table></div><p class="note fn" style="padding-left:0;margin:4px 0 0">회수배수 = 기간 오더 ÷ 집행비용(매출 기준, 마진 미반영) · Sell-in 목표 = <b>전년 동기 오더 ×1.2</b> — 전체 참여 고객사의 해당 SKU 혹은 당해 총 오더 금액 기준, 전년 대비 20% 증진 · MENA Portfolio Expansion 만 전쟁 이슈로 <b>$30,000</b> 으로 정정한 목표를 씀 · 캠페인이 진행 중이라 달성률은 기간 진행률과 같이 봐야 함 · Sell-out 목표·실적은 Sell-out 프로모션만 해당하며 Sell-out 프로모션 원자료를 직접 읽은 값 · NA Lordco 는 원자료에 sell-out 항목이 없어 SteerStar 미션 수치를 씀 · SKU 칸은 대상 SKU 가 지정된 캠페인만 전환율이고, 전 품목 캠페인은 오더가 발생한 SKU 종수 · LATAM CTR MarketFit 은 대상 26종과 연관 오더 원장을 대조한 값${MKLIVE?'':(MKLIVE_ERR?' (읽기 실패: '+esc(MKLIVE_ERR)+' · 스냅샷 값)':' (스냅샷 값)')} · 집행비용 환율 KRW/USD ${(D.fx||1470).toLocaleString()}</p>`;
+     return t+`</table></div>`;
 }
 
 /* ASIA Sell-in 수량·품목 (단일 소스: asia_sellin_qty.json)
@@ -2785,7 +2785,7 @@ function cisOct(){
   if(typeof CIS10==='undefined'||!CIS10.cust) return '';
   const C=CIS10, LM=+C.last_month.slice(5);
   const TN=C.target.A.n+C.target.E.n, TG=C.target.A.got+C.target.E.got;   /* 대상 SKU 합계 · 그중 오더 난 수 */
-  let h=cisHead(`<b style="color:var(--brand)">Choice Kit 프로모션</b> · 대상 SKU 연관 오더 ${esc(C.period)} · 고객사별 한 장 요약 · 상세는 캠페인 효과 탭`)
+  let h=cisHead(`<b style="color:var(--brand)">Choice Kit 프로모션</b>`)
    +`<div class="card">`
    +`<div class="kpis k6">`
     +cisTile('총 연관 오더',fmtC(C.total),`Asian ${fmtC(C.a)} + European ${fmtC(C.e)} · ${CISQ(C.qty)}개`,1)
@@ -3115,7 +3115,7 @@ function menaMonth(kgrid){
    +`<span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">MENA</span>`
    +`<span style="font-size:12.5px;color:var(--ink2)"> · <b style="color:var(--brand)">${esc(c.program)}</b>`
    +` · SHOCK ABSORBER + BRAKE PAD · 대상 ${(c.tgt_sku||0).toLocaleString()}종`
-   +` · ${esc(c.start)}~${esc(c.end)} · 상세는 캠페인 효과 탭</span></div><div class="card">`;
+   +`</span></div><div class="card">`;
 
   h+=kgrid([
     {lab:`연관 오더 (1~${M?M.last_month:10}월)`,hero:1,
@@ -3385,11 +3385,11 @@ function octMonth(A){
    +`<h3 style="margin:0;font-size:22px;font-weight:800;letter-spacing:-0.5px">10월 리포트</h3>`
    +(A.wip?`<span style="background:var(--warn);color:#fff;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap">${esc(A.wip)}</span>`:'')
    +`<span class="sub3" style="font-size:12px">데이터 기준 ${esc(A.generated_at)}</span></div>`
-   +`<p class="note" style="margin-top:-2px">${esc(A.note)}</p>`
    +kgrid([
      {lab:'연관 오더 (전년 → 당해)',hero:1,
       val:`${fmtC(Tov.a25)} <span style="color:var(--muted);font-weight:400">→</span> ${fmtC(Tov.a26)}`,
-      sub:`전년 대비 <span class="${cls(Tov.yoy)}">${fmtPC(Tov.yoy)}</span> · 전 권역 ${Tov.n}개 캠페인 합계`,
+      sub:`전년 대비 <span class="${cls(Tov.yoy)}">${fmtPC(Tov.yoy)}</span>`
+          +(_achM!=null?` · 달성률 <b>${_achM.toFixed(0)}%</b> <span style="font-weight:400">(목표 ${fmtC(_goalM)} · 전년 동기 ×1.2)</span>`:''),
       sub2:`대상 SKU 연관 오더 · 캠페인 기간만 · 원장 ~${esc(_ocut)}`},
      _rn?{lab:'참여 고객사 매출 (캠페인 기간)',val:fmtC(_rw),
       sub:`매출 자료가 있는 ${_rn}곳 합계 · 참여 고객 ${_ccode.size}곳`,
@@ -3400,10 +3400,8 @@ function octMonth(A){
      {lab:'순증액',val:fmtC(_g26-_g25)},
      {lab:'오더 전환 SKU',val:_gosku.toLocaleString()+'종',sub:'대상 SKU 지정 캠페인은 전환, 전 품목은 오더 발생'},
      {lab:'집행 캠페인',val:`${Tov.run} / ${Tov.n}`,sub:`대상 고객 ${Tov.cust.size.toLocaleString()}곳`},
-     {lab:'성장 권역',val:`${_gr.filter(r=>r.a26>r.a25).length} / ${_gr.length}`},
-     _achM!=null?{lab:'달성률 (연관 오더)',val:_achM.toFixed(0)+'%',
-      sub:`목표 ${fmtC(_goalM)} · 전년 동기 ×1.2`}:null].filter(Boolean),'k8')
-   +`<div class="sub3 cap" style="color:var(--ink2);margin:12px 0 3px"><b>권역 × 캠페인 오더 종합</b> <span style="font-weight:400">· 캠페인 기간 오더 vs 전년 동기 · 연관 오더 원장 기준</span></div>`
+     {lab:'성장 권역',val:`${_gr.filter(r=>r.a26>r.a25).length} / ${_gr.length}`}].filter(Boolean),'k8')
+   +`<div style="margin:12px 0 0"></div>`
    +campTable()
    +`</div>`;
 
@@ -3411,7 +3409,7 @@ function octMonth(A){
      권역 블록 순서는 아래 한곳에서만 정함. 여기서는 만들어만 두고 바로 붙이지 않음. */
   let asiaBlk='';
   if(S||O||Q){
-    asiaBlk=`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">ASIA</span> <span style="font-size:12.5px;color:var(--ink2)">· <b style="color:var(--brand)">Sell-out 프로모션이 주력</b> · 10월까지 · 고객사별 한 장 요약 (Sell-out · 오더 · 선적) · 오더는 <b>전 품목 SAP 원장</b> 기준 · 상세는 Sell-out 탭</span></div><div class="card">`
+    asiaBlk=`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">ASIA</span> <span style="font-size:12.5px;color:var(--ink2)">· <b style="color:var(--brand)">Sell-out 프로모션이 주력</b></span></div><div class="card">`
      +kgrid([
        O?{lab:'Sell-out 실적 (주력 프로모션)',hero:1,
           val:`${fmtC(O.usd)} <span style="font-size:16px;color:var(--muted);font-weight:400">/ ${O.att}%</span>`,
