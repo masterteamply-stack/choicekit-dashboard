@@ -3046,14 +3046,14 @@ function octMonth(A){
   const O=(typeof AO!=='undefined'&&AO.tot)?AO.tot:null;          /* ASIA sell-out */
   const Q=(typeof AQ!=='undefined'&&AQ.tot)?AQ.tot:null;          /* ASIA 품목·수량 */
   const ss=(typeof SS!=='undefined')?SS:null;                     /* SteerStar 미션 */
-  /* 이 리포트에는 기준이 다른 '오더'가 셋 있다. 라벨에서 바로 갈리게 둔다.
+  /* 이 리포트에는 기준이 다른 '오더'가 셋 있다. 따로 설명 박스를 두지 않고
+     각 타일 라벨에 무엇을 센 값인지 적어 둔다.
        ① 맨 위 KPI   — 전 권역 · 대상 SKU 연관 오더 · 캠페인 기간 · 연관 오더 원장
        ② ASIA 초이스킷 — ASIA 12곳 · 전 품목 · 초이스킷 기간 · SAP 오더 원장
        ③ ASIA 전체    — ASIA 12곳 · 전 품목 · 1~10월 전체 · 같은 SAP 원장
      셋을 더하거나 바로 비교하면 안 된다. */
   const _cuts=camps().map(c=>c.cut).filter(Boolean).sort();
   const _ocut=_cuts.length?(_cuts[0]===_cuts[_cuts.length-1]?_cuts[0]:`${_cuts[0]}~${_cuts[_cuts.length-1]}`):'–';
-  const _casia=camps().find(c=>c.region==='ASIA');
   const _scut=(typeof AS!=='undefined'&&AS.cut_order)||'';
 
   let h=`<div class="card">`
@@ -3072,13 +3072,6 @@ function octMonth(A){
      {lab:'집행 캠페인',val:`${Tov.run} / ${Tov.n}`,sub:`대상 고객 ${Tov.cust.size.toLocaleString()}곳`},
      {lab:'성장 권역',val:`${_gr.filter(r=>r.a26>r.a25).length} / ${_gr.length}`},
      {lab:'기간 진행',val:Tov.prog.toFixed(0)+'%',sub:`관측 ${Tov.obs.toLocaleString()}일 / 계획 ${Tov.tot.toLocaleString()}일`}])
-   +(_casia?`<div class="warnbox" style="margin:10px 0 0;font-size:12.5px"><b>아래 ASIA 블록의 오더와 기준이 다릅니다 — 더하거나 바로 비교하지 마세요</b><br>`
-      +`위 숫자 안의 ASIA 는 <b>대상 SKU 연관 오더</b>를 <b>캠페인 기간</b>`
-      +`${(_casia.wins&&_casia.wins[0])?` (${esc(_casia.wins[0].join(' ~ '))})`:''} 만 모은 `
-      +`${fmtC(_casia.a25)} → <b>${fmtC(_casia.a26)}</b> 입니다.`
-      +(S?`<br>아래 ASIA 블록은 <b>전 품목</b>을 <b>SAP 오더 원장</b>(~${esc(_scut)})에서 뽑아 `
-         +`초이스킷 기간 ${fmtC(S.a25)} → <b>${fmtC(S.got)}</b>, 1~${AS.last_month}월 전체 ${fmtC(S.y25t)} → <b>${fmtC(S.y26t)}</b> (${S.aratio}%) 입니다.`:'')
-      +`<br>원장 자체가 다릅니다 — 위는 연관 오더 원장(~${esc(_ocut)}), 아래는 SAP 전 품목 원장(~${esc(_scut)}).</div>`:'')
    +`<div class="sub3" style="color:var(--ink2);font-size:12px;margin:12px 0 3px"><b>권역 × 캠페인 오더 종합</b> <span style="font-weight:400">· 캠페인 기간 오더 vs 전년 동기 · 연관 오더 원장 기준</span></div>`
    +campTable()
    +`</div>`;
