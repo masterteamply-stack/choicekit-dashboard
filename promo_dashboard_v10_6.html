@@ -3015,6 +3015,73 @@ function cisBox(){
 
   box.innerHTML=h+`</div>`;
 }
+/* ── 이달의 주요 성과 — MENA ──
+   Portfolio Expansion Program 한 건이라 캠페인 레코드(camps())와 D.cust_delta 에서
+   바로 읽는다. 따로 자료 파일을 두지 않는다 — 권역×캠페인 표와 같은 소스다.
+   오더는 대상 SKU 연관 오더(Sell-in)고, ASIA 블록의 전 품목 SAP 원장과 기준이 다르다. */
+function menaMonth(kgrid){
+  const c=(typeof camps==='function')?camps().find(x=>x.region==='MENA'):null;
+  if(!c) return '';
+  const cu=(typeof D!=='undefined'&&D.cust_delta)
+    ? D.cust_delta.filter(r=>r.region==='MENA'&&r.program===c.program)
+        .slice().sort((a,b)=>(b.a26||0)-(a.a26||0)) : [];
+  const nCty=new Set(cu.map(r=>r.country).filter(Boolean)).size;
+  const add=c.add_months||{}, addSku=c.add_sku||{};
+  const mKeys=Object.keys(add).sort(), lastM=mKeys[mKeys.length-1]||'';
+  const addUsd=lastM?add[lastM]:0, addN=lastM?(addSku[lastM]||0):0;
+  const addCust=cu.filter(r=>r.base_a26===0&&r.a26>0);      /* 이달 처음 잡힌 곳 */
+  const att=c.so_t?c.a26/c.so_t*100:null;
+  const ex=v=>'$'+Math.round(v||0).toLocaleString();   /* 금액이 작아 $K 반올림을 쓰지 않는다 */
+
+  let h=`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px">`
+   +`<span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">MENA</span>`
+   +`<span style="font-size:12.5px;color:var(--ink2)"> · <b style="color:var(--brand)">${esc(c.program)}</b>`
+   +` · ${esc(c.scope||'')} 포트폴리오 확대 · 대상 ${(c.tgt_sku||0).toLocaleString()}종`
+   +` · ${esc(c.start)}~${esc(c.end)} · 상세는 캠페인 효과 탭</span></div><div class="card">`;
+
+  h+=kgrid([
+    {lab:'연관 오더 (전년 → 당해)',hero:1,
+     val:`${fmtC(c.a25)} <span style="color:var(--muted);font-weight:400">→</span> ${fmtC(c.a26)}`,
+     sub:`전년 대비 <span class="${cls(c.yoy)}">${fmtPC(c.yoy)}</span> · 고객 ${cu.length}곳 · ${nCty}개국`,
+     sub2:`${ex(c.a25)} → ${ex(c.a26)} · 대상 SKU 연관 오더 · 원장 ~${esc(c.cut||'')}`},
+    lastM?{lab:`${+lastM.slice(5)}월 추가분`,val:fmtC(addUsd),
+     sub:addCust.length?addCust.map(r=>esc(r.name)).join(' · '):'',
+     sub2:`${ex(addUsd)} · ${addN}종 · 9/22 까지분 ${ex(c.base_a26||0)} 에 더해진 값`}:null,
+    att!=null?{lab:'캠페인 목표 대비',val:att.toFixed(0)+'%',
+     sub:`캠페인 자체 목표 ${fmtC(c.so_t)} · 전쟁 이슈로 정정된 값`,meter:att}:null,
+    {lab:'오더 발생 SKU',val:`${(c.ord_sku||0)}<span style="font-size:15px;color:var(--muted);font-weight:400"> / ${(c.tgt_sku||0).toLocaleString()}종</span>`,
+     sub:`전환율 ${c.tgt_sku?(c.ord_sku/c.tgt_sku*100).toFixed(1):'–'}% · ~${esc(c.base_cut||c.obs_end||'')} 기준`,
+     sub2:addN?`${+lastM.slice(5)}월 ${addN}종은 따로 센 값 — 겹침을 몰라 더하지 않음`:''},
+    {lab:'기간 진행',val:(c.progress||0).toFixed(0)+'%',
+     sub:`관측 ${(c.obs_days||0).toLocaleString()}일 / 계획 ${(c.days||0).toLocaleString()}일`}
+  ].filter(Boolean));
+
+  if(cu.length){
+    const mx=Math.max(...cu.map(r=>r.a26||0),1);
+    h+=`<div class="sub3" style="color:var(--ink2);font-size:12px;margin:14px 0 3px"><b>고객사별 연관 오더</b> `
+     +`<span style="font-weight:400">· 대상 SKU 기준 · 전년 동기 대비</span></div>`
+     +`<div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr>`
+     +`<th style="text-align:left">고객사</th><th style="text-align:left">국가</th>`
+     +`<th>2025</th><th>2026</th><th>증감</th><th>비중</th><th style="text-align:left">비고</th></tr></thead><tbody>`
+     +cu.map(r=>{const d=(r.a26||0)-(r.a25||0);
+       return `<tr><td style="text-align:left"><b>${esc(r.name)}</b></td>
+        <td class="small sub3" style="text-align:left">${esc(r.country||'')}</td>
+        <td class="num sub3">${r.a25?ex(r.a25):'<span class="sub3">–</span>'}</td>
+        <td class="num"><b>${r.a26?ex(r.a26):'$0'}</b></td>
+        <td class="num"><span class="${cls(d)}">${(d>=0?'+':'')+ex(d)}</span></td>
+        <td style="min-width:70px"><div style="height:8px;background:var(--track);border-radius:3px;overflow:hidden"><div style="height:100%;width:${(r.a26||0)/mx*100}%;background:var(--brand)"></div></div></td>
+        <td style="text-align:left;font-size:11.5px" class="sub3">${r.base_a26===0&&r.a26>0?`${+lastM.slice(5)}월 첫 오더`:(r.a25?'':'올해 신규')}</td></tr>`;}).join('')
+     +`</tbody><tfoot><tr><td style="text-align:left">합계 · ${cu.length}곳</td><td></td>
+        <td class="num">${ex(c.a25)}</td><td class="num">${ex(c.a26)}</td>
+        <td class="num">${((c.a26-c.a25)>=0?'+':'')+ex(c.a26-c.a25)}</td><td></td><td></td></tr></tfoot></table></div>`;
+  }
+
+  h+=`<p class="note" style="margin:10px 0 0;padding-left:0;font-size:12px">`
+   +(c.note?`${esc(c.note)}<br>`:'')
+   +`오더는 <b>대상 SKU 연관 오더</b>라 ASIA 블록의 전 품목 SAP 원장과 기준이 다르다 — 더하지 않는다.</p>`;
+  return h+`</div>`;
+}
+
 /* ══════════ 10월 리포트 ══════════
    9월 리포트는 손대지 않는다. 10월 리포트는 손으로 적은 활동 수치 대신
    단일 소스(asia_choicekit / asia_sellout / asia_sellin_qty / SteerStar)를
@@ -3104,9 +3171,10 @@ function octMonth(A){
       +`<b>고객 Sell-out 연계 탭 › ASIA</b> 로 옮겼다. 여기에는 고객사별 요약 한 장만 둔다.</p>`
      +`</div>`;
   }
-  /* 권역 블록 순서 — CIS · LATAM · ASIA, 그다음 SteerStar */
+  /* 권역 블록 순서 — CIS · LATAM · MENA · ASIA, 그다음 SteerStar */
   h+=cisOct();
   h+=mfTable();
+  h+=menaMonth(kgrid);
   h+=asiaBlk;
 
   /* ── SteerStar 파트너 오더·매출 추이 ── */
