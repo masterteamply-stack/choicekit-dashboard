@@ -3076,9 +3076,11 @@ function octMonth(A){
    +campTable()
    +`</div>`;
 
-  /* ── 이달의 주요 성과 — ASIA ── */
+  /* ── 이달의 주요 성과 — ASIA ──
+     권역 블록 순서는 아래 한곳에서만 정한다. 여기서는 만들어만 두고 바로 붙이지 않는다. */
+  let asiaBlk='';
   if(S||O||Q){
-    h+=`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">ASIA</span> <span style="font-size:12.5px;color:var(--ink2)">· <b style="color:var(--brand)">Sell-out 프로모션이 주력</b> · 10월까지 · 고객사별 한 장 요약 (Sell-out · 오더 · 선적) · 오더는 <b>전 품목 SAP 원장</b> 기준 · 상세는 Sell-out 탭</span></div><div class="card">`
+    asiaBlk=`<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">ASIA</span> <span style="font-size:12.5px;color:var(--ink2)">· <b style="color:var(--brand)">Sell-out 프로모션이 주력</b> · 10월까지 · 고객사별 한 장 요약 (Sell-out · 오더 · 선적) · 오더는 <b>전 품목 SAP 원장</b> 기준 · 상세는 Sell-out 탭</span></div><div class="card">`
      +kgrid([
        O?{lab:'Sell-out 실적 (주력 프로모션)',hero:1,
           val:`${fmtC(O.usd)} <span style="font-size:16px;color:var(--muted);font-weight:400">/ ${O.att}%</span>`,
@@ -3102,8 +3104,10 @@ function octMonth(A){
       +`<b>고객 Sell-out 연계 탭 › ASIA</b> 로 옮겼다. 여기에는 고객사별 요약 한 장만 둔다.</p>`
      +`</div>`;
   }
-  h+=mfTable();
+  /* 권역 블록 순서 — CIS · LATAM · ASIA, 그다음 SteerStar */
   h+=cisOct();
+  h+=mfTable();
+  h+=asiaBlk;
 
   /* ── SteerStar 파트너 오더·매출 추이 ── */
   if(ss&&ss.rows){
