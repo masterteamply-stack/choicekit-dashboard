@@ -2839,10 +2839,7 @@ function cisInsight(){
       ig=A.plat[0], lastR=A.rounds[A.rounds.length-1];
     li.push({t:'광고 트래픽',d:`${esc(A.period)} ${A.n_round}회차로 클릭 <b>${A.tot.clk.toLocaleString()}건</b> `
       +`(CTR ${A.tot.ctr}% · CPC ₩${A.tot.cpc}). 회차 CTR 이 ${A.ctr_lo}~${A.ctr_hi}% 안에 머물러 `
-      +`같은 포맷을 ${esc(lastR.k)} 까지 반복해도 반응이 꺾이지 않음. `
-      +(kz?`다만 클릭은 ${esc(A.geo[0].k)}·${esc(A.geo[1].k)} 두 곳이 ${(A.geo[0].share+A.geo[1].share).toFixed(1)}% 를 가져갔고, `
-          +`누적 오더 ${C.countries[0].share}% 인 <b>${esc(kz.k)}</b>${kjo(kz.k,'은는')} 노출이 ${(kz.imp/_i*100).toFixed(1)}% 뿐임 `
-          +`— CTR 은 ${kz.ctr}% 로 가장 높아 다음 회차 배분을 다시 볼 구간임.`:'')});}
+      +`같은 포맷을 ${esc(lastR.k)} 까지 반복해도 반응이 꺾이지 않음.`});}
   const c1=C.countries[0];
   li.push({t:'국가 집중',d:`${esc(c1.k)} ${fmtC(c1.usd)} 로 <b>${c1.share}%</b> (${c1.n}곳). `
     +`제품군은 ${C.prods.slice(0,2).map(p=>`${esc(p.k)} ${fmtC(p.usd)}`).join(' · ')} 순임.`});
@@ -2920,8 +2917,7 @@ function cisAds(){
     ['노출과 오더가 어긋난 구간',
      `클릭의 ${(A.geo[0].share+A.geo[1].share).toFixed(1)}% 가 ${esc(A.geo[0].k)}·${esc(A.geo[1].k)} 두 곳에서 났음. `
      +(kz?`반면 누적 오더의 ${CIS10.countries[0].share}% 를 차지하는 <b>${esc(kz.k)}</b>${kjo(kz.k,'은는')} 노출이 전체의 ${(kz.imp/impT*100).toFixed(1)}% 에 그쳤는데, `
-        +`CTR 은 <b>${kz.ctr}%</b> 로 ${A.geo.length}개국 중 가장 높음. 노출 단가가 CPM ${w(kz.cpm)} 로 ${esc(cheap.k)}의 ${(kz.cpm/cheap.cpm).toFixed(1)}배라 `
-        +`예산이 적게 간 결과지만, 오더가 가장 큰 시장이라 다음 회차 배분을 다시 볼 구간임.`:'')]
+        +`CTR 은 <b>${kz.ctr}%</b> 로 ${A.geo.length}개국 중 가장 높음. 노출 단가는 CPM ${w(kz.cpm)} 로 ${esc(cheap.k)}의 ${(kz.cpm/cheap.cpm).toFixed(1)}배임.`:'')]
   ];
   h+=`<ul style="list-style:none;padding:0;margin:10px 0 0">`
    +li.map(x=>`<li class="note" style="margin:7px 0;padding-left:18px;position:relative;font-size:13.5px;line-height:1.55">`
@@ -3132,9 +3128,7 @@ function menaMonth(kgrid){
      sub:`전년 ${M.n_sku25}종 · 그중 <b>신규 ${M.n_new}종</b>`,
      sub2:`대상 대비 ${c.tgt_sku?(M.n_sku26/c.tgt_sku*100).toFixed(1):'–'}%`}:null,
     att!=null?{lab:'캠페인 목표 대비',val:att.toFixed(0)+'%',
-     sub:`캠페인 자체 목표 ${ex(c.so_t)} · 전쟁 이슈로 정정된 값`,meter:att}:null,
-    {lab:'기간 진행',val:(c.progress||0).toFixed(0)+'%',
-     sub:`관측 ${(c.obs_days||0).toLocaleString()}일 / 계획 ${(c.days||0).toLocaleString()}일`}
+     sub:`캠페인 자체 목표 ${ex(c.so_t)} · 전쟁 이슈로 정정된 값`,meter:att}:null
   ].filter(Boolean));
 
   /* 고객사 · 제품 */
