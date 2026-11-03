@@ -567,8 +567,8 @@ function kpis(){
   const _goal=_g6.reduce((a,c)=>a+(sellinGoal(c)||0),0);
   const _ach=_goal>0?(T.a26/_goal*100):null;
   $('#k6').textContent=_ach!=null?_ach.toFixed(0)+'%':'–';
-  $('#k6s').innerHTML=`연관 오더 ${fmtC(T.a26)} ÷ 목표 ${fmtC(_goal)}`;
-  const _k6d=$('#k6d'); if(_k6d) _k6d.innerHTML='목표는 <b>전년 동기 오더 ×1.2</b> — 전년 대비 20% 증진이 캠페인 미션임';
+  $('#k6s').innerHTML=`목표 ${fmtC(_goal)} · 전년 동기 ×1.2`;
+  const _k6d=$('#k6d'); if(_k6d) _k6d.innerHTML='';
   $('#k6m').style.width=(_ach!=null?Math.min(_ach,100):0)+'%';
   /* 참여 고객사 매출(캠페인 기간) · 대상 SKU 오더 전환 — 지금 걸린 필터 그대로 */
   const _cs2=camps();
@@ -585,8 +585,8 @@ function kpis(){
   const _k8=$('#k8w');
   if(_k8){ _k8.style.display=_t2.length?'':'none';
     if(_t2.length){ $('#k8').innerHTML=`${_a} <span style="color:var(--muted);font-weight:400">→</span> ${_b2}<span style="font-size:15px;color:var(--muted);font-weight:400">종</span>`;
-      $('#k8s').innerHTML=`전년 대비 <span class="${cls(_b2-_a)}">${_a?((_b2-_a)/_a*100>=0?'+':'')+((_b2-_a)/_a*100).toFixed(0)+'%':'–'}</span> · 대상 ${_ts.toLocaleString()}종 중 ${(_b2/_ts*100).toFixed(1)}%`;
-      $('#k8d').textContent=`대상 SKU 가 지정된 ${_t2.length}개 캠페인만`; } }
+      $('#k8s').innerHTML=`<span class="${cls(_b2-_a)}">${_a?((_b2-_a)/_a*100>=0?'+':'')+((_b2-_a)/_a*100).toFixed(0)+'%':'–'}</span> · 대상 ${_ts.toLocaleString()}종 중 ${(_b2/_ts*100).toFixed(1)}%`;
+      $('#k8d').textContent=''; } }
   const wait=T.n-T.run;
   $('#w1').style.display=wait?'block':'none';
   if(wait)$('#w1').innerHTML=`<b>시작 전 · 원장 미도달 ${wait}건</b>은 모든 집계에서 제외됨. `
@@ -3376,6 +3376,9 @@ function octMonth(A){
   const _tc=_cs.filter(c=>c.tgt_sku>0);
   const _tsku=_tc.reduce((a,c)=>a+(c.tgt_sku||0),0);
   const _s25=_tc.reduce((a,c)=>a+(c.s25||0),0), _s26=_tc.reduce((a,c)=>a+(c.s26||0),0);
+  /* 달성률 — 캠페인 효과 탭의 타일과 같은 식. 연관 오더 ÷ 전년 동기 ×1.2 */
+  const _goalM=_cs.filter(c=>c.started).reduce((a,c)=>a+(sellinGoal(c)||0),0);
+  const _achM=_goalM>0?(Tov.a26/_goalM*100):null;
 
   let h=`<div class="card">`
    +`<div style="display:flex;align-items:center;gap:10px;margin:0 0 10px"><span style="width:6px;height:26px;background:var(--brand);border-radius:2px;display:inline-block"></span>`
@@ -3393,13 +3396,13 @@ function octMonth(A){
       sub2:`그 고객사의 <b>전 품목</b> 매출임 — 대상 SKU 만의 매출이 아니고, 출하·청구 기준이라 오더(수주)와 더하지 않음`}:null,
      _tc.length?{lab:'대상 SKU 오더 전환',
       val:`${_s25} <span style="color:var(--muted);font-weight:400">→</span> ${_s26}<span style="font-size:15px;color:var(--muted);font-weight:400">종</span>`,
-      sub:`전년 대비 <span class="${cls(_s26-_s25)}">${_s25?((_s26-_s25)/_s25*100>=0?'+':'')+((_s26-_s25)/_s25*100).toFixed(0)+'%':'–'}</span> · 대상 ${_tsku.toLocaleString()}종 중 ${(_s26/_tsku*100).toFixed(1)}%`,
-      sub2:`대상 SKU 가 지정된 ${_tc.length}개 캠페인만`}:null,
+      sub:`<span class="${cls(_s26-_s25)}">${_s25?((_s26-_s25)/_s25*100>=0?'+':'')+((_s26-_s25)/_s25*100).toFixed(0)+'%':'–'}</span> · 대상 ${_tsku.toLocaleString()}종 중 ${(_s26/_tsku*100).toFixed(1)}%`}:null,
      {lab:'순증액',val:fmtC(_g26-_g25)},
      {lab:'오더 전환 SKU',val:_gosku.toLocaleString()+'종',sub:'대상 SKU 지정 캠페인은 전환, 전 품목은 오더 발생'},
      {lab:'집행 캠페인',val:`${Tov.run} / ${Tov.n}`,sub:`대상 고객 ${Tov.cust.size.toLocaleString()}곳`},
      {lab:'성장 권역',val:`${_gr.filter(r=>r.a26>r.a25).length} / ${_gr.length}`},
-     {lab:'기간 진행',val:Tov.prog.toFixed(0)+'%',sub:`관측 ${Tov.obs.toLocaleString()}일 / 계획 ${Tov.tot.toLocaleString()}일`}].filter(Boolean),'k8')
+     _achM!=null?{lab:'달성률 (연관 오더)',val:_achM.toFixed(0)+'%',
+      sub:`목표 ${fmtC(_goalM)} · 전년 동기 ×1.2`}:null].filter(Boolean),'k8')
    +`<div class="sub3 cap" style="color:var(--ink2);margin:12px 0 3px"><b>권역 × 캠페인 오더 종합</b> <span style="font-weight:400">· 캠페인 기간 오더 vs 전년 동기 · 연관 오더 원장 기준</span></div>`
    +campTable()
    +`</div>`;
