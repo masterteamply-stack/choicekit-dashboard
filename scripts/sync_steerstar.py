@@ -104,10 +104,14 @@ mSS = re.search(r'<script>const SS = (\{.*?\});</script>', html, re.S)
 if not (mCD and mSS):
     print('CD 또는 SS 블록을 찾지 못했음.'); sys.exit(1)
 CD, SSold = json.loads(mCD.group(1)), json.loads(mSS.group(1))
-yoy_of = {}
+# 전년 대비는 '고객사 전체 오더 누계(1~L월)' 의 증감이다. 비율만 두면 무엇의 비율인지
+# 알 수 없어 밑값(전년·당해)과 집계월도 같이 담는다.
+yoy_of, base_of = {}, {}
 for c in CD['custs']:
     p, q = c.get('cum25') or 0, c.get('cum26') or 0
-    yoy_of[c.get('ss_name') or c['name']] = round((q - p) / p * 100, 1) if p else None
+    k = c.get('ss_name') or c['name']
+    yoy_of[k] = round((q - p) / p * 100, 1) if p else None
+    base_of[k] = dict(o25=p, o26=q, last=c.get('last26'))
 
 # ── 4) SS.rows
 rows = []
@@ -125,7 +129,7 @@ for name in order_of:
         lead_rate=(None if drop else round(l['n'] / LEAD_TGT * 100, 1)),
         oser=o['ser'], opre=o['pre'], lser=l['ser'], pre_sum=o['pre_sum'],
         credit=p['credit'], note=p['note'], dropped=drop, ch=p['ch'],
-        yoy=yoy_of.get(name)))
+        yoy=yoy_of.get(name), **(base_of.get(name) or {})))
 
 live = [r for r in rows if not r['dropped']]
 scored = [r for r in live if r['tgt']]
