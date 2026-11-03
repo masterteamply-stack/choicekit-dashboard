@@ -1,0 +1,276 @@
+{
+ "CTR MarketFit Campaign": {
+  "region": "LATAM",
+  "target_countries": [],
+  "n_target_sku": 26,
+  "n_cust_total": 24,
+  "n_cust_matched": 21,
+  "unmatched_customers": [
+   "RURAL SANTA FE S.A.I.C.A.",
+   "Super Repuestos Honduras S.A.",
+   "Grupo IS, S.A. (Autonova)"
+  ],
+  "window": "02~09월",
+  "window_cut": "2026-09",
+  "by_year_full": {
+   "2024": {
+    "확정": {
+     "usd": 130618.74,
+     "qty": 23160,
+     "n_sku": 20
+    }
+   },
+   "2025": {
+    "확정": {
+     "usd": 143346.18,
+     "qty": 24682,
+     "n_sku": 23
+    }
+   },
+   "2026": {
+    "확정": {
+     "usd": 157100.9,
+     "qty": 29391,
+     "n_sku": 23
+    }
+   }
+  },
+  "by_year_window": {
+   "2024": {
+    "usd": 81157.69,
+    "qty": 14442,
+    "n_sku": 17
+   },
+   "2025": {
+    "usd": 105043.55,
+    "qty": 18340,
+    "n_sku": 21
+   },
+   "2026": {
+    "usd": 139694.06,
+    "qty": 25952,
+    "n_sku": 23
+   }
+  },
+  "by_customer_window": {
+   "RP INTERNATIONAL GROUP INC": 27177.84,
+   "REFAX PERU": 21008.13,
+   "SUPER REPUESTOS": 20848.17,
+   "AUTOMOVIL SUPPLY": 12095.69,
+   "COJAPAN": 9823.21,
+   "MARK'S AUTO SPARE": 6940.87,
+   "CLUTCHES DE GUATEMALA": 5413.95,
+   "HIVIMAR S.A.": 5064.98,
+   "GC IMP": 5035.55,
+   "DISTRIBUIDORA VEGA/VEGA MOTORS S": 4101.42,
+   "UNIVERSAL DE REPUESTOS": 3609.77,
+   "R24 AUTOMOTIVE": 3152.35,
+   "RENUSA": 3070.88,
+   "IMPORTADORA GIMPORT LYDA.": 2901.46,
+   "CORVEN S.A.C.I.F.": 2454.65,
+   "Super Repuestos Honduras S.A. de C.V.": 1766.5,
+   "IMPORTADORAS ASOCIADAS": 1737.69,
+   "NORIEGA S.A.C.": 1736.83,
+   "SANKAR'S AUTOWORKS": 1275.94,
+   "ARIAS MOTOR": 375.56,
+   "Malb Parts Importacao, Exportacao e": 102.62
+  },
+  "basis": "매출(출하·청구) · 대상 SKU ∩ 대상 고객사 ∩ 대상 국가. 같은 캠페인의 오더(수주)와 더하지 않음."
+ },
+ "Asian vehicle": {
+  "region": "CIS",
+  "target_countries": [
+   "KAZAKHSTAN",
+   "KYRGYZSTAN",
+   "TURKMENISTAN",
+   "TAJIKISTAN"
+  ],
+  "n_target_sku": 138,
+  "n_cust_total": 15,
+  "n_cust_matched": 14,
+  "unmatched_customers": [
+   "KULAN OIL"
+  ],
+  "window": "03~09월",
+  "window_cut": "2026-09",
+  "by_year_full": {
+   "2024": {
+    "확정": {
+     "usd": 1809970.11,
+     "qty": 398027,
+     "n_sku": 120
+    }
+   },
+   "2025": {
+    "확정": {
+     "usd": 2076034.1,
+     "qty": 464625,
+     "n_sku": 121
+    }
+   },
+   "2026": {
+    "확정": {
+     "usd": 1922250.65,
+     "qty": 441234,
+     "n_sku": 135
+    }
+   }
+  },
+  "by_year_window": {
+   "2024": {
+    "usd": 854304.57,
+    "qty": 182633,
+    "n_sku": 119
+   },
+   "2025": {
+    "usd": 1397791.77,
+    "qty": 317098,
+    "n_sku": 119
+   },
+   "2026": {
+    "usd": 1420956.59,
+    "qty": 335557,
+    "n_sku": 134
+   }
+  },
+  "by_customer_window": {
+   "COMPLEX-AUTO": 232637.1,
+   "PHAETON KZ LLP": 230888.56,
+   "ROSSKO KZ": 215187.87,
+   "ALLIANCE-MOTORS LLC": 135280.98,
+   "BAUTEN": 122040.7,
+   "TISS AUTO PARTS LLP": 111586.41,
+   "AUTOTRADE KZ": 110240.74,
+   "BTT": 86387.13,
+   "YASHLYK TUG LLC": 75352.63,
+   "SHATE M KZ": 45242.45,
+   "ES “RAHAT YOL”": 20232.66,
+   "AVTOKOM LLC": 17449.16,
+   "ARMTEK KZ": 12754.99,
+   "AUTOMIR": 5675.21
+  },
+  "basis": "매출(출하·청구) · 대상 SKU ∩ 대상 고객사 ∩ 대상 국가. 같은 캠페인의 오더(수주)와 더하지 않음."
+ },
+ "European vehicle": {
+  "region": "CIS",
+  "target_countries": [
+   "KAZAKHSTAN",
+   "KYRGYZSTAN",
+   "TURKMENISTAN",
+   "TAJIKISTAN"
+  ],
+  "n_target_sku": 195,
+  "n_cust_total": 10,
+  "n_cust_matched": 9,
+  "unmatched_customers": [
+   "KULAN OIL"
+  ],
+  "window": "03~09월",
+  "window_cut": "2026-09",
+  "by_year_full": {
+   "2024": {
+    "확정": {
+     "usd": 79388.42,
+     "qty": 12403,
+     "n_sku": 86
+    }
+   },
+   "2025": {
+    "확정": {
+     "usd": 64589.18,
+     "qty": 10696,
+     "n_sku": 114
+    }
+   },
+   "2026": {
+    "확정": {
+     "usd": 117034.39,
+     "qty": 20242,
+     "n_sku": 172
+    }
+   }
+  },
+  "by_year_window": {
+   "2024": {
+    "usd": 36990.5,
+    "qty": 5489,
+    "n_sku": 64
+   },
+   "2025": {
+    "usd": 48052.37,
+    "qty": 7959,
+    "n_sku": 92
+   },
+   "2026": {
+    "usd": 100736.03,
+    "qty": 17321,
+    "n_sku": 170
+   }
+  },
+  "by_customer_window": {
+   "ROSSKO KZ": 30091.22,
+   "AUTOTRADE KZ": 23088.5,
+   "ALLIANCE-MOTORS LLC": 20472.18,
+   "PHAETON KZ LLP": 14667.4,
+   "SHATE M KZ": 4959.15,
+   "TISS AUTO PARTS LLP": 4418.3,
+   "ES “RAHAT YOL”": 1602.03,
+   "ARMTEK KZ": 1437.25
+  },
+  "basis": "매출(출하·청구) · 대상 SKU ∩ 대상 고객사 ∩ 대상 국가. 같은 캠페인의 오더(수주)와 더하지 않음."
+ },
+ "Portfolio Expansion Program": {
+  "region": "MENA",
+  "target_countries": [],
+  "n_target_sku": 6312,
+  "n_cust_total": 3,
+  "n_cust_matched": 3,
+  "unmatched_customers": [],
+  "window": "01~09월",
+  "window_cut": "2026-09",
+  "by_year_full": {
+   "2024": {
+    "확정": {
+     "usd": 2364.61,
+     "qty": 106,
+     "n_sku": 15
+    }
+   },
+   "2025": {
+    "확정": {
+     "usd": 11706.27,
+     "qty": 1384,
+     "n_sku": 24
+    }
+   },
+   "2026": {
+    "확정": {
+     "usd": 5856.21,
+     "qty": 334,
+     "n_sku": 10
+    }
+   }
+  },
+  "by_year_window": {
+   "2024": {
+    "usd": 2364.61,
+    "qty": 106,
+    "n_sku": 15
+   },
+   "2025": {
+    "usd": 10272.78,
+    "qty": 1176,
+    "n_sku": 24
+   },
+   "2026": {
+    "usd": 5856.21,
+    "qty": 334,
+    "n_sku": 10
+   }
+  },
+  "by_customer_window": {
+   "MESK AL-BARARI": 5856.21
+  },
+  "basis": "매출(출하·청구) · 대상 SKU ∩ 대상 고객사 ∩ 대상 국가. 같은 캠페인의 오더(수주)와 더하지 않음."
+ }
+}
