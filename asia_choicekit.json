@@ -485,7 +485,7 @@
  ],
  "note_gta": "GTA(289997)와 GTB LIMITED.,CO(200770)는 같은 회사. 두 코드를 한 고객사(GTA)로 합쳐 집계하고, 오더 원장·캠페인 비용 표기도 GTA VIET NAM 으로 통일했음.",
  "note_ship": "선적(Shipment)은 SAP 기준. 2026 YTD 는 차감 전/후를 같이 둠 — 차감 후가 SAP 확정치임. 오더와 기간·시점이 달라 오더 금액과 직접 비교하지 않음.",
- "source_order": "ORD_Progress_20261030.csv (스냅 20261030 · 오더 ~2026-10-29 · K+V)",
+ "source_order": "SAP 전 품목 오더 원장 · 오더 ~2026-10-29 · CTR K+V",
  "note_order": "오더는 SAP 전 품목 오더 원장 기준이고 브랜치(지점) 오더를 모고객사로 합산했음. CTR K·CTR V 두 법인 원장이라 다른 법인을 거친 오더는 빠짐. LIFEPRO AUTO(Mast 브랜치)는 원장에 고객으로 없어 합산되지 않음.",
  "cut_order": "2026-10-29",
  "last_month": 10
