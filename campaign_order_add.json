@@ -1,5 +1,5 @@
 {
- "_readme": "월 오더 export 에서 뽑은 캠페인별 월 추가분. scripts/sync_campaign_month.py 로 만든다.",
+ "_readme": "월 오더 export 에서 뽑은 캠페인별 월 추가분. scripts/sync_campaign_month.py 로 만듦.",
  "camps": {
   "MENA|Portfolio Expansion Program": {
    "2026-10": {

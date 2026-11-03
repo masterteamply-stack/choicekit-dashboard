@@ -5,10 +5,10 @@
   python3 scripts/sync_cn_summary.py            # cn_summary.json 으로 반영만
   python3 scripts/sync_cn_summary.py ... --check
 
-p8(중국차 오더 리포트)의 월별 3기준 표는 이미 이 파일과 같은 수치다.
-여기서는 그 표에 없는 것만 가져온다 — 2025 대비, 권역별, 차종, 부품 종류별.
+p8(중국차 오더 리포트)의 월별 3기준 표는 이미 이 파일과 같은 수치임.
+여기서는 그 표에 없는 것만 가져옴 — 2025 대비, 권역별, 차종, 부품 종류별.
 
-요약 시트는 이미 집계된 표라 그대로 읽는다. 오더라인 시트를 다시 세지 않는다.
+요약 시트는 이미 집계된 표라 그대로 읽음. 오더라인 시트를 다시 세지 않음.
 파일의 '대시보드대조' 시트가 1~9월 원본 재집계와 화면값이 같음을 보여 준다(차이 0).
 """
 import json, os, re, sys
@@ -33,7 +33,7 @@ def find(G, text, col=0):
 
 
 def table(G, start, cols):
-    """머리글 다음 행부터 첫 열이 빌 때까지 읽는다."""
+    """머리글 다음 행부터 첫 열이 빌 때까지 읽음."""
     out = []
     for r in G[start:]:
         k = r[0] if r else None
@@ -53,7 +53,7 @@ if '--src' in sys.argv:
         if r and str(r[0] or '').strip() == '기준' and str((r[1] if len(r) > 1 else '') or '').strip() == '연도':
             hdr = j; break
     if hdr < 0:
-        print("'기준 | 연도' 머리글을 찾지 못했습니다."); sys.exit(1)
+        print("'기준 | 연도' 머리글을 찾지 못했음."); sys.exit(1)
     series, cur = [], None
     for r in G[hdr + 1:]:
         a = str(r[0] or '').strip(); b = str(r[1] or '').strip()
@@ -75,7 +75,7 @@ if '--src' in sys.argv:
             k = str(r[0] or '').strip()
             if not k: break
             if k == '합계': break
-            # 비율 열(share·yoy)은 원본이 소수라 퍼센트로 맞춘다 — 차종·부품 표와 같은 단위
+            # 비율 열(share·yoy)은 원본이 소수라 퍼센트로 맞춤 — 차종·부품 표와 같은 단위
             d = {}
             for c, i in cols.items():
                 v = r[i] if i < len(r) else None
@@ -91,7 +91,7 @@ if '--src' in sys.argv:
                                     'a25': 6, 'share25': 7, 'yoy': 8, 'cust25': 9,
                                     'new26': 10, 'new_cust': 11})
 
-    # 4. 차종 Top — 머리글 행을 바로 찾는다('4.' 로 앵커를 잡으면 다른 셀에 걸린다)
+    # 4. 차종 Top — 머리글 행을 바로 찾는다('4.' 로 앵커를 잡으면 다른 셀에 걸림)
     h = next((j for j, r in enumerate(G)
               if r and str(r[0] or '').strip() == '차종'), -1)
     models = []
@@ -122,7 +122,7 @@ if '--src' in sys.argv:
                src=re.sub(r'^[0-9a-f]{8,}-', '', os.path.basename(src)),
                series=series, regions=regions, regions_cn=regions_cn,
                models=models[:15], parts=parts,
-               note='월별 3기준 표(위)와 같은 자료다. 여기에는 그 표에 없는 2025 대비·권역·차종·부품만 둔다.')
+               note='월별 3기준 표(위)와 같은 자료임. 여기에는 그 표에 없는 2025 대비·권역·차종·부품만 둠.')
     json.dump(agg, open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 else:
     agg = json.load(open(OUT, encoding='utf-8'))
@@ -137,7 +137,7 @@ if pat.search(html):
 else:
     anchor = '<script>const CIS10 = '
     if anchor not in html:
-        print('CNSUM 자리를 만들 기준을 찾지 못했습니다.'); sys.exit(1)
+        print('CNSUM 자리를 만들 기준을 찾지 못했음.'); sys.exit(1)
     out = html.replace(anchor, blk + '\n' + anchor, 1)
 
 changed = out != html

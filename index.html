@@ -3098,9 +3098,9 @@ function _ensureCustomerMap() {
   _customerMapKey = key;
   return m;
 }
-// 같은 회사가 두 코드로 들어와 고객사 집계가 쪼개지는 경우를 여기서 합친다.
+// 같은 회사가 두 코드로 들어와 고객사 집계가 쪼개지는 경우를 여기서 합침.
 // GTB LIMITED.,CO(200770) = GTA VIET NAM(289997). 원본 데이터(data/·new_data/·
-// baseline_data/·pre_orders_bundle)는 그대로 두고 표기만 통합한다.
+// baseline_data/·pre_orders_bundle)는 그대로 두고 표기만 통합함.
 const CUSTOMER_ALIAS = {
   'GTB LIMITED.,CO': 'GTA VIET NAM',
   'GTB': 'GTA VIET NAM',
@@ -4457,7 +4457,7 @@ function renderAll() {
     await renderPromoChart(fOrders, fMkt);
     // _promoAfterTotal은 Promotion Performance 위젯의 권역 셀렉터(state.promoFilterRegion)로
     // 스코프될 수 있음. 최상단 헤더 KPI(Order Amount / Achievement / ROI)는 항상 전역이어야 하므로,
-    // 위젯 권역이 특정 권역으로 선택돼 있으면 헤더를 덮어쓰지 않고 동기 단계의 전역 값을 유지한다.
+    // 위젯 권역이 특정 권역으로 선택돼 있으면 헤더를 덮어쓰지 않고 동기 단계의 전역 값을 유지함.
     // KPI Order Amount/ROI는 exec Campaign Period Order 기준으로 Phase 1b에서 확정됨 — 여기서 덮어쓰지 않음
     // (이전엔 _promoAfterTotal로 덮어써 값이 요약표와 달라지고 렌더마다 바뀌는 문제가 있었음)
     renderPromoOrderTrend(fOrders, fMkt);
@@ -4589,8 +4589,8 @@ function buildPlanExecNodes(fOrders, fMkt) {
       // Region-wide activity: spread cost to all existing countries in this region
       const reg = normalizeRegion(m.region || '');
       let existingCountries = tree[reg] ? Object.keys(tree[reg]).filter(c => c !== '–') : [];
-      // 광역 마케팅비는 실제 오더가 있는 국가/고객에만 분산한다 — 안 그러면 KOREA처럼 country가
-      // 고객명으로 폴백된 지역에서 대상 아닌 고객사(오더 0)에까지 예산이 붙어 유령 노드가 생긴다.
+      // 광역 마케팅비는 실제 오더가 있는 국가/고객에만 분산함 — 안 그러면 KOREA처럼 country가
+      // 고객명으로 폴백된 지역에서 대상 아닌 고객사(오더 0)에까지 예산이 붙어 유령 노드가 생김.
       // 오더 있는 국가가 하나도 없으면 종전대로 전체에 분산(폴백).
       const _withOrders = existingCountries.filter(c => Object.values(tree[reg][c]||{}).some(pm => Object.values(pm).some(l => (l.orderAmt||0) > 0)));
       if (_withOrders.length > 0) existingCountries = _withOrders;
@@ -5072,7 +5072,7 @@ function renderActivityChart(fMkt) {
 /* ===== ASIA ChoiceKit 파트너 오더 미션 ============================
    단일 소스는 asia_choicekit.json (효과 분석 대시보드와 같은 파일).
    여기 수치는 고객사별 초이스킷 기간/전년 같은 기간으로 맞춘 전체 오더이고,
-   오더 원장(orders.csv)의 연관 오더 집계와는 범위가 다르다. */
+   오더 원장(orders.csv)의 연관 오더 집계와는 범위가 다름. */
 let _asiaCk = null, _asiaCkTried = false;
 function renderAsiaChoiceKit() {
   const panel = document.querySelector('.widget[data-widget-id="asiaChoiceKit"]');
@@ -5606,7 +5606,7 @@ function renderQuarterly(fOrders) {
     // Verbose Q3-to-date / QoQ / active-campaigns explainer removed per request.
     // Keep only a short, actionable hint when the prior-year baseline isn't loaded.
     const _hasPre = state.preOrders && state.preOrders.length;
-    note.innerHTML = _hasPre ? '' : 'ℹ️ <b>전년(2025) 분기 비교</b>는 상단 <b>Load pre-orders</b> 로드 시 막대그래프·테이블에 표시됩니다.';
+    note.innerHTML = _hasPre ? '' : 'ℹ️ <b>전년(2025) 분기 비교</b>는 상단 <b>Load pre-orders</b> 로드 시 막대그래프·테이블에 표시됨.';
     note.style.display = note.innerHTML ? '' : 'none';
   }
 
@@ -5658,7 +5658,7 @@ function renderQuarterly(fOrders) {
   if (ins) {
     const avgs = rows.map(r => r.avg);
     const rising = avgs[0] < avgs[1] && (avgs[2]===0 || avgs[1] <= avgs[2] || avgs[2] >= avgs[0]);
-    ins.innerHTML = `💡 고객당 평균 오더액이 <b>${rows.map(r=>fmtMoneyShort(r.avg)).join(' → ')}</b>로 ${rising?'상승':'변화'}하고, 주문 고객 수(${rows.map(r=>r.cust).join('→')})와 SKU 수(${rows.map(r=>r.sku).join('→')})가 함께 움직입니다. 분기별 성과 비교를 통해 Choice Kit의 오더 전환이 <b>단기 이벤트성</b>인지, <b>고객·SKU 확장으로 이어지는 지속 성과</b>인지 검증합니다. <span class="muted">(Q3 to date는 ${spanTxt}의 부분 분기 — 초기 오더 속도 지표)</span>`;
+    ins.innerHTML = `💡 고객당 평균 오더액이 <b>${rows.map(r=>fmtMoneyShort(r.avg)).join(' → ')}</b>로 ${rising?'상승':'변화'}하고, 주문 고객 수(${rows.map(r=>r.cust).join('→')})와 SKU 수(${rows.map(r=>r.sku).join('→')})가 함께 움직임. 분기별 성과 비교를 통해 Choice Kit의 오더 전환이 <b>단기 이벤트성</b>인지, <b>고객·SKU 확장으로 이어지는 지속 성과</b>인지 검증함. <span class="muted">(Q3 to date는 ${spanTxt}의 부분 분기 — 초기 오더 속도 지표)</span>`;
   }
 
   // ── charts ──
@@ -5860,7 +5860,7 @@ function renderCustomerTrend(fOrders, fMkt) {
         <th>#</th><th>Customer</th><th class="text-right">Qty</th>
         <th class="text-right">Amount</th><th class="text-right">campaign order</th><th class="text-right">Mkt Cost</th>
       </tr></thead>
-      <tbody>${!ranking.length ? `<tr><td colspan="6" class="muted" style="text-align:center;padding:18px">이 필터에 해당하는 캠페인 오더가 없습니다 · REGION/CAMPAIGN을 <b>All</b>로 바꿔보세요</td></tr>` : ranking.map((r,i) => {
+      <tbody>${!ranking.length ? `<tr><td colspan="6" class="muted" style="text-align:center;padding:18px">이 필터에 해당하는 캠페인 오더가 없음 · REGION/CAMPAIGN을 <b>All</b>로 바꿔 볼 것</td></tr>` : ranking.map((r,i) => {
         const isSel = r.customer === selectedCustomer;
         return `<tr class="cust-trend-row" data-cust="${r.customer.replace(/"/g,'&quot;')}"
           style="cursor:pointer;${isSel?'background:#1d2940':''}">
@@ -7127,7 +7127,7 @@ function periodLabelOf(period) {
 async function renderPromoChart(fOrders, fMkt) {
   // 진실의 원천 = 드롭다운(사용자가 실제로 선택/표시된 값). state.promoFilter가 다른 렌더/이벤트로 이전 선택값에
   // drift하면 summary는 drift된 값으로 빌드되고 카드는 동기화된 값으로 그려져 서로 어긋난다(카드=Strategic
-  // Partner인데 표=European 등). summary 빌드 전에 드롭다운의 유효 옵션 값으로 state를 맞춰 카드·차트·표를 일치시킨다.
+  // Partner인데 표=European 등). summary 빌드 전에 드롭다운의 유효 옵션 값으로 state를 맞춰 카드·차트·표를 일치시킴.
   try {
     const _sel = document.getElementById('promoFilterSel');
     if (_sel && typeof _sel.value === 'string' && _sel.value && _sel.value !== state.promoFilter
@@ -8745,7 +8745,7 @@ async function renderPromoChart(fOrders, fMkt) {
 function renderPromoTable() {
   // 진실의 원천 = 드롭다운(사용자가 실제로 선택/표시된 값). state.promoFilter가 다른 렌더 경로(정렬 등)나
   // 이벤트로 이전 선택값에 drift하면 표가 드롭다운·카드와 어긋난다(예: 드롭다운=[KOREA] Strategic Partner인데
-  // 표=CTR MarketFit). 표 렌더 직전에 드롭다운의 유효 옵션 값으로 state를 맞춰 항상 일치시킨다.
+  // 표=CTR MarketFit). 표 렌더 직전에 드롭다운의 유효 옵션 값으로 state를 맞춰 항상 일치시킴.
   try {
     const _sel = document.getElementById('promoFilterSel');
     if (_sel && typeof _sel.value === 'string' && _sel.value && _sel.value !== state.promoFilter
@@ -9125,7 +9125,7 @@ function renderPromoTable() {
     return`<tr style="background:${color};font-weight:700;border-top:1px solid var(--border)"><td style="padding-left:8px;font-size:12px"><b>${label}</b><span class="muted" style="font-size:10px;margin-left:6px">${rows.length}개 캠페인</span></td><td class="text-right mono">${fmtNum(rows.reduce((s,p)=>s+(p.orders||0),0))}</td><td class="text-right mono t-green" style="font-weight:800">${fmtMoney(tot)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted">${prv>0?fmtMoney(prv):'–'}</td>`:''}<td class="text-right mono">${dt}</td><td class="text-right mono" style="border-left:1px solid var(--border);font-size:11px;white-space:nowrap">${_txCell(_tx.cur,_tx.prev)}</td><td class="text-right mono">${_txYoY(_tx.cur,_tx.prev)}</td><td class="text-right mono t-yellow" style="border-left:1px solid var(--border)">${fmtMoney(exp)}</td><td class="text-right mono t-orange">${fmtMoney(act)}</td><td class="text-right mono">${act>0?fmtPct(((tot-act)/act)*100):'–'}</td></tr>`;
   };
   // region-split 캠페인(SELL-OUT/Strategic Partner)을 특정 지역([ASIA] SELL-OUT 등)으로 선택하면
-  // 그 지역 leg만 표시 — 안 그러면 split이 만든 ∟ASIA·∟LATAM 두 leg가 다 나온다. (__all__/무지역은 전부)
+  // 그 지역 leg만 표시 — 안 그러면 split이 만든 ∟ASIA·∟LATAM 두 leg가 다 나옴. (__all__/무지역은 전부)
   const _regLegOK=(p)=>(!_ppRgn||_ppRgn==='__all__'||!p._region||normalizeRegion(p._region)===_ppRgn);
   const siS=summary.filter(p=>campSellType(p.promotion||p.key||'')==='SELL-IN'&&_regLegOK(p));
   const soS=summary.filter(p=>campSellType(p.promotion||p.key||'')==='SELL-OUT'&&_regLegOK(p));
@@ -10651,7 +10651,7 @@ function buildAnnualSeries(orders) {
 
 /* =========================================================================
    Choice Kit Impact — Dormant Activation analysis
-   "안 팔리던 품번/고객을 캠페인으로 깨우는" 효과를 정량화한다.
+   "안 팔리던 품번/고객을 캠페인으로 깨우는" 효과를 정량화함.
    - SKU 기반 캠페인: target_skus 기준으로 baseline 매출이 threshold 이하인
      '휴면 SKU'를 식별하고, 그 중 캠페인 기간에 1건이라도 주문된 SKU 수와
      매출/수량을 'newly activated' 핵심 KPI로 표시.
@@ -11142,12 +11142,12 @@ function renderSkuAggregate(fOrders) {
           <div class="label-mono muted" style="font-size:11px;margin:15px 0 6px">🔼 가장 많이 늘어난 SKU</div>
           <div style="overflow:auto;max-height:300px"><table style="font-size:12px;width:100%">
             <thead><tr><th style="text-align:left">SKU</th><th style="text-align:left">차종</th><th style="text-align:left">지역</th><th class="text-right">집행 전</th><th class="text-right">집행 후</th><th class="text-right">증감</th></tr></thead>
-            <tbody>${_up.length? _up.slice(0,15).map(e=>`<tr><td style="text-align:left"><b>${e.sku}</b></td><td style="text-align:left">${_escE(e.model)}</td><td style="text-align:left">${e.region}</td><td class="text-right mono muted">${fmtMoney(e.before)}</td><td class="text-right mono">${fmtMoney(e.after)}</td><td class="text-right mono">${_incC(e.inc)}</td></tr>`).join('') : '<tr><td colspan="6" class="muted" style="text-align:center;padding:14px">전년 동기간 대비 늘어난 SKU가 없습니다</td></tr>'}</tbody>
+            <tbody>${_up.length? _up.slice(0,15).map(e=>`<tr><td style="text-align:left"><b>${e.sku}</b></td><td style="text-align:left">${_escE(e.model)}</td><td style="text-align:left">${e.region}</td><td class="text-right mono muted">${fmtMoney(e.before)}</td><td class="text-right mono">${fmtMoney(e.after)}</td><td class="text-right mono">${_incC(e.inc)}</td></tr>`).join('') : '<tr><td colspan="6" class="muted" style="text-align:center;padding:14px">전년 동기간 대비 늘어난 SKU가 없음</td></tr>'}</tbody>
           </table></div>
           <div class="label-mono muted" style="font-size:11px;margin:18px 0 6px">🔽 가장 많이 줄어든 SKU</div>
           <div style="overflow:auto;max-height:300px"><table style="font-size:12px;width:100%">
             <thead><tr><th style="text-align:left">SKU</th><th style="text-align:left">차종</th><th style="text-align:left">지역</th><th class="text-right">집행 전</th><th class="text-right">집행 후</th><th class="text-right">증감</th></tr></thead>
-            <tbody>${_down.length? _down.slice(0,15).map(e=>`<tr><td style="text-align:left"><b>${e.sku}</b></td><td style="text-align:left">${_escE(e.model)}</td><td style="text-align:left">${e.region}</td><td class="text-right mono muted">${fmtMoney(e.before)}</td><td class="text-right mono">${fmtMoney(e.after)}</td><td class="text-right mono">${_incC(e.inc)}</td></tr>`).join('') : '<tr><td colspan="6" class="muted" style="text-align:center;padding:14px">전년 동기간 대비 줄어든 SKU가 없습니다</td></tr>'}</tbody>
+            <tbody>${_down.length? _down.slice(0,15).map(e=>`<tr><td style="text-align:left"><b>${e.sku}</b></td><td style="text-align:left">${_escE(e.model)}</td><td style="text-align:left">${e.region}</td><td class="text-right mono muted">${fmtMoney(e.before)}</td><td class="text-right mono">${fmtMoney(e.after)}</td><td class="text-right mono">${_incC(e.inc)}</td></tr>`).join('') : '<tr><td colspan="6" class="muted" style="text-align:center;padding:14px">전년 동기간 대비 줄어든 SKU가 없음</td></tr>'}</tbody>
           </table></div>
           <div class="label-mono muted" style="font-size:11px;margin:18px 0 6px">🚗 차종별 증감 <span style="font-weight:400">(어떤 차종 오더가 늘었나)</span></div>
           <div style="overflow:auto;max-height:260px"><table style="font-size:12px;width:100%">
@@ -11219,7 +11219,7 @@ function renderSkuAggregate(fOrders) {
   // period only (fillCompareKpis already calls state.preOrders for prevSource).
   // SKU Analysis 전년 매칭: 차트(buildBaStats)와 동일하게 "이 캠페인의 SKU 집합"으로 매칭.
   // promoKeyOfOrder는 customer 우선이라(예: NAM BAC=Trade) baseline의 Asian SKU 행을
-  // 다른 캠페인으로 보내 전년이 0이 되는 문제가 있어, SKU 기반 캠페인은 SKU 집합으로 직접 매칭한다.
+  // 다른 캠페인으로 보내 전년이 0이 되는 문제가 있어, SKU 기반 캠페인은 SKU 집합으로 직접 매칭함.
   const _cmpCfg = (state.campaignTargetSkus||{})[promo] || {};
   const _cmpIsSku = (promo && promo!=='__all__') && ((_cmpCfg.match_by||'sku').toLowerCase()!=='customer');
   const _cmpSkuSet = _cmpIsSku ? new Set(skus.map(s=>(s||'').toUpperCase())) : null;
@@ -11487,7 +11487,7 @@ function clearAll() {
   try { idbDelete('preOrdersCache_v2'); } catch (e) {}
   persist(); rebuildAll();
   renderDataTimestamps();
-  showToast('🗑️ 데이터가 초기화됐습니다');
+  showToast('🗑️ 데이터가 초기화됐음');
 }
 
 /* Modal */
@@ -11724,7 +11724,7 @@ function prefillRegionBudgetsFromCSV() {
   });
   const entries = Object.entries(byRegionUsd).filter(([,v]) => v > 0);
   if (!entries.length) {
-    showToast('⚠️ CSV에서 region별 expected_cost를 찾지 못했습니다');
+    showToast('⚠️ CSV에서 region별 expected_cost를 찾지 못했음');
     return;
   }
   // Warn before overwriting existing manual entries
@@ -12063,7 +12063,7 @@ document.getElementById('fBulk').addEventListener('change', async e => {
       'color:#fff;font:600 18px/1.4 system-ui,-apple-system,Segoe UI,sans-serif;text-align:center;';
     overlay.innerHTML =
       '<div style="border:2px dashed #fff;padding:28px 40px;border-radius:14px;background:rgba(0,0,0,.25)">' +
-      '📥 CSV 파일을 여기에 놓으세요<br>' +
+      '📥 CSV 파일을 여기에 놓을 것<br>' +
       '<span style="font-weight:400;font-size:14px;opacity:.85">' +
       'orders.csv / marketing.csv / budgets.csv — 헤더로 자동 인식</span></div>';
     document.body.appendChild(overlay);
@@ -12094,7 +12094,7 @@ document.getElementById('fBulk').addEventListener('change', async e => {
     depth = 0;
     if (overlay) overlay.style.display = 'none';
     const files = Array.from(e.dataTransfer.files || []).filter(f => /\.csv$/i.test(f.name));
-    if (!files.length) { alert('CSV 파일만 인식됩니다.'); return; }
+    if (!files.length) { alert('CSV 파일만 인식됨.'); return; }
     const summary = await processBulkFiles(files);
     const lines = [
       `✓ Orders: ${summary.orders} added`,
@@ -12648,9 +12648,9 @@ window.reloadAutoCSV = reloadAutoCSV;
    GitHub raw에서 chunked JSON 파일들을 직접 받아와 메모리 캐시.
    두 manifest를 합쳐서 로드 — `data/` (177K) + `new_data/` (334K) = ~512K rows.
 
-   IMPORTANT — 이 데이터는 메인 흐름(state.orders, 일반 차트/KPI)에 절대 통합되지 않습니다.
+   IMPORTANT — 이 데이터는 메인 흐름(state.orders, 일반 차트/KPI)에 절대 통합되지 않음.
    오직 SKU의 캠페인 적용 전/후 효과 추적을 위해, YoY/QoQ/MoM/WoW 비교 KPI의
-   "이전 기간(previous range)" 집계에서만 baseline으로 활용됩니다.
+   "이전 기간(previous range)" 집계에서만 baseline으로 활용됨.
 
    - state.preOrders        : 메모리 캐시 (localStorage에는 절대 저장 안 됨)
    - state.preOrdersEnabled : 로드 여부 플래그 (true면 비교 KPI baseline에 자동 포함)
@@ -12884,7 +12884,7 @@ async function togglePreOrders() {
   } catch (err) {
     console.error('[pre-orders] toggle failed:', err);
     alert('Pre-order baseline 로드 실패:\n\n' + (err && err.message || err) +
-          '\n\n자세한 내용은 브라우저 개발자 도구 > Console을 확인하세요.');
+          '\n\n자세한 내용은 브라우저 개발자 도구 > Console을 확인할 것.');
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -12914,12 +12914,12 @@ function visibleRegionFilter(arr) {
 }
 
 /* =================== AUTO CSV LOAD ===================
-   HTML 파일과 같은 폴더에 아래 파일명으로 두면 자동 로딩됩니다:
+   HTML 파일과 같은 폴더에 아래 파일명으로 두면 자동 로딩됨:
      - orders.csv      (오더 데이터)
      - marketing.csv   (마케팅 활동)
    브라우저 보안 정책상 file:// 프로토콜에서는 fetch가 막힐 수 있어,
-   사내 웹서버 또는 정적 호스팅(http(s)://) 환경에서 사용하세요.
-   실패 시 기존 수동 업로드 버튼으로 보완 가능합니다.
+   사내 웹서버 또는 정적 호스팅(http(s)://) 환경에서 사용할 것.
+   실패 시 기존 수동 업로드 버튼으로 보완 가능함.
 */
 const AUTO_CSV_FILES = {
   orders:    'https://raw.githubusercontent.com/masterteamply-stack/choicekit-dashboard/main/orders.csv',
@@ -12928,10 +12928,10 @@ const AUTO_CSV_FILES = {
 };
 
 /* =================== SUPABASE SHARED DATA ===================
-   ck_shared_data 테이블에서 공유 CSV를 로드합니다.
-   - 모든 사용자가 동일한 기본 데이터를 봅니다.
-   - 사용자가 직접 CSV를 올리면 개인 커스텀 데이터가 localStorage에 저장됩니다.
-   - Reset to Shared Data 버튼으로 공유 데이터로 복원할 수 있습니다.
+   ck_shared_data 테이블에서 공유 CSV를 로드함.
+   - 모든 사용자가 동일한 기본 데이터를 봄.
+   - 사용자가 직접 CSV를 올리면 개인 커스텀 데이터가 localStorage에 저장됨.
+   - Reset to Shared Data 버튼으로 공유 데이터로 복원할 수 있음.
 ================================================================ */
 const SB_SHARED_URL = 'https://waxjtcxdgulbdofycywr.supabase.co';
 const SB_SHARED_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndheGp0Y3hkZ3VsYmRvZnljeXdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyMjc3NTIsImV4cCI6MjA4ODgwMzc1Mn0.rvkmwG-dsjeFfT2NAMUJaKjCBMm2SOmAQ1SXl3V3jHI';
@@ -12980,7 +12980,7 @@ async function uploadCtrModelCSV(file) {
     const vtype = row['vehicle_type'] || row['type'] || '';
     if (ctr) rows.push({ ctr_code: ctr.toUpperCase(), make_model: model, brand, vehicle_type: vtype });
   }
-  if (!rows.length) { alert('유효한 데이터가 없습니다.'); return; }
+  if (!rows.length) { alert('유효한 데이터가 없음.'); return; }
 
   // Supabase upsert
   const res = await fetch(`${SB_SHARED_URL}/rest/v1/ck_ctr_model`, {
@@ -13091,7 +13091,7 @@ async function loadSharedData(force = false) {
 
   // file:// 환경에서는 GitHub raw fetch가 차단됨
   if (location.protocol === 'file:') {
-    console.warn('[shared] file:// 환경에서는 GitHub raw fetch가 차단됩니다. HTTP(S) 호스팅에 올려야 자동 로드됩니다.');
+    console.warn('[shared] file:// 환경에서는 GitHub raw fetch가 차단됨. HTTP(S) 호스팅에 올려야 자동 로드됨.');
     return false;
   }
 
@@ -13164,7 +13164,7 @@ async function resetToSharedData() {
   await loadFxRates(); rebuildAll();
   renderDataTimestamps();
   if (loaded) showToast('✅ 공유 데이터로 초기화 완료');
-  else showToast('⚠️ 공유 데이터를 불러오지 못했습니다');
+  else showToast('⚠️ 공유 데이터를 불러오지 못했음');
 }
 window.resetToSharedData = resetToSharedData;
 /* ============================================================
@@ -13279,7 +13279,7 @@ async function reloadAutoCSV(showAlert = false) {
   if (location.protocol === 'file:') {
     if (showAlert) {
       const msg =
-        '⚠ file:// 프로토콜에서는 브라우저 보안 정책상 CSV 자동 로딩(fetch)이 차단됩니다.\n\n' +
+        '⚠ file:// 프로토콜에서는 브라우저 보안 정책상 CSV 자동 로딩(fetch)이 차단됨.\n\n' +
         '해결 방법 (택1):\n' +
         '  1) 지금 열리는 파일 선택창에서 orders.csv / marketing.csv / budgets.csv 를 한꺼번에 선택 (자동 인식)\n' +
         '  2) HTML 파일이 있는 폴더에서 로컬 웹서버 실행 후 http://localhost 로 접속\n' +
@@ -13663,7 +13663,7 @@ function injectCopyLinkButtons() {
     const btn = document.createElement('button');
     btn.className = 'dl-copy-btn'; btn.type = 'button';
     btn.textContent = '🔗 Copy link';
-    btn.title = '현재 필터가 반영된 이 화면의 공유 링크를 복사합니다';
+    btn.title = '현재 필터가 반영된 이 화면의 공유 링크를 복사함';
     btn.style.cssText = 'position:absolute;top:8px;right:10px;font-size:10px;line-height:1;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);cursor:pointer;z-index:30;opacity:.65';
     btn.addEventListener('mouseenter', () => { btn.style.opacity = '1'; });
     btn.addEventListener('mouseleave', () => { btn.style.opacity = '.65'; });
@@ -13796,7 +13796,7 @@ function injectCopyLinkButtons() {
           'font:500 13px/1.4 system-ui,-apple-system,Segoe UI,sans-serif;' +
           'display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.3)';
         bar.innerHTML =
-          '<span style="flex:1">ℹ️ <b>file://</b> 환경 — 자동 CSV 로딩은 차단됩니다. ' +
+          '<span style="flex:1">ℹ️ <b>file://</b> 환경 — 자동 CSV 로딩은 차단됨. ' +
           '우상단 <b>Bulk Upload</b> 버튼을 누르거나, 이 페이지에 CSV 파일을 <b>드래그&드롭</b>하세요.</span>' +
           '<button id="fileProtoHintBulk" style="background:#fff;color:#1d4ed8;border:0;padding:6px 12px;border-radius:6px;font-weight:600;cursor:pointer">Open Bulk Upload</button>' +
           '<button id="fileProtoHintClose" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5);padding:6px 10px;border-radius:6px;cursor:pointer">Close</button>';
@@ -13992,7 +13992,7 @@ function injectCopyLinkButtons() {
     window.__v24SelfCheck = { summary, results };
 
     // console.info / console.table 은 일부 환경(임베디드 브라우저, 로깅 래퍼 등)에서
-    // 존재하지 않을 수 있으므로 안전 호출로 폴백한다.
+    // 존재하지 않을 수 있으므로 안전 호출로 폴백함.
     const _logFn = (name) => (typeof console[name] === 'function' ? console[name].bind(console) : console.log.bind(console));
     const _info  = _logFn('info');
     const _table = _logFn('table');

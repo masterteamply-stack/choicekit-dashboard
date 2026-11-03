@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """월 오더 export(SAP 수출 원장 · Plnt 1150)에서 캠페인별 그 달 오더를 뽑아
-campaign_order_add.json 에 쌓고, 대시보드의 const D 캠페인 행에 더한다.
+campaign_order_add.json 에 쌓고, 대시보드의 const D 캠페인 행에 더함.
 
   python3 scripts/sync_campaign_month.py --xlsx export.XLSX
   python3 scripts/sync_campaign_month.py              # json 만으로 다시 반영
   python3 scripts/sync_campaign_month.py --check      # 쓰지 않고 변경 여부만
 
 왜 캠페인 전부가 아니라 일부만 다루나
-  이 export 는 Plnt 1150(본사 수출) 한 곳이다. Lordco(CTR A)·ASIA 일부(CTR V)처럼
-  다른 법인을 거치는 고객은 통째로 빠져 있어, 그 캠페인에 더하면 실적이 깎인다.
-  그래서 참여 고객이 모두 1150 을 거치는 캠페인만 COVERED 에 적어 둔다.
+  이 export 는 Plnt 1150(본사 수출) 한 곳임. Lordco(CTR A)·ASIA 일부(CTR V)처럼
+  다른 법인을 거치는 고객은 통째로 빠져 있어, 그 캠페인에 더하면 실적이 깎임.
+  그래서 참여 고객이 모두 1150 을 거치는 캠페인만 COVERED 에 적어 둠.
 
-대상 판정은 campaign_target_skus.json 의 규칙을 그대로 쓴다
+대상 판정은 campaign_target_skus.json 의 규칙을 그대로 씀
   match_by=sku  대상 SKU 목록 ∩ 그 캠페인 권역 ∩ (목록이 있으면) 대상 고객
   match_by=cust 대상 고객 ∩ 그 캠페인 권역
 """
@@ -22,7 +22,7 @@ HTML = os.path.join(ROOT, 'promo_dashboard_v10_6.html')
 ADD = os.path.join(ROOT, 'campaign_order_add.json')
 TGT = os.path.join(ROOT, 'campaign_target_skus.json')
 
-# 이 export(Plnt 1150) 하나로 그 달 실적이 온전히 잡히는 캠페인만 더한다.
+# 이 export(Plnt 1150) 하나로 그 달 실적이 온전히 잡히는 캠페인만 더함.
 COVERED = {'MENA|Portfolio Expansion Program'}
 # 오더로 보지 않는 건 — 캠페인 주석에 적힌 예외
 EXCLUDE = {'MENA|Portfolio Expansion Program': {'EURL TASSRIAA'}}
@@ -58,13 +58,13 @@ def read_export(path):
 html = open(HTML, encoding='utf-8', newline='').read()
 mD = re.search(r'<script>const D = (\{.*?\});</script>', html, re.S)
 if not mD:
-    print('D 블록을 찾지 못했습니다.'); sys.exit(1)
+    print('D 블록을 찾지 못했음.'); sys.exit(1)
 D = json.loads(mD.group(1))
 REG_OF = {c['k']: REG_MAP.get(c.get('r'), c.get('r')) for c in D.get('customers', [])}
 CTRY = {c['k']: (c.get('c') or '') for c in D.get('customers', [])}
 T = json.load(open(TGT, encoding='utf-8'))
 add = json.load(open(ADD, encoding='utf-8')) if os.path.exists(ADD) else {'_readme':
-    '월 오더 export 에서 뽑은 캠페인별 월 추가분. scripts/sync_campaign_month.py 로 만든다.', 'camps': {}}
+    '월 오더 export 에서 뽑은 캠페인별 월 추가분. scripts/sync_campaign_month.py 로 만듦.', 'camps': {}}
 
 if '--xlsx' in sys.argv:
     xl = sys.argv[sys.argv.index('--xlsx') + 1]
@@ -114,7 +114,7 @@ for c in D.get('campaigns', []):
     c['add_months'] = {m: v['usd'] for m, v in sorted(months.items())}
     c['add_sku'] = {m: v['n_sku'] for m, v in sorted(months.items())}
     touched.append((key, c['base_a26'], c['a26'], last, c['mo_ord']))
-    # 그 달에 처음 오더한 고객은 캠페인 고객 목록(cust_delta)에도 올린다
+    # 그 달에 처음 오더한 고객은 캠페인 고객 목록(cust_delta)에도 올림
     cd = D.setdefault('cust_delta', [])
     have = {r['name'] for r in cd if r.get('region') == c['region'] and r.get('program') == c['program']}
     tot_by = {}

@@ -10,9 +10,9 @@
   '세팅 정보'               — 목적·타깃·랜딩
 
 집계 규칙
-  합계는 OVERVIEW 를 쓴다. 국가별 시트 합계가 1~3 건 작은 것은 Meta 의
-  국가 미식별(Unknown) 유저가 국가 집계에서 빠지기 때문이라 맞추지 않는다.
-  CTR·CPC·CPM 은 반올림된 열을 쓰지 않고 원수치에서 다시 계산한다.
+  합계는 OVERVIEW 를 씀. 국가별 시트 합계가 1~3 건 작은 것은 Meta 의
+  국가 미식별(Unknown) 유저가 국가 집계에서 빠지기 때문이라 맞추지 않음.
+  CTR·CPC·CPM 은 반올림된 열을 쓰지 않고 원수치에서 다시 계산함.
 """
 import json, os, re, sys, collections
 
@@ -25,13 +25,13 @@ def sheet(wb, name):
 
 
 def head(rows, key):
-    """key 가 들어 있는 머리글 행을 찾아 {열이름: 번호} 로 돌려준다."""
+    """key 가 들어 있는 머리글 행을 찾아 {열이름: 번호} 로 돌려줌."""
     for i, r in enumerate(rows):
         cells = [str(x).strip() for x in r if x is not None]
         if key in cells:
             h = [str(x).strip() if x is not None else '' for x in r]
             return i, {v: j for j, v in enumerate(h) if v}
-    print(f"'{key}' 머리글을 찾지 못했습니다."); sys.exit(1)
+    print(f"'{key}' 머리글을 찾지 못했음."); sys.exit(1)
 
 
 def rate(a, b, nd=2):
@@ -70,7 +70,7 @@ def main():
                            eng=int(r[ix['참여']] or 0),
                            ctr=rate(clk, imp), cpc=won(cost, clk)))
     if len(rounds) < 2:
-        print('회차 행을 찾지 못했습니다.'); sys.exit(1)
+        print('회차 행을 찾지 못했음.'); sys.exit(1)
     rounds.sort(key=lambda x: [int(v) for v in re.split(r'[.~]', x['when'])[:2]])
 
     T = {k: sum(x[k] for x in rounds) for k in ('cost', 'imp', 'clk', 'eng')}
@@ -113,7 +113,7 @@ def main():
     d0, d1 = rounds[0]['when'].split('~')[0], rounds[-1]['when'].split('~')[1]
 
     out = dict(
-        _readme='CIS Choice Kit Meta 광고 성과. 원천 리포트에서 매번 다시 뽑는다. '
+        _readme='CIS Choice Kit Meta 광고 성과. 원천 리포트에서 매번 다시 뽑음. '
                 '재생성: python3 scripts/sync_cis_ads.py --src <xlsx>',
         src=os.path.basename(src), period=f'{d0}~{d1}', n_round=len(rounds),
         goal=cell('캠페인 목적') or 'Traffic', media='META · Facebook + Instagram',
@@ -123,10 +123,10 @@ def main():
         best_clk=dict(k=best_clk['k'], v=best_clk['clk']),
         best_ctr=dict(k=best_ctr['k'], v=best_ctr['ctr']),
         ctr_lo=min(x['ctr'] for x in rounds), ctr_hi=max(x['ctr'] for x in rounds),
-        note_scope='Meta 클릭과 웹사이트 조회는 측정 주체가 달라 1:1로 잇지 않는다. '
-                   '광고는 유입을 만든 쪽, 조회·다운로드는 받은 쪽 수치다.',
+        note_scope='Meta 클릭과 웹사이트 조회는 측정 주체가 달라 1:1로 잇지 않음. '
+                   '광고는 유입을 만든 쪽, 조회·다운로드는 받은 쪽 수치임.',
         note_geo='국가별 합계는 Meta 의 국가 미식별(Unknown) 유저가 빠져 전체보다 '
-                 f"{T['clk'] - geo_clk}건 적다. 맞추지 않고 그대로 둔다.")
+                 f"{T['clk'] - geo_clk}건 적음. 맞추지 않고 그대로 둠.")
     json.dump(out, open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 
     print(f"{out['src']} · {out['period']} · {len(rounds)}회차")

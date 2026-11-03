@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
-"""중국차 오더 리포트(const CNORD)를 '오더라인' 시트 한 장으로 통째로 다시 만든다.
+"""중국차 오더 리포트(const CNORD)를 '오더라인' 시트 한 장으로 통째로 다시 만듦.
 
   python3 scripts/sync_cn_lines.py --lines "중국차 오더 월별 이력 2026_01-10.xlsx"
   python3 scripts/sync_cn_lines.py --lines <파일> --check     # 쓰지 않고 수치만
 
-쓰는 시트는 '오더라인_2026' 이고 다음 열이 있어야 한다.
+쓰는 시트는 '오더라인_2026' 이고 다음 열이 있어야 함.
   월 · 매칭 코드 · 중국 브랜드 · 권역 (대시보드 기준) · 정가(USD)
   ② 중국전용 · ③ 신규 (237 기준) · ③b 신규 (중국전용 한정)   ← 전부 Y/N
 
 왜 월 export 가 아니라 이 시트인가
-  월 export 는 그 달에 받은 것만 담기는데 전표가 빠지는 수가 있다. 2026-10 export 는
+  월 export 는 그 달에 받은 것만 담기는데 전표가 빠지는 수가 있음. 2026-10 export 는
   CTR EUROPE 판매문서 4건(802887·802888·802892·802893, 커버 품번 $17,584)이 통째로
-  빠져 있었다. 오더라인 시트는 원장 3개년을 다 보고 만든 것이라 이쪽을 정본으로 쓴다.
+  빠져 있었음. 오더라인 시트는 원장 3개년을 다 보고 만든 것이라 이쪽을 정본으로 씀.
 
 신규(③) 판정
   it[2] = 커버 237 코드 전체 기준 — 2024·2025 오더 이력이 없고 2026 첫 오더가
           5월 이후인 품번. 타 브랜드와 공용인 품번도 과거 구매 이력이 없다면
-          카탈로그 효과로 보고 같이 센다(중국 전용 한정 정의는 쓰지 않는다).
+          카탈로그 효과로 보고 같이 센다(중국 전용 한정 정의는 쓰지 않음).
 """
 import json, os, re, sys, collections
 
@@ -26,12 +26,12 @@ NEED = ['월', '매칭 코드', '중국 브랜드', '권역 (대시보드 기준
         '② 중국전용', '③ 신규 (237 기준)']
 
 if '--lines' not in sys.argv:
-    print('--lines <오더라인 xlsx> 가 필요합니다.'); sys.exit(1)
+    print('--lines <오더라인 xlsx> 가 필요함.'); sys.exit(1)
 import openpyxl
 wb = openpyxl.load_workbook(sys.argv[sys.argv.index('--lines') + 1], data_only=True)
 sh = next((s for s in wb.sheetnames if s.startswith('오더라인')), None)
 if not sh:
-    print("'오더라인…' 시트를 찾지 못했습니다: " + ', '.join(wb.sheetnames)); sys.exit(1)
+    print("'오더라인…' 시트를 찾지 못했음: " + ', '.join(wb.sheetnames)); sys.exit(1)
 rows = list(wb[sh].iter_rows(values_only=True))
 H = {str(h).strip(): i for i, h in enumerate(rows[0]) if h is not None}
 miss = [k for k in NEED if k not in H]
@@ -42,7 +42,7 @@ Y = lambda v: str(v or '').strip().upper() == 'Y'
 html = open(HTML, encoding='utf-8', newline='').read()
 mC = re.search(r'const CNORD=(\{.*?\});\n', html, re.S)
 if not mC:
-    print('CNORD 블록을 찾지 못했습니다.'); sys.exit(1)
+    print('CNORD 블록을 찾지 못했음.'); sys.exit(1)
 CN = json.loads(mC.group(1))
 old = {it[0]: it for it in CN['items']}
 
@@ -66,7 +66,7 @@ for r in rows[1:]:
 items = []
 for c, m in sorted(meta.items()):
     o = old.get(c)
-    st = o[4] if o else 'Mass Production'      # 상태는 기존 값을 잇는다
+    st = o[4] if o else 'Mass Production'      # 상태는 기존 값을 이음
     g = {}
     for (cc, rg, mm), v in per.items():
         if cc == c and v: g.setdefault(rg, {})[mm] = round(v, 2)

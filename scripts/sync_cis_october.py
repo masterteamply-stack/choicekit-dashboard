@@ -6,11 +6,11 @@
   python3 scripts/sync_cis_october.py ... --check     # 쓰지 않고 수치만
 
 오더 수치는 원천 엑셀(Raw Data 시트)에서 매번 다시 뽑고, 활동·콘텐츠 글은
-cis_october.json 에서 읽는다. 둘을 합쳐 const CIS10 한 덩어리로 넣는다.
+cis_october.json 에서 읽음. 둘을 합쳐 const CIS10 한 덩어리로 넣음.
 
 집계 규칙
   금액 amount(USD) · 날짜 order date · 고객 customer · 국가 country
-  Asian / European 은 파일로 가른다. 캠페인 효과 탭의 CIS 수치와는 집계 범위가
+  Asian / European 은 파일로 가름. 캠페인 효과 탭의 CIS 수치와는 집계 범위가
   달라 서로 더하지 않는다(참고 지표).
 """
 import json, os, re, sys, datetime, collections
@@ -118,21 +118,21 @@ else:
 src = json.load(open(SRC, encoding='utf-8'))
 CIS10 = dict(agg); CIS10.pop('_readme', None)
 CIS10.update({k: v for k, v in src.items() if not k.startswith('_')})
-# 파일명이 10/28 이라도 실제 마지막 오더일로 적는다 — 없는 날짜를 적지 않는다
+# 파일명이 10/28 이라도 실제 마지막 오더일로 적음 — 없는 날짜를 적지 않음
 CIS10['period'] = f"{agg['t_from']} ~ {agg['t_to']}"
-# 광고 성과는 따로 뽑아 둔 것을 얹는다 — scripts/sync_cis_ads.py
+# 광고 성과는 따로 뽑아 둔 것을 얹음 — scripts/sync_cis_ads.py
 if os.path.exists(ADS):
     CIS10['ads'] = {k: v for k, v in json.load(open(ADS, encoding='utf-8')).items()
                     if not k.startswith('_')}
 CIS10['validation'] = [
     f"고객 15곳 합계 ${agg['total']:,.2f} — 보고용 표의 $1,560,053 과 센트 단위까지 맞음.",
-    "보고용 표의 SHATE M KZ 합계가 1달러 어긋나 보이는 것은 Asian·European 을 먼저 반올림해 더했기 때문이다"
-    " (13,956.74+3,684.58=17,641.32 → 17,641, 각각 반올림하면 13,957+3,685=17,642). 자료 문제가 아니다.",
+    "보고용 표의 SHATE M KZ 합계가 1달러 어긋나 보이는 것은 Asian·European 을 먼저 반올림해 더했기 때문임"
+    " (13,956.74+3,684.58=17,641.32 → 17,641, 각각 반올림하면 13,957+3,685=17,642). 자료 문제가 아님.",
     f"원천 오더일은 {agg['t_from']} ~ {agg['t_to']} 다. 파일 이름의 10-28 까지가 아니라 "
-    f"{agg['t_to']} 이 마지막 오더일이라, 화면에도 그대로 적었다.",
-    "고객명·국가·중복 레코드 확인 — 보고용 표의 15곳과 원천의 고객 집합이 정확히 같고, 빠지거나 더 있는 곳이 없다.",
-    "광고 성과는 원천 리포트의 OVERVIEW 합계를 그대로 쓴다. 국가별 시트 합계가 클릭 2건 적은 것은 "
-    "Meta 의 국가 미식별(Unknown) 유저가 국가 집계에서 빠지기 때문이라 맞추지 않았다.",
+    f"{agg['t_to']} 이 마지막 오더일이라, 화면에도 그대로 적었음.",
+    "고객명·국가·중복 레코드 확인 — 보고용 표의 15곳과 원천의 고객 집합이 정확히 같고, 빠지거나 더 있는 곳이 없음.",
+    "광고 성과는 원천 리포트의 OVERVIEW 합계를 그대로 씀. 국가별 시트 합계가 클릭 2건 적은 것은 "
+    "Meta 의 국가 미식별(Unknown) 유저가 국가 집계에서 빠지기 때문이라 맞추지 않음.",
 ]
 
 html = open(HTML, encoding='utf-8', newline='').read()
@@ -140,7 +140,7 @@ new = '<script>const CIS10 = ' + json.dumps(CIS10, ensure_ascii=False, separator
 pat = re.compile(r'<script>const CIS10 = \{.*?\};</script>', re.S)
 out = pat.sub(lambda _: new, html, count=1) if pat.search(html) else None
 if out is None:
-    print('CIS10 블록을 찾지 못했습니다 — 대시보드에 먼저 자리를 만들어야 합니다.'); sys.exit(1)
+    print('CIS10 블록을 찾지 못했음 — 대시보드에 먼저 자리를 만들어야 함.'); sys.exit(1)
 changed = out != html
 if '--check' in sys.argv:
     print('변경 있음' if changed else '변경 없음'); sys.exit(0)

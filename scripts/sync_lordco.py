@@ -34,7 +34,7 @@ lo = {'y25': o25, 'y26': o26, 's25': s25, 's26': s26, 'q25': q25, 'q26': q26, 'l
       'note_sales': src.get('note_sales', ''), 'lift_m25': src.get('lift_months25', []),
       'lift25': src.get('lift_sum25', 0), 'ship25': src.get('ship_sum25', 0),
       'note_oct26': src.get('note_oct26', '')}
-# lordco:{...} 는 키가 늘어도 깨지지 않게 괄호를 세어 끝을 찾는다
+# lordco:{...} 는 키가 늘어도 깨지지 않게 괄호를 세어 끝을 찾음
 def _obj_end(s, i):
     d = 0; q = None; j = i
     while j < len(s):
@@ -71,8 +71,8 @@ def fix_SS(SS):
         if r['name'].strip() == src['customer']: r['yoy'] = round(yoy, 1)
 t = edit_json(t, 'SS', fix_SS)
 
-# CD.custs 의 lordco 도 같이 맞춘다. sync_customer_orders.py 는 Sell-out 원장인 Lordco 를
-# 건드리지 않으므로 여기서 안 쓰면 고객사 요약과 SteerStar 전년 대비가 카드와 어긋난다.
+# CD.custs 의 lordco 도 같이 맞춤. sync_customer_orders.py 는 Sell-out 원장인 Lordco 를
+# 건드리지 않으므로 여기서 안 쓰면 고객사 요약과 SteerStar 전년 대비가 카드와 어긋남.
 def fix_CD(CD):
     for c in CD['custs']:
         if c.get('id') != 'lordco': continue

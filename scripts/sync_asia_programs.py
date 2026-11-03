@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """asia_sellout_programs.json(단일 소스) → promo_dashboard_v10_6.html 반영.
 사용: 1) asia_sellout_programs.json 수정  2) python3 scripts/sync_asia_programs.py
- · 효과 대시보드의 const AP = {...} 블록을 통째로 갈아끼운다.
+ · 효과 대시보드의 const AP = {...} 블록을 통째로 갈아끼움.
 (--check 로 실행하면 파일을 쓰지 않고 변경 여부만 출력)"""
 import json, os, re, sys, collections
 
@@ -36,7 +36,7 @@ new = '<script>const AP = ' + json.dumps(AP, ensure_ascii=False, separators=(','
 pat = re.compile(r'<script>const AP = \{.*?\};</script>', re.S)
 out = pat.sub(lambda _: new, html, count=1) if pat.search(html) else None
 if out is None:
-    print('AP 블록을 찾지 못했습니다 — 대시보드에 먼저 삽입이 필요합니다.'); sys.exit(1)
+    print('AP 블록을 찾지 못했음 — 대시보드에 먼저 삽입이 필요함.'); sys.exit(1)
 changed = out != html
 if '--check' in sys.argv:
     print('변경 있음' if changed else '변경 없음'); sys.exit(0)

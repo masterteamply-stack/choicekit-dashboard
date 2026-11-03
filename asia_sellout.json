@@ -5,8 +5,8 @@
  "months": ["2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10"],
  "target_src": "marketing.csv SELL-OUT Target($) 합계",
  "target": 835539,
- "note_dup": "한 고객사가 Sales Champion Award(영업사원 단위)와 Order to Earn POSM·Long-Term Loyalty(매장·딜러 단위)에 동시에 걸려 같은 판매가 두 번 잡힌다. 아래 USD 금액은 중복을 걷어낸 값이라 프로그램별 금액을 더한 것보다 작다.",
- "note_scope": "현지 통화 원자료를 고객사별 고정 환율로 USD 환산한 값. 월은 sell-out 발생월 기준이며, 고객사마다 자료가 들어온 마지막 달이 다르다.",
+ "note_dup": "한 고객사가 Sales Champion Award(영업사원 단위)와 Order to Earn POSM·Long-Term Loyalty(매장·딜러 단위)에 동시에 걸려 같은 판매가 두 번 잡힘. 아래 USD 금액은 중복을 걷어낸 값이라 프로그램별 금액을 더한 것보다 작음.",
+ "note_scope": "현지 통화 원자료를 고객사별 고정 환율로 USD 환산한 값. 월은 sell-out 발생월 기준이며, 고객사마다 자료가 들어온 마지막 달이 다름.",
  "rows": [
   {"k": "Mast", "code": "200371", "country": "베트남", "cur": "VND", "fx": 26000,
    "programs": ["Sales Champion Award", "Order to Earn POSM"],

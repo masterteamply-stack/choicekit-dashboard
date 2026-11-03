@@ -16,7 +16,7 @@
   · 고객사 요약(전체 권역) — SteerStar 오더 미션 / 설문 리드 열 (const CD 의 mission)
 
 오더 '실적'은 각 미션이 약속한 기준(SERI 는 이벤트 기간 오더, Lordco 는 Sell-out)이라
-원장에서 다시 뽑지 않고 이 파일의 값을 그대로 쓴다. 영업 Order Target 과는 무관하다.
+원장에서 다시 뽑지 않고 이 파일의 값을 그대로 씀. 영업 Order Target 과는 무관함.
 """
 import json, os, re, sys, unicodedata
 
@@ -49,7 +49,7 @@ def sheet(wb, name):
 
 xl = sys.argv[sys.argv.index('--xlsx') + 1] if '--xlsx' in sys.argv else None
 if not xl:
-    print('--xlsx <SteerStar management.xlsx> 가 필요합니다.'); sys.exit(1)
+    print('--xlsx <SteerStar management.xlsx> 가 필요함.'); sys.exit(1)
 import openpyxl
 wb = openpyxl.load_workbook(xl, data_only=True)
 
@@ -66,7 +66,7 @@ for r in sheet(wb, 'SteerStar Plan')[1:]:
     plan[name] = dict(region=region, country=txt(r[1]), name=name,
                       act=txt(r[8]), when=txt(r[9]).replace('Arpil', 'April'),
                       main=txt(r[10]), sub=txt(r[12]),
-                      # BizRewards 는 금액만 적힌 칸과 설명이 적힌 칸이 섞여 있다
+                      # BizRewards 는 금액만 적힌 칸과 설명이 적힌 칸이 섞여 있음
                       credit=(f'${int(r[19]):,}' if isinstance(r[19], (int, float)) else txt(r[19])),
                       note=txt(r[20]), ch=ch,
                       dropped=(txt(r[12]) == DROP))
@@ -97,12 +97,12 @@ for r in sheet(wb, 'Mission lead')[1:]:
         if v: ser.append(dict(m=m, v=int(v)))
     leads[name] = dict(ser=ser, n=int(sum(x['v'] for x in ser)))
 
-# ── 3) 현재 블록(전년 대비는 고객사 오더 원장에서 가져온다)
+# ── 3) 현재 블록(전년 대비는 고객사 오더 원장에서 가져옴)
 html = open(HTML, encoding='utf-8', newline='').read()
 mCD = re.search(r'<script>const CD = (\{.*?\});</script>', html, re.S)
 mSS = re.search(r'<script>const SS = (\{.*?\});</script>', html, re.S)
 if not (mCD and mSS):
-    print('CD 또는 SS 블록을 찾지 못했습니다.'); sys.exit(1)
+    print('CD 또는 SS 블록을 찾지 못했음.'); sys.exit(1)
 CD, SSold = json.loads(mCD.group(1)), json.loads(mSS.group(1))
 yoy_of = {}
 for c in CD['custs']:
@@ -137,7 +137,7 @@ budget = [dict(k=txt(r[0]), v=float(r[1] or 0), d=txt(r[2]).replace(' · ', '\n'
           for r in sheet(wb, '예산')[1:] if txt(r[0])]
 btot = next((b['v'] for b in budget if b['k'] == '총 예산'), SSold.get('btot'))
 
-# 업로드 경로의 해시 접두사(8ea25dd8-...)는 떼고 원래 파일 이름만 남긴다
+# 업로드 경로의 해시 접두사(8ea25dd8-...)는 떼고 원래 파일 이름만 남김
 src_name = re.sub(r'^[0-9a-f]{8,}-', '', os.path.basename(xl)).replace('_', ' ')
 SS = dict(src=src_name, lead_target=LEAD_TGT,
           n=len(live), n_live=len(live), n_drop=len(rows) - len(live),

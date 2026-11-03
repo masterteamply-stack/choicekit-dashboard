@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""고객사별 오더를 KV_Orders 원장(SAP ORD_Progress · CTR K + CTR V)에 맞춘다.
+"""고객사별 오더를 KV_Orders 원장(SAP ORD_Progress · CTR K + CTR V)에 맞춤.
 
   python3 scripts/sync_customer_orders.py --html <KV_Orders_*.html>   # 원장에서 새로 뽑고 반영
   python3 scripts/sync_customer_orders.py                             # customer_orders.json 으로 반영만
@@ -7,15 +7,15 @@
 
 하는 일
  1) 원장 HTML 안의 const D 에서 고객사별 '일자' 오더(전 품목·USD 환산)를 뽑아
-    customer_orders.json 으로 저장한다. 원장 HTML 자체는 저장소에 두지 않는다.
- 2) asia_choicekit.json 의 오더 칸(a25·got·y25·y25t·y26t)을 원장 기준으로 다시 쓴다.
-    브랜치(지점) 오더는 BRANCH 표에 따라 모(母)고객사로 합산한다.
+    customer_orders.json 으로 저장함. 원장 HTML 자체는 저장소에 두지 않음.
+ 2) asia_choicekit.json 의 오더 칸(a25·got·y25·y25t·y26t)을 원장 기준으로 다시 씀.
+    브랜치(지점) 오더는 BRANCH 표에 따라 모(母)고객사로 합산함.
  3) promo_dashboard_v10_6.html 의 const CD 블록에서 SteerStar 고객사의 월별 오더를
-    원장 기준으로 다시 쓴다(Lordco 는 Sell-out 원장이라 건드리지 않는다).
- 4) 끝으로 scripts/sync_asia.py 를 돌려 const AS 를 갱신한다.
+    원장 기준으로 다시 쓴다(Lordco 는 Sell-out 원장이라 건드리지 않음).
+ 4) 끝으로 scripts/sync_asia.py 를 돌려 const AS 를 갱신함.
 
-매출(s25·s26)은 이 스크립트가 건드리지 않는다 — AM Sales 파일의 실적이 아직
-9월까지라 10월 반영분이 없다. 매출은 AM 파일이 갱신되면 따로 손본다.
+매출(s25·s26)은 이 스크립트가 건드리지 않음 — AM Sales 파일의 실적이 아직
+9월까지라 10월 반영분이 없음. 매출은 AM 파일이 갱신되면 따로 손봄.
 """
 import json, os, re, sys, datetime, collections, subprocess
 
@@ -23,8 +23,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CO = os.path.join(ROOT, 'customer_orders.json')
 HTML = os.path.join(ROOT, 'promo_dashboard_v10_6.html')
 
-# ── 고객사 → 원장 고객코드. 브랜치는 모고객사로 합산한다.
-#    괄호 안은 영업 Buyer code — 고객사가 준 브랜치 표의 코드다.
+# ── 고객사 → 원장 고객코드. 브랜치는 모고객사로 합산함.
+#    괄호 안은 영업 Buyer code — 고객사가 준 브랜치 표의 코드임.
 ASIA = {
     'Mast':           ['200371', '288138'],              # MAST(551-006) · MAST SAIGON(551-906)
     'Nam Bac':        ['200464', '288130'],              # NAM BAC(551-008) · NAM BAC HANOI(551-908)
@@ -39,12 +39,12 @@ ASIA = {
     'SERI':           ['289248'],                        # 530-004
     'Zentralink':     ['200335'],                        # 520-104
 }
-# LIFEPRO AUTO(551-806)는 Mast 브랜치지만 원장에 고객으로 등재돼 있지 않아 합산되지 않는다.
+# LIFEPRO AUTO(551-806)는 Mast 브랜치지만 원장에 고객으로 등재돼 있지 않아 합산되지 않음.
 MISSING = {'Mast': 'LIFEPRO AUTO(551-806) 는 원장에 고객으로 없어 합산되지 않음'}
 
 CD_CUST = {'seri': ['289248'], 'kailos': ['288503'], 'retems': ['290059'],
            'bauten': ['289381'], 'brabham': ['289060'], 'refatrix': ['289404']}
-# lordco 는 Sell-out(CTRA_LO) 원장이라 이 스크립트 대상이 아니다.
+# lordco 는 Sell-out(CTRA_LO) 원장이라 이 스크립트 대상이 아님.
 
 
 def grab(s, i):
@@ -93,7 +93,7 @@ def extract(path):
 
 
 def series(src, codes):
-    """일자 -> [금액, 수량]. 예전 형식(금액만)도 읽는다."""
+    """일자 -> [금액, 수량]. 예전 형식(금액만)도 읽음."""
     out = collections.defaultdict(lambda: [0.0, 0.0])
     for c in codes:
         for d, v in src['rows'].get(c, {}).get('d', {}).items():
@@ -139,15 +139,15 @@ for r in aj['rows']:
     q25, q26 = months(dd, 2025, 1), months(dd, 2026, 1)
     old = (r['a25'], r['got'], r['y26t'])
     r.update(a25=a25, got=got, y25=sum(m25), y25t=sum(m25[:L]), y26t=sum(m26[:L]),
-             # 같은 구간의 수량 — 금액과 한 원장에서 같이 뽑아 기준이 어긋나지 않는다
+             # 같은 구간의 수량 — 금액과 한 원장에서 같이 뽑아 기준이 어긋나지 않음
              a25q=rng(dd, s25, e25, 1), gotq=rng(dd, s, e, 1),
              y25q=sum(q25), y25tq=sum(q25[:L]), y26tq=sum(q26[:L]),
              codes=ASIA[r['k']], m26=m26, oct=m26[9] if L >= 10 else 0)
     if MISSING.get(r['k']): r['order_note'] = MISSING[r['k']]
     log.append((r['k'], old, (a25, got, r['y26t'])))
 aj['source_order'] = f"{src['source']} (스냅 {src['snap']} · 오더 ~{MX} · {'+'.join(src['entities'])})"
-aj['note_order'] = ('오더는 SAP 전 품목 오더 원장 기준이고 브랜치(지점) 오더를 모고객사로 합산했다. '
-                    'CTR K·CTR V 두 법인 원장이라 다른 법인을 거친 오더는 빠진다. '
+aj['note_order'] = ('오더는 SAP 전 품목 오더 원장 기준이고 브랜치(지점) 오더를 모고객사로 합산했음. '
+                    'CTR K·CTR V 두 법인 원장이라 다른 법인을 거친 오더는 빠짐. '
                     'LIFEPRO AUTO(Mast 브랜치)는 원장에 고객으로 없어 합산되지 않음.')
 aj['cut_order'] = MX
 aj['last_month'] = L
@@ -156,7 +156,7 @@ aj['last_month'] = L
 html = open(HTML, encoding='utf-8', newline='').read()
 m = re.search(r'<script>const CD = (\{.*?\});</script>', html, re.S)
 if not m:
-    print('CD 블록을 찾지 못했습니다.'); sys.exit(1)
+    print('CD 블록을 찾지 못했음.'); sys.exit(1)
 CD = json.loads(m.group(1))
 for c in CD['custs']:
     codes = CD_CUST.get(c['id'])

@@ -1,5 +1,5 @@
 {
- "_readme": "CIS Choice Kit Meta 광고 성과. 원천 리포트에서 매번 다시 뽑는다. 재생성: python3 scripts/sync_cis_ads.py --src <xlsx>",
+ "_readme": "CIS Choice Kit Meta 광고 성과. 원천 리포트에서 매번 다시 뽑음. 재생성: python3 scripts/sync_cis_ads.py --src <xlsx>",
  "src": "PTKOREA_CTR_Choice_Kit_Promotion_광고성과_1029.xlsx",
  "period": "9.16~10.27",
  "n_round": 6,
@@ -163,6 +163,6 @@
  },
  "ctr_lo": 1.17,
  "ctr_hi": 1.38,
- "note_scope": "Meta 클릭과 웹사이트 조회는 측정 주체가 달라 1:1로 잇지 않는다. 광고는 유입을 만든 쪽, 조회·다운로드는 받은 쪽 수치다.",
- "note_geo": "국가별 합계는 Meta 의 국가 미식별(Unknown) 유저가 빠져 전체보다 2건 적다. 맞추지 않고 그대로 둔다."
+ "note_scope": "Meta 클릭과 웹사이트 조회는 측정 주체가 달라 1:1로 잇지 않음. 광고는 유입을 만든 쪽, 조회·다운로드는 받은 쪽 수치임.",
+ "note_geo": "국가별 합계는 Meta 의 국가 미식별(Unknown) 유저가 빠져 전체보다 2건 적음. 맞추지 않고 그대로 둠."
 }

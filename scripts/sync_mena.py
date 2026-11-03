@@ -6,19 +6,19 @@
   python3 scripts/sync_mena.py ... --check                 # 쓰지 않고 수치만
 
 왜 이 스크립트가 필요한가
-  연관 오더 원장(orders.csv)의 MENA 분에 2025 BRAKE PAD 오더가 빠져 있었다.
-  그래서 전년이 SHOCK ABSORBER $2,770 만으로 잡혀 YoY 가 +365.9% 로 부풀었다.
+  연관 오더 원장(orders.csv)의 MENA 분에 2025 BRAKE PAD 오더가 빠져 있었음.
+  그래서 전년이 SHOCK ABSORBER $2,770 만으로 잡혀 YoY 가 +365.9% 로 부풀었음.
   같은 1~10월로 맞추면 $12,719 → $23,496 (+84.7%) 다. 이 파일이 두 제품·두 해를
-  한 장에 담은 원본이라 여기서 다시 센다.
+  한 장에 담은 원본이라 여기서 다시 셈.
 
-두 가지 구간을 따로 둔다 — 섞으면 안 된다
+두 가지 구간을 따로 둠 — 섞으면 안 됨
   ① 1~10월 전체      a25 / a26  — 10월 AL ZAIM 오더가 들어간 값
   ② 캠페인 동일 구간  d25 / d26  — 2026-01-13~09-22 와 2025 같은 날짜 구간
   화면의 '전년 동기' 는 ① 이고, 월별 지속성 차트(mser)는 ② 다.
 
 건드리지 않는 것
   d25/d26 는 대조군 분석(did)에도 쓰이지만 MENA 는 n_ctrl=0 · incr=null 이라
-  그 집계에서 빠진다. 그래서 값을 바로잡아도 다른 권역 수치에 영향이 없다.
+  그 집계에서 빠짐. 그래서 값을 바로잡아도 다른 권역 수치에 영향이 없음.
 """
 import json, os, re, sys, datetime, collections
 
@@ -54,7 +54,7 @@ def read(path):
 
 
 def sum2(rows, pick):
-    """pick(row) 이 참인 행을 연도별로 더한다."""
+    """pick(row) 이 참인 행을 연도별로 더함."""
     g = collections.defaultdict(float)
     for r in rows:
         if pick(r): g[r['y']] += r['usd']
@@ -94,7 +94,7 @@ if '--src' in sys.argv:
     months = [{'m': i + 1, 'a25': round(mon[2025][i], 2), 'a26': round(mon[2026][i], 2)}
               for i in range(LM)]
 
-    # 마지막 달(10월)에 오더가 난 고객 — 화면에서 '이달 추가분' 을 누가 냈는지 적는다
+    # 마지막 달(10월)에 오더가 난 고객 — 화면에서 '이달 추가분' 을 누가 냈는지 적음
     lastby = collections.defaultdict(float)
     for r in R:
         if r['y'] == 2026 and r['m'] == LM: lastby[r['cust']] += r['usd']
@@ -120,8 +120,8 @@ if '--src' in sys.argv:
                n_sku25=len(s25), n_sku26=len(s26), n_new=len(s26 - s25),
                custs=custs, prods=prods, months=months, top_sku=top_sku, last_by=last_by,
                n_cust=len(custs), n_cty=len({c['country'] for c in custs if c['country']}),
-               note_basis=f'두 해 모두 1~{LM}월 같은 구간이다. 전년이 SHOCK ABSORBER 만 잡혀 있던 것을 '
-                          'BRAKE PAD 까지 넣어 바로잡았다.')
+               note_basis=f'두 해 모두 1~{LM}월 같은 구간임. 전년이 SHOCK ABSORBER 만 잡혀 있던 것을 '
+                          'BRAKE PAD 까지 넣어 바로잡았음.')
     json.dump(agg, open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 else:
     agg = json.load(open(OUT, encoding='utf-8'))
@@ -130,11 +130,11 @@ else:
 html = open(HTML, encoding='utf-8', newline='').read()
 m = re.search(r'<script>const D = (\{.*?\});</script>', html, re.S)
 if not m:
-    print('D 블록을 찾지 못했습니다.'); sys.exit(1)
+    print('D 블록을 찾지 못했음.'); sys.exit(1)
 D = json.loads(m.group(1))
 camp = next((c for c in D['campaigns'] if (c.get('region'), c.get('program')) == KEY), None)
 if not camp:
-    print('MENA 캠페인을 찾지 못했습니다.'); sys.exit(1)
+    print('MENA 캠페인을 찾지 못했음.'); sys.exit(1)
 
 old = (camp.get('a25'), camp.get('a26'), camp.get('yoy'))
 camp['a25'] = camp['all25'] = agg['a25']
@@ -143,12 +143,12 @@ camp['q25'], camp['q26'] = agg['q25'], agg['q26']
 camp['s25'], camp['s26'] = agg['n_sku25'], agg['n_sku26']
 camp['yoy'] = camp['yoyA'] = agg['yoy']
 camp['basis'] = f"두 해 모두 1~{agg['last_month']}월 · SHOCK ABSORBER + BRAKE PAD · 자료 {agg['src']}"
-# 오더가 난 SKU·고객·국가도 원장이 아니라 이 원본 기준으로 맞춘다
+# 오더가 난 SKU·고객·국가도 원장이 아니라 이 원본 기준으로 맞춤
 camp['ord_sku'] = agg['n_sku26']
 camp['n_cust'] = agg['n_cust']
 camp['loc'] = f"{agg['n_cty']}개국"
 
-# ── 캠페인 동일 구간(d25/d26)과 월별 지속성(mser) 도 같은 원본으로 다시 센다.
+# ── 캠페인 동일 구간(d25/d26)과 월별 지속성(mser) 도 같은 원본으로 다시 셈.
 #    구간은 wins 의 첫 칸(2026-01-13~09-22)과 전년 같은 날짜.
 if R is not None and camp.get('wins'):
     w0, w1 = camp['wins'][0]
@@ -195,7 +195,7 @@ if pat.search(out):
 else:
     anchor = '<script>const CIS10 = '
     if anchor not in out:
-        print('MENA10 자리를 만들 기준(const CIS10)을 찾지 못했습니다.'); sys.exit(1)
+        print('MENA10 자리를 만들 기준(const CIS10)을 찾지 못했음.'); sys.exit(1)
     out = out.replace(anchor, blk + '\n' + anchor, 1)
 
 changed = out != html
