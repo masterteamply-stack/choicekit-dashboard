@@ -26,7 +26,10 @@
    "q": 14438,
    "a": 87273,
    "cust": 25,
-   "started": true
+   "started": true,
+   "sq": 14579,
+   "sa": 89606.98,
+   "shit": 7
   },
   {
    "make": "CHEVROLET",
@@ -49,7 +52,10 @@
    "q": 53012,
    "a": 224832,
    "cust": 20,
-   "started": true
+   "started": true,
+   "sq": 59794,
+   "sa": 235270.59,
+   "shit": 9
   },
   {
    "make": "NISSAN",
@@ -72,7 +78,10 @@
    "q": 10101,
    "a": 49269,
    "cust": 22,
-   "started": true
+   "started": true,
+   "sq": 2829,
+   "sa": 15143.89,
+   "shit": 8
   },
   {
    "make": "TOYOTA",
@@ -97,7 +106,10 @@
    "q": 1304,
    "a": 8983,
    "cust": 14,
-   "started": true
+   "started": true,
+   "sq": 2364,
+   "sa": 16452.61,
+   "shit": 6
   },
   {
    "make": "VOLKSWAGEN",
@@ -117,7 +129,10 @@
    "q": 85,
    "a": 587,
    "cust": 2,
-   "started": true
+   "started": true,
+   "sq": 194,
+   "sa": 1272.31,
+   "shit": 4
   },
   {
    "make": "RENAULT",
@@ -139,7 +154,10 @@
    "q": 0,
    "a": 0,
    "cust": 0,
-   "started": true
+   "started": true,
+   "sq": 627,
+   "sa": 4255.81,
+   "shit": 5
   },
   {
    "make": "CHEVROLET",
@@ -159,7 +177,10 @@
    "q": 0,
    "a": 0,
    "cust": 0,
-   "started": true
+   "started": true,
+   "sq": 506,
+   "sa": 2930.82,
+   "shit": 6
   },
   {
    "make": "HYUNDAI",
@@ -184,7 +205,10 @@
    "q": 0,
    "a": 0,
    "cust": 0,
-   "started": false
+   "started": false,
+   "sq": 35,
+   "sa": 168.5,
+   "shit": 2
   },
   {
    "make": "SUZUKI",
@@ -204,7 +228,10 @@
    "q": 0,
    "a": 0,
    "cust": 0,
-   "started": false
+   "started": false,
+   "sq": 0,
+   "sa": 0.0,
+   "shit": 0
   }
  ],
  "tot": {
@@ -215,6 +242,12 @@
   "a": 326265,
   "cust": 29,
   "pre_n": 9,
-  "pre_a": 58193
- }
+  "pre_a": 58193,
+  "sq": 80928,
+  "sa": 365101.51,
+  "shit": 47,
+  "sn": 72
+ },
+ "sale_src": "LATAM_MarketFit.xlsx",
+ "note_sale": "누적 판매는 제공 자료에 적힌 값이고 마감일이 자료에 없다. 연관 오더 원장 집계와 기준·시점이 달라 더하거나 바꿔 쓰지 않는다."
 }
