@@ -1117,12 +1117,9 @@ function sellinSvg(o,W){
    월별 Sell-out, Sell-in 수량·품목)와 달마다 쌓는 분석은 여기 한곳에 모음. */
 
 /* 월별 분석 누적 — 새 달 분석은 이 배열 맨 앞에 한 덩어리 추가하면 그대로 쌓임. */
+/* 비워 두면 '분석 누적' 블록 자체가 그려지지 않음. 새 달 분석은 여기 맨 앞에
+   {m:'2026-11', t:'…', li:['…']} 한 덩어리를 넣으면 그대로 쌓임. */
 const ASIA_SO_LOG=[
- {m:'2026-10', t:'10월 집계 (9월까지 실적)', li:[
-   '프로그램 단위 합계와 고객사 단위 합계를 같이 봄 — 한 고객사가 Sales Champion Award(영업사원 단위)와 Order to Earn POSM(매장·딜러 단위)에 동시에 걸리면 같은 판매가 두 번 잡힘. 대외 보고 수치는 중복을 걷어낸 고객사 단위를 씀.',
-   'Chuan Lam·Young Auto 는 월별 Sell-out 원장에는 실적이 있는데 리워드 지급 기준표에는 아직 0으로 올라와 있음. 둘 중 어느 쪽이 지급 근거인지 확인이 필요함.',
-   'SERI·Zentralink 는 CTR Display & Visibility 단독 참여라 Sell-out 목표가 없음. 예산은 집행 중이므로 달성률 계산에서는 빠지되 비용에는 잡힘.',
-   '지급 리워드는 전액 Sales Champion Award 에서 나감. POSM·Loyalty·New Product 는 목표 미달이거나 지급 조건 미충족임.']}
 ];
 
 function asiaSoPanel(o){
@@ -1953,7 +1950,6 @@ function apTable(){
  });
  const fa=(typeof AO!=='undefined'&&AO.tot)?AO.tot.usd:T.act, fr=(typeof AO!=='undefined'&&AO.tot)?AO.tot.att:T.att;
  return `<h4 class="soh" style="border-left:4px solid var(--brand);padding-left:8px">고객사별 Sell-out 프로그램 참여 · 현황${AP.cut?' ('+(+AP.cut.slice(5))+'월까지)':''}</h4>`
-  +`<p class="sub3" style="margin:-4px 0 9px;line-height:1.5">고객사마다 어느 프로그램에 들어가 있고 각각 어디까지 왔는지 한 줄에서 봄 · ${esc(AP.note)} · 자료 ${esc(AP.src)}<br><b>${esc(AP.note_dup)}</b> 그래서 고객사 머리행의 실적은 중복을 걷어낸 값이고, 아래 프로그램 행을 더하면 그보다 커짐.</p>`
   +`<div class="tblwrap sowrap"><table class="lts sotbl" style="font-size:12px"><thead><tr>
      <th style="text-align:left">고객사</th><th style="text-align:left">참여 프로그램 · 기간 · 현황</th>
      <th>Sell-out 목표</th><th>Sell-out 실적</th><th>달성률</th><th>마케팅 예산</th><th>지급 리워드</th></tr></thead><tbody>`
