@@ -415,6 +415,7 @@ tfoot td.ocol{background:#15605a;color:#fff}
     <div class="kpis k6" id="ssKpi"></div>
     <div id="ssBody"></div>
     <div id="ssExtra"></div>
+    <div id="ssTail"></div>
   </div>
 
     <!-- P7 September Report -->
@@ -1479,6 +1480,7 @@ function ssPage(){
         :`<b>${esc(f.region)}</b> 권역에는 SteerStar 파트너가 없음.<br>`
           +`현재 파트너: ${[...new Set((SS.rows||[]).map(r=>r.region))].join(' · ')}`)
       +`</div></div>`;
+    $('#ssTail').innerHTML='';   /* 앞서 그린 하단 카드가 남지 않게 */
     return;}
   $('#w6').innerHTML=`<b>SteerStar 2026</b> · 파트너 ${rows.length}곳`
     +(drop.length?` (올해 제외 ${drop.length}곳: ${drop.map(r=>esc(r.name.split(' ')[0])).join(' · ')})`:'')
@@ -1542,7 +1544,9 @@ function ssPage(){
           <span><i class="sw" style="background:var(--brand)"></i>설문 참여 수 (건)</span></div>
         <div class="svgbox">${ssSvg(MS,460)}</div></div>
     </div>
-    ${card(T1,'t1')}
+    ${card(T1,'t1')}`;
+  /* 예산 집행 · 활동 계획과 진행 메모 · 설문 진행 미션은 고객사 상세 뒤, 페이지 맨 아래로 */
+  $('#ssTail').innerHTML=`
     <div class="card"><h3>예산 집행</h3>
       <div class="scroll">${tbl({cols:[c2('k','항목','l','t'),c2('v','금액','r','w'),c2('sh','총예산 대비','r','sh'),c2('d','내용','l','t',520)],
         rows:(SS.budget||[]).map(b=>({...b,sh:SS.btot?Math.round(b.v/SS.btot*1000)/10:null}))})}</div></div>
@@ -1550,7 +1554,7 @@ function ssPage(){
     <div class="card"><h3>파트너별 설문 진행 미션</h3>
       <p class="note" style="padding-left:0;margin:0 0 10px">설문 참여 수·목표·달성률(SERI Expo 포함) 상세는 <b>설문 인사이트</b> 탭으로 통합·이동함.</p>
       <button class="btn" id="goSurvey">설문 인사이트 탭으로 이동 →</button></div>`;
-  $$('#ssBody button[data-csv]').forEach(b=>{b.onclick=()=>{
+  $$('#ssBody button[data-csv], #ssTail button[data-csv]').forEach(b=>{b.onclick=()=>{
     const t={t1:T1,t2:T2,t3:T3}[b.dataset.csv];
     csv(t.csv,[t.cols.map(c=>c.lab)].concat(t.rows.map(r=>t.cols.map(c=>r[c.k]??''))));};});
   /* 설문 상세는 설문 인사이트(p9) 탭에 있음 — 거기로 바로 넘김 */
