@@ -233,6 +233,8 @@ th .up{color:#7be3b8}
 :root[data-theme="dark"]{ --pos:var(--s1); --neg:var(--brand); }
 .kpis.k6{grid-template-columns:1.4fr repeat(5,1fr)}
 .kpis.k8{grid-template-columns:1.5fr repeat(3,1fr)}
+.kpis.keq{grid-template-columns:repeat(auto-fit,minmax(0,1fr))}
+.kpis.keq .tile{min-width:0}
 @media(max-width:1320px){.kpis.k6{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:820px){.kpis.k6{grid-template-columns:repeat(2,1fr)}}
 .kpis.k4{grid-template-columns:1.4fr repeat(3,1fr)}
@@ -1873,15 +1875,6 @@ function asiaInsight(){
     const top=AO.rows.filter(r=>r.usd>0).sort((a,b)=>b.usd-a.usd).slice(0,3);
     li.push({t:'Sell-out 이 주력',d:`목표 ${fmtC(O.tgt)} 대비 <b>${fmtC(O.usd)} (${O.att}%)</b>. `
       +`상위 ${top.map(r=>`${esc(r.k)} ${fmtC(r.usd)}`).join(' · ')} 가 ${(top.reduce((a,r)=>a+r.usd,0)/O.usd*100).toFixed(0)}% 를 차지함.`});
-    const pend=AO.rows.filter(r=>r.usd===0).map(r=>esc(r.k));
-    if(pend.length) li.push({t:'자료 미수령',d:`${pend.join(' · ')} — Display & Visibility 분. 목표가 없어 달성률에는 안 잡히지만 예산은 집행 중임.`});
-  }
-  if(P&&AP.groups){
-    const g=AP.groups.slice().sort((a,b)=>(b.att||0)-(a.att||0));
-    const hi=g.filter(x=>x.att!=null&&x.att>=100), lo=g.filter(x=>x.att!=null&&x.att<100);
-    li.push({t:'프로그램 쏠림',d:(hi.length?`${hi.map(x=>`${esc(x.p)} ${x.att}%`).join(' · ')} 는 목표를 넘겼고, `:'')
-      +(lo.length?`${lo.map(x=>`${esc(x.p)} ${x.att}%`).join(' · ')} 는 아래임. `:'')
-      +`지급 리워드 ${fmtC(P.rew)} 는 전액 Sales Champion Award 에서 나감 (예산 ${fmtC(P.bud)}).`});
   }
   if(S) li.push({t:'Sell-in 은 캠페인 기간 기준',
     d:`전년 동기 ${fmtC(S.a25)} → <b>${fmtC(S.got)}</b> (${fmtPC(S.yoy)}), 타깃 ${fmtC(S.tgt)} 대비 ${S.att}%. `
@@ -3114,10 +3107,12 @@ function menaMonth(kgrid){
    +`</span></div><div class="card">`;
 
   h+=kgrid([
-    {lab:`연관 오더 (1~${M?M.last_month:10}월)`,hero:1,
-     val:`${ex(c.a25)} <span style="color:var(--muted);font-weight:400">→</span> ${ex(c.a26)}`,
+    {lab:`연관 오더 (1~${M?M.last_month:10}월)`,
+     val:`<span style="font-size:clamp(19px,1.5vw,25px)">${ex(c.a25)} <span style="color:var(--muted);font-weight:400">→</span> ${ex(c.a26)}`
+         +(att!=null?`<span style="display:inline-block;margin-left:.3em;padding:1px .34em;border-radius:8px;background:var(--brand);color:#fff;font-size:.8em;vertical-align:.1em">${att.toFixed(0)}%</span>`:'')
+         +`</span>`,
      sub:`전년 대비 <span class="${cls(c.yoy)}">${fmtPC(c.yoy)}</span> · 고객 ${cu.length}곳 · ${nCty}개국`,
-     sub2:`두 해 모두 1~${M?M.last_month:10}월 같은 구간`},
+     sub2:(att!=null?`달성률 — 캠페인 자체 목표 ${ex(c.so_t)}`:`두 해 모두 1~${M?M.last_month:10}월 같은 구간`)},
     lastM?{lab:`${+lastM.slice(5)}월 추가분`,val:ex(addUsd),
      sub:(M&&M.last_by&&M.last_by.length)?M.last_by.map(x=>esc(x.k)).join(' · '):'',
      sub2:`${addN}종 · BRAKE PAD · 이 한 건이 당해 증가분의 대부분`}:null,
@@ -3126,10 +3121,8 @@ function menaMonth(kgrid){
     }:null,
     M?{lab:'오더 SKU',val:`${M.n_sku26}<span style="font-size:15px;color:var(--muted);font-weight:400"> / ${(c.tgt_sku||0).toLocaleString()}종</span>`,
      sub:`전년 ${M.n_sku25}종 · 그중 <b>신규 ${M.n_new}종</b>`,
-     sub2:`대상 대비 ${c.tgt_sku?(M.n_sku26/c.tgt_sku*100).toFixed(1):'–'}%`}:null,
-    att!=null?{lab:'캠페인 목표 대비',val:att.toFixed(0)+'%',
-     sub:`캠페인 자체 목표 ${ex(c.so_t)} · 전쟁 이슈로 정정된 값`,meter:att}:null
-  ].filter(Boolean));
+     sub2:`대상 대비 ${c.tgt_sku?(M.n_sku26/c.tgt_sku*100).toFixed(1):'–'}%`}:null
+  ].filter(Boolean),'keq');
 
   /* 고객사 · 제품 */
   if(cu.length){
@@ -3381,9 +3374,12 @@ function octMonth(A){
    +`<span class="sub3" style="font-size:12px">데이터 기준 ${esc(A.generated_at)}</span></div>`
    +kgrid([
      {lab:'연관 오더 (전년 → 당해)',hero:1,
-      val:`${fmtC(Tov.a25)} <span style="color:var(--muted);font-weight:400">→</span> ${fmtC(Tov.a26)}`,
+      /* 달성률을 당해 오더 옆에 같이 크게. 한 줄에 들어가게 본 수치를 조금 줄임 */
+      val:`<span style="font-size:clamp(26px,2.3vw,36px)">${fmtC(Tov.a25)} <span style="color:var(--muted);font-weight:400">→</span> ${fmtC(Tov.a26)}`
+          +(_achM!=null?`<span style="display:inline-block;margin-left:.3em;padding:1px .34em;border-radius:9px;background:var(--brand);color:#fff;font-size:.78em;vertical-align:.1em">${_achM.toFixed(0)}%</span>`:'')
+          +`</span>`,
       sub:`전년 대비 <span class="${cls(Tov.yoy)}">${fmtPC(Tov.yoy)}</span>`
-          +(_achM!=null?` · 달성률 <b>${_achM.toFixed(0)}%</b> <span style="font-weight:400">(목표 ${fmtC(_goalM)} · 전년 동기 ×1.2)</span>`:''),
+          +(_achM!=null?` · 달성률 — 목표 ${fmtC(_goalM)} (전년 동기 ×1.2)`:''),
       sub2:`대상 SKU 연관 오더 · 캠페인 기간만 · 원장 ~${esc(_ocut)}`},
      _rn?{lab:'참여 고객사 매출 (캠페인 기간)',val:fmtC(_rw),
       sub:`매출 자료가 있는 ${_rn}곳 합계 · 참여 고객 ${_ccode.size}곳`,
