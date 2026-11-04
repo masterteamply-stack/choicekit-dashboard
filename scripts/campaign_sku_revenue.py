@@ -19,6 +19,8 @@
 """
 import argparse, collections, csv, gzip, json, os, re, sys
 
+FC = False   # --with-forecast
+
 HTML = 'promo_dashboard_v10_6.html'
 NORM = re.compile(r'[^A-Z0-9]+')
 norm = lambda s: NORM.sub('', (s or '').upper().replace('“', '"').replace('”', '"'))
@@ -33,7 +35,10 @@ def main():
     ap.add_argument('--base', default='data_base')
     ap.add_argument('--out', default='campaign_sku_revenue.json')
     ap.add_argument('--html', default=HTML)
+    ap.add_argument('--with-forecast', action='store_true',
+                    help='아직 결산 전인 달의 예상매출도 실적으로 같이 셈')
     a = ap.parse_args()
+    global FC; FC = a.with_forecast
 
     T = json.load(open('campaign_target_skus.json', encoding='utf-8'))
     h = open(a.html, encoding='utf-8').read()
@@ -78,9 +83,14 @@ def main():
     if not jobs:
         print('대상 SKU 가 지정된 캠페인이 없음.'); return
 
-    # 확정 매출이 어디까지 있나 — 캠페인 구간을 여기서 자름.
+    # 품번 단위 매출이 어디까지 온전한가 — 캠페인 구간을 여기서 자름.
     # 자르지 않으면 전년은 11월까지, 올해는 9월까지가 되어 전년 대비가 왜곡됨.
-    cut = max(json.load(open(os.path.join(a.base, 'manifest.json'),
+    #
+    # 법인 중 가장 이른 마감월을 씀(max 가 아니라 min). 결산 전인 달의 예상매출은
+    # 품번이 비어 있어(item_code='') 대상 SKU 로 집계되지 않음 — 한 법인만 덜
+    # 마감돼도 그 달은 올해만 0 이 되어 전년 대비가 통째로 깎임.
+    # (실제로 max 로 두었더니 CIS Asian 이 +1.7% → -9.3% 로 뒤집혔음)
+    cut = min(json.load(open(os.path.join(a.base, 'manifest.json'),
                              encoding='utf-8'))['sales_meta']['last_actual'].values())
     cutm = cut[4:]
     for j in jobs.values():
@@ -103,9 +113,10 @@ def main():
                     continue
                 g = agg[k][(mo[:4], r['is_forecast'])]
                 g[0] += u; g[1] += q; g[2].add(r['item_code'])
-                # 캠페인 구간 · 확정분만. 전년 같은 달과 1:1 로 비교할 수 있게 전년도 같은 구간도 셈
+                # 캠페인 구간. 전년 같은 달과 1:1 로 비교할 수 있게 전년도 같은 구간도 셈.
+                # --with-forecast 를 주면 아직 결산 전인 달도 실적으로 같이 봄.
                 w = j['win']
-                if w and r['is_forecast'] == '0' and w[0][5:] <= mo[5:] <= w[1][5:]:
+                if w and (FC or r['is_forecast'] == '0') and w[0][5:] <= mo[5:] <= w[1][5:]:
                     if mo[:4] >= '2024':
                         v = wag[k][mo[:4]]
                         v[0] += u; v[1] += q; v[2].add(r['item_code'])

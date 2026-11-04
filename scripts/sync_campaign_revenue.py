@@ -35,14 +35,25 @@ def main():
     ap.add_argument('--base', default='data_base')
     ap.add_argument('--html', default=HTML)
     ap.add_argument('--check', action='store_true')
+    ap.add_argument('--through', help="구간 끝달을 못박음 (예: 2026-10). "
+                                      "법인 마감이 덜 끝난 달을 쓸 때는 --with-forecast 를 같이 줌")
+    ap.add_argument('--with-forecast', action='store_true',
+                    help='아직 결산 전인 달의 예상매출도 실적으로 같이 셈')
     a = ap.parse_args()
 
     html = open(a.html, encoding='utf-8', newline='').read()
     D = json.loads(re.search(r'<script>const D = (\{.*?\});</script>', html, re.S).group(1))
     man = json.load(open(os.path.join(a.base, 'manifest.json'), encoding='utf-8'))
-    # 전 법인이 확정된 마지막 달까지만 봄 — 법인마다 마감이 다르면 가장 이른 달
+    # 기본은 전 법인이 확정된 마지막 달 — 법인마다 마감이 다르면 가장 이른 달.
+    # --through 로 못박으면 그 달까지 보되, 결산 전 법인이 섞이면
+    # --with-forecast 가 있어야 그 달의 예상매출도 같이 셈.
     cut = min(man['sales_meta']['last_actual'].values())
-    cutm = '%s-%s' % (cut[:4], cut[4:])
+    cutm = a.through or ('%s-%s' % (cut[:4], cut[4:]))
+    late = sorted(k for k, v in man['sales_meta']['last_actual'].items()
+                  if '%s-%s' % (v[:4], v[4:]) < cutm)
+    if late and not a.with_forecast:
+        raise SystemExit('%s 은(는) %s 까지만 결산됨. 그 달을 넣으려면 --with-forecast 를 같이 줌.'
+                         % (' · '.join(late), cut))
 
     win = {}
     for c in D.get('campaigns', []):
@@ -100,18 +111,35 @@ def main():
 
     cur = collections.Counter(); pre = collections.Counter()
     src = os.path.join(a.base, 'am_sales_cat.csv')
+    fc = 0.0          # 실적으로 같이 센 '결산 전' 금액 — 얼마나 섞였는지 밝히려고 모음
     for r in csv.DictReader(open(src, encoding='utf-8')):
-        if r['is_internal'] == '1' or r['is_forecast'] == '1': continue
-        for code in bymap.get(r['buyer_code'], ()):
+        if r['is_internal'] == '1': continue
+        if r['is_forecast'] == '1' and not a.with_forecast: continue
+        codes = bymap.get(r['buyer_code'])
+        if not codes: continue
+        ym, u = r['month'], float(r['usd'] or 0)
+        prev = '%d%s' % (int(ym[:4]) + 1, ym[4:])      # 이 달을 전년으로 보면 당해 몇 월인지
+        for code in codes:
             s, e, _ = tgt[code]
-            ym, u = r['month'], float(r['usd'] or 0)
-            if s <= ym <= e: cur[code] += u
-            elif ('%d%s' % (int(ym[:4]) + 1, ym[4:])) >= s and \
-                 ('%d%s' % (int(ym[:4]) + 1, ym[4:])) <= e: pre[code] += u
+            if s <= ym <= e:
+                cur[code] += u
+                if r['is_forecast'] == '1': fc += u
+            elif s <= prev <= e:
+                pre[code] += u
 
     REVW = {k: round(v, 2) for k, v in cur.items() if v}
     REVP = {k: round(v, 2) for k, v in pre.items() if v}
+    meta = {'cut': cutm, 'fc': round(fc, 2), 'fc_plant': late,
+            'note': ('매출 구간 ~%s' % cutm) +
+                    ((' · 그중 %s 의 %s 분 $%s 는 결산 전 수치임'
+                      % (' · '.join(late), cutm[5:] + '월', format(round(fc), ','))) if fc else '')}
     out = put(html, 'REVW', REVW)
+    if re.search(r'const REVM\s*=', out):
+        out = put(out, 'REVM', meta)
+    else:
+        _m = re.search(r'const REVW\s*=', out)
+        out = out[:_m.start()] + 'const REVM=' + json.dumps(meta, ensure_ascii=False,
+              separators=(',', ':')) + ';\n' + out[_m.start():]
     if re.search(r'const REVP\s*=', out):
         out = put(out, 'REVP', REVP)
     else:
@@ -127,7 +155,8 @@ def main():
     c26, c25 = sum(REVW.values()), sum(REVP.values())
     both = [k for k in REVW if k in REVP]
     b26 = sum(REVW[k] for k in both); b25 = sum(REVP[k] for k in both)
-    print(f"캠페인 기간 매출 · 확정 ~{cutm} 에서 자름")
+    print(f"캠페인 기간 매출 · ~{cutm} 에서 자름"
+          + (f"  (그중 결산 전 ${fc:,.0f} 포함 — {' · '.join(late)})" if fc else ''))
     print(f"  당해 ${c26:,.0f} ({len(REVW)}곳)   전년 동기 ${c25:,.0f} ({len(REVP)}곳)")
     print(f"  양쪽 다 있는 {len(both)}곳 기준  ${b25:,.0f} → ${b26:,.0f}  "
           f"({(b26-b25)/b25*100:+.1f}%)" if b25 else '')
