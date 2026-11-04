@@ -1543,14 +1543,20 @@ function ssPage(){
         <div class="svgbox">${ssSvg(MS,460)}</div></div>
     </div>
     ${card(T1,'t1')}
-    <div class="card"><h3>파트너별 설문 진행 미션</h3><p class="note" style="padding-left:0">설문 참여 수·목표·달성률(SERI Expo 포함) 상세는 <b>설문 인사이트</b> 탭으로 통합·이동함.</p></div>
     <div class="card"><h3>예산 집행</h3>
       <div class="scroll">${tbl({cols:[c2('k','항목','l','t'),c2('v','금액','r','w'),c2('sh','총예산 대비','r','sh'),c2('d','내용','l','t',520)],
         rows:(SS.budget||[]).map(b=>({...b,sh:SS.btot?Math.round(b.v/SS.btot*1000)/10:null}))})}</div></div>
-    ${card(T3,'t3')}`;
+    ${card(T3,'t3')}
+    <div class="card"><h3>파트너별 설문 진행 미션</h3>
+      <p class="note" style="padding-left:0;margin:0 0 10px">설문 참여 수·목표·달성률(SERI Expo 포함) 상세는 <b>설문 인사이트</b> 탭으로 통합·이동함.</p>
+      <button class="btn" id="goSurvey">설문 인사이트 탭으로 이동 →</button></div>`;
   $$('#ssBody button[data-csv]').forEach(b=>{b.onclick=()=>{
     const t={t1:T1,t2:T2,t3:T3}[b.dataset.csv];
     csv(t.csv,[t.cols.map(c=>c.lab)].concat(t.rows.map(r=>t.cols.map(c=>r[c.k]??''))));};});
+  /* 설문 상세는 설문 인사이트(p9) 탭에 있음 — 거기로 바로 넘김 */
+  {const gs=$('#goSurvey'); if(gs) gs.onclick=()=>{
+    const b=document.querySelector('#nav button[data-pg="p9"]');
+    if(b){activateTab(b); window.scrollTo({top:0,behavior:'smooth'});}};}
   $$('#ssBody .hit').forEach(h=>{
     h.addEventListener('mousemove',e=>{const x=MS[+h.dataset.j];
       tipOn(e,`<div class="tt">${x.m}</div>
