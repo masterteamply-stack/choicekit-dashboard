@@ -2802,29 +2802,67 @@ function cisOct(){
     +cisTile('Catalogue 다운로드',CISQ(C.cat.rows[1][2]),`웹사이트 조회 ${CISQ(C.cat.rows[0][2])} · 콘텐츠 ${esc(C.cat.sns_oct)}`+(C.ads?`<br>Meta 광고 클릭 ${CISQ(C.ads.tot.clk)} · CTR ${C.ads.tot.ctr}%`:''))
     +`</div>`;
 
-  const mx=Math.max(...C.cust.map(c=>c.t),1);
-  h+=`<div class="sub3 cap" style="color:var(--ink2);margin:14px 0 3px"><b>고객사별 누적 오더</b> `
-   +`<span style="font-weight:400">· ${esc(C.period)} · Choice Kit 대상 SKU 연관 오더(Sell-in)</span></div>`
-   +`<div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr>`
-   +`<th>#</th><th style="text-align:left">고객사</th><th style="text-align:left">국가</th>`
-   +`<th>Asian</th><th>European</th><th>합계</th><th>비중</th><th>${LM}월 신규</th></tr></thead><tbody>`
-   +C.cust.map(c=>`<tr><td class="num sub3">${c.rank}</td>
-      <td style="text-align:left"><b>${esc(c.k)}</b></td>
-      <td class="small sub3" style="text-align:left">${esc(c.country)}</td>
-      <td class="num sub3">${c.a?fmtC(c.a):'<span class="sub3">–</span>'}</td>
-      <td class="num sub3">${c.e?fmtC(c.e):'<span class="sub3">–</span>'}</td>
-      <td class="num"><b>${fmtC(c.t)}</b></td>
-      <td style="min-width:80px"><div style="height:8px;background:var(--track);border-radius:3px;overflow:hidden"><div style="height:100%;width:${c.t/mx*100}%;background:var(--brand)"></div></div></td>
-      <td class="num">${c.oct?`<b class="up">${fmtC(c.oct)}</b>`:'<span class="sub3">·</span>'}</td></tr>`).join('')
-   +`</tbody><tfoot><tr><td></td><td style="text-align:left">합계 · ${C.n_cust}개사</td><td></td>
-      <td class="num">${fmtC(C.a)}</td><td class="num">${fmtC(C.e)}</td><td class="num">${fmtC(C.total)}</td>
-      <td></td><td class="num">${fmtC(C.last.usd)}</td></tr></tfoot></table></div>`
+  h+=cisCustTable();
    +cisInsight()
    +`<p class="note" style="margin:12px 0 0;border-left:3px solid var(--brand);padding-left:10px">`
     +`월별·국가별·제품군별 오더 분해, 고객사 협업 활동, Mechanic Support Kit, Catalogue 성과, `
     +`11월 현장 캘린더와 Action Plan 은 <b>캠페인 효과 탭 › CIS</b> 로 옮겼음.</p>`
    +`</div>`;
   return h;
+}
+
+/* CIS 고객사별 누적 오더 — 연관 오더 원장 기준(D.cust_delta).
+   전년이 같이 들어 있는 자료가 이것뿐이라 표 전체를 이 기준으로 둠.
+   Asian·European 각각 전년 → 당해와 증감을 나란히 봄. */
+function cisCustTable(){
+  const CP=(typeof D!=='undefined'&&D.campaigns)?D.campaigns.filter(c=>c.region==='CIS'):[];
+  const rows=new Map();
+  (((typeof D!=='undefined'&&D.cust_delta)||[])).forEach(r=>{
+    if(r.region!=='CIS') return;
+    const k=(r.name||'').trim();
+    if(!rows.has(k)) rows.set(k,{k,country:r.country||'',A:[0,0],E:[0,0],has:{A:false,E:false}});
+    const o=rows.get(k), s=r.program==='European vehicle'?'E':'A';
+    o[s][0]+=r.a25||0; o[s][1]+=r.a26||0; o.has[s]=true;
+  });
+  const list=[...rows.values()].map(o=>({...o,t25:o.A[0]+o.E[0],t26:o.A[1]+o.E[1]}))
+    .sort((x,y)=>y.t26-x.t26);
+  if(!list.length) return '';
+  const T=list.reduce((a,o)=>({a25:a.a25+o.A[0],a26:a.a26+o.A[1],e25:a.e25+o.E[0],e26:a.e26+o.E[1]}),
+                      {a25:0,a26:0,e25:0,e26:0});
+  const t25=T.a25+T.e25, t26=T.a26+T.e26;
+  const pc=(p,c)=>{ if(!p) return c>0?'<span class="pill na">신규</span>':'<span class="sub3">–</span>';
+    const v=(c-p)/p*100; return `<span class="${cls(v)}">${(v>=0?'+':'')+v.toFixed(0)}%</span>`; };
+  const pair=(p,c,has)=>has
+    ? `<span style="color:var(--muted)">${p?fmtC(p):'0'}</span> <span style="color:var(--muted)">→</span> ${c?fmtC(c):'0'}`
+    : '<span class="sub3">–</span>';
+  const win=CP.length?`${CP[0].start} ~ ${CP[0].end}`:'';
+  const obs=(CP.length&&CP[0].wins&&CP[0].wins[0])?CP[0].wins[0].join(' ~ '):'';
+  return `<div class="sub3 cap" style="color:var(--ink2);margin:14px 0 3px"><b>고객사별 누적 오더</b> `
+   +`<span style="font-weight:400">· 전년 → 당해 · Choice Kit 대상 SKU 연관 오더(Sell-in)`
+   +(obs?` · 두 해 모두 ${esc(obs)} 같은 구간`:'')+`</span></div>`
+   +`<div class="tblwrap"><table class="lts" style="font-size:12px"><thead>`
+   +`<tr><th rowspan="2">#</th><th rowspan="2" style="text-align:left">고객사</th>`
+   +`<th rowspan="2" style="text-align:left">국가</th>`
+   +`<th colspan="2">Asian</th><th colspan="2">European</th><th colspan="2">합계</th></tr>`
+   +`<tr><th>전년 → 당해</th><th>증감</th><th>전년 → 당해</th><th>증감</th><th>전년 → 당해</th><th>증감</th></tr>`
+   +`</thead><tbody>`
+   +list.map((o,i)=>`<tr><td class="num sub3">${i+1}</td>
+      <td style="text-align:left"><b>${esc(o.k)}</b></td>
+      <td class="small sub3" style="text-align:left">${esc(o.country)}</td>
+      <td class="num sub3">${pair(o.A[0],o.A[1],o.has.A)}</td>
+      <td class="num">${o.has.A?pc(o.A[0],o.A[1]):'<span class="sub3">–</span>'}</td>
+      <td class="num sub3">${pair(o.E[0],o.E[1],o.has.E)}</td>
+      <td class="num">${o.has.E?pc(o.E[0],o.E[1]):'<span class="sub3">–</span>'}</td>
+      <td class="num"><b>${pair(o.t25,o.t26,true)}</b></td>
+      <td class="num"><b>${pc(o.t25,o.t26)}</b></td></tr>`).join('')
+   +`</tbody><tfoot><tr><td></td><td style="text-align:left">합계 · ${list.length}개사</td><td></td>
+      <td class="num">${pair(T.a25,T.a26,true)}</td><td class="num">${pc(T.a25,T.a26)}</td>
+      <td class="num">${pair(T.e25,T.e26,true)}</td><td class="num">${pc(T.e25,T.e26)}</td>
+      <td class="num"><b>${pair(t25,t26,true)}</b></td><td class="num"><b>${pc(t25,t26)}</b></td>
+      </tr></tfoot></table></div>`
+   +(typeof CIS10!=='undefined'&&CIS10.total?`<p class="note fn" style="padding-left:0;margin:4px 0 0">`
+      +`전년이 같이 있는 연관 오더 원장으로 뽑아 위 KPI(${fmtC(CIS10.total)})와 다름 — `
+      +`KPI 는 ${esc(CIS10.period)} 구간이고 이 표는 전년과 맞춘 ${esc(obs)} 구간임. 두 값을 섞지 않음.</p>`:'');
 }
 
 /* 월간 리포트용 CIS 인사이트 — 수치에서 직접 뽑음. 손으로 적지 않음. */
