@@ -40,12 +40,18 @@ def grab(s, i):
     raise ValueError('괄호가 닫히지 않음')
 
 
-def read_kv(path):
+def read_kv(path, want=None):
+    """want='2026-10' 이면 그 달치. 안 주면 '마지막 완결월'.
+
+    원장이 달 중간에서 끊기면(11/03 스냅) 그 달을 집계월로 잡으면 안 됨 —
+    며칠치가 한 달처럼 보임. 그래서 기본값은 끝난 달까지만 봄.
+    """
+    import calendar
     h = open(path, encoding='utf-8', errors='replace').read()
     K = json.loads(grab(h, h.index('const D=') + len('const D=')))
     ep = datetime.date(*map(int, K['meta']['epoch'].split('-')))
     mx = ''
-    per = collections.defaultdict(lambda: [0.0, 0.0])   # 월 마감 기준 그 달치
+    per = collections.defaultdict(lambda: [0.0, 0.0])
     seen = set()
     rows = []
     for r in K['ord']:
@@ -54,11 +60,18 @@ def read_kv(path):
         if d > mx: mx = d
         rows.append((d, K['cus'][r[1]][3], r[9], r[7]))
         seen.add(K['cus'][r[1]][3])
-    mon = mx[:7]
+    if want:
+        mon = want
+    else:
+        y, m = int(mx[:4]), int(mx[5:7])
+        if int(mx[8:10]) < calendar.monthrange(y, m)[1]:
+            y, m = (y - 1, 12) if m == 1 else (y, m - 1)
+        mon = '%d-%02d' % (y, m)
+    cut = min(mx, '%s-%02d' % (mon, calendar.monthrange(int(mon[:4]), int(mon[5:7]))[1]))
     for d, code, usd, qty in rows:
         if d[:7] != mon: continue
         v = per[code]; v[0] += usd; v[1] += qty
-    return per, mx, seen, {c[0].strip(): c[3] for c in K['cus']}
+    return per, cut, mon, seen, {c[0].strip(): c[3] for c in K['cus']}
 
 
 html = open(HTML, encoding='utf-8', newline='').read()
@@ -68,8 +81,8 @@ if not m:
 D = json.loads(m.group(1))
 
 if '--html' in sys.argv:
-    per, cut, seen, byname = read_kv(sys.argv[sys.argv.index('--html') + 1])
-    mon = cut[:7]
+    _w = sys.argv[sys.argv.index('--month') + 1] if '--month' in sys.argv else None
+    per, cut, mon, seen, byname = read_kv(sys.argv[sys.argv.index('--html') + 1], _w)
     rows, cust = [], {}
     for c in D['campaigns']:
         if not c.get('started'): continue

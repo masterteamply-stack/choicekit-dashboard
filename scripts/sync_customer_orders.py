@@ -17,7 +17,7 @@
 매출(s25·s26)은 이 스크립트가 건드리지 않음 — AM Sales 파일의 실적이 아직
 9월까지라 10월 반영분이 없음. 매출은 AM 파일이 갱신되면 따로 손봄.
 """
-import json, os, re, sys, datetime, collections, subprocess
+import calendar, json, os, re, sys, datetime, collections, subprocess
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CO = os.path.join(ROOT, 'customer_orders.json')
@@ -121,7 +121,14 @@ if '--html' in sys.argv:
 else:
     src = json.load(open(CO, encoding='utf-8'))
 MX = src['max_order_date']
-L = int(MX[5:7])          # 당해 마지막 오더월
+# 비교·누계는 '마지막 완결월'까지만 봄.
+# 원장이 달 중간에서 끊기면(예: 11/03 스냅) 전년 11월 한 달 전체와 올해 3일치를
+# 맞대게 되어 전년 대비가 통째로 깎임. 그 달은 통계에서 빼고, 아래 PART 에
+# 남겨 두어 화면에서 '원장에 며칠치가 더 있음'을 밝힐 수 있게 함.
+_lastday = calendar.monthrange(int(MX[:4]), int(MX[5:7]))[1]
+_full = int(MX[8:10]) >= _lastday
+L = int(MX[5:7]) if _full else int(MX[5:7]) - 1   # 당해 마지막 완결 오더월
+PART = '' if _full else MX                        # 잘라 낸 미완결 구간의 마지막 날
 
 # ── 2) ASIA 초이스킷
 AJ = os.path.join(ROOT, 'asia_choicekit.json')
@@ -137,6 +144,8 @@ for r in aj['rows']:
     a25 = rng(dd, s25, e25)
     m25, m26 = months(dd, 2025), months(dd, 2026)
     q25, q26 = months(dd, 2025, 1), months(dd, 2026, 1)
+    m26 = m26[:L] + [0] * (12 - L)                # 미완결 달은 빼고 봄
+    q26 = q26[:L] + [0] * (12 - L)
     old = (r['a25'], r['got'], r['y26t'])
     r.update(a25=a25, got=got, y25=sum(m25), y25t=sum(m25[:L]), y26t=sum(m26[:L]),
              # 같은 구간의 수량 — 금액과 한 원장에서 같이 뽑아 기준이 어긋나지 않음
@@ -149,7 +158,7 @@ aj['source_order'] = f"{src['source']} (스냅 {src['snap']} · 오더 ~{MX} · 
 aj['note_order'] = ('오더는 SAP 전 품목 오더 원장 기준이고 브랜치(지점) 오더를 모고객사로 합산했음. '
                     'CTR K·CTR V 두 법인 원장이라 다른 법인을 거친 오더는 빠짐. '
                     'LIFEPRO AUTO(Mast 브랜치)는 원장에 고객으로 없어 합산되지 않음.')
-aj['cut_order'] = MX
+aj['cut_order'] = min(MX, '%s-%02d-%02d' % (MX[:4], L, calendar.monthrange(int(MX[:4]), L)[1]))
 aj['last_month'] = L
 
 # ── 3) CD 블록(SteerStar 고객사 월별 오더)
@@ -163,15 +172,45 @@ for c in CD['custs']:
     if not codes: continue
     dd = series(src, codes)
     m25, m26 = months(dd, 2025), months(dd, 2026)
-    c.update(y25=m25, y26=m26, last26=L, cut=MX[:7],
+    part = sum(m26[L:])                  # 완결월 뒤의 며칠치 — 통계에서 뺌
+    m26 = m26[:L] + [0] * (12 - L)       # 월별 막대에도 미완결 달을 띄우지 않음
+    c.update(y25=m25, y26=m26, last26=L, cut='%s-%02d' % (MX[:4], L),
              annual25=sum(m25), ytd26=sum(m26[:L]),
              cum25=sum(m25[:L]), cum26=sum(m26[:L]),
-             src='KV 오더 원장(CTR K+V)')
-CD['cut'] = MX[:7]
+             part26=part, src='KV 오더 원장(CTR K+V)')
+CD['cut'] = '%s-%02d' % (MX[:4], L)
 CD['src_note'] = (f"SAP 전 품목 오더 원장 {src['source']} (스냅 {src['snap']}) · 오더 ~{MX} · "
                   'Lordco 만 Sell-out 원장(CTRA_LO) 그대로')
+if PART:
+    CD['part_note'] = (f"원장에는 {PART} 까지 들어 있으나 {L}월까지만 셈 — "
+                       f"달 중간에서 끊긴 {int(MX[5:7])}월을 넣으면 전년 같은 달 한 달 전체와 "
+                       '맞대게 되어 전년 대비가 깎임.')
 out = html[:m.start()] + '<script>const CD = ' + json.dumps(CD, ensure_ascii=False, separators=(',', ':')) \
       + ';</script>' + html[m.end():]
+
+# SteerStar 표의 '전년 대비'와 그 밑값은 CD 에서 나옴. 여기서 같이 안 맞추면
+# 원장을 새로 반영할 때마다 같은 고객사가 두 군데서 다른 전년 대비로 보임.
+_m2 = re.search(r'<script>const SS = (\{.*?\});</script>', out, re.S)
+if _m2:
+    SS = json.loads(_m2.group(1))
+    base = {}
+    for c in CD['custs']:
+        base[c.get('ss_name') or c.get('name')] = (c.get('cum25') or 0, c.get('cum26') or 0,
+                                                   c.get('last26'))
+    fixed = []
+    for r in SS.get('rows', []):
+        b = base.get(r.get('name'))
+        if not b: continue
+        p, q, l = b
+        y = round((q - p) / p * 100, 1) if p else None
+        if (r.get('yoy'), r.get('o25'), r.get('o26')) != (y, p, q):
+            fixed.append(r['name'])
+        r.update(yoy=y, o25=p, o26=q, last=l)
+    if fixed:
+        out = out[:_m2.start()] + '<script>const SS = ' \
+            + json.dumps(SS, ensure_ascii=False, separators=(',', ':')) + ';</script>' + out[_m2.end():]
+        print('SteerStar 전년 대비 재계산: ' + ' · '.join(fixed))
+
 changed = out != html
 
 if '--check' in sys.argv:
