@@ -1836,6 +1836,71 @@ function aiTable(){
 
 /* LATAM CTR MarketFit — 모델군별 게시일(프로모션 적용 시작일) 기준 집계
    (단일 소스: latam_marketfit.json). 품번마다 자기 게시일 이후 오더만 셈. */
+/* LATAM 권역 종합 — 그 아래 캠페인별 지표. MarketFit 상세는 mfTable() 이 이어 붙임. */
+function latamBlock(){
+ const CS=((typeof D!=='undefined'&&D.campaigns)||[]).filter(c=>c.region==='LATAM'&&c.started);
+ if(!CS.length) return mfTable();
+ const SK={'CTR MarketFit Campaign':(typeof MF!=='undefined'&&MF.tot&&MF.tot.n)
+             ?{ord:MF.tot.hit,tgt:MF.tot.n}:null};
+ const a25=CS.reduce((a,c)=>a+(c.a25||0),0), a26=CS.reduce((a,c)=>a+(c.a26||0),0);
+ const yoy=a25?((a26-a25)/a25*100):null;
+ const oct=(typeof octU==='function')?octU(CS):{usd:0,qty:0,n:0};
+ const cust=new Set(((typeof D!=='undefined'&&D.cust_delta)||[])
+   .filter(r=>r.region==='LATAM'&&CS.some(c=>c.program===r.program))
+   .map(r=>String(r.code||r.name))).size;
+ /* 대상 SKU 가 지정된 캠페인만 전환율이 성립함 — 전 품목 캠페인은 오더가 난 종수라 섞지 않음 */
+ const tg=CS.map(c=>({c,s:SK[c.program]||(c.tgt_sku?{ord:c.s26,tgt:c.tgt_sku}:null)}))
+            .filter(x=>x.s&&x.s.tgt);
+ const to=tg.reduce((a,x)=>a+(x.s.ord||0),0), tt=tg.reduce((a,x)=>a+(x.s.tgt||0),0);
+ const K=[
+   {lab:'LATAM 연관 오더 (전년 → 당해)',hero:1,
+    val:`<span style="font-size:clamp(17px,1.35vw,25px)"><span style="color:var(--muted)">${fmtC(a25)}</span> <span style="color:var(--muted);font-weight:400">→</span> ${fmtC(a26)}`
+      +(yoy!=null?`<span style="display:inline-block;margin-left:.3em;font-size:.68em;vertical-align:.14em" class="${cls(yoy)}">${yoy>999?'>+999%':(yoy>=0?'+':'')+yoy.toFixed(0)+'%'}</span>`:'')+`</span>`,
+    sub:`캠페인 ${CS.length}개 합계 · 캠페인 기간 기준`},
+   {lab:'참여 고객사',val:`${cust}개사`,
+    sub:CS.map(c=>`${esc(c.program.replace(' Campaign','').replace(' Promotion',''))} ${c.n_cust}곳`).join(' · ')},
+   tt?{lab:'대상 SKU 오더 전환',
+    val:`${to}<span style="font-size:15px;color:var(--muted);font-weight:400"> / ${tt}종</span>`,
+    sub:`전환율 ${(to/tt*100).toFixed(1)}% · 대상 SKU 가 지정된 ${tg.length}개 캠페인만`}:null,
+   oct.usd?{lab:`${+COCT.month.slice(5)}월 전 품목 오더`,val:fmtC(oct.usd),
+    sub:`${oct.qty.toLocaleString()}개 · 고객 ${oct.n}곳 · 대상 SKU 로 좁히지 않은 값`}:null
+ ].filter(Boolean);
+ const pc=v=>v==null?'<span class="sub3">–</span>'
+   :`<span class="${cls(v)}">${v>999?'>+999%':(v>=0?'+':'')+v.toFixed(0)+'%'}</span>`;
+ const row=c=>{const s=SK[c.program]||(c.tgt_sku?{ord:c.s26,tgt:c.tgt_sku}:null);
+   return `<tr><td style="text-align:left"><b>${esc(c.program)}</b>
+     <div class="sub3">${esc(c.start)} ~ ${esc(c.end)} · 고객 ${c.n_cust}곳</div></td>
+   <td class="small sub3" style="text-align:left;white-space:normal;max-width:190px">${esc((SCM[c.scope]||{}).label||c.scope)}</td>
+   <td class="num sub3">${c.a25?fmtC(c.a25):'<span class="sub3">0</span>'}</td>
+   <td class="num"><b>${c.a26?fmtC(c.a26):'–'}</b></td>
+   <td class="num">${pc(c.yoy)}</td>
+   <td class="num">${s&&s.tgt?`<b>${s.ord}</b><span class="sub3"> / ${s.tgt}종</span>`:`<span class="sub3">${esc(c.sku_disp||'전 품목')}</span>`}</td>
+   <td class="num ocol">${c.oct_all?fmtC(c.oct_all):'<span class="sub3">0</span>'}</td></tr>`;};
+ return `<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px">`
+   +`<span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">LATAM</span>`
+   +`<span style="font-size:12.5px;color:var(--ink2)"> · <b style="color:var(--brand)">프로모션 ${CS.length}개 종합</b></span></div>`
+   +`<div class="card">`
+   +`<div class="kpis ${K.length===4?'keq':'k4'}" style="margin:0 0 12px">`
+   +K.map(k=>`<div class="tile${k.hero?' hero':''}"><div class="lab">${k.lab}</div><div class="val">${k.val}</div><div class="sub2">${k.sub}</div></div>`).join('')
+   +`</div>`
+   +`<div class="sub3 cap" style="color:var(--ink2);margin:4px 0 3px"><b>캠페인별</b></div>`
+   +`<div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr>`
+   +`<th style="text-align:left">캠페인</th><th style="text-align:left">집계 대상</th>`
+   +`<th>전년</th><th>당해</th><th>YoY</th><th>SKU</th>`
+   +`<th class="ocol">${+COCT.month.slice(5)}월 전 품목</th></tr></thead><tbody>`
+   +CS.slice().sort((x,y)=>(y.a26||0)-(x.a26||0)).map(row).join('')
+   +`</tbody><tfoot><tr><td style="text-align:left">합계 · ${CS.length}개 캠페인</td><td></td>
+      <td class="num">${fmtC(a25)}</td><td class="num">${fmtC(a26)}</td><td class="num">${pc(yoy)}</td>
+      <td class="num">${tt?`${to} / ${tt}종`:'–'}</td>
+      <td class="num ocol">${fmtC(oct.usd)}</td></tr></tfoot></table></div>`
+   +`<p class="note fn" style="padding-left:0;margin:5px 0 0">`
+   +`전년·당해는 캠페인마다 자기 집계 대상(대상 SKU 또는 전 품목) 기준임 · `
+   +`${+COCT.month.slice(5)}월 칸은 참여 고객사의 전 품목 오더라 왼쪽과 집계 범위가 달라 더하지 않음 · `
+   +`SKU 칸은 대상 SKU 가 지정된 캠페인만 전환이고 나머지는 오더가 난 종수임</p>`
+   +`</div>`
+   +mfTable();
+}
+
 function mfTable(){
  if(typeof MF==='undefined'||!(MF.rows||[]).length) return '';
  const T=MF.tot;
@@ -3505,7 +3570,7 @@ function octMonth(A){
   }
   /* 권역 블록 순서 — CIS · LATAM · MENA · ASIA, 그다음 SteerStar */
   h+=cisOct();
-  h+=mfTable();
+  h+=latamBlock();
   h+=menaMonth(kgrid);
   h+=asiaBlk;
 
