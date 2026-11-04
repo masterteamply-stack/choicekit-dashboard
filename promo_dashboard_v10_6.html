@@ -582,12 +582,13 @@ function kpis(){
   const _wy=_p>0?((_c-_p)/_p*100):null;
   const _k7=$('#k7w');
   if(_k7){ _k7.style.display=_wn?'':'none';
-    if(_wn){ $('#k7').innerHTML=fmtC(_w)
-        +(_wy!=null?`<span style="display:inline-block;margin-left:.3em;font-size:.62em;vertical-align:.18em" class="${cls(_wy)}">${(_wy>=0?'+':'')+_wy.toFixed(1)}%</span>`:'');
-      $('#k7s').innerHTML=`매출 자료가 있는 ${_wn}곳 합계 · 참여 고객 ${_cd.size}곳`
-        +(_wy!=null?`<br>전년 동기 ${fmtC(_p)} → ${fmtC(_c)} · 두 해 다 있는 ${_pn}곳 기준`:'');
-      $('#k7d').innerHTML='그 고객사의 <b>전 품목</b> 매출임 — 대상 SKU 만의 매출이 아니고, 출하·청구 기준이라 오더(수주)와 더하지 않음'
-        +(typeof REVM!=='undefined'&&REVM.note?`<br>${esc(REVM.note)}`:''); } }
+    if(_wn){ $('#k7').innerHTML=(_wy!=null
+        ? `<span style="font-size:clamp(14px,1.1vw,20px)"><span style="color:var(--muted)">${fmtC(_p)}</span> <span style="color:var(--muted);font-weight:400">→</span> ${fmtC(_c)}`
+          +`<span style="display:inline-block;margin-left:.3em;font-size:.7em;vertical-align:.12em" class="${cls(_wy)}">${(_wy>=0?'+':'')+_wy.toFixed(1)}%</span></span>`
+        : fmtC(_w));
+      $('#k7s').innerHTML=(_wy!=null?`두 해 다 있는 ${_pn}곳 기준 · 자료가 있는 ${_wn}곳 전체는 ${fmtC(_w)}`
+                                    :`매출 자료가 있는 ${_wn}곳 합계`)+` · 참여 고객 ${_cd.size}곳`;
+      $('#k7d').innerHTML='그 고객사의 <b>전 품목</b> 매출임'; } }
   const _t2=_cs2.filter(c=>c.tgt_sku>0);
   const _ts=_t2.reduce((a,c)=>a+(c.tgt_sku||0),0);
   const _a=_t2.reduce((a,c)=>a+(c.s25||0),0), _b2=_t2.reduce((a,c)=>a+(c.s26||0),0);
@@ -3390,12 +3391,15 @@ function octMonth(A){
       sub:`전년 대비 <span class="${cls(Tov.yoy)}">${fmtPC(Tov.yoy)}</span>`
           +(_achM!=null?` · 달성률 — 목표 ${fmtC(_goalM)} (전년 동기 ×1.2)`:''),
       sub2:`대상 SKU 연관 오더 · 캠페인 기간만 · 원장 ~${esc(_ocut)}`},
-     _rn?{lab:'참여 고객사 매출 (캠페인 기간)',val:fmtC(_rw)
-       +(_ryoy!=null?`<span style="display:inline-block;margin-left:.3em;font-size:.62em;vertical-align:.18em" class="${cls(_ryoy)}">${(_ryoy>=0?'+':'')+_ryoy.toFixed(1)}%</span>`:''),
-      sub:`매출 자료가 있는 ${_rn}곳 합계 · 참여 고객 ${_ccode.size}곳`
-       +(_ryoy!=null?`<br>전년 동기 ${fmtC(_r25)} → ${fmtC(_r26)} · 두 해 다 있는 ${_rn2}곳 기준`:''),
-      sub2:`그 고객사의 <b>전 품목</b> 매출임 — 대상 SKU 만의 매출이 아니고, 출하·청구 기준이라 오더(수주)와 더하지 않음`
-       +(typeof REVM!=='undefined'&&REVM.note?`<br>${esc(REVM.note)}`:'')}:null,
+     /* 연관 오더 타일과 같은 꼴 — 전년 → 당해 → 증감%. 전년은 흐리게. */
+     _rn?{lab:'참여 고객사 매출 (캠페인 기간)',
+      val:(_ryoy!=null
+        ? `<span style="font-size:clamp(14px,1.1vw,20px)"><span style="color:var(--muted)">${fmtC(_r25)}</span> <span style="color:var(--muted);font-weight:400">→</span> ${fmtC(_r26)}`
+          +`<span style="display:inline-block;margin-left:.3em;font-size:.7em;vertical-align:.12em" class="${cls(_ryoy)}">${(_ryoy>=0?'+':'')+_ryoy.toFixed(1)}%</span></span>`
+        : fmtC(_rw)),
+      sub:(_ryoy!=null?`두 해 다 있는 ${_rn2}곳 기준 · 자료가 있는 ${_rn}곳 전체는 ${fmtC(_rw)}`
+                      :`매출 자료가 있는 ${_rn}곳 합계`)+` · 참여 고객 ${_ccode.size}곳`,
+      sub2:`그 고객사의 <b>전 품목</b> 매출임`}:null,
      _tc.length?{lab:'대상 SKU 오더 전환',
       val:`${_s25} <span style="color:var(--muted);font-weight:400">→</span> ${_s26}<span style="font-size:15px;color:var(--muted);font-weight:400">종</span>`,
       sub:`<span class="${cls(_s26-_s25)}">${_s25?((_s26-_s25)/_s25*100>=0?'+':'')+((_s26-_s25)/_s25*100).toFixed(0)+'%':'–'}</span> · 대상 ${_tsku.toLocaleString()}종 중 ${(_s26/_tsku*100).toFixed(1)}%`}:null,
