@@ -1864,8 +1864,7 @@ function mfTable(){
    {lab:'오더 집계 고객',val:`${T.cust}개사`,sub:`${T.groups}개 모델군 게시`},
    {lab:'오더 전환 SKU',
     val:`${T.hit}<span style="font-size:15px;color:var(--muted);font-weight:400"> / ${T.n}종</span>`,
-    sub:`대상 SKU 전환율 ${(T.hit/T.n*100).toFixed(1)}% · 게시일 이후 오더만`},
-   {lab:'기준',val:(MF.cut||'').slice(5),sub:'연관 오더 원장 마감일'}];
+    sub:`대상 SKU 전환율 ${(T.hit/T.n*100).toFixed(1)}% · 게시일 이후 오더만`}];
  return `<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">LATAM · CTR MarketFit</span> <span style="font-size:12.5px;color:var(--ink2)">· 모델군별 게시일 기준 전환</span></div><div class="card">`
   +`<div class="kpis k4" style="margin:0 0 12px">`
   +K.map(k=>`<div class="tile${k.hero?' hero':''}"><div class="lab">${k.lab}</div><div class="val">${k.val}</div><div class="sub2">${k.sub}</div></div>`).join('')
@@ -1886,7 +1885,8 @@ function mfTable(){
      <td class="num">${fmtC(T.a)}</td><td class="num">${T.q.toLocaleString()}</td><td class="num">${T.cust}</td><td></td></tr></tfoot></table></div>`
   +`<p class="note fn" style="padding-left:0;margin:5px 0 0">`
    +`게시날짜 = 그 모델군 품번의 프로모션 적용 시작일 · 각 품번은 자기 게시일 이후 오더만 셈 · ${esc(MF.note_pre)}<br>`
-   +`한 품번이 두 모델군에 걸리면 먼저 게시된 날짜를 시작일로 봄 · 모델군별 금액을 더하면 겹치는 품번만큼 합계보다 커짐</p></div>`;
+   +`한 품번이 두 모델군에 걸리면 먼저 게시된 날짜를 시작일로 봄 · 모델군별 금액을 더하면 겹치는 품번만큼 합계보다 커짐`
+   +(MF.cut?`<br>연관 오더 원장 마감일 ${esc(MF.cut)} 기준`:'')+`</p></div>`;
 }
 
 
