@@ -1848,9 +1848,23 @@ function mfTable(){
    <td class="num sub3">${r.q?r.q.toLocaleString():'·'}</td>
    <td class="num sub3">${r.cust||'·'}</td>
    <td class="sub3" style="text-align:left;font-size:10.5px">${r.started?(r.hit?'':'게시 후 오더 없음'):'원장 마감 이후 게시'}</td></tr>`;
- const K=[{lab:'대상 SKU',val:T.n+'종',sub:T.groups+'개 모델군'},
-   {lab:'오더 전환',val:T.hit+'종',sub:`전환율 ${(T.hit/T.n*100).toFixed(0)}% · 게시일 이후 오더만`,hero:1},
-   {lab:'캠페인 오더',val:fmtC(T.a),sub:`수량 ${T.q.toLocaleString()} · 고객 ${T.cust}곳`},
+ /* CIS 블록과 같은 차례·같은 꼴로 — 오더(전년 → 당해) · 고객 · 오더 전환 SKU · 기준.
+    대상 SKU 와 오더 전환은 한 칸으로 합치고 전환율을 같이 적음(CIS '오더 발생 SKU' 와 같은 모양). */
+ const MC=(typeof D!=='undefined'&&D.campaigns)
+   ? D.campaigns.find(c=>c.program==='CTR MarketFit Campaign') : null;
+ const m25=MC&&MC.a25, m26=MC&&MC.a26;
+ const myoy=(m25&&m26!=null)?((m26-m25)/m25*100):null;
+ const K=[
+   {lab:'캠페인 오더 (전년 → 당해)',hero:1,
+    val:(myoy!=null
+      ? `<span style="font-size:clamp(17px,1.35vw,25px)"><span style="color:var(--muted)">${fmtC(m25)}</span> <span style="color:var(--muted);font-weight:400">→</span> ${fmtC(m26)}`
+        +`<span style="display:inline-block;margin-left:.3em;font-size:.68em;vertical-align:.14em" class="${cls(myoy)}">${myoy>999?'>+999%':(myoy>=0?'+':'')+myoy.toFixed(0)+'%'}</span></span>`
+      : fmtC(T.a)),
+    sub:`수량 ${T.q.toLocaleString()}개 · 대상 SKU 연관 오더`},
+   {lab:'오더 집계 고객',val:`${T.cust}개사`,sub:`${T.groups}개 모델군 게시`},
+   {lab:'오더 전환 SKU',
+    val:`${T.hit}<span style="font-size:15px;color:var(--muted);font-weight:400"> / ${T.n}종</span>`,
+    sub:`대상 SKU 전환율 ${(T.hit/T.n*100).toFixed(1)}% · 게시일 이후 오더만`},
    {lab:'기준',val:(MF.cut||'').slice(5),sub:'연관 오더 원장 마감일'}];
  return `<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px"><span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">LATAM · CTR MarketFit</span> <span style="font-size:12.5px;color:var(--ink2)">· 모델군별 게시일 기준 전환</span></div><div class="card">`
   +`<div class="kpis k4" style="margin:0 0 12px">`
