@@ -1798,10 +1798,8 @@ function aiTable(){
    <td class="num">${rt(r.ratio)}${r.qratio!=null?`<div style="font-size:10px;font-weight:400"><span class="${r.qratio>=100?'up':'dn'}">${r.qratio}%</span></div>`:''}</td>
    <td class="num">${pc(r.yoy)}</td></tr>`;};
  const TS=rows.reduce((a,r)=>a+soT(r.k),0), TA=rows.reduce((a,r)=>a+(soA(r.k)||0),0);
- return `<h4 class="soh">Sell-out 타깃 · Sell-in 오더 추적 — 초이스킷 참여 기간</h4>`
-  +`<ul class="lead"><li><b>Sell-out 이 이 권역의 캠페인 타깃</b>임 — 앞에 두고, 뒤에서 Sell-in 오더가 따라왔는지 봄</li>`
-   +`<li>고객사마다 참여 기간이 달라 전년(2025)도 <b>각자의 같은 날짜 구간</b>으로 맞춰 비교함</li>`
-   +`<li>2026 매출은 SAP 선적 YTD(차감 후)라 <b>기간·기준이 오더와 다름</b> — 오더 금액과 직접 비교하지 않음</li></ul>`
+ return `<ul class="lead"><li><b>Sell-out 이 이 권역의 캠페인 타깃</b>임 — 앞에 두고, 뒤에서 Sell-in 오더가 따라왔는지 봄</li>`
+   +`<li>고객사마다 참여 기간이 달라 전년(2025)도 <b>각자의 같은 날짜 구간</b>으로 맞춰 비교함</li></ul>`
   +`<div class="legend"><span><i class="sw" style="background:var(--s1)"></i>2025 동기</span><span><i class="sw" style="background:var(--brand)"></i>2026 오더</span></div>`
   +`<div class="tblwrap"><table class="lts" style="font-size:12px"><thead>
      <tr><th rowspan="2" style="text-align:left">고객사</th><th rowspan="2" style="text-align:left">초이스킷 기간</th>
@@ -3320,15 +3318,7 @@ const OCTOBER_ACTIVITY = { _m: 10, kind: 'october', generated_at: '2026-10-30', 
       + '연관 오더 원장은 9/25 까지라 캠페인 오더·SKU 는 그 기준임. '
       + '매출은 AM 실적표가 아직 9월까지만 확정이라(10월은 예상치만) 9월 기준 그대로임. '
       + 'ASIA 선적(SAP)은 10/20 제공분 기준.',
-  issues: [
-    { s:'대기', t:'10월 매출은 아직 집계 전',
-      d:'AM 실적표 10/30 판도 5개 법인 모두 lastActual 이 202609 다. 10월 칸에는 예상치만 있고 실적은 0 임. '
-       +'10/26 판과 1~9월 실적을 한 줄씩 맞춰 보니 바뀐 건이 하나도 없어(차이 0건) 매출 수치는 9월 기준 그대로 둠. '
-       +'바뀐 것은 10월 예상치뿐이다($15.74M → $14.81M).' },
-    { s:'확인', t:'ASIA 원장에 소급 반영된 오더',
-      d:'ATC 1·5·6월 $61,172 와 Zentralink 10월 $44,913 가 이번 원장에서 새로 잡혔음. '
-       +'반대로 Nam Bac 6월 −$1,909, PT Densocentra −$406, Young Auto −$113 은 줄었음. '
-       +'원장 마감 전 조정이라 다음 스냅에서 또 움직일 수 있음.' } ] };
+  issues: [] };
 
 function octMonth(A){
   const pc=v=>(v>=0?'+':'')+(v*100).toFixed(1)+'%';
