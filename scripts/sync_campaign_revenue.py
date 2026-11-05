@@ -1,23 +1,18 @@
 #!/usr/bin/env python3
-"""캠페인 매출 — 캠페인마다 자기 스코프대로만 셈.
+"""캠페인 참여 고객사의 매출 — 전 품목 · 올해 누계와 전년 같은 구간.
 
-  python3 scripts/sync_campaign_revenue.py --base data_base
+  python3 scripts/sync_campaign_revenue.py --base data_base [--through 2026-10]
 
 무엇을 세나
-  캠페인이 대상 SKU 를 지정했으면  그 SKU 의 매출만
-  전 품목 캠페인이면              그 고객사의 전 품목 매출
-  둘 다 캠페인 기간 안의 달만 봄. '그 고객사의 전 품목'을 한꺼번에
-  더하면 캠페인과 무관한 매출이 섞임.
+  캠페인에 들어간 고객사가 올린 매출 전부(전 품목). 대상 SKU 로 좁히지
+  않음 — 그 고객사가 캠페인 기간에 무엇을 샀든 다 봄.
 
 구간
-  캠페인 시작월 ~ 종료월을, 품번까지 온전한 마지막 달에서 자름.
-  결산 전인 달은 예상매출에 품번이 없어(item_code='') 대상 SKU 로
-  잡히지 않음 — 그 달을 넣으면 올해만 0 이 되어 전년 대비가 깎임.
-  전년은 같은 월 구간(연도만 -1)을 씀.
+  1월부터 --through 달까지. 전년은 같은 달 구간(연도만 -1).
+  --through 를 안 주면 전 법인이 결산된 마지막 달까지.
 
 중복
-  한 고객사가 여러 캠페인에 걸릴 수 있음. (고객·품번·월) 한 줄은
-  한 번만 셈 — 캠페인별로 더하면 겹친 몫이 두 번 들어감.
+  한 고객사가 여러 캠페인에 걸려도 한 번만 셈.
 
 기준
   매출(출하·청구) · 내부거래 제외. 오더(수주)와 더하지 않음.
@@ -44,24 +39,24 @@ def main():
     ap.add_argument('--base', default='data_base')
     ap.add_argument('--html', default=HTML)
     ap.add_argument('--check', action='store_true')
+    ap.add_argument('--through', help='끝달을 못박음 (예: 2026-10)')
+    ap.add_argument('--with-forecast', action='store_true',
+                    help='아직 결산 전인 달의 예상매출도 실적으로 같이 셈')
     a = ap.parse_args()
 
     html = open(a.html, encoding='utf-8', newline='').read()
     D = json.loads(re.search(r'<script>const D = (\{.*?\});</script>', html, re.S).group(1))
     man = json.load(open(os.path.join(a.base, 'manifest.json'), encoding='utf-8'))
-    # 품번까지 온전한 마지막 달 = 법인 중 가장 이른 마감월
     cut = min(man['sales_meta']['last_actual'].values())
-    cutm = '%s-%s' % (cut[:4], cut[4:])
-
-    TS = json.load(open('campaign_target_skus.json', encoding='utf-8'))
-    skus = {k: set(v['target_skus']) for k, v in TS.items()
-            if v.get('match_by') == 'sku' and v.get('target_skus')}
-
-    win = {}
-    for c in D.get('campaigns', []):
-        if c.get('program') and c.get('start'):
-            win[(c.get('region'), c['program'])] = (c['start'][:7],
-                                                    min((c.get('end') or '2026-12')[:7], cutm))
+    cutm = a.through or ('%s-%s' % (cut[:4], cut[4:]))
+    late = sorted(k for k, v in man['sales_meta']['last_actual'].items()
+                  if '%s-%s' % (v[:4], v[4:]) < cutm)
+    if late and not a.with_forecast:
+        raise SystemExit('%s 은(는) %s 까지만 결산됨. --with-forecast 를 같이 줌.'
+                         % (' · '.join(late), cut))
+    y = int(cutm[:4])
+    W26 = ('%d-01' % y, cutm)                     # 올해 1월 ~ 끝달
+    W25 = ('%d-01' % (y - 1), '%d%s' % (y - 1, cutm[4:]))   # 전년 같은 구간
 
     buyers = collections.defaultdict(list)
     for b in csv.DictReader(open(os.path.join(a.base, 'am_buyers.csv'), encoding='utf-8')):
@@ -85,45 +80,37 @@ def main():
             if c > best or (c == best and bn and len(k) > len(bn)): best, bn = c, k
         return buyers[bn] if bn else None
 
-    # 매출코드 → [(원장코드, 시작월, 끝월, 대상SKU 또는 None)]
-    rules = collections.defaultdict(list)
-    miss, scoped, allitem = [], set(), set()
+    # 매출코드 → 원장코드(한 고객사가 여러 캠페인에 걸려도 한 번만)
+    rules, miss, seenc = {}, [], set()
     for r in D.get('cust_delta', []):
         code = str(r.get('code') or '')
-        prog = r.get('program')
-        w = win.get((r.get('region'), prog))
-        if not code or not w: continue
+        if not code or code in seenc: continue
         bc = find(norm(r.get('name')))
         if not bc:
             miss.append(r.get('name')); continue
-        sk = skus.get(prog)
-        (scoped if sk else allitem).add(prog)
-        for b in bc: rules[b].append((code, w[0], w[1], sk))
+        seenc.add(code)
+        for b in bc: rules.setdefault(b, code)
 
     cur, pre = collections.Counter(), collections.Counter()
-    seen_c, seen_p = set(), set()      # (매출코드, 품번, 월) 중복 방지
-    src = os.path.join(a.base, 'am_sales_sku.csv.gz')
-    with gzip.open(src, 'rt', encoding='utf-8') as f:
-        for r in csv.DictReader(f):
-            rs = rules.get(r['buyer_code'])
-            if not rs: continue
-            ym, it, u = r['month'], r['item_code'], float(r['usd'] or 0)
-            if not u: continue
-            nxt = '%d%s' % (int(ym[:4]) + 1, ym[4:])
-            key = (r['buyer_code'], it, ym)
-            for code, s, e, sk in rs:
-                if sk is not None and it not in sk: continue
-                if s <= ym <= e:
-                    if key in seen_c: break
-                    seen_c.add(key); cur[code] += u; break
-                if s <= nxt <= e:
-                    if key in seen_p: break
-                    seen_p.add(key); pre[code] += u; break
+    fc = 0.0
+    src = os.path.join(a.base, 'am_sales_cat.csv')     # 전 품목이라 품목군 표로 충분함
+    for r in csv.DictReader(open(src, encoding='utf-8')):
+        if r['is_internal'] == '1': continue
+        if r['is_forecast'] == '1' and not a.with_forecast: continue
+        code = rules.get(r['buyer_code'])
+        if not code: continue
+        ym, u = r['month'], float(r['usd'] or 0)
+        if not u: continue
+        if W26[0] <= ym <= W26[1]:
+            cur[code] += u
+            if r['is_forecast'] == '1': fc += u
+        elif W25[0] <= ym <= W25[1]:
+            pre[code] += u
 
     REVW = {k: round(v, 2) for k, v in cur.items() if v}
     REVP = {k: round(v, 2) for k, v in pre.items() if v}
     meta = {'cut': cutm,
-            'note': '대상 SKU 캠페인은 그 SKU 만 · 전 품목 캠페인은 전 품목 · ~%s' % cutm}
+            'note': '참여 고객사의 전 품목 매출 · 1~%d월 · 전년은 같은 구간' % int(cutm[5:])}
     out = put(put(put(html, 'REVW', REVW), 'REVP', REVP), 'REVM', meta)
     changed = out != html
     if a.check:
@@ -132,8 +119,8 @@ def main():
 
     both = [k for k in REVW if k in REVP]
     b26 = sum(REVW[k] for k in both); b25 = sum(REVP[k] for k in both)
-    print(f"캠페인 매출 · 스코프별 · ~{cutm} 에서 자름")
-    print(f"  대상 SKU 캠페인 {len(scoped)}개 · 전 품목 캠페인 {len(allitem)}개")
+    print(f"캠페인 참여 고객사 매출 (전 품목) · {W25[0]}~{W25[1]} vs {W26[0]}~{W26[1]}"
+          + (f"  (그중 결산 전 ${fc:,.0f} — {' · '.join(late)})" if fc else ''))
     print(f"  당해 ${sum(REVW.values()):,.0f} ({len(REVW)}곳)   전년 동기 ${sum(REVP.values()):,.0f} ({len(REVP)}곳)")
     if b25:
         print(f"  양쪽 다 있는 {len(both)}곳  ${b25:,.0f} → ${b26:,.0f}  ({(b26-b25)/b25*100:+.1f}%)")
