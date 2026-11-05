@@ -3257,9 +3257,6 @@ function menaMonth(kgrid){
     lastM?{lab:`${+lastM.slice(5)}월 추가분`,val:ex(addUsd),
      sub:(M&&M.last_by&&M.last_by.length)?M.last_by.map(x=>esc(x.k)).join(' · '):'',
      sub2:`${addN}종 · BRAKE PAD · 이 한 건이 당해 증가분의 대부분`}:null,
-    c.d25?{lab:'캠페인 동일 구간',val:`${ex(c.d25)} → ${ex(c.d26)}`,
-     sub:`<span class="${cls(c.dyoy)}">${fmtPC(c.dyoy)}</span> · ${esc((c.wins&&c.wins[0])?c.wins[0].join('~'):'')}`,
-    }:null,
     M?{lab:'오더 SKU',val:`${M.n_sku26}<span style="font-size:15px;color:var(--muted);font-weight:400"> / ${(c.tgt_sku||0).toLocaleString()}종</span>`,
      sub:`전년 ${M.n_sku25}종 · 그중 <b>신규 ${M.n_new}종</b>`,
      sub2:`대상 대비 ${c.tgt_sku?(M.n_sku26/c.tgt_sku*100).toFixed(1):'–'}%`}:null
