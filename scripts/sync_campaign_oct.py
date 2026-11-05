@@ -68,10 +68,13 @@ def read_kv(path, want=None):
             y, m = (y - 1, 12) if m == 1 else (y, m - 1)
         mon = '%d-%02d' % (y, m)
     cut = min(mx, '%s-%02d' % (mon, calendar.monthrange(int(mon[:4]), int(mon[5:7]))[1]))
+    ytd = collections.defaultdict(lambda: [0.0, 0.0])   # 그 해 1월~마감월 누계
     for d, code, usd, qty in rows:
-        if d[:7] != mon: continue
-        v = per[code]; v[0] += usd; v[1] += qty
-    return per, cut, mon, seen, {c[0].strip(): c[3] for c in K['cus']}
+        if d[:7] == mon:
+            v = per[code]; v[0] += usd; v[1] += qty
+        if d[:4] == mon[:4] and d <= cut:
+            v = ytd[code]; v[0] += usd; v[1] += qty
+    return per, ytd, cut, mon, seen, {c[0].strip(): c[3] for c in K['cus']}
 
 
 html = open(HTML, encoding='utf-8', newline='').read()
@@ -82,7 +85,7 @@ D = json.loads(m.group(1))
 
 if '--html' in sys.argv:
     _w = sys.argv[sys.argv.index('--month') + 1] if '--month' in sys.argv else None
-    per, cut, mon, seen, byname = read_kv(sys.argv[sys.argv.index('--html') + 1], _w)
+    per, ytd, cut, mon, seen, byname = read_kv(sys.argv[sys.argv.index('--html') + 1], _w)
     rows, cust = [], {}
     for c in D['campaigns']:
         if not c.get('started'): continue
@@ -94,20 +97,27 @@ if '--html' in sys.argv:
             if not code or code not in seen:
                 miss.append(r.get('name', '')); continue
             codes.append(code)
-            v = per.get(code)
-            if v and v[0]:
-                cust[code] = [round(v[0], 2), int(v[1]), (r.get('name') or '').strip()]
+            v, w = per.get(code), ytd.get(code)
+            if (v and v[0]) or (w and w[0]):
+                # [그 달 USD, 그 달 수량, 고객명, 누계 USD, 누계 수량]
+                cust[code] = [round((v or [0, 0])[0], 2), int((v or [0, 0])[1]),
+                              (r.get('name') or '').strip(),
+                              round((w or [0, 0])[0], 2), int((w or [0, 0])[1])]
         codes = sorted(set(codes))
         usd = sum(per.get(k, [0, 0])[0] for k in codes)
         qty = sum(per.get(k, [0, 0])[1] for k in codes)
+        yu = sum(ytd.get(k, [0, 0])[0] for k in codes)
+        yq = sum(ytd.get(k, [0, 0])[1] for k in codes)
         rows.append(dict(region=c['region'], program=c['program'], codes=codes,
                          n_cust=len(cds), n_miss=len(miss), miss=miss[:6],
-                         usd=round(usd, 2), qty=int(qty)))
-    agg = dict(_readme='캠페인 고객사의 10월 전 품목 오더. 캠페인 행의 전년·당해와 집계 '
-                       '범위가 달라 같은 칸에 넣지 않음. 캠페인별 값은 고객사가 겹쳐 '
-                       '단순 합산 금지 — 합계는 codes 합집합으로 계산함. '
+                         usd=round(usd, 2), qty=int(qty),
+                         ytd=round(yu, 2), ytd_qty=int(yq)))
+    agg = dict(_readme='캠페인 고객사의 전 품목 오더 — 그 달치(usd)와 그 해 누계(ytd) 둘 다. '
+                       '캠페인 행의 전년·당해와 집계 범위가 달라 같은 칸에 넣지 않음. '
+                       '캠페인별 값은 고객사가 겹쳐 단순 합산 금지 — 합계는 codes 합집합으로 계산함. '
                        '재생성: python3 scripts/sync_campaign_oct.py --html <KV 원장 html>',
                month=mon, cut=cut, rows=rows, cust=cust,
+               ytd_from='%s-01' % mon[:4],
                basis='전 품목 오더 원장 · 캠페인 참여 고객사만',
                note='대상 SKU로 좁힌 캠페인 실적과는 집계 범위가 다름 — 더하지 않음.')
     json.dump(agg, open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
@@ -121,6 +131,8 @@ for c in D['campaigns']:
     c['oct_all'] = r['usd']
     c['oct_all_q'] = r['qty']
     c['oct_all_n'] = len(r['codes'])
+    c['ytd_all'] = r.get('ytd')
+    c['ytd_all_q'] = r.get('ytd_qty')
 
 out = html[:m.start(1)] + json.dumps(D, ensure_ascii=False, separators=(',', ':')) + html[m.end(1):]
 blk = '<script>const COCT = ' + json.dumps(
@@ -140,11 +152,13 @@ if '--check' in sys.argv:
     print('변경 있음' if changed else '변경 없음'); sys.exit(0)
 if changed: open(HTML, 'w', encoding='utf-8', newline='').write(out)
 
-print(f"캠페인 고객사 {agg['month']} 전 품목 오더 · 원장 ~{agg['cut']}")
-for r in sorted(agg['rows'], key=lambda x: -x['usd']):
+print(f"캠페인 고객사 전 품목 오더 · 원장 ~{agg['cut']}")
+print(f"  {'':<34}{agg['month'][5:]+'월':>12}{'1~'+agg['month'][5:]+'월 누계':>16}")
+for r in sorted(agg['rows'], key=lambda x: -(x.get('ytd') or 0)):
     note = f"  (고객 {r['n_cust']}곳 중 {r['n_miss']}곳 원장 밖)" if r['n_miss'] else ''
-    print(f"  {r['region']:<6}{r['program'][:26]:<28}{r['usd']:>12,.0f}  {r['qty']:>8,}개{note}")
+    print(f"  {r['region']:<6}{r['program'][:26]:<28}{r['usd']:>12,.0f}{r.get('ytd',0):>16,.0f}{note}")
 uni = sorted({k for r in agg['rows'] for k in r['codes']})
-tot = sum(agg['cust'].get(k, [0])[0] for k in uni)
-print(f"  {'합계 (고객사 중복 제거)':<32}{tot:>12,.0f}  고객 {len(uni)}곳")
+tot = sum(agg['cust'].get(k, [0, 0, '', 0])[0] for k in uni)
+yt = sum((agg['cust'].get(k) or [0, 0, '', 0])[3] for k in uni)
+print(f"  {'합계 (고객사 중복 제거)':<32}{tot:>12,.0f}{yt:>16,.0f}  고객 {len(uni)}곳")
 print('promo_dashboard_v10_6.html ' + ('갱신됨' if changed else '변경 없음'))

@@ -1,5 +1,5 @@
 {
- "_readme": "캠페인 고객사의 10월 전 품목 오더. 캠페인 행의 전년·당해와 집계 범위가 달라 같은 칸에 넣지 않음. 캠페인별 값은 고객사가 겹쳐 단순 합산 금지 — 합계는 codes 합집합으로 계산함. 재생성: python3 scripts/sync_campaign_oct.py --html <KV 원장 html>",
+ "_readme": "캠페인 고객사의 전 품목 오더 — 그 달치(usd)와 그 해 누계(ytd) 둘 다. 캠페인 행의 전년·당해와 집계 범위가 달라 같은 칸에 넣지 않음. 캠페인별 값은 고객사가 겹쳐 단순 합산 금지 — 합계는 codes 합집합으로 계산함. 재생성: python3 scripts/sync_campaign_oct.py --html <KV 원장 html>",
  "month": "2026-10",
  "cut": "2026-10-31",
  "rows": [
@@ -27,7 +27,9 @@
    "n_miss": 0,
    "miss": [],
    "usd": 164036.78,
-   "qty": 35889
+   "qty": 35889,
+   "ytd": 6390039.56,
+   "ytd_qty": 1367740
   },
   {
    "region": "ASIA",
@@ -50,7 +52,9 @@
    "n_miss": 0,
    "miss": [],
    "usd": 329952.52,
-   "qty": 72350
+   "qty": 72350,
+   "ytd": 2505400.65,
+   "ytd_qty": 503121
   },
   {
    "region": "NA",
@@ -62,7 +66,9 @@
    "n_miss": 0,
    "miss": [],
    "usd": 0,
-   "qty": 0
+   "qty": 0,
+   "ytd": 198041.88,
+   "ytd_qty": 25925
   },
   {
    "region": "LATAM",
@@ -75,7 +81,9 @@
    "n_miss": 0,
    "miss": [],
    "usd": 0,
-   "qty": 0
+   "qty": 0,
+   "ytd": 906579.8,
+   "ytd_qty": 160220
   },
   {
    "region": "MENA",
@@ -89,7 +97,9 @@
    "n_miss": 0,
    "miss": [],
    "usd": 485773.23,
-   "qty": 98280
+   "qty": 98280,
+   "ytd": 2504544.7,
+   "ytd_qty": 507768
   },
   {
    "region": "KR",
@@ -101,7 +111,9 @@
    "n_miss": 0,
    "miss": [],
    "usd": 20050.12,
-   "qty": 1042
+   "qty": 1042,
+   "ytd": 149779.71,
+   "ytd_qty": 8777
   },
   {
    "region": "CIS",
@@ -122,7 +134,9 @@
    "n_miss": 0,
    "miss": [],
    "usd": 164036.78,
-   "qty": 35889
+   "qty": 35889,
+   "ytd": 4371784.5,
+   "ytd_qty": 966509
   },
   {
    "region": "LATAM",
@@ -134,7 +148,9 @@
    "n_miss": 0,
    "miss": [],
    "usd": 63657.79,
-   "qty": 5200
+   "qty": 5200,
+   "ytd": 178253.41,
+   "ytd_qty": 22943
   },
   {
    "region": "LATAM",
@@ -168,111 +184,406 @@
    "n_miss": 0,
    "miss": [],
    "usd": 898645.45,
-   "qty": 162129
+   "qty": 162129,
+   "ytd": 10222256.36,
+   "ytd_qty": 1887490
   }
  ],
  "cust": {
+  "289381": [
+   0,
+   0,
+   "BAUTEN",
+   387208.77,
+   82437
+  ],
   "287584": [
    23916.25,
    5080,
-   "ROSSKO KZ"
+   "ROSSKO KZ",
+   752841.1,
+   172202
+  ],
+  "287553": [
+   0,
+   0,
+   "AUTOTRADE KZ",
+   665140.56,
+   128467
+  ],
+  "200323": [
+   0,
+   0,
+   "PHAETON KZ LLP",
+   1179625.52,
+   292966
+  ],
+  "288336": [
+   0,
+   0,
+   "TISS AUTO PARTS LLP",
+   438886.17,
+   98315
+  ],
+  "287585": [
+   0,
+   0,
+   "SHATE M KZ",
+   252436.4,
+   58671
+  ],
+  "290061": [
+   0,
+   0,
+   "KULAN OIL",
+   132933.5,
+   28458
   ],
   "200572": [
    120812.99,
    27316,
-   "ARMTEK KZ"
+   "ARMTEK KZ",
+   120812.99,
+   27316
+  ],
+  "200380": [
+   0,
+   0,
+   "ALLIANCE-MOTORS LLC",
+   695117.13,
+   131277
+  ],
+  "200344": [
+   0,
+   0,
+   "COMPLEX-AUTO",
+   980096.12,
+   180585
+  ],
+  "200456": [
+   0,
+   0,
+   "AVTOKOM LLC",
+   64835.09,
+   14294
   ],
   "289300": [
    19307.54,
    3493,
-   "AUTOMIR"
+   "AUTOMIR",
+   35114.33,
+   6573
+  ],
+  "288281": [
+   0,
+   0,
+   "BTT",
+   402949.77,
+   78271
+  ],
+  "200507": [
+   0,
+   0,
+   "ES “RAHAT YOL”",
+   98876.8,
+   22264
+  ],
+  "289383": [
+   0,
+   0,
+   "YASHLYK TUG LLC",
+   183165.31,
+   45644
   ],
   "289248": [
    158070.4,
    32128,
-   "Seri Wathana Enterprise Co., Ltd"
+   "Seri Wathana Enterprise Co., Ltd",
+   487504.44,
+   97759
+  ],
+  "288352": [
+   0,
+   0,
+   "GP Mobility Public Company Limited",
+   492923.56,
+   78835
+  ],
+  "200691": [
+   0,
+   0,
+   "CHIN SENG HUAT",
+   148173.66,
+   28976
   ],
   "200332": [
    10827.78,
    2464,
-   "Auto Business Corporation Ltd."
+   "Auto Business Corporation Ltd.",
+   72000.72,
+   15188
+  ],
+  "288291": [
+   0,
+   0,
+   "PT. Denso Centra",
+   49463.01,
+   11229
   ],
   "200335": [
    51520.24,
    10988,
-   "ZENTRALINK OTOPARTS"
+   "ZENTRALINK OTOPARTS",
+   108684.14,
+   23558
   ],
   "200464": [
    25267.98,
    8745,
-   "NAM BAC AUTO SPARE PART CORPORATION."
+   "NAM BAC AUTO SPARE PART CORPORATION.",
+   167571.31,
+   37903
   ],
   "200371": [
    18964.98,
    4260,
-   "MAST MOTORING AUTOPARTS SOLUTIONS AND"
+   "MAST MOTORING AUTOPARTS SOLUTIONS AND",
+   380025.49,
+   87235
   ],
   "200242": [
    23078.3,
    4740,
-   "YOUNG AUTO SUPPLY CO., INC."
+   "YOUNG AUTO SUPPLY CO., INC.",
+   96673.56,
+   19583
   ],
   "200241": [
    42222.84,
    9025,
-   "CHUAN LAM AUTO SUPPLY"
+   "CHUAN LAM AUTO SUPPLY",
+   384977.1,
+   86195
+  ],
+  "200264": [
+   0,
+   0,
+   "MARBORO AUTO PARTS (M) SDN. BHD.",
+   117403.66,
+   16660
+  ],
+  "289029": [
+   0,
+   0,
+   "Lordco Auto Parts",
+   198041.88,
+   25925
+  ],
+  "200169": [
+   0,
+   0,
+   "Super Repuestos Honduras S.A.",
+   368114.01,
+   61499
+  ],
+  "200189": [
+   0,
+   0,
+   "PLUSCAR S.A",
+   538465.79,
+   98721
+  ],
+  "200287": [
+   0,
+   0,
+   "MESK AL-BARARI",
+   666534.43,
+   139413
   ],
   "200284": [
    441181.8,
    88090,
-   "DYNATRADE"
+   "DYNATRADE",
+   1687143.51,
+   339143
   ],
   "200411": [
    44591.43,
    10190,
-   "AL ZAIM UNITED CO.,LTD"
+   "AL ZAIM UNITED CO.,LTD",
+   150866.76,
+   29212
   ],
   "114621": [
    20050.12,
    1042,
-   "세종파츠플러스 유한회사"
+   "세종파츠플러스 유한회사",
+   149779.71,
+   8777
   ],
   "289404": [
    63657.79,
    5200,
-   "REFATRIX"
+   "REFATRIX",
+   178253.41,
+   22943
   ],
   "200443": [
    158507.68,
    36717,
-   "UNIVERSAL DE REPUESTOS"
+   "UNIVERSAL DE REPUESTOS",
+   1193496.52,
+   313203
+  ],
+  "200318": [
+   0,
+   0,
+   "IMPORTADORAS ASOCIADAS",
+   63528.86,
+   11426
   ],
   "200312": [
    104426.68,
    15587,
-   "COJAPAN"
+   "COJAPAN",
+   1669007.62,
+   259313
+  ],
+  "200181": [
+   0,
+   0,
+   "HIVIMAR S.A.",
+   1286288.7,
+   236548
+  ],
+  "200193": [
+   0,
+   0,
+   "REFAX PERU",
+   1203045.18,
+   208189
+  ],
+  "200311": [
+   0,
+   0,
+   "GC IMP",
+   539570.47,
+   111535
   ],
   "200465": [
    49822.59,
    8556,
-   "RENUSA"
+   "RENUSA",
+   176839.88,
+   28556
   ],
   "200192": [
    102663.3,
    17055,
-   "DISTRIBUIDORA VEGA/VEGA MOTORS S"
+   "DISTRIBUIDORA VEGA/VEGA MOTORS S",
+   412026.8,
+   67907
+  ],
+  "200745": [
+   0,
+   0,
+   "CORVEN S.A.C.I.F.",
+   38647.52,
+   8964
+  ],
+  "200641": [
+   0,
+   0,
+   "RURAL SANTA FE S.A.I.C.A.",
+   68976.11,
+   12660
+  ],
+  "290021": [
+   0,
+   0,
+   "Super Repuestos Honduras S.A. de C.V.",
+   202639.68,
+   31395
+  ],
+  "200403": [
+   0,
+   0,
+   "CLUTCHES DE GUATEMALA",
+   58921.01,
+   10969
+  ],
+  "289020": [
+   0,
+   0,
+   "Grupo IS, S.A. (Autonova)",
+   50214.36,
+   7486
+  ],
+  "200358": [
+   0,
+   0,
+   "RP INTERNATIONAL GROUP INC",
+   387137.89,
+   89041
   ],
   "203776": [
    271591.35,
    52745,
-   "R24 AUTOMOTIVE"
+   "R24 AUTOMOTIVE",
+   944524.73,
+   163219
+  ],
+  "200601": [
+   0,
+   0,
+   "MARK'S AUTO SPARE",
+   94228.9,
+   14255
+  ],
+  "200170": [
+   0,
+   0,
+   "SANKAR'S AUTOWORKS",
+   92983.58,
+   17604
+  ],
+  "200183": [
+   0,
+   0,
+   "NORIEGA S.A.C.",
+   263057.49,
+   43283
+  ],
+  "200184": [
+   0,
+   0,
+   "IMPORTADORA GIMPORT LYDA.",
+   253727.92,
+   37357
   ],
   "200187": [
    211633.85,
    31469,
-   "AUTOMOVIL SUPPLY"
+   "AUTOMOVIL SUPPLY",
+   827845.9,
+   148180
+  ],
+  "200387": [
+   0,
+   0,
+   "ARIAS MOTOR",
+   17082.19,
+   3178
+  ],
+  "280921": [
+   0,
+   0,
+   "Malb Parts Importacao, Exportacao e",
+   10351.04,
+   1723
   ]
  },
+ "ytd_from": "2026-01",
  "basis": "전 품목 오더 원장 · 캠페인 참여 고객사만",
  "note": "대상 SKU로 좁힌 캠페인 실적과는 집계 범위가 다름 — 더하지 않음."
 }
