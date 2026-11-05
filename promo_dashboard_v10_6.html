@@ -1799,19 +1799,26 @@ function aiTable(){
  const rt=v=>v==null?'<span class="sub3">–</span>':`<span class="${v>=100?'up':'dn'}">${v}%</span>`;
  const at=(x,y)=>y?`<span class="${x/y>=1?'up':(x/y>=0.5?'':'dn')}">${(x/y*100).toFixed(0)}%</span>`:'<span class="sub3">–</span>';
  const pc=v=>v==null?'<span class="sub3">–</span>':`<span class="${cls(v)}">${fmtPC(v)}</span>`;
- const tr=r=>{const st=soT(r.k), sa=soA(r.k);
+ /* Sell-out 프로모션에 안 들어간 고객사(= Display & Visibility 단독 참여)는
+    목표도 실적도 0 이 아니라 '대상 아님'임. 0 으로 두면 못 판 것처럼 읽힘. */
+ const SOP=/Sell-?out|Order to Earn|Sales Champion|Loyalty/i;
+ const notSO=k=>{const r=(typeof AO!=='undefined'&&AO.rows)?AO.rows.find(x=>x.k===k):null;
+   return !!(r&&Array.isArray(r.programs)&&r.programs.length&&!r.programs.some(p=>SOP.test(p)));};
+ const tr=r=>{const st=soT(r.k), sa=soA(r.k), ns=notSO(r.k);
+  const na=ns?`<span class="pill na" title="Sell-out 프로모션 대상이 아님">대상 아님</span>`:null;
+  const c=(typeof AO!=='undefined'&&AO.rows)?AO.rows.find(x=>x.k===r.k):null;
   return `<tr><td style="text-align:left"><b>${esc(r.k)}</b>
    <div class="sub3" style="font-size:10.5px;font-weight:400">${esc(r.country)}</div></td>
    <td class="small" style="text-align:left;white-space:nowrap;font-size:11px">${esc(r.period)}</td>
-   <td class="num socol sol">${st?fmtC(st):'<span class="sub3">–</span>'}</td>
-   <td class="num socol"><b>${sa==null?'<span class="sub3">–</span>':fmtC(sa)}</b></td>
-   <td class="num socol sor"><b>${(st&&sa!=null)?at(sa,st):'<span class="sub3">–</span>'}</b></td>
+   <td class="num socol sol">${na||(st?fmtC(st):'<span class="sub3">–</span>')}</td>
+   <td class="num socol">${ns?`<span class="sub3" style="font-size:10.5px">${esc((c&&c.programs||[]).join(' · '))}</span>`:`<b>${sa==null?'<span class="sub3">–</span>':fmtC(sa)}</b>`}</td>
+   <td class="num socol sor">${na?'<span class="sub3">–</span>':`<b>${(st&&sa!=null)?at(sa,st):'<span class="sub3">–</span>'}</b>`}</td>
    <td class="num sub3">${fmtC(r.a25)}${r.a25q?`<div style="font-size:10px">${r.a25q.toLocaleString()}개</div>`:''}</td>
    <td class="num"><b>${fmtC(r.got)}</b>${r.gotq?`<div class="sub3" style="font-weight:400;font-size:10px">${r.gotq.toLocaleString()}개</div>`:''}</td>
    <td class="num sub3">${fmtC(r.s26)}</td>
    <td style="min-width:70px">${pair(r.a25,r.got)}</td>
-   <td class="num">${rt(r.ratio)}${r.qratio!=null?`<div style="font-size:10px;font-weight:400"><span class="${r.qratio>=100?'up':'dn'}">${r.qratio}%</span></div>`:''}</td>
-   <td class="num">${pc(r.yoy)}</td></tr>`;};
+   <td class="num">${(!r.a25&&r.got>0)?`<span class="pill na">신규</span>`:rt(r.ratio)}${(r.a25&&r.qratio!=null)?`<div style="font-size:10px;font-weight:400"><span class="${r.qratio>=100?'up':'dn'}">${r.qratio}%</span></div>`:''}</td>
+   <td class="num">${(!r.a25&&r.got>0)?`<span class="up">+${fmtC(r.got)}</span><div class="sub3" style="font-weight:400;font-size:10px">전년 0 — 비율 없음</div>`:pc(r.yoy)}</td></tr>`;};
  const TS=rows.reduce((a,r)=>a+soT(r.k),0), TA=rows.reduce((a,r)=>a+(soA(r.k)||0),0);
  return `<ul class="lead"><li><b>Sell-out 이 이 권역의 캠페인 타깃</b>임 — 앞에 두고, 뒤에서 Sell-in 오더가 따라왔는지 봄</li>`
    +`<li>고객사마다 참여 기간이 달라 전년(2025)도 <b>각자의 같은 날짜 구간</b>으로 맞춰 비교함</li></ul>`
