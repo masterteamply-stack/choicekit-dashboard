@@ -5081,7 +5081,7 @@ function renderAsiaChoiceKit() {
   if (!_asiaCk) {
     if (_asiaCkTried) { panel.style.display = 'none'; return; }
     _asiaCkTried = true;
-    fetch('asia_choicekit.json').then(r => r.ok ? r.json() : null).then(d => {
+    fetch('asia_choicekit.json',{cache:'no-store'}).then(r => r.ok ? r.json() : null).then(d => {
       if (d && d.rows && d.rows.length) { _asiaCk = d; try { renderAsiaChoiceKit(); } catch(e){ console.error(e); } }
       else panel.style.display = 'none';
     }).catch(() => { panel.style.display = 'none'; });
@@ -11989,25 +11989,25 @@ async function processBulkFiles(files, { replace = false } = {}) {
         if (replace && !replacedMkt) { state.marketing = rows;
       // Cost_customer.csv — 전년 MKT cost 데이터 로드
       try {
-        const _cr = await fetch(_resolveGhRepoBase() + '/Cost_customer.csv');
+        const _cr = await fetch(_resolveGhRepoBase() + '/Cost_customer.csv',{cache:'no-store'});
         if (_cr.ok) { state.costCustomer = parseCSV(await _cr.text()); }
         else state.costCustomer = [];
       } catch(e) { state.costCustomer = []; }
       // marketing_2025_customer_support.csv — 전년(2025) 고객별 마케팅 서포트 비용(USD)
       try {
-        const _sr = await fetch(_resolveGhRepoBase() + '/marketing_2025_customer_support.csv');
+        const _sr = await fetch(_resolveGhRepoBase() + '/marketing_2025_customer_support.csv',{cache:'no-store'});
         if (_sr.ok) { state.mkt2025support = parseCSV(await _sr.text()); }
         else state.mkt2025support = [];
       } catch(e) { state.mkt2025support = []; }
       // prior_orders_2025.json — 전년(2025) 고객별 실제 오더(SAP CTR+NA export 추출, USD). Customer_No 키.
       try {
-        const _pr = await fetch(_resolveGhRepoBase() + '/prior_orders_2025.json');
+        const _pr = await fetch(_resolveGhRepoBase() + '/prior_orders_2025.json',{cache:'no-store'});
         if (_pr.ok) { state.priorOrders2025 = await _pr.json(); }
         else state.priorOrders2025 = {};
       } catch(e) { state.priorOrders2025 = {}; }
       // pre_orders_summary.json — YoY 스냅샷 (전년 동기 bar/line 차트용)
       try {
-        const _ps = await fetch(_resolveGhRepoBase() + '/pre_orders_summary.json');
+        const _ps = await fetch(_resolveGhRepoBase() + '/pre_orders_summary.json',{cache:'no-store'});
         if (_ps.ok) {
           const _d = await _ps.json();
           state.yoyByPromoMonth = _d.yoy_by_promo_month || {};
@@ -13137,7 +13137,7 @@ async function loadSharedData(force = false) {
 
   // ── pre_orders_summary.json (YoY 스냅샷) 로드 ──
   try {
-    const _psRes = await fetch(_resolveGhRepoBase() + '/pre_orders_summary.json');
+    const _psRes = await fetch(_resolveGhRepoBase() + '/pre_orders_summary.json',{cache:'no-store'});
     if (_psRes.ok) {
       const _psData = await _psRes.json();
       state.yoyByPromoMonth = _psData.yoy_by_promo_month || {};
