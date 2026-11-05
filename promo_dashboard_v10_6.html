@@ -1630,9 +1630,9 @@ function asiaBox(){
      sub2:`전년 대비 <b>${T.ratio}%</b> (${(T.yoy>=0?'+':'')+T.yoy}%)`},
     {lab:'타깃 대비 달성',val:`${T.att}%`,sub:`초이스킷 캠페인 타깃 ${fmtC(T.tgt)} · 넘긴 곳 <b>${AS.hit}</b>/${AS.n}`,meter:T.att},
     {lab:'전년 넘긴 고객사',val:`${AS.up}`,sub:`${AS.n}곳 중 · 나머지는 전년 아래`},
-    {lab:`당해 전체 오더 (1~${AS.last_month||10}월)`,val:fmtC(T.y26t),
+    {lab:`캠페인 참여 고객 YTD 오더 (1~${AS.last_month||10}월)`,val:fmtC(T.y26t),
      sub:`전년 동기 ${fmtC(T.y25t)} · <b>${T.aratio}%</b>`,sub2:`2025 연간 ${fmtC(T.y25)} 대비 ${T.vs25}%`},
-    {lab:'캠페인 기간 비중',val:`${T.share}%`,sub:'당해 전체 오더 중 초이스킷 기간에 들어온 몫',meter:T.share},
+    {lab:'캠페인 기간 비중',val:`${T.share}%`,sub:'참여 고객 YTD 오더 중 초이스킷 기간에 들어온 몫',meter:T.share},
     {lab:'기준',val:(AS.cut_order||AS.asof).slice(5),sub:esc(AS.src_order||AS.src),
      sub2:'미션·타깃·선적은 '+esc(AS.src)}];
   const code=r=>esc((r.codes||[r.code]).join(' + '));
@@ -3548,9 +3548,9 @@ function octMonth(A){
        S?{lab:'초이스킷 기간 오더',val:`${fmtC(S.a25)} → ${fmtC(S.got)}`,
           sub:`전년 동기 대비 <span class="${cls(S.yoy)}">${fmtPC(S.yoy)}</span>`,
           sub2:`전 품목 · SAP 오더 원장 ~${esc(_scut)}`}:null,
-       S?{lab:`전체 오더 (1~${AS.last_month}월)`,val:fmtC(S.y26t),
+       S?{lab:`캠페인 참여 고객 YTD 오더 (1~${AS.last_month}월)`,val:fmtC(S.y26t),
           sub:`전년 동기 ${fmtC(S.y25t)} · <b>${S.aratio}%</b>`,
-          sub2:'캠페인 기간이 아니라 올해 전체 · 같은 원장'}:null,
+          sub2:'그 고객사가 올해 낸 오더 전부 · 캠페인 기간으로 좁히지 않음'}:null,
        S?{lab:'선적 (SAP · YTD)',val:fmtC(S.s26),sub:`전년 연간 ${fmtC(S.s25)} 대비 ${S.sratio}%`}:null,
        Q?{lab:'Sell-in 수량',val:Q.q26.toLocaleString()+'개',
           sub:`전년 동기 ${Q.q25.toLocaleString()}개 대비 <b>${Q.ratio}%</b> · 금액 ${fmtC(Q.a26)}`}:null,
