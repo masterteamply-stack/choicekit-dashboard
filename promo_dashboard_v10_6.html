@@ -1495,13 +1495,12 @@ function ssPage(){
   const K=[
     {lab:'오더 미션 목표 → 실적',hero:1,val:`${fmtC(tgt)} <span style="color:var(--muted);font-weight:400">→</span> ${fmtC(got)}`,
      sub:`미션 진행 ${scored.length}곳 합계`,sub2:`합계 달성률 <b class="${rate>=100?'up':'dn'}">${rate==null?'–':rate.toFixed(1)+'%'}</b>`},
-    /* SteerStar 목표는 오더 미션과 설문 참여 둘임 — 두 달성률의 단순 평균을 종합으로 둠.
-       한쪽이 크게 넘겨도 다른 쪽 미달을 덮지 않게, 괄호 안에 100% 로 끊은 값도 같이 적음. */
-    (rate!=null&&lrate!=null)?(()=>{const comb=(rate+lrate)/2,
-        capped=(Math.min(rate,100)+Math.min(lrate,100))/2;
-      return {lab:'종합 달성률',val:`${comb.toFixed(1)}%`,
-        sub:`오더 <b class="${rate>=100?'up':'dn'}">${rate.toFixed(1)}%</b> · 설문 <b class="${lrate>=100?'up':'dn'}">${lrate.toFixed(1)}%</b> 의 평균`,
-        sub2:`초과분을 100% 로 끊으면 <b>${capped.toFixed(1)}%</b>`,meter:Math.min(comb,100)};})():null,
+    /* SteerStar 목표는 오더 미션과 설문 참여 둘임. 각각 100% 로 끊어 평균 —
+       안 끊으면 오더 초과분이 설문 미달을 덮어 종합이 실제보다 높게 보임. */
+    (rate!=null&&lrate!=null)?(()=>{const capped=(Math.min(rate,100)+Math.min(lrate,100))/2;
+      return {lab:'종합 달성률',val:`${capped.toFixed(1)}%`,
+        sub:`오더 <b class="${rate>=100?'up':'dn'}">${rate.toFixed(1)}%</b> · 설문 <b class="${lrate>=100?'up':'dn'}">${lrate.toFixed(1)}%</b> — 초과분은 100% 로 끊어 평균`,
+        meter:capped};})():null,
     {lab:'목표를 넘긴 파트너',val:`${hit}`,val2:`/ ${scored.length}`,
      sub:`중간값 달성률 ${med==null?'–':med.toFixed(1)+'%'} — 합계는 상위 소수가 끌어올림`},
     {lab:'설문 참여 수',val:fmtQ(lead),val2:`/ ${fmtQ(ltgt)}`,
