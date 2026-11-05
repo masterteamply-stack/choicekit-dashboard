@@ -1950,8 +1950,7 @@ function mfTable(){
      <td class="num">${fmtC(T.a)}</td><td class="num">${T.q.toLocaleString()}</td><td class="num">${T.cust}</td><td></td></tr></tfoot></table></div>`
   +`<p class="note fn" style="padding-left:0;margin:5px 0 0">`
    +`게시날짜 = 그 모델군 품번의 프로모션 적용 시작일 · 각 품번은 자기 게시일 이후 오더만 셈 · ${esc(MF.note_pre)}<br>`
-   +`한 품번이 두 모델군에 걸리면 먼저 게시된 날짜를 시작일로 봄 · 모델군별 금액을 더하면 겹치는 품번만큼 합계보다 커짐`
-   +(MF.cut?`<br>연관 오더 원장 마감일 ${esc(MF.cut)} 기준`:'')+`</p></div>`;
+   +`한 품번이 두 모델군에 걸리면 먼저 게시된 날짜를 시작일로 봄 · 모델군별 금액을 더하면 겹치는 품번만큼 합계보다 커짐</p></div>`;
 }
 
 
