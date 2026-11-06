@@ -79,7 +79,7 @@ def main():
         c = (r['customer'] or '').strip()
         if c and r['Customer_No']: cno[c][r['Customer_No']] += 1
 
-    new, miss = [], set()
+    new, miss, fx = [], set(), 0
     for p in (a.asian, a.euro):
         for r in read_xlsx(p):
             c = str(r['customer']).strip()
@@ -87,7 +87,17 @@ def main():
             if not n: miss.add(c)
             r['Customer_No'] = n
             r['customer'] = c
+            # 원자료는 단가만 현지 통화(EUR)고 amount 는 이미 USD 로 환산돼 있음
+            # (10 × 3.75 EUR = 37.50 인데 amount 43.36 — 1.156 이 곱해진 값).
+            # currency 를 그대로 두면 메인 대시보드가 amount 를 EUR 로 보고 한 번 더
+            # 환산해 CIS 가 부풀음(실제로 $19,239 더 나왔음). USD 로 통일함.
+            if str(r['currency']).strip().upper() not in ('', 'USD'):
+                q, amt = num(r['qty']), num(r['amount'])
+                if q: r['unit_price'] = round(amt / q, 4)
+                r['currency'] = 'USD'
+                fx += 1
             new.append(r)
+    if fx: print(f"  단가 통화 환산: {fx:,} 행을 USD 로 통일 (amount 는 원자료가 이미 USD)")
 
     # ── 품번별 대조
     A = collections.defaultdict(lambda: [0.0, 0.0])
