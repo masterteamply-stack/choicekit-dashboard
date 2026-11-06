@@ -3168,6 +3168,12 @@ async function loadFxRates() {
 const rateToUsd = (ym, cur) => {
   const c = (cur||'USD').toUpperCase();
   if (c === 'USD') return 1;
+  // KRW 는 효과 분석 대시보드와 같은 고정 환율을 씀 (campaign_kpi.json · 1,470).
+  // 월별 API 환율을 쓰면 같은 ₩7,813만이 두 화면에서 $53K / $57K 로 갈림.
+  if (c === 'KRW') {
+    const k = Number((window.CKPI && window.CKPI.krw_per_usd) || state.fxManualUsdKrw || 0);
+    if (k > 0) return 1 / k;
+  }
   const v = state.fx[`${ym}|${c}`];
   return (v && isFinite(v) && v>0) ? v : (FALLBACK_TO_USD[c] ?? 1);
 };
@@ -4340,6 +4346,8 @@ function renderAll() {
   // last known value here for an instant paint.
   document.getElementById('kpiAchv').textContent = (window._execMeanProgress != null) ? fmtPct(window._execMeanProgress) : '–';
   document.getElementById('kpiAchvSub').textContent = '(order+sell-out) ÷ target';
+  // 위 값들은 효과 분석 기준(campaign_kpi.json)이 있으면 바로 덮임 — applyKpiBridge 참고
+  try { applyKpiBridge(); } catch (e) { console.warn('[kpi] apply failed:', e); }
   document.getElementById('kpiRoi').textContent = mktCost>0 ? fmtPct(roi) : '–';
   document.getElementById('kpiRoiCard').classList.toggle('neg', roi<0);
 
@@ -4467,6 +4475,10 @@ function renderAll() {
   _deferRender(() => {
     renderSkuExplorer(fOrders, fMkt);
   }, 600);
+
+  // ── 마지막: 헤더 KPI 를 효과 분석 기준으로 되돌림 ──
+  // 앞 단계들이 자기 계산값으로 kpiOrder/kpiAchv/kpiRoi 를 덮으므로 맨 뒤에서 한 번 더 적용함.
+  _deferRender(() => { try { applyKpiBridge(); } catch (e) {} }, 700);
 
   // ── Deep-link: reflect current filters in the URL + ensure Copy-link buttons ──
   try { updateDeepLinkURL(); } catch (e) {}
@@ -6977,8 +6989,13 @@ function renderRegionExecSummary(fOrders, fMkt) {
   const _overallProg = _combDen > 0 ? (_totOrder + _totSoRes) / _combDen * 100 : null;
   const _nTgt = _campVals.filter(t => t.target > 0 || (t.otOut||0) > 0).length;
   window._execMeanProgress = _overallProg;
-  { const el = document.getElementById('kpiAchv'); if (el) el.textContent = _overallProg != null ? fmtPct(_overallProg) : '–';
-    const sub = document.getElementById('kpiAchvSub'); if (sub) sub.textContent = _nTgt ? `(order+sell-out) ÷ target · ${_nTgt} campaigns` : 'order ÷ target'; }
+  // 헤더의 달성률은 효과 분석 기준(연관 오더 ÷ 전년 동기 ×1.2)이 원본임.
+  // 여기 값((연관 오더+셀아웃) ÷ (오더 타깃+셀아웃 타깃))은 아래 요약표의 것이라
+  // campaign_kpi.json 이 있으면 헤더에 쓰지 않음 — 쓰면 57.2% / 87% 로 다시 갈림.
+  if (!window.CKPI) {
+    const el = document.getElementById('kpiAchv'); if (el) el.textContent = _overallProg != null ? fmtPct(_overallProg) : '–';
+    const sub = document.getElementById('kpiAchvSub'); if (sub) sub.textContent = _nTgt ? `(order+sell-out) ÷ target · ${_nTgt} campaigns` : 'order ÷ target';
+  } else { try { applyKpiBridge(); } catch (e) {} }
 
   // ── Note (minimal) ──
   const noteEl = document.getElementById('execSummaryNote');
@@ -13043,6 +13060,63 @@ async function loadCampaignTargetSkus() {
   }
 }
 
+/* =================== 효과 분석 대시보드와 KPI 맞추기 ===================
+   두 화면이 같은 수치를 각자 계산하면 반드시 어긋남 — 실제로 달성률이
+   57.2% / 87% 로 갈렸음(메인은 (연관 오더+셀아웃) ÷ (오더 타깃+셀아웃 타깃),
+   효과 분석은 연관 오더 ÷ (전년 동기 ×1.2)). 마케팅 KPI 는 뒤쪽이 맞으므로
+   효과 분석을 원본으로 두고 여기서는 그 값을 그대로 보여 줌.
+   재생성: python3 scripts/sync_kpi_bridge.py
+======================================================================== */
+window.CKPI = null;
+async function loadCampaignKpi() {
+  if (location.protocol === 'file:') return;
+  try {
+    const res = await fetch(_resolveGhRepoBase() + '/campaign_kpi.json', { cache: 'no-store' });
+    if (!res.ok) { if (res.status !== 404) console.warn(`[kpi] HTTP ${res.status}`); return; }
+    const j = await res.json();
+    if (j && typeof j === 'object' && j.a26 != null) {
+      window.CKPI = j;
+      console.log(`[kpi] ✅ 효과 분석 기준 — 연관 오더 $${Math.round(j.a26).toLocaleString()} · 달성률 ${j.achv}% · 원장 ~${j.cut}`);
+    }
+  } catch (e) { console.warn('[kpi] load failed (non-fatal):', e); }
+}
+
+function applyKpiBridge() {
+  const K = window.CKPI; if (!K) return;
+  const set = (id, v) => { const e = document.getElementById(id); if (e) e.innerHTML = v; };
+  const d = usdToDisplay(), m = n => fmtMoney(n * d);
+  set('kpiOrder', m(K.a26));
+  set('kpiOrderSub', `전년 동기 ${m(K.a25)} · <b>${K.yoy >= 0 ? '+' : ''}${K.yoy}%</b> · 캠페인 기간 · 대상 SKU 기준`);
+  set('kpiAchv', `${K.achv.toFixed(0)}%`);   // 효과 분석과 같은 반올림
+  set('kpiAchvSub', `목표 ${m(K.target)} · 전년 동기 ×${K.target_mult}`);
+  set('kpiCamps', `${K.camps_started} / ${K.camps_total}`);
+  set('kEngaged', String(K.n_cust));
+  set('kEngagedSub', '대상 고객 · 효과 분석 기준');
+  set('kRpc', K.n_cust ? m(K.a26 / K.n_cust) : '–');
+  set('kSkuCnt', `${K.sku_conv26} / ${K.sku_tgt}`);
+  set('kSkuSub', `대상 SKU 전환 · 전년 ${K.sku_conv25}종 · 오더 발생 ${K.ord_sku.toLocaleString()}종`);
+  // 비용도 같은 활동 원장에서 — 메인이 marketing.csv 를 따로 집계하면 또 갈림
+  if (K.cost != null && K.exp != null) {
+    const nAct = (window._execCache && window._execCache.nAct) || (state.marketing || []).length;
+    set('kpiPlan', m(K.exp));
+    set('kpiPlanSub', `효과 분석 기준 예상 비용 · 캠페인 ${K.camps_started}건`);
+    set('kpiExpectedFromCsv', `KRW/USD ${K.krw_per_usd.toLocaleString()} 고정 · 예상 ₩${Math.round(K.exp_krw).toLocaleString()}`);
+    set('kpiBudget', m(K.cost));
+    const use = K.exp > 0 ? (K.cost / K.exp) * 100 : 0;
+    set('kpiBudgetSub', `${fmtNum(nAct)} activities · <span class="${use>100?'t-red':'t-yellow'}">${use.toFixed(0)}%</span> of expected`);
+    set('kCpo', m(K.cost / Math.max(window._execOrderCount || 0, 1)));
+  }
+  // ROI 는 이 분자(연관 오더)와 같은 집행비용으로 다시 셈
+  const cost = (K.cost != null) ? K.cost * d
+    : (() => { const el = document.getElementById('kpiBudget');
+               return el ? num(String(el.textContent).replace(/[^0-9.\-]/g, '')) : 0; })();
+  if (cost > 0) {
+    const roi = ((K.a26 * d - cost) / cost) * 100;
+    set('kpiRoi', fmtPct(roi));
+    const rc = document.getElementById('kpiRoiCard'); if (rc) rc.classList.toggle('neg', roi < 0);
+  }
+}
+
 // Decode an ArrayBuffer to CSV text. Tries UTF-8 first, falls back to EUC-KR
 // (CP949) if the UTF-8 decode contains replacement chars. Mirrors readCsvText
 // but works on raw buffers from fetch() responses (not just File objects).
@@ -13776,6 +13850,8 @@ function injectCopyLinkButtons() {
   // Embedded shared data is in-DOM, no fetch required — works on file:// too.
   // 항상 강제 로드 (ck_has_personal_data 무시)
   localStorage.removeItem('ck_has_personal_data');
+  // 효과 분석 기준 KPI 는 환율까지 들고 있어 데이터보다 먼저 읽어 둠
+  try { await loadCampaignKpi(); } catch (e) { console.warn('[kpi] skipped:', e); }
   try { await loadSharedData(true); } catch (e) { console.warn('Shared data load skipped:', e); }
   // Load explicit per-campaign target SKU lists (SA_list etc.) — best-effort.
   try { await loadCampaignTargetSkus(); } catch (e) { console.warn('target SKU load skipped:', e); }

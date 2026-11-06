@@ -1,0 +1,93 @@
+{
+ "_readme": "효과 분석 대시보드(promo_dashboard_v10_6.html)의 캠페인 KPI. 메인 대시보드(index.html)가 이 파일을 읽어 같은 값을 보여 줌 — 두 화면이 각자 계산하지 않게 하려는 것임. 재생성: python3 scripts/sync_kpi_bridge.py",
+ "_basis": "연관 오더 = 캠페인 기간 · 대상 SKU 기준. 달성률 = 당해 ÷ (전년 동기 × 1.2). 셀아웃 실적·타깃은 달성률에 넣지 않음 — 마케팅 KPI 는 연관 오더만 봄.",
+ "src": "promo_dashboard_v10_6.html",
+ "cut": "2026-10-20",
+ "cut_from": "2026-09-21",
+ "a25": 3270998.0,
+ "a26": 3440852.69,
+ "yoy": 5.2,
+ "target_mult": 1.2,
+ "target": 3939934.74,
+ "target_fix": {
+  "MENA|Portfolio Expansion Program": 30000.0
+ },
+ "achv": 87.3,
+ "camps_started": 9,
+ "camps_total": 9,
+ "n_cust": 57,
+ "sku_tgt": 841,
+ "sku_conv25": 263,
+ "sku_conv26": 368,
+ "ord_sku": 5253,
+ "krw_per_usd": 1470,
+ "cost_krw": 78125472.0,
+ "exp_krw": 188282100.0,
+ "cost": 53146.58,
+ "exp": 128083.06,
+ "rows": [
+  {
+   "region": "CIS",
+   "program": "Asian vehicle",
+   "a25": 1866984.79,
+   "a26": 1471598.79,
+   "cut": "2026-10-19"
+  },
+  {
+   "region": "ASIA",
+   "program": "SELL-OUT Promotion",
+   "a25": 302613.41,
+   "a26": 679054.06,
+   "cut": "2026-09-25"
+  },
+  {
+   "region": "NA",
+   "program": "Strategic Partner Program",
+   "a25": 711181.0,
+   "a26": 346221.0,
+   "cut": "2026-09-26"
+  },
+  {
+   "region": "LATAM",
+   "program": "SELL-OUT Promotion",
+   "a25": 151868.19,
+   "a26": 330866.79,
+   "cut": "2026-09-23"
+  },
+  {
+   "region": "LATAM",
+   "program": "CTR MarketFit Campaign",
+   "a25": 29395.71,
+   "a26": 326230.31,
+   "cut": "2026-09-23"
+  },
+  {
+   "region": "KR",
+   "program": "Strategic Partner Program",
+   "a25": 127198.77,
+   "a26": 91592.44,
+   "cut": "2026-09-21"
+  },
+  {
+   "region": "CIS",
+   "program": "European vehicle",
+   "a25": 64442.96,
+   "a26": 88454.02,
+   "cut": "2026-10-19"
+  },
+  {
+   "region": "LATAM",
+   "program": "Mexico Awakening Campaign",
+   "a25": 4594.12,
+   "a26": 83339.48,
+   "cut": "2026-09-23"
+  },
+  {
+   "region": "MENA",
+   "program": "Portfolio Expansion Program",
+   "a25": 12719.05,
+   "a26": 23495.8,
+   "cut": "2026-10-20"
+  }
+ ]
+}
