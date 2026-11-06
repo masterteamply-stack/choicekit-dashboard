@@ -14,7 +14,8 @@
 무엇이 들어가나
   효과 분석의 const D 에서 집행된 캠페인만 추려 전년·당해·목표·달성률,
   캠페인 수, 대상 고객 수, 대상 SKU 와 전환 종수를 계산해 담음.
-  환율(KRW/USD 1,470)도 같이 넣음 — 메인이 매달 외부 API 환율을 쓰는 바람에
+  환율(KRW/USD 1,280 · 2026 경영환율)도 같이 넣음 — 메인이 매달 외부 API 환율을
+  쓰는 바람에
   집행비용이 $57K / $53K 로 갈렸음.
 """
 import argparse, json, os, re
@@ -23,7 +24,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, 'promo_dashboard_v10_6.html')
 OUT = os.path.join(ROOT, 'campaign_kpi.json')
 MULT = 1.2          # 전년 동기 대비 20% 증진이 마케팅 목표임
-KRW = 1470          # CHOICE_KIT 예산 173,500,000원 = $118,027.21 에서 역산한 고정 환율
+KRW = 1280          # 2026 경영환율 — 2027 광고선전비 예산서(환율표 2026-09-30) 기준
 
 
 def main():

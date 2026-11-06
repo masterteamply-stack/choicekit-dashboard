@@ -20,11 +20,11 @@
  "sku_conv25": 263,
  "sku_conv26": 368,
  "ord_sku": 5253,
- "krw_per_usd": 1470,
+ "krw_per_usd": 1280,
  "cost_krw": 78125472.0,
  "exp_krw": 188282100.0,
- "cost": 53146.58,
- "exp": 128083.06,
+ "cost": 61035.53,
+ "exp": 147095.39,
  "rows": [
   {
    "region": "CIS",

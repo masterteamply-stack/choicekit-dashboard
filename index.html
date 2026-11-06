@@ -3168,7 +3168,7 @@ async function loadFxRates() {
 const rateToUsd = (ym, cur) => {
   const c = (cur||'USD').toUpperCase();
   if (c === 'USD') return 1;
-  // KRW 는 효과 분석 대시보드와 같은 고정 환율을 씀 (campaign_kpi.json · 1,470).
+  // KRW 는 효과 분석 대시보드와 같은 고정 환율을 씀 (campaign_kpi.json · 2026 경영환율 1,280).
   // 월별 API 환율을 쓰면 같은 ₩7,813만이 두 화면에서 $53K / $57K 로 갈림.
   if (c === 'KRW') {
     const k = Number((window.CKPI && window.CKPI.krw_per_usd) || state.fxManualUsdKrw || 0);
