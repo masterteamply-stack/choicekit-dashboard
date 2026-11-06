@@ -1,7 +1,7 @@
 {
  "_readme": "원천 엑셀에서 뽑은 CIS Choice Kit 오더 집계. 재생성: python3 scripts/sync_cis_october.py --asian <xlsx> --euro <xlsx>",
- "src_a": "asian.xlsx",
- "src_e": "euro.xlsx",
+ "src_a": "5197b189-CK_Asian_Order_0301-1028_TOTAL.xlsx",
+ "src_e": "f2683322-CK_European_Order_0301-1028_TOTAL.xlsx",
  "t_from": "2026-03-23",
  "t_to": "2026-10-19",
  "last_month": "2026-10",
