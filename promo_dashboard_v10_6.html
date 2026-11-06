@@ -3465,7 +3465,7 @@ function cnSumPanel(reg){
    9월 리포트는 손대지 않음. 10월 리포트는 손으로 적은 활동 수치 대신
    단일 소스(asia_choicekit / asia_sellout / asia_sellin_qty / SteerStar)를
    그대로 읽어 그림. 자료가 안 들어온 칸은 비워 두고 그렇게 적음. */
-const OCTOBER_ACTIVITY = { _m: 10, kind: 'october', generated_at: '2026-10-30', wip: '업데이트 중',
+const OCTOBER_ACTIVITY = { _m: 10, kind: 'october', generated_at: '2026-10-30', wip: '업데이트 완료',
   cut: '2026-10',
   note: 'ASIA 고객사 오더는 SAP 전 품목 오더 원장 ~2026-10-29 기준으로 다시 반영했음. '
       + '연관 오더 원장은 9/25 까지라 캠페인 오더·SKU 는 그 기준임. '
@@ -3518,7 +3518,7 @@ function octMonth(A){
   let h=`<div class="card">`
    +`<div style="display:flex;align-items:center;gap:10px;margin:0 0 10px"><span style="width:6px;height:26px;background:var(--brand);border-radius:2px;display:inline-block"></span>`
    +`<h3 style="margin:0;font-size:22px;font-weight:800;letter-spacing:-0.5px">10월 리포트</h3>`
-   +(A.wip?`<span style="background:var(--warn);color:#fff;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap">${esc(A.wip)}</span>`:'')
+   +(A.wip?`<span style="background:var(--${/중$|중\b/.test(A.wip)?'warn':'good'});color:#fff;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap">${esc(A.wip)}</span>`:'')
    +`<span class="sub3" style="font-size:12px">데이터 기준 ${esc(A.generated_at)}</span></div>`
    +kgrid([
      {lab:'연관 오더 (전년 → 당해)',hero:1,
@@ -3738,7 +3738,7 @@ function sepReport(sel){
   const opts=`<option value="all"${sepSel==='all'?' selected':''}>종합 (최종 누적)</option>`
     +have.map(m=>`<option value="${m}"${sepSel===m?' selected':''}>${m}월 리포트${MONTHLY_ACTIVITY[m]&&MONTHLY_ACTIVITY[m].wip?' ('+MONTHLY_ACTIVITY[m].wip+')':''}</option>`).join('');
   const _Acur=MONTHLY_ACTIVITY[sepSel];
-  const _hdr=_Acur?`<span class="sepfhdr"><b>${_Acur._m}월 활동 리포트 · Activity Layer</b> · 데이터 기준 ${_Acur.generated_at}${_Acur.wip?` · <b style="color:var(--warn)">${esc(_Acur.wip)}</b>`:''}</span>`:`<span class="sepfhdr"><b>월간 종합</b> · 최종 누적(최신 월 기준)</span>`;
+  const _hdr=_Acur?`<span class="sepfhdr"><b>${_Acur._m}월 활동 리포트 · Activity Layer</b> · 데이터 기준 ${_Acur.generated_at}${_Acur.wip?` · <b style="color:var(--${/중$|중\b/.test(_Acur.wip)?'warn':'good'})">${esc(_Acur.wip)}</b>`:''}</span>`:`<span class="sepfhdr"><b>월간 종합</b> · 최종 누적(최신 월 기준)</span>`;
   $('#sepFilter').innerHTML=`<label class="sepdd">월 선택 <select id="sepSelDd">${opts}</select></label>`+_hdr;
   let body;
   if(sepSel==='all') body=sepAllOverview(have);
