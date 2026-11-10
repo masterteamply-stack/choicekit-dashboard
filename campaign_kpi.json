@@ -2,24 +2,24 @@
  "_readme": "효과 분석 대시보드(promo_dashboard_v10_6.html)의 캠페인 KPI. 메인 대시보드(index.html)가 이 파일을 읽어 같은 값을 보여 줌 — 두 화면이 각자 계산하지 않게 하려는 것임. 재생성: python3 scripts/sync_kpi_bridge.py",
  "_basis": "연관 오더 = 캠페인 기간 · 대상 SKU 기준. 달성률 = 당해 ÷ (전년 동기 × 1.2). 셀아웃 실적·타깃은 달성률에 넣지 않음 — 마케팅 KPI 는 연관 오더만 봄.",
  "src": "promo_dashboard_v10_6.html",
- "cut": "2026-10-20",
+ "cut": "2026-10-26",
  "cut_from": "2026-09-21",
- "a25": 3270998.0,
- "a26": 3440852.69,
- "yoy": 5.2,
+ "a25": 3280851.98,
+ "a26": 3457623.59,
+ "yoy": 5.4,
  "target_mult": 1.2,
- "target": 3939934.74,
+ "target": 3951759.52,
  "target_fix": {
   "MENA|Portfolio Expansion Program": 30000.0
  },
- "achv": 87.3,
- "camps_started": 9,
- "camps_total": 9,
+ "achv": 87.5,
+ "camps_started": 10,
+ "camps_total": 11,
  "n_cust": 57,
- "sku_tgt": 841,
- "sku_conv25": 263,
- "sku_conv26": 368,
- "ord_sku": 5253,
+ "sku_tgt": 1024,
+ "sku_conv25": 306,
+ "sku_conv26": 429,
+ "ord_sku": 5314,
  "krw_per_usd": 1280,
  "cost_krw": 78125472.0,
  "exp_krw": 188282100.0,
@@ -88,6 +88,13 @@
    "a25": 12719.05,
    "a26": 23495.8,
    "cut": "2026-10-20"
+  },
+  {
+   "region": "LATAM",
+   "program": "Chinese Vehicle Promotion",
+   "a25": 9853.98,
+   "a26": 16770.9,
+   "cut": "2026-10-26"
   }
  ]
 }
