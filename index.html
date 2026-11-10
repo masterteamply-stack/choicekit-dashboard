@@ -13087,7 +13087,9 @@ function applyKpiBridge() {
   const d = usdToDisplay(), m = n => fmtMoney(n * d);
   set('kpiOrder', m(K.a26));
   set('kpiOrderSub', `전년 동기 ${m(K.a25)} · <b>${K.yoy >= 0 ? '+' : ''}${K.yoy}%</b> · 캠페인 기간 · 대상 SKU 기준`);
-  set('kpiAchv', `${K.achv.toFixed(0)}%`);   // 효과 분석과 같은 반올림
+  // 효과 분석과 같은 입력으로 여기서 셈 — 저장된 값을 다시 반올림하면 87/88 로 갈림
+  const _ach = (K.target > 0) ? (K.a26 / K.target * 100) : (K.achv != null ? K.achv : null);
+  set('kpiAchv', _ach != null ? `${_ach.toFixed(0)}%` : '–');
   set('kpiAchvSub', `목표 ${m(K.target)} · 전년 동기 ×${K.target_mult}`);
   set('kpiCamps', `${K.camps_started} / ${K.camps_total}`);
   set('kEngaged', String(K.n_cust));

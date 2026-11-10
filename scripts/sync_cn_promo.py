@@ -26,7 +26,7 @@ import argparse, collections, datetime, json, os, re, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HTML = os.path.join(ROOT, 'promo_dashboard_v10_6.html')
 OUT = os.path.join(ROOT, 'cn_promo.json')
-PROGRAM = 'Chinese Vehicle Promotion'
+PROGRAM = '중국차 프로모션'    # 화면 표기 — 다른 캠페인과 달리 한글로 둠(권역 표에서 바로 눈에 띄게)
 
 # 권역 → (카탈로그 배포월, 집계 시작월, 화면에 적을 말)
 PLAN = {
@@ -138,7 +138,15 @@ def main():
     html = open(HTML, encoding='utf-8', newline='').read()
     m = re.search(r'<script>const D = (\{.*?\});</script>', html, re.S)
     D = json.loads(m.group(1))
-    D['campaigns'] = [c for c in D['campaigns'] if c.get('program') != PROGRAM]
+    D['campaigns'] = [c for c in D['campaigns']
+                      if c.get('program') not in (PROGRAM, 'Chinese Vehicle Promotion')]
+    # 권역 표의 '집계 대상'·'스코프 규칙' 칸이 비지 않게 scope 설명도 같이 넣음
+    D.setdefault('scope_meta', {})['CN'] = {
+        'label': '② 중국전용 품번 (중국차)',
+        'rule': '중국차 카탈로그 %d품번 중 중국 차종 전용만. ① 커버 전체(공용 포함)는 '
+                'ChoiceKit 대상 SKU 와 겹쳐 연관 오더에 더하지 않음.' % agg2['tgt_sku'],
+        'src': '카탈로그', 'n_list': agg2['tgt_sku'],
+        'n_sku': max([r['cn26_sku'] for r in agg2['rows']] or [0]), 'share': None}
 
     print(f"중국차 프로모션 · 원장 ~{agg2['cut']} · 카탈로그 대상 품번 {agg2['tgt_sku']}종")
     for r in agg2['rows']:
@@ -155,13 +163,19 @@ def main():
             'all25': r['all25'], 'all26': r['all26'],
             'q25': r['cn25_q'], 'q26': r['cn26_q'],
             's25': r['cn25_sku'], 's26': r['cn26_sku'],
-            'tgt_sku': agg2['tgt_sku'], 'ord_sku': r['cn26_sku'],
+            # 아직 시작 안 한 권역은 대상 품번을 0 으로 둠 — 넣어 두면 화면의
+            # '대상 SKU' 합계가 campaign_kpi.json(집행분만 셈)과 어긋남
+            'tgt_sku': agg2['tgt_sku'] if started else 0,
+            'ord_sku': r['cn26_sku'],
             'yoy': round((r['cn26'] - r['cn25']) / r['cn25'] * 100, 1) if r['cn25'] else None,
             'yoyA': round((r['all26'] - r['all25']) / r['all25'] * 100, 1) if r['all25'] else None,
             'cost': 0.0, 'exp': 0.0, 'so_t': 0.0, 'so_r': 0.0,
             'countries': r.get('countries') or [], 'custs': [],
             'n_cust': r['cn26_cust'], 'excl_ck': [], 'cust_scoped': False,
             'wins': [[r['from'] + '-01', r['cut']]] if r['months'] else [],
+            # 전 품목 오더(COCT) 는 ChoiceKit 참여 고객사 기준이라 이 캠페인엔 없음 → '–'
+            'oct_all': None, 'oct_all_q': None, 'oct_all_n': None,
+            'ytd_all': None, 'ytd_all_q': None,
             'mser': [{'m': x['m'], 'cur': x['cur'], 'prv': x['prv'],
                       'yoy': round((x['cur'] - x['prv']) / x['prv'] * 100, 1) if x['prv'] else None,
                       'days': 0, 'mdays': 30} for x in r['mser']],

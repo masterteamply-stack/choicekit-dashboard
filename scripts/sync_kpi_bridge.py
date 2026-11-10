@@ -68,7 +68,9 @@ def main():
         'yoy': round((a26 - a25) / a25 * 100, 1) if a25 else None,
         'target_mult': mult, 'target': tgt,
         'target_fix': fix,
-        'achv': round(a26 / tgt * 100, 1) if tgt else None,
+        # 소수 한 자리로 깎아 두면 메인에서 다시 반올림할 때 효과 분석과 1% 갈림
+        # (87.49 → 87.5 → '88%'). 두 자리로 두면 양쪽 다 87% 로 떨어짐.
+        'achv': round(a26 / tgt * 100, 4) if tgt else None,
         'camps_started': len(cs), 'camps_total': len(D['campaigns']),
         'n_cust': len({str(r.get('code') or '') for r in D.get('cust_delta', []) if r.get('code')}),
         'sku_tgt': sum(c.get('tgt_sku') or 0 for c in tg),

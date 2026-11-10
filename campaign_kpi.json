@@ -12,7 +12,7 @@
  "target_fix": {
   "MENA|Portfolio Expansion Program": 30000.0
  },
- "achv": 87.5,
+ "achv": 87.4958,
  "camps_started": 10,
  "camps_total": 11,
  "n_cust": 57,
@@ -91,7 +91,7 @@
   },
   {
    "region": "LATAM",
-   "program": "Chinese Vehicle Promotion",
+   "program": "중국차 프로모션",
    "a25": 9853.98,
    "a26": 16770.9,
    "cut": "2026-10-26"
