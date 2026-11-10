@@ -3636,7 +3636,6 @@ function octMonth(A){
   h+=latamBlock();
   h+=menaMonth(kgrid);
   h+=asiaBlk;
-  h+=cnPromoOct(kgrid);
 
   /* ── SteerStar 파트너 오더·매출 추이 ── */
   if(ss&&ss.rows){
@@ -3681,6 +3680,8 @@ function octMonth(A){
         <td style="text-align:left;white-space:normal;font-size:13px;line-height:1.5">${esc(x.d)}</td></tr>`).join('')
      +`</tbody></table></div></div>`;
   }
+  /* 중국차 프로모션은 10월 리포트 맨 아래에 둠 */
+  h+=cnPromoOct(kgrid);
   return h;
 }
 
