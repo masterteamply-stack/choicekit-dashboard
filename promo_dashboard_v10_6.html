@@ -1739,6 +1739,18 @@ const SO=new Set(['SELL-OUT Promotion','Sell-Out Promotion','Trade promotion']);
        const mult=cu>0?'<b>'+(c.a26/cu).toFixed(1)+'배</b>':'–';
        T.a26+=c.a26||0; T.a25+=c.a25||0; T.goal+=_ot||0; T.cost+=cu;
        T.sku+=(_os||0); if(so&&_so.t>0){T.sot+=_so.t; T.sor+=_so.r;}
+       /* 아직 시작 전인 캠페인은 숫자 칸을 '–' 로 줄줄이 비우지 않고
+          언제부터 시작하는지 한 칸으로 적음. */
+       if(!c.started){
+         const _st=String(c.start||'').slice(0,7);
+         t+=`<tr><td style="white-space:nowrap">${esc(c.region)}</td><td style="font-size:11.5px;word-break:keep-all;overflow-wrap:anywhere">${esc(c.program)}`
+          +`<div class="sub3" style="font-size:10px;color:var(--ink2);font-weight:400">${c.loc?esc(c.loc)+' · ':''}${c.note?esc(c.note):'시작 전'}</div></td>`
+          +`<td style="font-size:11px">${so?'<span class="pill">OUT</span>':'IN'}</td>`
+          +`<td class="sub3" colspan="9" style="text-align:left;font-size:11.5px">`
+          +`<b>${_st?+_st.slice(5)+'월부터 시작':'시작 예정'}</b>`
+          +`${c.cut?` · 오더 원장이 ${esc(c.cut)} 까지라 아직 집계 전`:''}</td></tr>`;
+         return;
+       }
        t+=`<tr><td style="white-space:nowrap">${esc(c.region)}</td><td style="font-size:11.5px;word-break:keep-all;overflow-wrap:anywhere">${esc(c.program)}<div class="sub3" style="font-size:10px;color:var(--ink2);font-weight:400">${c.loc?esc(c.loc)+' · ':''}고객 ${c.n_cust}곳 · ${_td}</div></td><td style="font-size:11px">${so?'<span class="pill">OUT</span>':'IN'}</td><td class="num">${c.a26?fmtC(c.a26):'–'}</td><td class="num sub3">${c.a25?fmtC(c.a25):'–'}</td><td class="num">${yoy}</td><td class="num" style="font-size:11px">${siGoal}</td><td class="num" style="font-size:11px">${siRate}</td><td class="num" style="font-size:11px;word-break:break-word">${sell}</td><td class="num" style="font-size:10.5px">${_conv}${c.add_sku?`<div class="sub3" style="font-size:9.5px">${Object.entries(c.add_sku).map(([m,n])=>`${+m.slice(5)}월 ${n}종`).join(' · ')}</div>`:''}</td><td class="num sub3">${cu>0?fmtC(cu):'–'}</td><td class="num">${mult}</td></tr>`;});
      const _ty=T.a25?((T.a26-T.a25)/T.a25*100):null;
      const _tr=(x,y)=>y?`<span class="${x/y>=1?'up':(x/y>=0.5?'':'dn')}">${(x/y*100).toFixed(0)}%</span>`:'<span class="sub3">–</span>';
@@ -1891,7 +1903,7 @@ function latamBlock(){
    <td class="num"><b>${c.a26?fmtC(c.a26):'–'}</b></td>
    <td class="num">${pc(c.yoy)}</td>
    <td class="num">${s&&s.tgt?`<b>${s.ord}</b><span class="sub3"> / ${s.tgt}종</span>`:`<span class="sub3">${esc(c.sku_disp||'전 품목')}</span>`}</td>
-   <td class="num ocol">${c.ytd_all?fmtC(c.ytd_all):'<span class="sub3">0</span>'}
+   <td class="num ocol">${c.ytd_all?fmtC(c.ytd_all):(c.ytd_all==null?'<span class="sub3">–</span>':'<span class="sub3">0</span>')}
      ${c.oct_all?`<div class="sub3" style="font-weight:400;font-size:10px">${+COCT.month.slice(5)}월 ${fmtC(c.oct_all)}</div>`:''}</td></tr>`;};
  return `<div style="margin:26px 0 10px;border-left:6px solid var(--brand);padding:3px 0 3px 12px">`
    +`<span style="font-size:20px;font-weight:800;letter-spacing:-0.5px">LATAM</span>`
