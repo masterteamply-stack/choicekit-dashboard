@@ -10910,7 +10910,7 @@ function renderSkuAggregate(fOrders) {
     clearSkuPanels();
     const _e = document.getElementById('skuAggEffect');
     if (_e) _e.innerHTML = X ? `<div class="skui"><div class="skui-hd"><span class="skui-bar"></span><div>`
-      + `<b>${X.p} · 캠페인 단위</b><div class="skui-sub">${X.basis}</div></div></div>`
+      + `<b>${X.p} · ${X.cls?'품번 단위':'캠페인 단위'}</b><div class="skui-sub">${X.basis}</div></div></div>`
       + `<div class="skui-tiles">`
       + `<div class="skui-tile"><div class="skui-lab">대상 SKU</div><div class="skui-val">${X.n}종</div>`
       + `<div class="skui-sub">중국차 카탈로그 · 중국 차종 전용</div></div>`
@@ -10919,7 +10919,12 @@ function renderSkuAggregate(fOrders) {
       + `<div class="skui-tile"><div class="skui-lab">집행 전 → 후</div>`
       + `<div class="skui-val">${skuiMoney(X.before)} → ${skuiMoney(X.after)}</div>`
       + `<div class="skui-sub">${skuiPct(X.yoy)} · ${skuiMoney(X.inc)}</div></div></div>`
-      + `<p class="skui-basis">${X.note} — 품번별로 보시려면 중국차 오더분석 원장이 필요함.</p></div>` : '';
+      + (X.cls ? `<div class="skui-cls">품번 분류 <b>${(X.cls['신규']||0)}</b> 신규 · `
+          + `<b>${(X.cls['증가']||0)}</b> 증가 · <b>${(X.cls['유지']||0)}</b> 유지 · `
+          + `<b>${(X.cls['감소']||0)}</b> 감소 · <b>${(X.cls['이탈']||0)}</b> 이탈 `
+          + `<span class="skui-mut">(신규 ${skuiMoney(X.new_amt)} · 증가 ${skuiMoney(X.up_amt)} · 감소·이탈 ${skuiMoney(X.dn_amt)})</span></div>`
+          + _cnSkuTable(X) : '')
+      + `<p class="skui-basis">${skuiEsc(X.rule||'')} · ${skuiEsc(X.note||'')}</p></div>` : '';
     { const _i=document.getElementById('skuAggInsight'); if(_i) _i.innerHTML=''; }
     return;
   }
@@ -13332,6 +13337,29 @@ function skuiPct(v){
 }
 function skuiEsc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
+
+/* 중국차 품번 단위 표 — cn_sku_impact.json 의 top 버킷 (신규·증가·감소) */
+function _cnSkuTable(X){
+  const T=X.top||{}; const order=['신규','증가','감소','이탈'];
+  const rows=[];
+  order.forEach(k=>(T[k]||[]).slice(0,8).forEach(x=>rows.push({k:k,...x})));
+  if(!rows.length) return '';
+  const tag=k=>k==='신규'?'<span class="skui-up">신규</span>'
+    :k==='증가'?'<span class="skui-up">증가</span>'
+    :`<span class="skui-dn">${k}</span>`;
+  return '<div class="skui-wrap"><table class="skui-tbl"><thead><tr>'
+   +'<th>구분</th><th>CTR 코드</th><th>브랜드</th><th>부품</th><th>권역</th>'
+   +'<th class="n">고객</th><th class="n">집행 전</th><th class="n">집행 후</th><th class="n">증감</th>'
+   +'</tr></thead><tbody>'
+   +rows.map(x=>'<tr><td>'+tag(x.k)+'</td><td><b>'+skuiEsc(x.sku)+'</b></td>'
+     +'<td>'+skuiEsc(x.brand)+'</td><td>'+skuiEsc(x.part)+'</td>'
+     +'<td>'+skuiEsc((x.region||[]).join(' · '))+'</td>'
+     +'<td class="n">'+skuiNum(x.cust)+'곳</td>'
+     +'<td class="n">'+skuiMoney(x.before)+'</td><td class="n"><b>'+skuiMoney(x.after)+'</b></td>'
+     +'<td class="n '+(x.inc>=0?'skui-up':'skui-dn')+'">'+(x.inc>=0?'+':'')+skuiMoney(x.inc)+'</td></tr>').join('')
+   +'</tbody></table></div>';
+}
+
 function skuImpactHTML(){
   const S=skuiData(); if(!S||S.tgt_sku==null) return '';
   const C=S.cls||{}, X=(S.extra||[])[0]||null;
@@ -13345,7 +13373,7 @@ function skuImpactHTML(){
   const rows=(S.by_camp||[]).slice().sort((a,b)=>(b.before||0)-(a.before||0));
   const grew=rows.filter(r=>(r.yoy||0)>0).concat(X&&X.yoy>0?[X]:[]);
   const main=rows.filter(r=>(r.inc||0)<0).sort((a,b)=>a.inc-b.inc)[0]||null;
-  const newBy=rows.filter(r=>r.new>0).sort((a,b)=>b.new-a.new);
+  const newBy=rows.concat(X&&X.new>0?[X]:[]).filter(r=>r.new>0).sort((a,b)=>b.new-a.new);
   const dn=(S.top&&S.top['감소'])||[];
 
   const tile=(lab,val,sub)=>'<div class="skui-tile"><div class="skui-lab">'+lab+'</div>'
@@ -13356,7 +13384,7 @@ function skuImpactHTML(){
    +'<b>SKU 기반 오더 전환 효과 · 종합</b>'
    +'<div class="skui-sub">SKU 대상 프로모션을 집행한 권역의 캠페인만 취합 — '
    + skuiEsc((S.regions||[]).join(' · '))+' · 원장 ~'+skuiEsc(S.cut)
-   + (X?' (중국차는 ~'+skuiEsc(X.cut)+' · 월 단위)':'')+'</div></div></div>';
+   + (X?' · 중국차는 별도 원장 ~'+skuiEsc(X.cut):'')+'</div></div></div>';
 
   h+='<div class="skui-tiles">'
    +tile('대상 SKU', skuiNum(tgtAll)+'종', X?('중국차 '+X.n+'종 포함'):'')
@@ -13386,11 +13414,11 @@ function skuImpactHTML(){
   if(X){
     h+='<tr class="skui-x"><td><b>'+skuiEsc(X.p)+'</b></td><td>'+skuiEsc((X.region||[]).join(' · '))+'</td>'
      +'<td>'+skuiEsc(X.start||'–')+'</td><td class="n">'+skuiNum(X.n)+'종</td>'
-     +'<td class="n">'+skuiNum(X.conv)+'종</td><td class="n">·</td>'
+     +'<td class="n">'+skuiNum(X.conv)+'종</td><td class="n">'+(X.new?'<b>'+X.new+'종</b>':'·')+'</td>'
      +'<td class="n">'+skuiMoney(X.before)+'</td><td class="n"><b>'+skuiMoney(X.after)+'</b></td>'
      +'<td class="n skui-up">+'+skuiMoney(X.inc)+'</td><td class="n">'+skuiPct(X.yoy)+'</td></tr>'
-     +'<tr class="skui-note2"><td colspan="10">중국차는 오더 원장이 따로임 — '+skuiEsc(X.basis)
-     +'. '+skuiEsc(X.note)+'</td></tr>';
+     +'<tr class="skui-note2"><td colspan="10">중국차는 오더 원장이 orders.csv 밖임 — '+skuiEsc(X.basis)
+     +(X.rule?' · '+skuiEsc(X.rule):'')+'. '+skuiEsc(X.note)+'</td></tr>';
   }
   h+='</tbody></table></div>';
 

@@ -1,0 +1,1495 @@
+{
+ "src": "중국차 오더분석 2026 r9",
+ "basis": "② 중국전용 품번 · 정가(USD) · 2026-04-01 ~ 2026-10-26 · 전년은 같은 날짜 구간",
+ "rule": "RUS 제외 · 우크라이나는 EU · LATAM·MENA·CIS 만",
+ "cut": "2026-10-26",
+ "start": "2026-04-01",
+ "regions": [
+  "LATAM",
+  "MENA",
+  "CIS"
+ ],
+ "before": 10238.78,
+ "after": 19387.61,
+ "inc": 9148.83,
+ "yoy": 89.4,
+ "conv": 63,
+ "conv_prev": 43,
+ "cust": 10,
+ "cls": {
+  "증가": 24,
+  "이탈": 7,
+  "신규": 27,
+  "유지": 2,
+  "감소": 10
+ },
+ "new_amt": 7540,
+ "up_amt": 4990,
+ "dn_amt": -3371,
+ "top": {
+  "증가": [
+   {
+    "sku": "CQ0896L",
+    "part": "CONTROL ARM",
+    "brand": "HAVAL",
+    "region": [
+     "CIS",
+     "LATAM"
+    ],
+    "before": 82.08,
+    "after": 657.7,
+    "inc": 575.62,
+    "cust": 2,
+    "kind": "증가"
+   },
+   {
+    "sku": "CQ0896R",
+    "part": "CONTROL ARM",
+    "brand": "HAVAL",
+    "region": [
+     "CIS",
+     "LATAM"
+    ],
+    "before": 82.08,
+    "after": 657.7,
+    "inc": 575.62,
+    "cust": 2,
+    "kind": "증가"
+   },
+   {
+    "sku": "CR1004",
+    "part": "INNER TIE ROD",
+    "brand": "CHERY",
+    "region": [
+     "CIS",
+     "LATAM"
+    ],
+    "before": 330.3,
+    "after": 804.0,
+    "inc": 473.7,
+    "cust": 4,
+    "kind": "증가"
+   },
+   {
+    "sku": "CE1082L",
+    "part": "OUTER TIE ROD",
+    "brand": "CHERY",
+    "region": [
+     "LATAM"
+    ],
+    "before": 80.6,
+    "after": 420.4,
+    "inc": 339.8,
+    "cust": 3,
+    "kind": "증가"
+   },
+   {
+    "sku": "CE1082R",
+    "part": "OUTER TIE ROD",
+    "brand": "CHERY",
+    "region": [
+     "LATAM"
+    ],
+    "before": 80.6,
+    "after": 412.5,
+    "inc": 331.9,
+    "cust": 3,
+    "kind": "증가"
+   },
+   {
+    "sku": "CE1080",
+    "part": "OUTER TIE ROD",
+    "brand": "CHERY",
+    "region": [
+     "LATAM"
+    ],
+    "before": 278.7,
+    "after": 555.68,
+    "inc": 276.98,
+    "cust": 3,
+    "kind": "증가"
+   },
+   {
+    "sku": "CS0054L",
+    "part": "SIDE ROD / TIE ROD ASSY",
+    "brand": "CHERY",
+    "region": [
+     "LATAM"
+    ],
+    "before": 159.0,
+    "after": 410.6,
+    "inc": 251.6,
+    "cust": 2,
+    "kind": "증가"
+   },
+   {
+    "sku": "CS0054R",
+    "part": "SIDE ROD / TIE ROD ASSY",
+    "brand": "CHERY",
+    "region": [
+     "LATAM"
+    ],
+    "before": 159.0,
+    "after": 410.6,
+    "inc": 251.6,
+    "cust": 2,
+    "kind": "증가"
+   },
+   {
+    "sku": "CB0659",
+    "part": "BALL JOINT",
+    "brand": "SOUEAST",
+    "region": [
+     "LATAM"
+    ],
+    "before": 151.2,
+    "after": 351.5,
+    "inc": 200.3,
+    "cust": 2,
+    "kind": "증가"
+   },
+   {
+    "sku": "CE1087L",
+    "part": "OUTER TIE ROD",
+    "brand": "CHERY",
+    "region": [
+     "LATAM"
+    ],
+    "before": 135.1,
+    "after": 309.8,
+    "inc": 174.7,
+    "cust": 2,
+    "kind": "증가"
+   }
+  ],
+  "이탈": [
+   {
+    "sku": "CB0671",
+    "part": "BALL JOINT",
+    "brand": "HAVAL / GREAT WALL",
+    "region": [
+     "LATAM"
+    ],
+    "before": 516.8,
+    "after": 0,
+    "inc": -516.8,
+    "cust": 2,
+    "kind": "이탈"
+   },
+   {
+    "sku": "CQ0897L",
+    "part": "CONTROL ARM",
+    "brand": "HAVAL",
+    "region": [
+     "LATAM"
+    ],
+    "before": 252.88,
+    "after": 0,
+    "inc": -252.88,
+    "cust": 1,
+    "kind": "이탈"
+   },
+   {
+    "sku": "CQ0897R",
+    "part": "CONTROL ARM",
+    "brand": "HAVAL",
+    "region": [
+     "LATAM"
+    ],
+    "before": 252.88,
+    "after": 0,
+    "inc": -252.88,
+    "cust": 1,
+    "kind": "이탈"
+   },
+   {
+    "sku": "CQ0893L",
+    "part": "CONTROL ARM",
+    "brand": "SOUEAST",
+    "region": [
+     "LATAM"
+    ],
+    "before": 249.76,
+    "after": 0,
+    "inc": -249.76,
+    "cust": 1,
+    "kind": "이탈"
+   },
+   {
+    "sku": "CQ0893R",
+    "part": "CONTROL ARM",
+    "brand": "SOUEAST",
+    "region": [
+     "LATAM"
+    ],
+    "before": 249.76,
+    "after": 0,
+    "inc": -249.76,
+    "cust": 1,
+    "kind": "이탈"
+   },
+   {
+    "sku": "CR1003",
+    "part": "INNER TIE ROD",
+    "brand": "CHERY",
+    "region": [
+     "LATAM"
+    ],
+    "before": 150.36,
+    "after": 0,
+    "inc": -150.36,
+    "cust": 2,
+    "kind": "이탈"
+   },
+   {
+    "sku": "CL0973",
+    "part": "STABILIZER LINK",
+    "brand": "HAVAL",
+    "region": [
+     "LATAM"
+    ],
+    "before": 140.4,
+    "after": 0,
+    "inc": -140.4,
+    "cust": 1,
+    "kind": "이탈"
+   }
+  ],
+  "신규": [
+   {
+    "sku": "CE1095L",
+    "part": "OUTER TIE ROD",
+    "brand": "CHERY",
+    "region": [
+     "CIS",
+     "LATAM"
+    ],
+    "before": 0,
+    "after": 784.36,
+    "inc": 784.36,
+    "cust": 3,
+    "kind": "신규"
+   },
+   {
+    "sku": "CE1095R",
+    "part": "OUTER TIE ROD",
+    "brand": "CHERY",
+    "region": [
+     "CIS",
+     "LATAM"
+    ],
+    "before": 0,
+    "after": 784.36,
+    "inc": 784.36,
+    "cust": 3,
+    "kind": "신규"
+   },
+   {
+    "sku": "CB0675",
+    "part": "BALL JOINT",
+    "brand": "CHERY",
+    "region": [
+     "CIS",
+     "LATAM"
+    ],
+    "before": 0,
+    "after": 554.9,
+    "inc": 554.9,
+    "cust": 3,
+    "kind": "신규"
+   },
+   {
+    "sku": "CE1093L",
+    "part": "OUTER TIE ROD",
+    "brand": "CHERY",
+    "region": [
+     "CIS",
+     "LATAM"
+    ],
+    "before": 0,
+    "after": 537.16,
+    "inc": 537.16,
+    "cust": 4,
+    "kind": "신규"
+   },
+   {
+    "sku": "CE1093R",
+    "part": "OUTER TIE ROD",
+    "brand": "CHERY",
+    "region": [
+     "CIS",
+     "LATAM"
+    ],
+    "before": 0,
+    "after": 537.16,
+    "inc": 537.16,
+    "cust": 4,
+    "kind": "신규"
+   },
+   {
+    "sku": "CE1097L",
+    "part": "OUTER TIE ROD",
+    "brand": "MG",
+    "region": [
+     "LATAM",
+     "MENA"
+    ],
+    "before": 0,
+    "after": 383.34,
+    "inc": 383.34,
+    "cust": 3,
+    "kind": "신규"
+   },
+   {
+    "sku": "CE1097R",
+    "part": "OUTER TIE ROD",
+    "brand": "MG",
+    "region": [
+     "LATAM",
+     "MENA"
+    ],
+    "before": 0,
+    "after": 358.26,
+    "inc": 358.26,
+    "cust": 3,
+    "kind": "신규"
+   },
+   {
+    "sku": "CL0994",
+    "part": "STABILIZER LINK",
+    "brand": "CHERY",
+    "region": [
+     "CIS",
+     "LATAM"
+    ],
+    "before": 0,
+    "after": 326.14,
+    "inc": 326.14,
+    "cust": 3,
+    "kind": "신규"
+   },
+   {
+    "sku": "CB0677L",
+    "part": "BALL JOINT",
+    "brand": "MG",
+    "region": [
+     "LATAM",
+     "MENA"
+    ],
+    "before": 0,
+    "after": 310.92,
+    "inc": 310.92,
+    "cust": 2,
+    "kind": "신규"
+   },
+   {
+    "sku": "CB0677R",
+    "part": "BALL JOINT",
+    "brand": "MG",
+    "region": [
+     "LATAM",
+     "MENA"
+    ],
+    "before": 0,
+    "after": 310.92,
+    "inc": 310.92,
+    "cust": 2,
+    "kind": "신규"
+   }
+  ],
+  "유지": [
+   {
+    "sku": "CE1081L",
+    "part": "OUTER TIE ROD",
+    "brand": "SOUEAST",
+    "region": [
+     "LATAM"
+    ],
+    "before": 264.0,
+    "after": 259.0,
+    "inc": -5.0,
+    "cust": 1,
+    "kind": "유지"
+   },
+   {
+    "sku": "CE1081R",
+    "part": "OUTER TIE ROD",
+    "brand": "SOUEAST",
+    "region": [
+     "LATAM"
+    ],
+    "before": 264.0,
+    "after": 259.0,
+    "inc": -5.0,
+    "cust": 1,
+    "kind": "유지"
+   }
+  ],
+  "감소": [
+   {
+    "sku": "CL0974",
+    "part": "STABILIZER LINK",
+    "brand": "CHERY",
+    "region": [
+     "LATAM"
+    ],
+    "before": 433.2,
+    "after": 102.95,
+    "inc": -330.25,
+    "cust": 1,
+    "kind": "감소"
+   },
+   {
+    "sku": "CL0975",
+    "part": "STABILIZER LINK",
+    "brand": "CHERY",
+    "region": [
+     "LATAM"
+    ],
+    "before": 430.38,
+    "after": 162.0,
+    "inc": -268.38,
+    "cust": 1,
+    "kind": "감소"
+   },
+   {
+    "sku": "CL0976L",
+    "part": "STABILIZER LINK",
+    "brand": "JAC",
+    "region": [
+     "LATAM"
+    ],
+    "before": 367.2,
+    "after": 138.2,
+    "inc": -229.0,
+    "cust": 2,
+    "kind": "감소"
+   },
+   {
+    "sku": "CL0976R",
+    "part": "STABILIZER LINK",
+    "brand": "JAC",
+    "region": [
+     "LATAM"
+    ],
+    "before": 367.2,
+    "after": 138.2,
+    "inc": -229.0,
+    "cust": 2,
+    "kind": "감소"
+   },
+   {
+    "sku": "CE1084L",
+    "part": "OUTER TIE ROD",
+    "brand": "CHERY",
+    "region": [
+     "LATAM"
+    ],
+    "before": 195.6,
+    "after": 87.92,
+    "inc": -107.68,
+    "cust": 1,
+    "kind": "감소"
+   },
+   {
+    "sku": "CE1084R",
+    "part": "OUTER TIE ROD",
+    "brand": "CHERY",
+    "region": [
+     "LATAM"
+    ],
+    "before": 195.6,
+    "after": 87.92,
+    "inc": -107.68,
+    "cust": 1,
+    "kind": "감소"
+   },
+   {
+    "sku": "CE1085",
+    "part": "OUTER TIE ROD",
+    "brand": "CHERY",
+    "region": [
+     "LATAM"
+    ],
+    "before": 134.2,
+    "after": 30.0,
+    "inc": -104.2,
+    "cust": 1,
+    "kind": "감소"
+   },
+   {
+    "sku": "CR1001",
+    "part": "INNER TIE ROD",
+    "brand": "CHERY",
+    "region": [
+     "LATAM"
+    ],
+    "before": 388.0,
+    "after": 309.4,
+    "inc": -78.6,
+    "cust": 3,
+    "kind": "감소"
+   },
+   {
+    "sku": "CR1002",
+    "part": "INNER TIE ROD",
+    "brand": "CHERY",
+    "region": [
+     "LATAM"
+    ],
+    "before": 206.4,
+    "after": 135.2,
+    "inc": -71.2,
+    "cust": 1,
+    "kind": "감소"
+   },
+   {
+    "sku": "CR0997",
+    "part": "INNER TIE ROD",
+    "brand": "CHERY",
+    "region": [
+     "LATAM"
+    ],
+    "before": 178.08,
+    "after": 145.6,
+    "inc": -32.48,
+    "cust": 1,
+    "kind": "감소"
+   }
+  ]
+ },
+ "items": [
+  {
+   "sku": "CB0659",
+   "part": "BALL JOINT",
+   "brand": "SOUEAST",
+   "region": [
+    "LATAM"
+   ],
+   "before": 151.2,
+   "after": 351.5,
+   "inc": 200.3,
+   "cust": 2,
+   "kind": "증가"
+  },
+  {
+   "sku": "CB0670",
+   "part": "BALL JOINT",
+   "brand": "CHERY",
+   "region": [
+    "CIS",
+    "LATAM"
+   ],
+   "before": 574.6,
+   "after": 727.6,
+   "inc": 153.0,
+   "cust": 3,
+   "kind": "증가"
+  },
+  {
+   "sku": "CB0671",
+   "part": "BALL JOINT",
+   "brand": "HAVAL / GREAT WALL",
+   "region": [
+    "LATAM"
+   ],
+   "before": 516.8,
+   "after": 0,
+   "inc": -516.8,
+   "cust": 2,
+   "kind": "이탈"
+  },
+  {
+   "sku": "CB0672",
+   "part": "BALL JOINT",
+   "brand": "HAVAL",
+   "region": [
+    "LATAM"
+   ],
+   "before": 432.0,
+   "after": 545.5,
+   "inc": 113.5,
+   "cust": 2,
+   "kind": "증가"
+  },
+  {
+   "sku": "CB0675",
+   "part": "BALL JOINT",
+   "brand": "CHERY",
+   "region": [
+    "CIS",
+    "LATAM"
+   ],
+   "before": 0,
+   "after": 554.9,
+   "inc": 554.9,
+   "cust": 3,
+   "kind": "신규"
+  },
+  {
+   "sku": "CB0677L",
+   "part": "BALL JOINT",
+   "brand": "MG",
+   "region": [
+    "LATAM",
+    "MENA"
+   ],
+   "before": 0,
+   "after": 310.92,
+   "inc": 310.92,
+   "cust": 2,
+   "kind": "신규"
+  },
+  {
+   "sku": "CB0677R",
+   "part": "BALL JOINT",
+   "brand": "MG",
+   "region": [
+    "LATAM",
+    "MENA"
+   ],
+   "before": 0,
+   "after": 310.92,
+   "inc": 310.92,
+   "cust": 2,
+   "kind": "신규"
+  },
+  {
+   "sku": "CB0689",
+   "part": "BALL JOINT",
+   "brand": "CHERY",
+   "region": [
+    "LATAM"
+   ],
+   "before": 0,
+   "after": 300.8,
+   "inc": 300.8,
+   "cust": 2,
+   "kind": "신규"
+  },
+  {
+   "sku": "CB0694",
+   "part": "BALL JOINT",
+   "brand": "MG",
+   "region": [
+    "MENA"
+   ],
+   "before": 0,
+   "after": 194.4,
+   "inc": 194.4,
+   "cust": 1,
+   "kind": "신규"
+  },
+  {
+   "sku": "CB0696L",
+   "part": "BALL JOINT",
+   "brand": "MG",
+   "region": [
+    "LATAM",
+    "MENA"
+   ],
+   "before": 0,
+   "after": 208.0,
+   "inc": 208.0,
+   "cust": 2,
+   "kind": "신규"
+  },
+  {
+   "sku": "CB0696R",
+   "part": "BALL JOINT",
+   "brand": "MG / SAIC",
+   "region": [
+    "LATAM",
+    "MENA"
+   ],
+   "before": 0,
+   "after": 208.0,
+   "inc": 208.0,
+   "cust": 2,
+   "kind": "신규"
+  },
+  {
+   "sku": "CE1080",
+   "part": "OUTER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "LATAM"
+   ],
+   "before": 278.7,
+   "after": 555.68,
+   "inc": 276.98,
+   "cust": 3,
+   "kind": "증가"
+  },
+  {
+   "sku": "CE1081L",
+   "part": "OUTER TIE ROD",
+   "brand": "SOUEAST",
+   "region": [
+    "LATAM"
+   ],
+   "before": 264.0,
+   "after": 259.0,
+   "inc": -5.0,
+   "cust": 1,
+   "kind": "유지"
+  },
+  {
+   "sku": "CE1081R",
+   "part": "OUTER TIE ROD",
+   "brand": "SOUEAST",
+   "region": [
+    "LATAM"
+   ],
+   "before": 264.0,
+   "after": 259.0,
+   "inc": -5.0,
+   "cust": 1,
+   "kind": "유지"
+  },
+  {
+   "sku": "CE1082L",
+   "part": "OUTER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "LATAM"
+   ],
+   "before": 80.6,
+   "after": 420.4,
+   "inc": 339.8,
+   "cust": 3,
+   "kind": "증가"
+  },
+  {
+   "sku": "CE1082R",
+   "part": "OUTER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "LATAM"
+   ],
+   "before": 80.6,
+   "after": 412.5,
+   "inc": 331.9,
+   "cust": 3,
+   "kind": "증가"
+  },
+  {
+   "sku": "CE1083L",
+   "part": "OUTER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "LATAM"
+   ],
+   "before": 176.8,
+   "after": 217.0,
+   "inc": 40.2,
+   "cust": 1,
+   "kind": "증가"
+  },
+  {
+   "sku": "CE1083R",
+   "part": "OUTER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "LATAM"
+   ],
+   "before": 176.8,
+   "after": 217.0,
+   "inc": 40.2,
+   "cust": 1,
+   "kind": "증가"
+  },
+  {
+   "sku": "CE1084L",
+   "part": "OUTER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "LATAM"
+   ],
+   "before": 195.6,
+   "after": 87.92,
+   "inc": -107.68,
+   "cust": 1,
+   "kind": "감소"
+  },
+  {
+   "sku": "CE1084R",
+   "part": "OUTER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "LATAM"
+   ],
+   "before": 195.6,
+   "after": 87.92,
+   "inc": -107.68,
+   "cust": 1,
+   "kind": "감소"
+  },
+  {
+   "sku": "CE1085",
+   "part": "OUTER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "LATAM"
+   ],
+   "before": 134.2,
+   "after": 30.0,
+   "inc": -104.2,
+   "cust": 1,
+   "kind": "감소"
+  },
+  {
+   "sku": "CE1086",
+   "part": "OUTER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "LATAM"
+   ],
+   "before": 61.0,
+   "after": 150.0,
+   "inc": 89.0,
+   "cust": 2,
+   "kind": "증가"
+  },
+  {
+   "sku": "CE1087L",
+   "part": "OUTER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "LATAM"
+   ],
+   "before": 135.1,
+   "after": 309.8,
+   "inc": 174.7,
+   "cust": 2,
+   "kind": "증가"
+  },
+  {
+   "sku": "CE1087R",
+   "part": "OUTER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "LATAM"
+   ],
+   "before": 135.1,
+   "after": 309.8,
+   "inc": 174.7,
+   "cust": 2,
+   "kind": "증가"
+  },
+  {
+   "sku": "CE1088L",
+   "part": "OUTER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "LATAM"
+   ],
+   "before": 220.43,
+   "after": 314.8,
+   "inc": 94.37,
+   "cust": 2,
+   "kind": "증가"
+  },
+  {
+   "sku": "CE1088R",
+   "part": "OUTER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "LATAM"
+   ],
+   "before": 220.43,
+   "after": 314.8,
+   "inc": 94.37,
+   "cust": 2,
+   "kind": "증가"
+  },
+  {
+   "sku": "CE1093L",
+   "part": "OUTER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "CIS",
+    "LATAM"
+   ],
+   "before": 0,
+   "after": 537.16,
+   "inc": 537.16,
+   "cust": 4,
+   "kind": "신규"
+  },
+  {
+   "sku": "CE1093R",
+   "part": "OUTER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "CIS",
+    "LATAM"
+   ],
+   "before": 0,
+   "after": 537.16,
+   "inc": 537.16,
+   "cust": 4,
+   "kind": "신규"
+  },
+  {
+   "sku": "CE1095L",
+   "part": "OUTER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "CIS",
+    "LATAM"
+   ],
+   "before": 0,
+   "after": 784.36,
+   "inc": 784.36,
+   "cust": 3,
+   "kind": "신규"
+  },
+  {
+   "sku": "CE1095R",
+   "part": "OUTER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "CIS",
+    "LATAM"
+   ],
+   "before": 0,
+   "after": 784.36,
+   "inc": 784.36,
+   "cust": 3,
+   "kind": "신규"
+  },
+  {
+   "sku": "CE1097L",
+   "part": "OUTER TIE ROD",
+   "brand": "MG",
+   "region": [
+    "LATAM",
+    "MENA"
+   ],
+   "before": 0,
+   "after": 383.34,
+   "inc": 383.34,
+   "cust": 3,
+   "kind": "신규"
+  },
+  {
+   "sku": "CE1097R",
+   "part": "OUTER TIE ROD",
+   "brand": "MG",
+   "region": [
+    "LATAM",
+    "MENA"
+   ],
+   "before": 0,
+   "after": 358.26,
+   "inc": 358.26,
+   "cust": 3,
+   "kind": "신규"
+  },
+  {
+   "sku": "CE1123L",
+   "part": "OUTER TIE ROD",
+   "brand": "MG",
+   "region": [
+    "LATAM"
+   ],
+   "before": 0,
+   "after": 73.9,
+   "inc": 73.9,
+   "cust": 1,
+   "kind": "신규"
+  },
+  {
+   "sku": "CE1123R",
+   "part": "OUTER TIE ROD",
+   "brand": "MG",
+   "region": [
+    "LATAM"
+   ],
+   "before": 0,
+   "after": 73.9,
+   "inc": 73.9,
+   "cust": 1,
+   "kind": "신규"
+  },
+  {
+   "sku": "CE1124",
+   "part": "OUTER TIE ROD",
+   "brand": "MG",
+   "region": [
+    "LATAM",
+    "MENA"
+   ],
+   "before": 0,
+   "after": 194.6,
+   "inc": 194.6,
+   "cust": 2,
+   "kind": "신규"
+  },
+  {
+   "sku": "CE1131L",
+   "part": "OUTER TIE ROD",
+   "brand": "BYD",
+   "region": [
+    "LATAM"
+   ],
+   "before": 0,
+   "after": 98.41,
+   "inc": 98.41,
+   "cust": 2,
+   "kind": "신규"
+  },
+  {
+   "sku": "CE1131R",
+   "part": "OUTER TIE ROD",
+   "brand": "BYD",
+   "region": [
+    "LATAM"
+   ],
+   "before": 0,
+   "after": 98.41,
+   "inc": 98.41,
+   "cust": 2,
+   "kind": "신규"
+  },
+  {
+   "sku": "CE1134L",
+   "part": "OUTER TIE ROD",
+   "brand": "BYD",
+   "region": [
+    "LATAM"
+   ],
+   "before": 0,
+   "after": 86.7,
+   "inc": 86.7,
+   "cust": 1,
+   "kind": "신규"
+  },
+  {
+   "sku": "CE1134R",
+   "part": "OUTER TIE ROD",
+   "brand": "BYD",
+   "region": [
+    "LATAM"
+   ],
+   "before": 0,
+   "after": 86.7,
+   "inc": 86.7,
+   "cust": 1,
+   "kind": "신규"
+  },
+  {
+   "sku": "CL0973",
+   "part": "STABILIZER LINK",
+   "brand": "HAVAL",
+   "region": [
+    "LATAM"
+   ],
+   "before": 140.4,
+   "after": 0,
+   "inc": -140.4,
+   "cust": 1,
+   "kind": "이탈"
+  },
+  {
+   "sku": "CL0974",
+   "part": "STABILIZER LINK",
+   "brand": "CHERY",
+   "region": [
+    "LATAM"
+   ],
+   "before": 433.2,
+   "after": 102.95,
+   "inc": -330.25,
+   "cust": 1,
+   "kind": "감소"
+  },
+  {
+   "sku": "CL0975",
+   "part": "STABILIZER LINK",
+   "brand": "CHERY",
+   "region": [
+    "LATAM"
+   ],
+   "before": 430.38,
+   "after": 162.0,
+   "inc": -268.38,
+   "cust": 1,
+   "kind": "감소"
+  },
+  {
+   "sku": "CL0976L",
+   "part": "STABILIZER LINK",
+   "brand": "JAC",
+   "region": [
+    "LATAM"
+   ],
+   "before": 367.2,
+   "after": 138.2,
+   "inc": -229.0,
+   "cust": 2,
+   "kind": "감소"
+  },
+  {
+   "sku": "CL0976R",
+   "part": "STABILIZER LINK",
+   "brand": "JAC",
+   "region": [
+    "LATAM"
+   ],
+   "before": 367.2,
+   "after": 138.2,
+   "inc": -229.0,
+   "cust": 2,
+   "kind": "감소"
+  },
+  {
+   "sku": "CL0994",
+   "part": "STABILIZER LINK",
+   "brand": "CHERY",
+   "region": [
+    "CIS",
+    "LATAM"
+   ],
+   "before": 0,
+   "after": 326.14,
+   "inc": 326.14,
+   "cust": 3,
+   "kind": "신규"
+  },
+  {
+   "sku": "CQ0893L",
+   "part": "CONTROL ARM",
+   "brand": "SOUEAST",
+   "region": [
+    "LATAM"
+   ],
+   "before": 249.76,
+   "after": 0,
+   "inc": -249.76,
+   "cust": 1,
+   "kind": "이탈"
+  },
+  {
+   "sku": "CQ0893R",
+   "part": "CONTROL ARM",
+   "brand": "SOUEAST",
+   "region": [
+    "LATAM"
+   ],
+   "before": 249.76,
+   "after": 0,
+   "inc": -249.76,
+   "cust": 1,
+   "kind": "이탈"
+  },
+  {
+   "sku": "CQ0896L",
+   "part": "CONTROL ARM",
+   "brand": "HAVAL",
+   "region": [
+    "CIS",
+    "LATAM"
+   ],
+   "before": 82.08,
+   "after": 657.7,
+   "inc": 575.62,
+   "cust": 2,
+   "kind": "증가"
+  },
+  {
+   "sku": "CQ0896R",
+   "part": "CONTROL ARM",
+   "brand": "HAVAL",
+   "region": [
+    "CIS",
+    "LATAM"
+   ],
+   "before": 82.08,
+   "after": 657.7,
+   "inc": 575.62,
+   "cust": 2,
+   "kind": "증가"
+  },
+  {
+   "sku": "CQ0897L",
+   "part": "CONTROL ARM",
+   "brand": "HAVAL",
+   "region": [
+    "LATAM"
+   ],
+   "before": 252.88,
+   "after": 0,
+   "inc": -252.88,
+   "cust": 1,
+   "kind": "이탈"
+  },
+  {
+   "sku": "CQ0897R",
+   "part": "CONTROL ARM",
+   "brand": "HAVAL",
+   "region": [
+    "LATAM"
+   ],
+   "before": 252.88,
+   "after": 0,
+   "inc": -252.88,
+   "cust": 1,
+   "kind": "이탈"
+  },
+  {
+   "sku": "CR0993",
+   "part": "INNER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "CIS",
+    "LATAM"
+   ],
+   "before": 308.8,
+   "after": 475.09,
+   "inc": 166.29,
+   "cust": 4,
+   "kind": "증가"
+  },
+  {
+   "sku": "CR0994",
+   "part": "INNER TIE ROD",
+   "brand": "HAVAL",
+   "region": [
+    "CIS",
+    "LATAM"
+   ],
+   "before": 284.9,
+   "after": 438.9,
+   "inc": 154.0,
+   "cust": 3,
+   "kind": "증가"
+  },
+  {
+   "sku": "CR0995",
+   "part": "INNER TIE ROD",
+   "brand": "HAVAL",
+   "region": [
+    "CIS",
+    "LATAM"
+   ],
+   "before": 195.5,
+   "after": 319.2,
+   "inc": 123.7,
+   "cust": 4,
+   "kind": "증가"
+  },
+  {
+   "sku": "CR0996",
+   "part": "INNER TIE ROD",
+   "brand": "HAVAL",
+   "region": [
+    "CIS",
+    "LATAM"
+   ],
+   "before": 214.5,
+   "after": 278.66,
+   "inc": 64.16,
+   "cust": 3,
+   "kind": "증가"
+  },
+  {
+   "sku": "CR0997",
+   "part": "INNER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "LATAM"
+   ],
+   "before": 178.08,
+   "after": 145.6,
+   "inc": -32.48,
+   "cust": 1,
+   "kind": "감소"
+  },
+  {
+   "sku": "CR0998",
+   "part": "INNER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "LATAM"
+   ],
+   "before": 239.36,
+   "after": 298.0,
+   "inc": 58.64,
+   "cust": 3,
+   "kind": "증가"
+  },
+  {
+   "sku": "CR0999",
+   "part": "INNER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "LATAM"
+   ],
+   "before": 223.2,
+   "after": 394.95,
+   "inc": 171.75,
+   "cust": 3,
+   "kind": "증가"
+  },
+  {
+   "sku": "CR1001",
+   "part": "INNER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "LATAM"
+   ],
+   "before": 388.0,
+   "after": 309.4,
+   "inc": -78.6,
+   "cust": 3,
+   "kind": "감소"
+  },
+  {
+   "sku": "CR1002",
+   "part": "INNER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "LATAM"
+   ],
+   "before": 206.4,
+   "after": 135.2,
+   "inc": -71.2,
+   "cust": 1,
+   "kind": "감소"
+  },
+  {
+   "sku": "CR1003",
+   "part": "INNER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "LATAM"
+   ],
+   "before": 150.36,
+   "after": 0,
+   "inc": -150.36,
+   "cust": 2,
+   "kind": "이탈"
+  },
+  {
+   "sku": "CR1004",
+   "part": "INNER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "CIS",
+    "LATAM"
+   ],
+   "before": 330.3,
+   "after": 804.0,
+   "inc": 473.7,
+   "cust": 4,
+   "kind": "증가"
+  },
+  {
+   "sku": "CR1014",
+   "part": "INNER TIE ROD",
+   "brand": "MG",
+   "region": [
+    "LATAM"
+   ],
+   "before": 0,
+   "after": 262.5,
+   "inc": 262.5,
+   "cust": 2,
+   "kind": "신규"
+  },
+  {
+   "sku": "CR1015",
+   "part": "INNER TIE ROD",
+   "brand": "MG",
+   "region": [
+    "LATAM"
+   ],
+   "before": 0,
+   "after": 109.5,
+   "inc": 109.5,
+   "cust": 1,
+   "kind": "신규"
+  },
+  {
+   "sku": "CR1017",
+   "part": "INNER TIE ROD",
+   "brand": "MG",
+   "region": [
+    "LATAM"
+   ],
+   "before": 0,
+   "after": 149.1,
+   "inc": 149.1,
+   "cust": 1,
+   "kind": "신규"
+  },
+  {
+   "sku": "CR1018",
+   "part": "INNER TIE ROD",
+   "brand": "CHERY",
+   "region": [
+    "LATAM"
+   ],
+   "before": 0,
+   "after": 126.2,
+   "inc": 126.2,
+   "cust": 1,
+   "kind": "신규"
+  },
+  {
+   "sku": "CR1019",
+   "part": "INNER TIE ROD",
+   "brand": "MG",
+   "region": [
+    "LATAM",
+    "MENA"
+   ],
+   "before": 0,
+   "after": 191.5,
+   "inc": 191.5,
+   "cust": 2,
+   "kind": "신규"
+  },
+  {
+   "sku": "CR1050",
+   "part": "INNER TIE ROD",
+   "brand": "BYD",
+   "region": [
+    "LATAM"
+   ],
+   "before": 0,
+   "after": 190.3,
+   "inc": 190.3,
+   "cust": 2,
+   "kind": "신규"
+  },
+  {
+   "sku": "CS0054L",
+   "part": "SIDE ROD / TIE ROD ASSY",
+   "brand": "CHERY",
+   "region": [
+    "LATAM"
+   ],
+   "before": 159.0,
+   "after": 410.6,
+   "inc": 251.6,
+   "cust": 2,
+   "kind": "증가"
+  },
+  {
+   "sku": "CS0054R",
+   "part": "SIDE ROD / TIE ROD ASSY",
+   "brand": "CHERY",
+   "region": [
+    "LATAM"
+   ],
+   "before": 159.0,
+   "after": 410.6,
+   "inc": 251.6,
+   "cust": 2,
+   "kind": "증가"
+  }
+ ]
+}

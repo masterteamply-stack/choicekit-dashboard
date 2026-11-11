@@ -244,8 +244,28 @@ def main():
                 'yoy': round((af / b - 1) * 100, 1) if b > 0 else None,
                 'cust': sum(r.get('cn26_cust') or 0 for r in rs),
                 'region': [r['region'] for r in rs],
-                'basis': '② 중국전용 품번 · 월 단위 · 원장 ~%s · 2026-04부터' % CN.get('cut'),
-                'note': '품번별 전년 비교는 중국차 원장에 전년 품번 행이 없어 권역 단위까지만 가능'})
+                'basis': '② 중국전용 품번 · 원장 ~%s · 2026-04부터' % CN.get('cut'),
+                'note': '오더 원장이 orders.csv 밖이라 따로 집계함'})
+            # 품번 단위 — cn_sku_impact.json (오더라인_2025 가 있어야 생김)
+            cs = os.path.join(ROOT, 'cn_sku_impact.json')
+            if os.path.exists(cs):
+                K = json.load(open(cs, encoding='utf-8'))
+                if abs((K.get('after') or 0) - af) <= 1 and abs((K.get('before') or 0) - b) <= 1:
+                    e = D['extra'][-1]
+                    e.update(cls=K.get('cls'), new=(K.get('cls') or {}).get('신규'),
+                             new_amt=K.get('new_amt'), up_amt=K.get('up_amt'),
+                             dn_amt=K.get('dn_amt'), top=K.get('top'),
+                             basis=K.get('basis'), rule=K.get('rule'),
+                             note='품번 단위까지 집계됨 · 원장 %s' % K.get('src'))
+                else:
+                    print('cn_sku_impact.json 이 cn_promo.json 과 어긋나 품번 단위는 붙이지 않음')
+            _xe = D['extra'][-1]
+            if _xe.get('cls'):
+                for k, v in (_xe['cls'] or {}).items():
+                    D['cls'][k] = (D['cls'].get(k) or 0) + v
+                D['new_amt'] = (D['new_amt'] or 0) + (_xe.get('new_amt') or 0)
+                D['up_amt'] = (D['up_amt'] or 0) + (_xe.get('up_amt') or 0)
+                D['dn_amt'] = (D['dn_amt'] or 0) + (_xe.get('dn_amt') or 0)
             D['tgt_all'] = D['tgt_sku'] + (CN.get('tgt_sku') or 0)
             D['conv_all'] = D['conv_sku'] + (CN.get('union26') or 0)
             D['before_all'] = round(tb + b, 2)
