@@ -3992,6 +3992,7 @@ function skuImpactHTML(){
   let h='<div class="skui">'
    +'<div class="skui-hd"><span class="skui-bar"></span><div>'
    +'<b>SKU 기반 오더 전환 효과 · 종합</b>'
+   +'<span class="skui-mut" style="font-size:10.5px;margin-left:8px">· 위 드롭다운과 무관한 고정 집계</span>'
    +'<div class="skui-sub">SKU 대상 프로모션을 집행한 권역의 캠페인만 취합 — '
    + skuiEsc((S.regions||[]).join(' · '))+' · 원장 ~'+skuiEsc(S.cut)
    + (X?' · 중국차는 별도 원장 ~'+skuiEsc(X.cut):'')+'</div></div></div>';

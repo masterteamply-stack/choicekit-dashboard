@@ -1921,9 +1921,6 @@ header .mono b.t-orange {
 
     </section>
 
-    <!-- SKU 기반 오더 전환 효과 — 종합 수치 바로 아래 (sku_impact.json) -->
-    <div id="skuImpactBlock"></div>
-
     <!-- Sortable widget area -->
     <div id="widgetArea" style="display:flex;flex-direction:column;gap:18px">
 
@@ -2289,6 +2286,8 @@ header .mono b.t-orange {
             <div class="widget-order-controls"></div>
           </div>
         </div>
+        <!-- SKU 기반 오더 전환 효과 — 이 섹션 맨 위 (sku_impact.json · steerstar_sku.json) -->
+        <div id="skuImpactBlock" style="margin:0 0 6px"></div>
         <div id="skuAggMeta" class="label-mono muted" style="font-size:11px;margin-bottom:10px"></div>
         <div id="skuCompareKpis" style="display:none;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px"></div>
         <div id="skuBaSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px"></div>
@@ -10800,6 +10799,8 @@ function buildAnnualSeries(orders) {
    ========================================================================= */
 
 function renderSkuExplorer(fOrders, fMkt) {
+  /* 블록이 이 위젯 안으로 들어왔으므로 위젯을 다시 그릴 때마다 같이 그린다 */
+  try { renderSkuImpactBlock(); } catch (_) {}
   populateSkuUI(fOrders);
 
   // segSkuCmp 버튼 상태 동기화
@@ -11267,7 +11268,12 @@ function renderSkuAggregate(fOrders) {
       let _trName='–',_trAmt=0,_trSku='–',_trModel='–';
       if(_topReg){ _trName=_topReg[0]; _trAmt=_topReg[1].amt; const _tS=Object.entries(_topReg[1].skus).sort((a,b)=>b[1]-a[1])[0]; if(_tS){_trSku=_tS[0]; _trModel=_modelOf(_tS[0])||'–';} }
       const _top3 = _bySkuRank.slice(0,3).map((x,i)=>`${i+1}. <b>${x.sku}</b>${_modelOf(x.sku)?` <span class=\"muted\">${_modelOf(x.sku)}</span>`:''} ${fmtMoney(x.total.amt)}`).join(' &nbsp;·&nbsp; ');
-      meta.innerHTML = `<div style="font-size:12px"><b>${isAll?'All SKU campaigns':promo}</b> · 대상 SKU <b>${_tgtSkuList.length}</b>개 · 오더 전환 <b class="t-green">${_orderedTgt.size}</b>개 <span class="muted">(${_cvtPct}%)</span> · 총 <b>${fmtNum(totalOrds)}</b> orders · <b class="t-green">${fmtMoney(_totAmt)}</b> 판매 · <span class="muted">click row to drill</span></div>`;
+      /* 종합(ALL) 일 때 대상/전환 품번 수는 위 블록이 이미 보여 줌 — 여기선 빼고
+         블록에 없는 것(오더 건수·판매액·드릴 안내)만 남겨 두 번 적지 않는다.
+         ※ 블록은 캠페인 귀속을 거친 수치라 이 줄의 단순 집계와 달라질 수 있었음. */
+      meta.innerHTML = (isAll && window.CKSKUI)
+        ? `<div style="font-size:12px"><b>SKU 기반 프로모션 전체</b> · 총 <b>${fmtNum(totalOrds)}</b> orders · <b class="t-green">${fmtMoney(_totAmt)}</b> 판매 · <span class="muted">품번 행을 누르면 드릴인</span></div>`
+        : `<div style="font-size:12px"><b>${isAll?'All SKU campaigns':promo}</b> · 대상 SKU <b>${_tgtSkuList.length}</b>개 · 오더 전환 <b class="t-green">${_orderedTgt.size}</b>개 <span class="muted">(${_cvtPct}%)</span> · 총 <b>${fmtNum(totalOrds)}</b> orders · <b class="t-green">${fmtMoney(_totAmt)}</b> 판매 · <span class="muted">click row to drill</span></div>`;
       // ── 인사이트(베스트셀러·최다지역·TOP3)는 표 아래에 큰 글씨로 배치 ──
       const _insEl = document.getElementById('skuAggInsight');
       if (_insEl) {
@@ -11351,8 +11357,14 @@ function renderSkuAggregate(fOrders) {
         const _verdict = _tInc>0 ? '<span class="t-green" style="font-weight:800">효과 있음 ▲</span>' : (_tInc<0 ? '<span class="t-red" style="font-weight:800">전년比 감소 ▼</span>' : '<span class="muted">변화 미미</span>');
         const _pct = v => v>0?`<span class="t-green">▲${v.toFixed(0)}%</span>`:(v<0?`<span class="t-red">▼${Math.abs(v).toFixed(0)}%</span>`:'<span class="muted">–</span>');
         const _incC = v => v>0?`<span class="t-green">+${fmtMoney(v)}</span>`:(v<0?`<span class="t-red">${fmtMoney(v)}</span>`:'<span class="muted">–</span>');
-        _effEl.innerHTML = `
-          <div class="label-mono muted" style="font-size:12px;margin-bottom:10px;letter-spacing:.03em">📊 캠페인 효과 — 집행 전 vs 후 <span style="font-weight:400">· 프로모션 시작일 기준, 전년 동기간과 비교</span></div>
+        /* 종합(ALL) 일 때는 위의 「SKU 기반 오더 전환 효과 · 종합」 블록이 같은 수치를
+           이미 보여 준다. 머리글·기준줄·집행 전/후 요약을 두 번 적지 않고, 여기서는
+           블록에 없는 품번별 증감 표만 남긴다. 특정 프로모션을 고르면 전부 보여 준다. */
+        const _dup = (promo === '__all__') && !!window.CKSKUI;
+        _effEl.innerHTML = (_dup ? `
+          <div class="label-mono muted" style="font-size:12px;margin-bottom:8px;letter-spacing:.03em">📊 품번별 증감 <span style="font-weight:400">· 위 종합 블록과 같은 기준 · 프로모션을 고르면 그 캠페인 기준으로 바뀜</span></div>` : `
+          <div class="label-mono muted" style="font-size:12px;margin-bottom:10px;letter-spacing:.03em">📊 캠페인 효과 — 집행 전 vs 후 <span style="font-weight:400">· 프로모션 시작일 기준, 전년 동기간과 비교</span></div>`)
+          + (_dup ? '' : `
           <div class="label-mono muted" style="font-size:10.5px;line-height:1.55;margin:-4px 0 10px;padding:7px 9px;border-left:2px solid rgba(106,182,255,.45);background:rgba(106,182,255,.05);border-radius:4px">
             기준 · 양쪽 모두 <b>캠페인 시작일 ~ ${total.baCut||'–'}</b>(오더 원장 마감)이고 전년은 같은 구간 · 전년도 <b>그 캠페인의 고객사</b>만 집계
             ${(total.baDropAmt>0)?` — 캠페인 밖 고객사 <b>${fmtMoney(total.baDropAmt)}</b>(${fmtNum(total.baDropOrds||0)}건)는 전년에서 제외`:''}
@@ -11362,7 +11374,8 @@ function renderSkuAggregate(fOrders) {
             <div style="font-size:22px;color:var(--muted)">→</div>
             <div><div class="label-mono muted" style="font-size:11px">집행 후 <span style="font-weight:400">(올해)</span></div><div style="font-size:19px;font-weight:800">${fmtMoney(_tA)}</div></div>
             <div style="margin-left:auto;text-align:right"><div style="font-size:18px;font-weight:800">${_incC(_tInc)} ${_pct(_tPct)}</div><div style="font-size:14px;margin-top:3px">${_verdict}</div></div>
-          </div>
+          </div>`)
+          + `
           <div class="muted" style="font-size:12px;margin-bottom:4px">늘어난 SKU <b class="t-green">${_nUp}</b>개 · 줄어든 SKU <b class="t-red">${_nDn}</b>개 <span style="font-size:11px">(전년 동기간 대비)</span></div>
           <div class="label-mono muted" style="font-size:11px;margin:15px 0 6px">🔼 가장 많이 늘어난 SKU</div>
           <div style="overflow:auto;max-height:300px"><table style="font-size:12px;width:100%">
@@ -13544,6 +13557,7 @@ function skuImpactHTML(){
   let h='<div class="skui">'
    +'<div class="skui-hd"><span class="skui-bar"></span><div>'
    +'<b>SKU 기반 오더 전환 효과 · 종합</b>'
+   +'<span class="skui-mut" style="font-size:10.5px;margin-left:8px">· 위 드롭다운과 무관한 고정 집계</span>'
    +'<div class="skui-sub">SKU 대상 프로모션을 집행한 권역의 캠페인만 취합 — '
    + skuiEsc((S.regions||[]).join(' · '))+' · 원장 ~'+skuiEsc(S.cut)
    + (X?' · 중국차는 별도 원장 ~'+skuiEsc(X.cut):'')+'</div></div></div>';
