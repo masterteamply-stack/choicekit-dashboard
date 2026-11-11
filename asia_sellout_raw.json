@@ -1,0 +1,282 @@
+{
+ "_readme": "ASIA Sell-out 원장(영업사원·매장·딜러 단위) 요약. 재생성: python3 scripts/sync_asia_trade.py --src <xlsx>",
+ "_basis": "프로그램 단위 원장이라 한 고객사가 두 프로그램에 걸리면 같은 판매가 두 번 잡힘. 고객사 단위 합계(중복 제거)는 asia_sellout.json 을 봐야 함.",
+ "src": "tp.xlsx",
+ "lines": 1520,
+ "usd": 1083138.35,
+ "months": {
+  "2026-05": 195886.49,
+  "2026-06": 240029.72,
+  "2026-07": 275624.41,
+  "2026-08": 182130.65,
+  "2026-09": 163125.48,
+  "2026-10": 26147.28,
+  "2026-11": 194.32
+ },
+ "programs": [
+  {
+   "k": "Sales Champion Award",
+   "usd": 825465.58,
+   "n": 476
+  },
+  {
+   "k": "Order to Earn POSM",
+   "usd": 137850.56,
+   "n": 727
+  },
+  {
+   "k": "Long-Term Loyalty",
+   "usd": 119822.21,
+   "n": 317
+  }
+ ],
+ "levels": [
+  {
+   "k": "Sales Rep",
+   "usd": 642904.78,
+   "n": 234
+  },
+  {
+   "k": "Sub-dealer",
+   "usd": 207758.68,
+   "n": 361
+  },
+  {
+   "k": "Dealer",
+   "usd": 137531.11,
+   "n": 264
+  },
+  {
+   "k": "Store",
+   "usd": 94943.79,
+   "n": 661
+  }
+ ],
+ "customers": [
+  {
+   "k": "Mast",
+   "usd": 343309.82,
+   "n": 756,
+   "levels": [
+    "Sales Rep",
+    "Store"
+   ]
+  },
+  {
+   "k": "GP",
+   "usd": 186053.62,
+   "n": 170,
+   "levels": [
+    "Dealer",
+    "Sales Rep"
+   ]
+  },
+  {
+   "k": "GTA",
+   "usd": 178951.27,
+   "n": 86,
+   "levels": [
+    "Dealer",
+    "Sales Rep"
+   ]
+  },
+  {
+   "k": "Nam Bac",
+   "usd": 153141.13,
+   "n": 87,
+   "levels": [
+    "Sales Rep"
+   ]
+  },
+  {
+   "k": "Chuan Lam",
+   "usd": 140194.43,
+   "n": 132,
+   "levels": [
+    "Sub-dealer"
+   ]
+  },
+  {
+   "k": "CSH",
+   "usd": 26421.47,
+   "n": 85,
+   "levels": [
+    "Sub-dealer"
+   ]
+  },
+  {
+   "k": "PT Densocentra",
+   "usd": 25197.87,
+   "n": 119,
+   "levels": [
+    "Sub-dealer"
+   ]
+  },
+  {
+   "k": "Young Auto",
+   "usd": 14855.41,
+   "n": 10,
+   "levels": [
+    "Sub-dealer"
+   ]
+  },
+  {
+   "k": "Marboro",
+   "usd": 13923.84,
+   "n": 60,
+   "levels": [
+    "Dealer"
+   ]
+  },
+  {
+   "k": "ATC",
+   "usd": 1089.5,
+   "n": 15,
+   "levels": [
+    "Sub-dealer"
+   ]
+  }
+ ],
+ "top_entities": [
+  {
+   "k": "GTA",
+   "p": "Sales Champion Award",
+   "level": "Sales Rep",
+   "name": "Cong",
+   "usd": 44583.86
+  },
+  {
+   "k": "GTA",
+   "p": "Sales Champion Award",
+   "level": "Sales Rep",
+   "name": "Hieu",
+   "usd": 43587.45
+  },
+  {
+   "k": "Nam Bac",
+   "p": "Sales Champion Award",
+   "level": "Sales Rep",
+   "name": "Hoài Cao Nguyên",
+   "usd": 31994.36
+  },
+  {
+   "k": "GP",
+   "p": "Sales Champion Award",
+   "level": "Sales Rep",
+   "name": "ชลธิชา บุญนิสสัย",
+   "usd": 30234.68
+  },
+  {
+   "k": "Chuan Lam",
+   "p": "Sales Champion Award",
+   "level": "Sub-dealer",
+   "name": "#2",
+   "usd": 28630.59
+  },
+  {
+   "k": "GTA",
+   "p": "Sales Champion Award",
+   "level": "Sales Rep",
+   "name": "Tuoi",
+   "usd": 28213.21
+  },
+  {
+   "k": "Mast",
+   "p": "Sales Champion Award",
+   "level": "Sales Rep",
+   "name": "Vi Hoàng Vũ",
+   "usd": 27299.62
+  },
+  {
+   "k": "Mast",
+   "p": "Sales Champion Award",
+   "level": "Sales Rep",
+   "name": "Dương Ngữ",
+   "usd": 23014.66
+  },
+  {
+   "k": "Mast",
+   "p": "Sales Champion Award",
+   "level": "Sales Rep",
+   "name": "Vũ Ngọc Hân",
+   "usd": 22479.79
+  },
+  {
+   "k": "Nam Bac",
+   "p": "Sales Champion Award",
+   "level": "Sales Rep",
+   "name": "Nguyễn Thanh Chánh",
+   "usd": 22205.8
+  },
+  {
+   "k": "Nam Bac",
+   "p": "Sales Champion Award",
+   "level": "Sales Rep",
+   "name": "Hoang Thanh Nga",
+   "usd": 20284.29
+  },
+  {
+   "k": "GP",
+   "p": "Sales Champion Award",
+   "level": "Sales Rep",
+   "name": "ทัศนีย์ ล้อมวงษ์",
+   "usd": 20141.22
+  },
+  {
+   "k": "GTA",
+   "p": "Sales Champion Award",
+   "level": "Sales Rep",
+   "name": "Nam",
+   "usd": 19659.98
+  },
+  {
+   "k": "Chuan Lam",
+   "p": "Sales Champion Award",
+   "level": "Sub-dealer",
+   "name": "#3",
+   "usd": 19637.42
+  },
+  {
+   "k": "Nam Bac",
+   "p": "Sales Champion Award",
+   "level": "Sales Rep",
+   "name": "Lai Chí Lương",
+   "usd": 17739.85
+  },
+  {
+   "k": "Mast",
+   "p": "Sales Champion Award",
+   "level": "Sales Rep",
+   "name": "Nguyễn Duy Mạnh",
+   "usd": 17368.78
+  },
+  {
+   "k": "GP",
+   "p": "Sales Champion Award",
+   "level": "Sales Rep",
+   "name": "วสุพงศ์ เทียนเวช",
+   "usd": 16946.11
+  },
+  {
+   "k": "GP",
+   "p": "Sales Champion Award",
+   "level": "Sales Rep",
+   "name": "อภิศักดิ์ ข่วงทิพย์",
+   "usd": 16322.93
+  },
+  {
+   "k": "Mast",
+   "p": "Sales Champion Award",
+   "level": "Sales Rep",
+   "name": "Phạm Thanh Vy",
+   "usd": 16322.6
+  },
+  {
+   "k": "Chuan Lam",
+   "p": "Sales Champion Award",
+   "level": "Sub-dealer",
+   "name": "#1",
+   "usd": 16292.5
+  }
+ ]
+}
