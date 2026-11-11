@@ -222,7 +222,8 @@ def main():
         'dn_amt': round(sum(x['inc'] for x in buckets['감소'] + buckets['이탈'])),
         'top': {k: buckets[k][:10] for k in buckets},
         'by_camp': [],
-        'extra': [],        # orders.csv 밖 원장을 쓰는 SKU 캠페인 (중국차)
+        'extra': [],        # orders.csv 밖 원장을 쓰는 SKU 캠페인 (중국차) — 합계에 더함
+        'aside': [],        # 같이 보되 합계에는 더하지 않는 것 (고객사 단독 미션)
     }
 
     # ── 중국차 프로모션 — orders.csv 에 태그가 없고 원장이 따로임 ──────────────
@@ -297,6 +298,34 @@ def main():
                    if prv.get(s, 0) or cur.get(s, 0)},
                   open(a.dump, 'w', encoding='utf-8'), ensure_ascii=False)
         print('품번별 덤프 → ' + a.dump)
+
+    # ── 고객사 단독 미션 — 같이 보여 주되 합계에는 더하지 않는다 ─────────────
+    #   SteerStar Kailos 일본·한국 차종 미션. OCEANIA 라 위 집행 권역과 겹치지
+    #   않고, SteerStar 오더 미션 합계에 이미 한 번 들어가 있는 값이라 여기서
+    #   더하면 두 번 세는 꼴이 된다. 표에는 '합계 제외' 로 적어 둔다.
+    sp = os.path.join(ROOT, 'steerstar_sku.json')
+    if os.path.exists(sp):
+        Q = json.load(open(sp, encoding='utf-8'))
+        if Q.get('region') in D['regions']:
+            print('중복 위험: %s 가 집행 권역에 있음 — aside 에 넣지 않음' % Q.get('region'))
+        else:
+            D['aside'].append({
+                'p': 'SteerStar_%s 일본·한국 차종 미션' % Q.get('cust'),
+                'who': Q.get('cust'), 'country': Q.get('country'),
+                'region': [Q.get('region')], 'start': '2026-01', 'cut': Q.get('cut'),
+                'n': None, 'conv': None, 'new': (Q.get('new') or {}).get('n'),
+                'before': Q.get('b25'), 'after': Q.get('a26'),
+                'inc': round((Q.get('a26') or 0) - (Q.get('b25') or 0), 2),
+                'yoy': Q.get('yoy'), 'tgt': Q.get('tgt'), 'rate': Q.get('rate'),
+                'sum': False,
+                'basis': '고객사 단독 미션 · ' + str(Q.get('basis') or ''),
+                'note': '%s 전체 오더 $%s 안의 부분집합이고 SteerStar 오더 미션 합계에 '
+                        '이미 들어가 있어 위 합계에는 더하지 않음'
+                        % (Q.get('cust'), format(round(Q.get('tot26') or 0), ',')),
+                'kjk': Q})
+            print('aside · %s (합계 제외) $%s → $%s · 달성률 %s%%'
+                  % (Q.get('cust'), format(round(Q.get('b25') or 0), ','),
+                     format(round(Q.get('a26') or 0), ','), Q.get('rate')))
 
     json.dump(D, open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 

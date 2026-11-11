@@ -1701,6 +1701,7 @@ header .mono b.t-orange {
 .skui-basis{margin:10px 0 0;padding:7px 9px;font-size:10.5px;line-height:1.6;
   color:var(--muted,#8a8a8f);border-left:2px solid rgba(106,182,255,.45);
   background:rgba(106,182,255,.05);border-radius:4px}
+.skui-tbl tr.skui-aside td{background:rgba(106,182,255,.045);border-top:1px dashed var(--border,rgba(127,127,127,.35))}
 .skui-excl{display:inline-block;margin-left:8px;padding:1px 7px;border-radius:9px;font-size:10px;
   font-weight:700;letter-spacing:.02em;color:var(--brand,#6ab6ff);
   border:1px solid rgba(106,182,255,.45);background:rgba(106,182,255,.08);vertical-align:2px}
@@ -13401,20 +13402,27 @@ function kjkData(){ return (typeof KJK!=='undefined'&&KJK)||window.CKKJK||null; 
 
 function kjkHTML(){
   const K=kjkData(); if(!K||K.a26==null) return '';
-  const M=skuiMoney, N=skuiNum, E=skuiEsc;
-  const nat=K.by_nat||[], jp=nat.find(x=>x.k==='일본'), kr=nat.find(x=>x.k==='한국');
-  const tile=(l,v,s)=>'<div class="skui-tile"><div class="skui-lab">'+l+'</div>'
-    +'<div class="skui-val">'+v+'</div>'+(s?'<div class="skui-sub">'+s+'</div>':'')+'</div>';
+  return '<div class="skui skui-solo">'+kjkHeadHTML(K)+kjkDetailHTML(K)+'</div>';
+}
 
-  let h='<div class="skui skui-solo">'
-   +'<div class="skui-hd"><span class="skui-bar"></span><div>'
+function kjkHeadHTML(K){
+  const M=skuiMoney, E=skuiEsc;
+  return '<div class="skui-hd"><span class="skui-bar"></span><div>'
    +'<b>SteerStar 추가 오더미션 · '+E(K.cust)+' ('+E(K.country)+') — 품번 단위</b>'
    +'<span class="skui-excl">이 고객사 단독 미션 · 합산 대상 아님</span>'
    +'<div class="skui-sub">「'+E(K.mission)+'」 · 원장 ~'+E(K.cut)+'<br>'
    +'<b>'+E(K.cust)+' 전체 오더 '+M(K.tot26)+' 안에서 미션 대상은 '+M(K.a26)+'</b> ('
    +(K.a26/K.tot26*100).toFixed(1)+'% · 부분집합이라 더하면 안 됨)</div></div></div>';
+}
 
-  h+='<div class="skui-tiles">'
+function kjkDetailHTML(K){
+  if(!K||K.a26==null) return '';
+  const M=skuiMoney, N=skuiNum, E=skuiEsc;
+  const nat=K.by_nat||[], jp=nat.find(x=>x.k==='일본'), kr=nat.find(x=>x.k==='한국');
+  const tile=(l,v,s)=>'<div class="skui-tile"><div class="skui-lab">'+l+'</div>'
+    +'<div class="skui-val">'+v+'</div>'+(s?'<div class="skui-sub">'+s+'</div>':'')+'</div>';
+
+  let h='<div class="skui-tiles">'
    +tile('미션 달성률', K.rate.toFixed(1)+'%', '목표 '+M(K.tgt)+' · 25년 기준 '+M(K.b25))
    +tile('일본 차종', M(jp?jp.a26:0), jp?('25년 '+M(jp.b25)+' · '+skuiPct(jp.yoy)):'')
    +tile('한국 차종', M(kr?kr.a26:0), kr?('25년 '+M(kr.b25)+' · '+skuiPct(kr.yoy)):'')
@@ -13488,7 +13496,17 @@ function kjkHTML(){
    +E(K.region)+' 는 애초에 들어가지 않으므로 그쪽과도 겹치지 않음.<br>'
    +'기준 · '+E(K.basis)+' · 2026 은 원장이 '+E(K.cut)
    +' 까지라 2025 연간이 아니라 같은 날짜 구간과 비교함 · 원장 '+E((K.src||[]).join(' + '))+'</p>';
-  return h+'</div>';
+  return h;
+}
+
+/* 종합 블록 안에 이어 붙이는 상세 — 바깥 테두리 없이 소제목만 */
+function kjkSectionHTML(A){
+  const K=A&&A.kjk; if(!K) return '';
+  return '<div class="skui-cls" style="margin-top:16px"><b>'+skuiEsc(A.p)+' · 품번 단위</b> '
+   +'<span class="skui-excl">합계 제외</span> '
+   +'<span class="skui-mut">「'+skuiEsc(K.mission)+'」 · '+skuiEsc(K.cust)+' 전체 오더 '
+   +skuiMoney(K.tot26)+' 안의 부분집합</span></div>'
+   +kjkDetailHTML(K);
 }
 
 
@@ -13606,6 +13624,21 @@ function skuImpactHTML(){
      +'<tr class="skui-note2"><td colspan="10">중국차는 오더 원장이 orders.csv 밖임 — '+skuiEsc(X.basis)
      +(X.rule?' · '+skuiEsc(X.rule):'')+'. '+skuiEsc(X.note)+'</td></tr>';
   }
+  /* 합계에 더하지 않는 단독 미션은 표에 같이 두되 '합계 제외' 로 적는다 */
+  (S.aside||[]).forEach(A=>{
+    h+='<tr class="skui-aside"><td><b>'+skuiEsc(A.p)+'</b>'
+     +'<span class="skui-excl">합계 제외</span></td>'
+     +'<td>'+skuiEsc((A.region||[]).join(' · '))+'</td>'
+     +'<td>'+skuiEsc(A.cut?('~'+A.cut):'–')+'</td>'
+     +'<td class="n">'+(A.tgt?skuiMoney(A.tgt)+' 목표':'·')+'</td>'
+     +'<td class="n">'+(A.rate!=null?'<b>'+A.rate.toFixed(1)+'%</b>':'·')+'</td>'
+     +'<td class="n">'+(A.new?'<b>'+A.new+'종</b>':'·')+'</td>'
+     +'<td class="n">'+skuiMoney(A.before)+'</td><td class="n"><b>'+skuiMoney(A.after)+'</b></td>'
+     +'<td class="n '+((A.inc||0)>=0?'skui-up':'skui-dn')+'">'+((A.inc||0)>=0?'+':'')+skuiMoney(A.inc)+'</td>'
+     +'<td class="n">'+skuiPct(A.yoy)+'</td></tr>'
+     +'<tr class="skui-note2"><td colspan="10">'+skuiEsc(A.note)+' · '+skuiEsc(A.basis)
+     +' <span class="skui-mut">(대상·전환 칸은 품번 수가 아니라 미션 목표·달성률)</span></td></tr>';
+  });
   h+='</tbody></table></div>';
 
   const bl=[];
@@ -13627,6 +13660,7 @@ function skuImpactHTML(){
   h+='<ul class="skui-bl">'+bl.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
 
   if(X) h+=cnDeepHTML(X);
+  (S.aside||[]).forEach(A=>{ h+=kjkSectionHTML(A); });
 
   h+='<p class="skui-basis">기준 · 양쪽 모두 <b>캠페인 시작일 ~ '+skuiEsc(S.cut)+'</b>(오더 원장 마감)이고 전년은 같은 구간 · '
    +'전년도 <b>그 캠페인의 고객사</b>만'
@@ -13639,7 +13673,8 @@ function skuImpactHTML(){
 
 function renderSkuImpactBlock() {
   const el = document.getElementById('skuImpactBlock'); if (!el) return;
-  try { el.innerHTML = skuImpactHTML() + kjkHTML(); } catch (e) { console.warn('[skui] render failed:', e); }
+  /* Kailos 미션은 종합 블록 안에 한 행 + 상세로 합쳐 넣음 — 별도 블록으로 띄우지 않는다 */
+  try { el.innerHTML = skuImpactHTML(); } catch (e) { console.warn('[skui] render failed:', e); }
 }
 
 function applyKpiBridge() {
