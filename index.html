@@ -10302,6 +10302,18 @@ function renderSkuBeforeAfter(values, opts) {
         <div style="font-size:18px;font-weight:800">${pctTag(dQtyPct)}</div>
         <div class="label-mono muted" style="font-size:11px">${fmtQ(afterQty - beforeQty)} ${qtyLbl}</div>
       </div>`;
+    /* 어느 잣대로 센 값인지 카드 아래에 적어 둠 — 기준 섞지 않기 */
+    const _cut = values.baCut || '', _drop = values.baDropAmt || 0;
+    if (_cut) {
+      const d = document.createElement('div');
+      d.className = 'label-mono muted';
+      d.style.cssText = 'grid-column:1/-1;font-size:10.5px;line-height:1.5;margin-top:2px;'
+        + 'padding:7px 9px;border-left:2px solid rgba(106,182,255,0.45);background:rgba(106,182,255,0.05);border-radius:4px';
+      d.innerHTML = `기준 · 양쪽 모두 <b>캠페인 시작일 ~ ${_cut}</b>(오더 원장 마감), 전년은 같은 구간 · `
+        + `전년도 <b>그 캠페인의 고객사</b>만 집계`
+        + (_drop > 0 ? ` — 캠페인 밖 고객사 <b>${fmtMoney(_drop)}</b>(${fmtNum(values.baDropOrds||0)}건)는 전년에서 제외` : '');
+      baSum.appendChild(d);
+    }
   }
 
   if (charts.sku_ba_amt) charts.sku_ba_amt.destroy();
@@ -10600,17 +10612,55 @@ function renderSkuYearly(annualSeries, opts) {
 //     → each order is split by ITS OWN promotion's marketing-start date
 //       (this is how ALL-promotions aggregate mode must work: per-campaign
 //        before/after summed together, not a single global anchor).
+/* ── Before/After 기준 (2026-11-11 변경) ───────────────────────────────────
+   예전에는 집행 후는 캠페인 태그가 붙은 행만 세고, 전년은 그 SKU 를 산
+   "모든 고객사 · 모든 권역" 을 세서 전년이 과대 계상됐음. 2026-11-11 점검에서
+   전년 $11,201,739 중 $9,129,229(81%)가 캠페인 밖 고객사였고, Mexico Awakening
+   은 전년 측 100% 가 캠페인 밖(멕시코 캠페인인데 카자흐스탄 PHAETON KZ 등)이었음.
+   또 전년만 오늘(2026-11-11)까지 가서 원장 마감(2026-10-20)보다 3주 길었음.
+   두 가지를 같은 잣대로 맞춤.
+     ① 전년도 그 캠페인의 고객사만 센다            → _baRoster()
+     ② 양쪽 끝일을 오더 원장 마감일로 끊는다        → _baCut()
+   어느 기준인지 화면에 적어 둬야 함(기준 섞지 않기). */
+let _baCache = { n: -1, cut: '', roster: null };
+function _baMaps() {
+  const src = state.orders || [];
+  if (_baCache.n === src.length && _baCache.roster) return _baCache;
+  let cut = '';
+  const roster = {};
+  const add = (p, c) => {
+    if (!p || !c) return;
+    (roster[p] = roster[p] || new Set()).add(String(c).trim().toUpperCase());
+  };
+  /* 캠페인 고객사 명부 = 설정의 target_customers ∪ orders.csv 에서 그 캠페인으로
+     태그된 고객사. 전년에만 사고 올해 끊긴 고객사도 명부에 있으면 남는다. */
+  const cfg = state.campaignTargetSkus || {};
+  Object.keys(cfg).forEach(p => (cfg[p].target_customers || []).forEach(c => add(p, c)));
+  src.forEach(o => {
+    if (o[PRE_ORDER_MARK]) return;
+    add(o.promotion_category, o.customer);
+    const d = o.order_date || '';
+    if (d > cut) cut = d;
+  });
+  _baCache = { n: src.length, cut: cut || _todayStr(), roster };
+  return _baCache;
+}
 function buildBaStats(orders, startDate) {
   const isPerPromo = startDate && typeof startDate === 'object' && startDate.byPromo;
   const promoMap   = isPerPromo ? startDate.byPromo   : null;
   const custMap    = isPerPromo ? (startDate.byCust || {}) : null;
-  const today = _todayStr();
   const shift1y = (s) => {
     if (!s) return '';
     const y = parseInt(s.slice(0,4),10);
     return `${y-1}${s.slice(4)}`;
   };
+  const M = _baMaps();
+  const today = _todayStr();
+  /* ② 끝일은 오늘과 원장 마감 중 이른 쪽 — 전년이 더 긴 구간을 받지 않게 */
+  const afterTo  = (today < M.cut) ? today : M.cut;
+  const beforeTo = shift1y(afterTo);
   let beforeAmt=0, afterAmt=0, beforeQty=0, afterQty=0, beforeOrds=0, afterOrds=0;
+  let dropAmt=0, dropOrds=0;      // ① 로 빠진 전년 금액 (화면에 근거로 적음)
   orders.forEach(o => {
     // 고객별 시작일 우선, 없으면 캠페인별 시작일
     let anchor;
@@ -10623,9 +10673,7 @@ function buildBaStats(orders, startDate) {
     }
     if (!anchor) return;
     const afterFrom  = anchor;
-    const afterTo    = today;
     const beforeFrom = shift1y(anchor);
-    const beforeTo   = shift1y(today);
     const d = o.order_date || '';
     if (!d) return;
     const isBaseline = !!o[PRE_ORDER_MARK];
@@ -10634,10 +10682,17 @@ function buildBaStats(orders, startDate) {
     if (!isBaseline && d >= afterFrom && d <= afterTo) {
       afterAmt  += amt; afterQty  += q; afterOrds++;
     } else if (d >= beforeFrom && d <= beforeTo) {
+      /* ① 그 캠페인 고객사가 아니면 전년에서 뺀다. 명부를 못 찾으면 그대로 둔다
+         (캠페인을 역추적할 수 없는 행을 임의로 지우지 않기 위함). */
+      const rost = M.roster[promoKeyOfOrder(o)];
+      if (rost && rost.size && !rost.has(String(o.customer || '').trim().toUpperCase())) {
+        dropAmt += amt; dropOrds++; return;
+      }
       beforeAmt += amt; beforeQty += q; beforeOrds++;
     }
   });
-  return { beforeAmt, afterAmt, beforeQty, afterQty, beforeOrds, afterOrds };
+  return { beforeAmt, afterAmt, beforeQty, afterQty, beforeOrds, afterOrds,
+           baCut: afterTo, baDropAmt: dropAmt, baDropOrds: dropOrds };
 }
 function buildMonthlySeries(orders, startDate) {
   const months = Array.from(new Set(orders.map(o => (o.order_date||'').slice(0,7)).filter(Boolean))).sort();
@@ -10796,8 +10851,15 @@ function renderSkuAggregate(fOrders) {
     if (_p === 'CTR MarketFit Campaign') { const _co = _LATAM_CARVEOUT[(o.customer||'').trim()]; if (_co && (o.order_date||'') >= _co[0] && (o.order_date||'') <= _co[1]) return false; }
     return true;
   });
+  /* SKU 기반 캠페인이 실제로 집행된 권역만 남긴다 (2026-11-11).
+     NA 는 Strategic Partner Program(전 품목·고객 기반)만 있어 SKU 대상 프로모션
+     집행 지역이 아님. 그런데 baseline(전년) 은 캠페인 태그가 없어 NA 오더까지
+     들어와 '집행 전' 만 부풀렸음. 집행 권역은 orders.csv 의 SKU 캠페인 행에서
+     뽑으므로 캠페인이 바뀌면 자동으로 따라간다. */
+  const _skuRgns = new Set(ordersCsv.map(o => normalizeRegion(o.region||'')).filter(Boolean));
+  const _skuRgnOK = o => { const r = normalizeRegion(o.region||''); return !r || !_skuRgns.size || _skuRgns.has(r); };
   const baselineSrc = (state.preOrdersEnabled && Array.isArray(state.preOrders))
-    ? state.preOrders.filter(o => o && o.sku)
+    ? state.preOrders.filter(o => o && o.sku).filter(_skuRgnOK)
     : [];
   const allOrd = ordersCsv.concat(baselineSrc);
   if (!allOrd.length) {
@@ -10839,13 +10901,44 @@ function renderSkuAggregate(fOrders) {
   // (기존엔 useOrders=2026 오더만이라, 전년에만 오더된 target SKU의 전년 값이 누락돼 #promo와 전년이 어긋났음)
   const _effCfg = (state.campaignTargetSkus||{})[promo] || {};
   const _effMb = (_effCfg.match_by||'sku').toLowerCase();
+  /* ALL 모드의 대상 SKU = SKU 기반 캠페인들의 target_skus 합집합 (2026-11-11).
+     예전에는 useOrders 에 나온 모든 품번을 대상으로 삼아, 캠페인 대상이 아닌
+     품번의 전년 오더까지 '집행 전' 에 들어갔음(대상 6,656종 · 전환 7% 로 표시).
+     집행 후는 캠페인 태그가 붙은 행만 세므로 품목 기준이 어긋났던 것임. */
+  const _effTgtAll = (promo === '__all__')
+    ? (() => { const s = new Set();
+        _skuBasedCamps.forEach(p => ((state.campaignTargetSkus[p]||{}).target_skus||[])
+          .forEach(x => s.add(String(x).trim().toUpperCase())));
+        return s.size ? s : null; })()
+    : null;
   const _effTgt = (promo !== '__all__' && _effMb !== 'customer')
-    ? new Set((_effCfg.target_skus||[]).map(x => String(x).trim().toUpperCase())) : null;
+    ? new Set((_effCfg.target_skus||[]).map(x => String(x).trim().toUpperCase()))
+    : _effTgtAll;
   const _effCust = (promo !== '__all__' && _effMb === 'customer')
     ? new Set((_effCfg.target_customers||[]).map(x => String(x).trim())) : null;
   const _effAllowR = (promo !== '__all__' && _effCfg.region)
     ? new Set((Array.isArray(_effCfg.region)?_effCfg.region:[_effCfg.region]).map(x=>normalizeRegion(x)).filter(Boolean)) : null;
-  const _effRgnOK = o => { if(!_effAllowR||!_effAllowR.size) return true; const r=normalizeRegion(o.region||''); return r ? _effAllowR.has(r) : true; };
+  /* ALL 모드는 캠페인마다 집행 권역이 달라 품번별로 허용 권역을 따로 들고 간다
+     (Asian/European=CIS, Portfolio=MENA, MarketFit=LATAM …). */
+  const _effSkuRgn = (promo === '__all__')
+    ? (() => { const m = {};
+        _skuBasedCamps.forEach(p => { const c = state.campaignTargetSkus[p]||{};
+          const rs = (Array.isArray(c.region)?c.region:(c.region?[c.region]:[])).map(x=>normalizeRegion(x)).filter(Boolean);
+          if (!rs.length) return;
+          (c.target_skus||[]).forEach(x => { const k=String(x).trim().toUpperCase();
+            (m[k] = m[k] || new Set()); rs.forEach(r => m[k].add(r)); }); });
+        return m; })()
+    : null;
+  const _effRgnOK = o => {
+    if (_effSkuRgn) {
+      const s = _effSkuRgn[(o.sku||'').trim().toUpperCase()];
+      if (!s || !s.size) return true;
+      const r = normalizeRegion(o.region||'');
+      return r ? s.has(r) : true;
+    }
+    if(!_effAllowR||!_effAllowR.size) return true;
+    const r=normalizeRegion(o.region||''); return r ? _effAllowR.has(r) : true;
+  };
   // SKU 기반: target SKU / 고객 기반: target 고객이 2025·2026 어느 해든 오더한 SKU 전부 → 전년 값(전년만 오더된 SKU) 누락 방지
   const skus = (_effTgt && _effTgt.size)
     ? Array.from(new Set(allOrd.filter(o => _effTgt.has((o.sku||'').trim().toUpperCase()) && _effRgnOK(o)).map(o => o.sku).filter(Boolean)))
@@ -10950,6 +11043,9 @@ function renderSkuAggregate(fOrders) {
     ? new Set(_baCfg.target_countries.map(x=>normalizeCountry(x)||String(x).trim().toUpperCase()))
     : null;
   const _baRegionOK = (o) => {
+    /* ALL 모드: 품번별 허용 권역 (캠페인마다 집행 권역이 다름) */
+    if(_effSkuRgn){ const _s=_effSkuRgn[(o.sku||'').trim().toUpperCase()];
+      if(_s && _s.size){ const _r=normalizeRegion(o.region||''); if(_r && !_s.has(_r)) return false; } }
     if(_baAllowR && _baAllowR.size){ const _r=normalizeRegion(o.region||''); if(_r && !_baAllowR.has(_r)) return false; }
     if(_baAllowC && _baAllowC.size){ const _c=normalizeCountry(o.country||'')||String(o.country||'').trim().toUpperCase(); if(_c && !_baAllowC.has(_c)) return false; }
     return true;
@@ -10999,7 +11095,11 @@ function renderSkuAggregate(fOrders) {
     afterQty:   acc.afterQty   + x.ba.afterQty,
     beforeOrds: acc.beforeOrds + x.ba.beforeOrds,
     afterOrds:  acc.afterOrds  + x.ba.afterOrds,
-  }), { beforeAmt:0, afterAmt:0, beforeQty:0, afterQty:0, beforeOrds:0, afterOrds:0 });
+    baDropAmt:  acc.baDropAmt  + (x.ba.baDropAmt||0),
+    baDropOrds: acc.baDropOrds + (x.ba.baDropOrds||0),
+    baCut:      x.ba.baCut || acc.baCut,
+  }), { beforeAmt:0, afterAmt:0, beforeQty:0, afterQty:0, beforeOrds:0, afterOrds:0,
+        baDropAmt:0, baDropOrds:0, baCut:'' });
 
   // Months / years that appear across all SKUs (used by the total series below).
   const allMonths = Array.from(new Set(perSku.flatMap(x => buildMonthlySeries(x.orders, startDate).map(m => m.key)))).sort();
@@ -11121,7 +11221,10 @@ function renderSkuAggregate(fOrders) {
         // 고객별 증감 (권역이 아닌 고객 단위) — buildBaStats와 동일 기준으로 고객별 before/after 집계
         const _skuSet2 = new Set(skus);
         const _shift1yC = ss => ss ? `${parseInt(ss.slice(0,4),10)-1}${ss.slice(4)}` : '';
-        const _todC = _todayStr();
+        /* buildBaStats 와 같은 잣대 — 끝일은 오더 원장 마감, 전년은 캠페인 고객사만 */
+        const _bmaps = _baMaps();
+        const _todNow = _todayStr();
+        const _todC = (_todNow < _bmaps.cut) ? _todNow : _bmaps.cut;
         const _custBA = {};
         allOrd.forEach(o=>{
           if(!_skuSet2.has(o.sku) || !_baRegionOK(o)) return;
@@ -11137,7 +11240,11 @@ function renderSkuAggregate(fOrders) {
           const amt=isBase?Number(o.amount_usd||0)*usdToDisplay():convOrder(o);
           const g=_custBA[cust]=_custBA[cust]||{before:0,after:0,region:(o.region||'').trim()};
           if(!isBase && d>=anc && d<=_todC) g.after+=amt;
-          else if(d>=_shift1yC(anc) && d<=_shift1yC(_todC)) g.before+=amt;
+          else if(d>=_shift1yC(anc) && d<=_shift1yC(_todC)) {
+            const _ro=_bmaps.roster[promoKeyOfOrder(o)];
+            if(_ro && _ro.size && !_ro.has(cust.toUpperCase())) return;
+            g.before+=amt;
+          }
         });
         const _custEff = Object.entries(_custBA).map(([c,g])=>({cust:c,region:g.region,before:g.before,after:g.after,inc:g.after-g.before})).filter(e=>e.before>0||e.after>0);
         const _custUp = _custEff.filter(e=>e.inc>0).sort((a,b)=>b.inc-a.inc);
@@ -11149,6 +11256,10 @@ function renderSkuAggregate(fOrders) {
         const _incC = v => v>0?`<span class="t-green">+${fmtMoney(v)}</span>`:(v<0?`<span class="t-red">${fmtMoney(v)}</span>`:'<span class="muted">–</span>');
         _effEl.innerHTML = `
           <div class="label-mono muted" style="font-size:12px;margin-bottom:10px;letter-spacing:.03em">📊 캠페인 효과 — 집행 전 vs 후 <span style="font-weight:400">· 프로모션 시작일 기준, 전년 동기간과 비교</span></div>
+          <div class="label-mono muted" style="font-size:10.5px;line-height:1.55;margin:-4px 0 10px;padding:7px 9px;border-left:2px solid rgba(106,182,255,.45);background:rgba(106,182,255,.05);border-radius:4px">
+            기준 · 양쪽 모두 <b>캠페인 시작일 ~ ${total.baCut||'–'}</b>(오더 원장 마감)이고 전년은 같은 구간 · 전년도 <b>그 캠페인의 고객사</b>만 집계
+            ${(total.baDropAmt>0)?` — 캠페인 밖 고객사 <b>${fmtMoney(total.baDropAmt)}</b>(${fmtNum(total.baDropOrds||0)}건)는 전년에서 제외`:''}
+          </div>
           <div style="background:var(--surface-2,rgba(127,127,127,.05));border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:12px;display:flex;flex-wrap:wrap;align-items:center;gap:18px">
             <div><div class="label-mono muted" style="font-size:11px">집행 전 <span style="font-weight:400">(전년 동기간)</span></div><div style="font-size:19px;font-weight:700">${fmtMoney(_tB)}</div></div>
             <div style="font-size:22px;color:var(--muted)">→</div>
