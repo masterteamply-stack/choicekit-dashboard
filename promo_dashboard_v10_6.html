@@ -416,6 +416,8 @@ tfoot td.ocol{background:#15605a;color:#fff}
         <div id="skuDn"></div></div>
     </div>
 
+    <div id="skuDeepBox"></div>
+
     <div class="grid2">
       <div class="card"><h3>증가 상위 고객</h3>
         <p class="note">캠페인 기간·대상 SKU 기준 <b>고객사 단위</b>. 막대는 증감률, 오른쪽 숫자는 금액 증감임.</p>
@@ -867,6 +869,8 @@ function skuBars(){
    +`${s.nomap_cur?`<br>CTR Code가 비어 있어 SKU 단위로 귀속하지 못한 오더 <b>${fmtC(s.nomap_cur)}</b>(증감 ${fmtC(s.nomap)})는 이 목록에서 제외했음.`:''}</p>`;
   $('#skuDn').innerHTML=skuPair(s.down.slice(0,8),0)
    +`<p class="hint">감소 총액 <b>${fmtC(s.dn_sum)}</b>. 순합 <b>${fmtC(s.up_sum+s.dn_sum)}</b>.</p>`;
+  /* 같은 질문의 다음 단계 — 어느 품번이 움직였나 다음에 어느 브랜드·권역·부품군이 열렸나 */
+  const _dp=$('#skuDeepBox'); if(_dp){ try{ _dp.innerHTML=skuImpactDeepHTML(); }catch(e){ _dp.innerHTML=''; } }
 }
 
 /* ══════════ 8. 비용 · ROMI ══════════ */
@@ -3753,9 +3757,9 @@ function octMonth(A){
   h+=cisOct();
   h+=latamBlock();
   h+=menaMonth(kgrid);
-  h+=skuImpactHTML();   /* SKU 기반 오더 전환 효과 — 종합 수치 아래 (종합 보기와 같은 소스) */
   h+=asiaBlk;
   h+=cnPromoOct(kgrid);   /* 중국차 프로모션 — SteerStar 바로 위 */
+  h+=skuImpactHTML();     /* SKU 기반 분석 — 중국차 블록 바로 아래 */
 
   /* ── SteerStar 파트너 오더·매출 추이 ── */
   if(ss&&ss.rows){
@@ -3998,8 +4002,30 @@ function cnDeepHTML(X){
   return h;
 }
 
+/* 월간 리포트·종합 보기용 — 굵직한 것만. 프로모션별·고객사별 상세는 각 탭으로 보냄. */
 function skuImpactHTML(){
-  const S=skuiData(); if(!S||S.tgt_sku==null) return '';
+  const P=skuImpactParts(); if(!P) return '';
+  return '<div class="skui">'+P.head+P.tiles+P.cls+P.table+P.bullets+P.basis
+   +'<p class="skui-basis" style="border-left-color:rgba(127,127,127,.35);background:rgba(127,127,127,.05)">'
+   +'프로모션별 품번 상세(중국차 브랜드·권역·부품군)는 <b>캠페인 효과 · SKU·고객</b> 탭에, '
+   +'고객사 단독 미션 상세는 <b>SteerStar</b> 탭에 같이 두었음.</p></div>';
+}
+
+/* 캠페인 효과 · SKU·고객 탭용 — 프로모션별 품번 상세 */
+function skuImpactDeepHTML(){
+  const P=skuImpactParts(); if(!P||!P.deep) return '';
+  return '<div class="skui">'
+   +'<div class="skui-hd"><span class="skui-bar"></span><div>'
+   +'<b>프로모션별 품번 전환 상세</b>'
+   +'<div class="skui-sub">위 증가·감소 상위 SKU 가 \'어느 품번이 움직였나\' 라면, 여기는 '
+   +'\'어느 브랜드·권역·부품군이 열렸나\' 임. 종합 수치는 월간 리포트의 SKU 기반 분석에 있음.</div></div></div>'
+   +P.deep+'</div>';
+}
+
+/* 조각으로 돌려준다 — 효과 분석은 카드로 감싸고(skuImpactHTML),
+   메인은 위젯의 기존 자리(KPI 행·인사이트·메타)에 나눠 넣는다. */
+function skuImpactParts(){
+  const S=skuiData(); if(!S||S.tgt_sku==null) return null;
   const C=S.cls||{}, X=(S.extra||[])[0]||null;
   const tgtAll=S.tgt_all||S.tgt_sku, convAll=S.conv_all||S.conv_sku;
   const bAll=S.before_all!=null?S.before_all:S.before, aAll=S.after_all!=null?S.after_all:S.after;
@@ -4017,28 +4043,27 @@ function skuImpactHTML(){
   const tile=(lab,val,sub)=>'<div class="skui-tile"><div class="skui-lab">'+lab+'</div>'
     +'<div class="skui-val">'+val+'</div>'+(sub?'<div class="skui-sub">'+sub+'</div>':'')+'</div>';
 
-  let h='<div class="skui">'
-   +'<div class="skui-hd"><span class="skui-bar"></span><div>'
+  const head='<div class="skui-hd"><span class="skui-bar"></span><div>'
    +'<b>SKU 기반 오더 전환 효과 · 종합</b>'
    +'<span class="skui-mut" style="font-size:10.5px;margin-left:8px">· 위 드롭다운과 무관한 고정 집계</span>'
    +'<div class="skui-sub">SKU 대상 프로모션을 집행한 권역의 캠페인만 취합 — '
    + skuiEsc((S.regions||[]).join(' · '))+' · 원장 ~'+skuiEsc(S.cut)
    + (X?' · 중국차는 별도 원장 ~'+skuiEsc(X.cut):'')+'</div></div></div>';
 
-  h+='<div class="skui-tiles">'
+  const tiles='<div class="skui-tiles">'
    +tile('대상 SKU', skuiNum(tgtAll)+'종', X?('중국차 '+X.n+'종 포함'):'')
    +tile('오더 전환', skuiNum(convAll)+'종', convRate!=null?convRate.toFixed(1)+'% · 전년에 없던 품번 '+skuiNum(C['신규']||0)+'종 포함':'')
    +tile('신규 전환 창출', skuiMoney(S.new_amt), '전년 오더 0 → 당해 오더 발생')
    +tile('집행 전 → 후', skuiMoney(bAll)+' → '+skuiMoney(aAll), skuiPct(yAll)+' · '+skuiMoney(aAll-bAll))
    +'</div>';
 
-  h+='<div class="skui-cls">품번 분류 <b>'+skuiNum(C['신규']||0)+'</b> 신규 · '
+  const clsline='<div class="skui-cls">품번 분류 <b>'+skuiNum(C['신규']||0)+'</b> 신규 · '
    +'<b>'+skuiNum(C['증가']||0)+'</b> 증가 · <b>'+skuiNum(C['유지']||0)+'</b> 유지 · '
    +'<b>'+skuiNum(C['감소']||0)+'</b> 감소 · <b>'+skuiNum(C['이탈']||0)+'</b> 이탈 · '
    +'<b>'+skuiNum(C['미전환']||0)+'</b> 미전환 '
    +'<span class="skui-mut">(증가 '+skuiMoney(S.up_amt)+' · 감소·이탈 '+skuiMoney(S.dn_amt)+')</span></div>';
 
-  h+='<div class="skui-wrap"><table class="skui-tbl"><thead><tr>'
+  let h='<div class="skui-wrap"><table class="skui-tbl"><thead><tr>'
    +'<th>프로모션</th><th>집행 권역</th><th>시작</th><th class="n">대상</th><th class="n">전환</th>'
    +'<th class="n">신규</th><th class="n">집행 전</th><th class="n">집행 후</th><th class="n">증감</th><th class="n">YoY</th>'
    +'</tr></thead><tbody>';
@@ -4075,6 +4100,7 @@ function skuImpactHTML(){
      +' <span class="skui-mut">(대상·전환 칸은 품번 수가 아니라 미션 목표·달성률)</span></td></tr>';
   });
   h+='</tbody></table></div>';
+  const table=h; let deep='';
 
   const bl=[];
   if(grew.length) bl.push('<b>오더가 없던 품번을 여는 쪽에서 작동했다</b> · '
@@ -4092,18 +4118,20 @@ function skuImpactHTML(){
     +skuiNum(C['증가']||0)+'종이 '+skuiMoney(S.up_amt)+' 늘었음. '
     +'반면 주력 품번의 역기저가 '+skuiMoney(S.dn_amt)+' 라 합계에서는 확장 성과가 가려짐. '
     +'합계 한 줄로 캠페인 성패를 판단하면 안 되는 구조.');
-  h+='<ul class="skui-bl">'+bl.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
+  const bullets='<ul class="skui-bl">'+bl.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
 
-  if(X) h+=cnDeepHTML(X);
-  (S.aside||[]).forEach(A=>{ h+=kjkSectionHTML(A); });
+  if(X) deep+=cnDeepHTML(X);          /* 프로모션별 상세 */
+  let deepCust='';                     /* 고객사 단독 미션 상세 — 두는 자리가 다름 */
+  (S.aside||[]).forEach(A=>{ deepCust+=kjkSectionHTML(A); });
 
-  h+='<p class="skui-basis">기준 · 양쪽 모두 <b>캠페인 시작일 ~ '+skuiEsc(S.cut)+'</b>(오더 원장 마감)이고 전년은 같은 구간 · '
+  const basis='<p class="skui-basis">기준 · 양쪽 모두 <b>캠페인 시작일 ~ '+skuiEsc(S.cut)+'</b>(오더 원장 마감)이고 전년은 같은 구간 · '
    +'전년도 <b>그 캠페인의 고객사</b>만'
    +(S.drop_amt?' (캠페인 밖 고객사 '+skuiMoney(S.drop_amt)+' · '+skuiNum(S.drop_ords)+'건 제외)':'')
    +(outSum?' · <b>'+Object.keys(S.regions_out).join('·')+'</b> 는 SKU 대상 프로모션 집행 지역이 아니라 제외(전년 '+skuiMoney(outSum)+')':'')
    +' · 대상 SKU 는 각 캠페인 target_skus 합집합이라 Portfolio 의 전 품목 카탈로그가 분모를 키움 — 전환율은 캠페인별로 볼 것.</p>';
 
-  return h+'</div>';
+  return {head:head, tiles:tiles, cls:clsline, table:table,
+          deep:deep, deepCust:deepCust, bullets:bullets, basis:basis};
 }
 
 function sepAllOverview(months){

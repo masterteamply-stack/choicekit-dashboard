@@ -1706,6 +1706,13 @@ header .mono b.t-orange {
   font-weight:700;letter-spacing:.02em;color:var(--brand,#6ab6ff);
   border:1px solid rgba(106,182,255,.45);background:rgba(106,182,255,.08);vertical-align:2px}
 .skui-solo{border-style:dashed}
+/* 메인: 위젯 안에 녹여 넣은 조각들 — 카드 테두리 없이 */
+#skuImpactBlock{margin:0}
+#skuImpactBlock .skui-wrap{margin:8px 0 2px}
+#skuCompareKpis .skui-tiles{margin-bottom:0}
+#skuAggMeta .skui-cls{margin:8px 0 0}
+#skuAggMeta .skui-basis{margin-top:7px}
+#skuAggInsight .skui-bl{margin-top:14px;border-top:1px solid var(--border,rgba(127,127,127,.2));padding-top:12px}
 .skui-up{color:var(--green,#2fb344)}
 .skui-dn{color:var(--red,#e5484d)}
 .skui-mut{color:var(--muted,#8a8a8f)}
@@ -10815,7 +10822,9 @@ function renderSkuExplorer(fOrders, fMkt) {
   });
 
   // skuCompareKpis는 renderSkuAggregate 내부에서 fillCompareKpis로 처리
-  return renderSkuAggregate(fOrders);
+  const _r = renderSkuAggregate(fOrders);
+  try { renderSkuImpactBlock(); } catch (_) {}   /* meta·insight 를 덮어쓴 뒤 다시 얹음 */
+  return _r;
 }
 
 function renderSkuIndividual(fOrders) {
@@ -13564,7 +13573,14 @@ function cnDeepHTML(X){
 }
 
 function skuImpactHTML(){
-  const S=skuiData(); if(!S||S.tgt_sku==null) return '';
+  const P=skuImpactParts(); if(!P) return '';
+  return '<div class="skui">'+P.head+P.tiles+P.cls+P.table+P.deep+P.bullets+P.basis+'</div>';
+}
+
+/* 조각으로 돌려준다 — 효과 분석은 카드로 감싸고(skuImpactHTML),
+   메인은 위젯의 기존 자리(KPI 행·인사이트·메타)에 나눠 넣는다. */
+function skuImpactParts(){
+  const S=skuiData(); if(!S||S.tgt_sku==null) return null;
   const C=S.cls||{}, X=(S.extra||[])[0]||null;
   const tgtAll=S.tgt_all||S.tgt_sku, convAll=S.conv_all||S.conv_sku;
   const bAll=S.before_all!=null?S.before_all:S.before, aAll=S.after_all!=null?S.after_all:S.after;
@@ -13582,28 +13598,27 @@ function skuImpactHTML(){
   const tile=(lab,val,sub)=>'<div class="skui-tile"><div class="skui-lab">'+lab+'</div>'
     +'<div class="skui-val">'+val+'</div>'+(sub?'<div class="skui-sub">'+sub+'</div>':'')+'</div>';
 
-  let h='<div class="skui">'
-   +'<div class="skui-hd"><span class="skui-bar"></span><div>'
+  const head='<div class="skui-hd"><span class="skui-bar"></span><div>'
    +'<b>SKU 기반 오더 전환 효과 · 종합</b>'
    +'<span class="skui-mut" style="font-size:10.5px;margin-left:8px">· 위 드롭다운과 무관한 고정 집계</span>'
    +'<div class="skui-sub">SKU 대상 프로모션을 집행한 권역의 캠페인만 취합 — '
    + skuiEsc((S.regions||[]).join(' · '))+' · 원장 ~'+skuiEsc(S.cut)
    + (X?' · 중국차는 별도 원장 ~'+skuiEsc(X.cut):'')+'</div></div></div>';
 
-  h+='<div class="skui-tiles">'
+  const tiles='<div class="skui-tiles">'
    +tile('대상 SKU', skuiNum(tgtAll)+'종', X?('중국차 '+X.n+'종 포함'):'')
    +tile('오더 전환', skuiNum(convAll)+'종', convRate!=null?convRate.toFixed(1)+'% · 전년에 없던 품번 '+skuiNum(C['신규']||0)+'종 포함':'')
    +tile('신규 전환 창출', skuiMoney(S.new_amt), '전년 오더 0 → 당해 오더 발생')
    +tile('집행 전 → 후', skuiMoney(bAll)+' → '+skuiMoney(aAll), skuiPct(yAll)+' · '+skuiMoney(aAll-bAll))
    +'</div>';
 
-  h+='<div class="skui-cls">품번 분류 <b>'+skuiNum(C['신규']||0)+'</b> 신규 · '
+  const clsline='<div class="skui-cls">품번 분류 <b>'+skuiNum(C['신규']||0)+'</b> 신규 · '
    +'<b>'+skuiNum(C['증가']||0)+'</b> 증가 · <b>'+skuiNum(C['유지']||0)+'</b> 유지 · '
    +'<b>'+skuiNum(C['감소']||0)+'</b> 감소 · <b>'+skuiNum(C['이탈']||0)+'</b> 이탈 · '
    +'<b>'+skuiNum(C['미전환']||0)+'</b> 미전환 '
    +'<span class="skui-mut">(증가 '+skuiMoney(S.up_amt)+' · 감소·이탈 '+skuiMoney(S.dn_amt)+')</span></div>';
 
-  h+='<div class="skui-wrap"><table class="skui-tbl"><thead><tr>'
+  let h='<div class="skui-wrap"><table class="skui-tbl"><thead><tr>'
    +'<th>프로모션</th><th>집행 권역</th><th>시작</th><th class="n">대상</th><th class="n">전환</th>'
    +'<th class="n">신규</th><th class="n">집행 전</th><th class="n">집행 후</th><th class="n">증감</th><th class="n">YoY</th>'
    +'</tr></thead><tbody>';
@@ -13640,6 +13655,7 @@ function skuImpactHTML(){
      +' <span class="skui-mut">(대상·전환 칸은 품번 수가 아니라 미션 목표·달성률)</span></td></tr>';
   });
   h+='</tbody></table></div>';
+  const table=h; let deep='';
 
   const bl=[];
   if(grew.length) bl.push('<b>오더가 없던 품번을 여는 쪽에서 작동했다</b> · '
@@ -13657,24 +13673,43 @@ function skuImpactHTML(){
     +skuiNum(C['증가']||0)+'종이 '+skuiMoney(S.up_amt)+' 늘었음. '
     +'반면 주력 품번의 역기저가 '+skuiMoney(S.dn_amt)+' 라 합계에서는 확장 성과가 가려짐. '
     +'합계 한 줄로 캠페인 성패를 판단하면 안 되는 구조.');
-  h+='<ul class="skui-bl">'+bl.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
+  const bullets='<ul class="skui-bl">'+bl.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
 
-  if(X) h+=cnDeepHTML(X);
-  (S.aside||[]).forEach(A=>{ h+=kjkSectionHTML(A); });
+  if(X) deep+=cnDeepHTML(X);          /* 프로모션별 상세 */
+  let deepCust='';                     /* 고객사 단독 미션 상세 — 두는 자리가 다름 */
+  (S.aside||[]).forEach(A=>{ deepCust+=kjkSectionHTML(A); });
 
-  h+='<p class="skui-basis">기준 · 양쪽 모두 <b>캠페인 시작일 ~ '+skuiEsc(S.cut)+'</b>(오더 원장 마감)이고 전년은 같은 구간 · '
+  const basis='<p class="skui-basis">기준 · 양쪽 모두 <b>캠페인 시작일 ~ '+skuiEsc(S.cut)+'</b>(오더 원장 마감)이고 전년은 같은 구간 · '
    +'전년도 <b>그 캠페인의 고객사</b>만'
    +(S.drop_amt?' (캠페인 밖 고객사 '+skuiMoney(S.drop_amt)+' · '+skuiNum(S.drop_ords)+'건 제외)':'')
    +(outSum?' · <b>'+Object.keys(S.regions_out).join('·')+'</b> 는 SKU 대상 프로모션 집행 지역이 아니라 제외(전년 '+skuiMoney(outSum)+')':'')
    +' · 대상 SKU 는 각 캠페인 target_skus 합집합이라 Portfolio 의 전 품목 카탈로그가 분모를 키움 — 전환율은 캠페인별로 볼 것.</p>';
 
-  return h+'</div>';
+  return {head:head, tiles:tiles, cls:clsline, table:table,
+          deep:deep, deepCust:deepCust, bullets:bullets, basis:basis};
 }
 
+/* 메인에서는 카드로 띄우지 않고 SKU Analysis 위젯의 기존 자리에 나눠 넣는다.
+   · 종합 타일   → 위젯 KPI 행(#skuCompareKpis)
+   · 품번 분류·기준 → 메타 줄(#skuAggMeta) 아래
+   · 캠페인 표·중국차·Kailos 상세 → #skuImpactBlock (테두리 없이)
+   · 인사이트     → 기존 「💡 SKU 인사이트」 패널 끝에 이어 붙임
+   효과 분석 대시보드는 같은 조각을 카드(skuImpactHTML)로 감싸 쓴다. */
 function renderSkuImpactBlock() {
   const el = document.getElementById('skuImpactBlock'); if (!el) return;
-  /* Kailos 미션은 종합 블록 안에 한 행 + 상세로 합쳐 넣음 — 별도 블록으로 띄우지 않는다 */
-  try { el.innerHTML = skuImpactHTML(); } catch (e) { console.warn('[skui] render failed:', e); }
+  let P = null;
+  try { P = skuImpactParts(); } catch (e) { console.warn('[skui] build failed:', e); }
+  if (!P) { el.innerHTML = ''; return; }
+  el.innerHTML = P.table + P.deep + P.deepCust;
+
+  const kp = document.getElementById('skuCompareKpis');
+  if (kp) { kp.innerHTML = P.tiles; kp.style.display = 'block'; }
+
+  const mt = document.getElementById('skuAggMeta');
+  if (mt && !mt.querySelector('.skui-cls')) mt.insertAdjacentHTML('beforeend', P.cls + P.basis);
+
+  const ins = document.getElementById('skuAggInsight');
+  if (ins && !ins.querySelector('.skui-bl')) ins.insertAdjacentHTML('beforeend', P.bullets);
 }
 
 function applyKpiBridge() {
