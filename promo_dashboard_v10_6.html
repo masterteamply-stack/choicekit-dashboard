@@ -2113,13 +2113,15 @@ function apTable(){
      <td class="num">${r.rew?fmtC(r.rew):'<span class="sub3">·</span>'}</td></tr>`;});
  });
  const fa=(typeof AO!=='undefined'&&AO.tot)?AO.tot.usd:T.act, fr=(typeof AO!=='undefined'&&AO.tot)?AO.tot.att:T.att;
+ /* 달성률이 고객사 묶음 기준이면 목표도 같은 기준이어야 함 — 프로그램 합은 아래 줄에 따로 적음 */
+ const ft=(typeof AO!=='undefined'&&AO.tot&&AO.tot.tgt!=null)?AO.tot.tgt:T.tgt;
  return `<h4 class="soh" style="border-left:4px solid var(--brand);padding-left:8px">고객사별 Sell-out 프로그램 참여 · 현황${AP.cut?' ('+(+AP.cut.slice(5))+'월까지)':''}</h4>`
   +`<div class="tblwrap sowrap"><table class="lts sotbl" style="font-size:12px"><thead><tr>
      <th style="text-align:left">고객사</th><th style="text-align:left">참여 프로그램 · 기간 · 현황</th>
      <th>Sell-out 목표</th><th>Sell-out 실적</th><th>달성률</th><th>마케팅 예산</th><th>지급 리워드</th></tr></thead><tbody>`
   +body
   +`</tbody><tfoot><tr><td style="text-align:left">합계 · 고객사 ${ks.length}곳</td><td style="text-align:left">프로그램 참여 ${T.n}건</td>
-     <td class="num">${fmtC(T.tgt)}</td>
+     <td class="num">${fmtC(ft)}${Math.abs(ft-T.tgt)>1?`<div class="sub3" style="font-weight:400;font-size:10px">프로그램 합 ${fmtC(T.tgt)}</div>`:''}</td>
      <td class="num">${fmtC(fa)}<div class="sub3" style="font-weight:400;font-size:10px">프로그램 합 ${fmtC(T.act)}</div></td>
      <td class="num">${fr}%</td>
      <td class="num">${fmtC(T.bud)}</td><td class="num">${fmtC(T.rew)}</td></tr></tfoot></table></div>`;
@@ -2424,38 +2426,39 @@ const SEPTEMBER_ACTIVITY = {
       "Mechanic Support Kits 10월 입고 후 고객사 컨테이너로 순차 발송",
       "↳ Kit 구성: 로고 공구 조끼·모자 세트, Mechanic Handbook, Asian / European 차종 Flyer"] },
   sea: { programs_count:5, countries:5, customers:12, period:"2026년 5~11월",
-    sellout_target:835538.7473, sellout_actual:864045.5111, achievement_rate:1.0341,
+    basis:"종합은 고객사 묶음(5.Sell-out by Customer · C 표 Total) · 프로그램 표는 프로그램 단위라 합계가 더 큼 — 섞어 쓰지 않음",
+    sellout_target:822901, sellout_actual:871919, achievement_rate:1.06,
     programs:[
-      {program:"Sales Champion Award", customers:8, target:271967, actual:531154.3828, achievement:1.9530, note:"전체 성과 핵심 견인"},
-      {program:"Long-Term Loyalty", customers:3, target:54780, actual:75072.0032, achievement:1.3704, note:"GP·Densocentra·Marboro 중심 안정적 성과"},
-      {program:"Order to Earn POSM", customers:3, target:496154, actual:257819.1252, achievement:0.5196, note:"POSM 조건 오더 기준 · GTA 달성 · Mast·Nam Bac 추가 Push 필요"},
+      {program:"Order to Earn POSM", customers:3, target:496154, actual:372932, achievement:0.752, note:"POSM 조건 오더 기준 · GTA 달성 · Mast·Nam Bac 추가 Push 필요"},
+      {program:"Sales Champion Award", customers:8, target:271967, actual:821711, achievement:3.021, note:"전체 성과 핵심 견인"},
+      {program:"Long-Term Loyalty", customers:3, target:54780, actual:125174, achievement:2.285, note:"GP·Densocentra·Marboro 중심 안정적 성과"},
       {program:"New Product Sell-Out", customers:2, target:12638, actual:0, achievement:0, note:"Sell-out 데이터 미요청 프로모션 (집계 대상 아님)"},
-      {program:"Display & Visibility", customers:3, target:null, actual:null, achievement:null, note:"전시·사진 중심 · Sell-out 데이터 미요청 프로모션"}],
+      {program:"CTR Display & Visibility", customers:3, target:null, actual:null, achievement:null, note:"전시·사진 중심 · Sell-out 데이터 미요청 프로모션"}],
     cust_perf:[
-      {c:"Vietnam", n:"Mast", t:246154, r:311508, rate:126.6, st:"Achieved"},
-      {c:"Vietnam", n:"Nam Bac", t:246154, r:202872, rate:82.4, st:"Near Target"},
-      {c:"Vietnam", n:"GTA", t:100000, r:190132, rate:190.1, st:"Achieved"},
-      {c:"Thailand", n:"GP", t:38863, r:100832, rate:259.5, st:"Achieved"},
-      {c:"Thailand", n:"CSH", t:15798, r:0, rate:0, st:"Data Pending"},
-      {c:"Indonesia", n:"Densocentra", t:22567, r:0, rate:0, st:"Data Pending"},
-      {c:"Malaysia", n:"Marboro", t:12308, r:11939, rate:97.0, st:"Near Target"},
-      {c:"Thailand", n:"ATC", t:22117, r:0, rate:0, st:"Data Pending"},
-      {c:"Philippines", n:"Chuan Lam", t:87719, r:0, rate:0, st:"Data Pending"},
-      {c:"Philippines", n:"Young Auto", t:43860, r:0, rate:0, st:"Data Pending"},
+      {c:"Vietnam", n:"Mast", t:246154, r:249693, rate:101.4, st:"Achieved"},
+      {c:"Vietnam", n:"Nam Bac", t:246154, r:153459, rate:62.3, st:"Behind"},
+      {c:"Philippines", n:"Chuan Lam", t:87719, r:140194, rate:159.8, st:"Achieved"},
+      {c:"Vietnam", n:"GTA", t:100000, r:136326, rate:136.3, st:"Achieved"},
+      {c:"Thailand", n:"GP", t:32543, r:109387, rate:336.1, st:"Achieved"},
+      {c:"Thailand", n:"CSH", t:15798, r:27432, rate:173.6, st:"Achieved"},
+      {c:"Indonesia", n:"Densocentra", t:22567, r:25004, rate:110.8, st:"Achieved"},
+      {c:"Philippines", n:"Young Auto", t:43860, r:14855, rate:33.9, st:"Behind"},
+      {c:"Malaysia", n:"Marboro", t:12308, r:14438, rate:117.3, st:"Achieved"},
+      {c:"Thailand", n:"ATC", t:15798, r:1131, rate:7.2, st:"Behind"},
       {c:"Thailand", n:"SERI (Seri Wathana)", t:null, r:null, rate:null, st:"대상 아님 (Display 프로그램)"},
       {c:"Indonesia", n:"Zentralink", t:null, r:null, rate:null, st:"대상 아님 (Display 프로그램)"}],
     sep_reflect:"9월 신규 반영은 Thailand CSH Sales Champion 약 $4,352 수준 · 대부분 5~8월 데이터 중심이며 9월 실적은 아직 미반영/미제출. '목표 초과 달성'과 '9월 데이터 미반영 고객 회수 필요'를 함께 관리.",
     customer_ach:[
-      {name:"Mast", country:"VN", ach:{"Sales Champion":5.94,"POSM":0.40}},
-      {name:"Nam Bac", country:"VN", ach:{"Sales Champion":2.88,"POSM":0.44}},
-      {name:"GTA", country:"VN", ach:{"Sales Champion":5.58,"POSM":1.02}},
-      {name:"GP", country:"TH", ach:{"Sales Champion":4.42,"Loyalty":2.26}},
+      {name:"Mast", country:"VN", ach:{"POSM":0.95, "Sales Champion":6.44}},
+      {name:"Nam Bac", country:"VN", ach:{"POSM":0.44, "Sales Champion":3.99}},
+      {name:"Chuan Lam", country:"PH", ach:{"Sales Champion":1.6}},
+      {name:"GTA", country:"VN", ach:{"POSM":1.02, "Sales Champion":7.09}},
+      {name:"GP", country:"TH", ach:{"Sales Champion":7.97, "Loyalty":4.3, "New Product":0.0}},
       {name:"CSH", country:"TH", ach:{"Sales Champion":1.74}},
-      {name:"ATC", country:"TH", ach:{"Sales Champion":0.07}, note:"6월 이후 실적 미제공"},
-      {name:"Marboro", country:"MY", ach:{"Loyalty":0.97}},
-      {name:"Densocentra", country:"ID", ach:{"Loyalty":0.81}},
-      {name:"Chuan Lam", country:"PH", pending:true},
-      {name:"Young Auto", country:"PH", pending:true}],
+      {name:"Densocentra", country:"ID", ach:{"Loyalty":1.12}},
+      {name:"Young Auto", country:"PH", ach:{"Sales Champion":0.34}},
+      {name:"Marboro", country:"MY", ach:{"Loyalty":1.17}},
+      {name:"ATC", country:"TH", ach:{"Sales Champion":0.07, "New Product":0.0}}],
     pending_badges:["New Product Sell-Out","Display & Visibility"] },
   mena: { september_orders:[{customer:"Dynatrade", amount_usd:1828.04},{customer:"MESK", amount_usd:1879.58}],
     september_total:3707.62, cumulative_order:12906.48, products:["Shock Absorber","Brake Pad"] },
@@ -3842,7 +3845,10 @@ function soLive(c){
  const v=mkRow(c);
  const o=(v&&(v.t>0||v.r>0))?{t:v.t,r:v.r,live:true}:{t:c.so_t,r:c.so_r,live:false};
  /* ASIA 는 원자료(중복 제거)가 있으면 실적을 그 값으로 바꿈. 목표는 marketing.csv 그대로. */
- if(c.region==='ASIA'&&c.program==='SELL-OUT Promotion'&&typeof AO!=='undefined'&&AO.tot&&AO.tot.usd!=null) o.r=AO.tot.usd;
+ /* 목표도 같은 기준(고객사 묶음)으로 바꿔야 함 — marketing.csv 의 so_t 는 프로그램 단위 합($836K)이라
+    실적만 바꾸면 한 칸에 두 기준이 섞임. */
+ if(c.region==='ASIA'&&c.program==='SELL-OUT Promotion'&&typeof AO!=='undefined'&&AO.tot&&AO.tot.usd!=null){
+   o.r=AO.tot.usd; if(AO.tot.tgt!=null) o.t=AO.tot.tgt; o.live=true; o.basis='고객사 묶음';}
  /* NA 는 marketing.csv 에 sell-out 항목이 없어 SteerStar 미션(Lordco)을 씀.
     스냅샷에 베껴 두는 대신 SS 를 직접 물려, SteerStar 파일이 갱신되면 같이 움직임. */
  if(c.region==='NA'&&c.program==='Strategic Partner Program'&&typeof SS!=='undefined'){
