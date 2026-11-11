@@ -19,6 +19,78 @@ OUT = os.path.join(ROOT, 'cn_summary.json')
 NUM = lambda v: float(v) if isinstance(v, (int, float)) else 0.0
 
 
+# 중국차 원장이 CIS 로 묶어 둔 나라 중 권역을 바로잡을 것 — scripts/sync_cn_promo.py 와 같은 표.
+#   RU  러시아는 그 자체로 한 권역(유일 고객이 CTR RUS LLC 로 법인 내부 거래)
+#   UA  우크라이나는 유럽 소속
+CTY_REGION = {'RU': 'RUS', 'UA': 'EU'}
+ORDER = ['CIS', 'RUS', 'LATAM', 'EU', 'MENA', 'NA', 'ASIA', 'OC']
+
+
+def region_from_lines(src):
+    """오더라인_2025 · 오더라인_2026 에서 권역표 둘(① 커버 전체 · ② 중국전용)을 다시 셈.
+
+    구간은 2026 자료가 있는 마지막 달까지, 전년도 같은 달까지로 맞춤.
+    """
+    import collections, openpyxl
+    wb = openpyxl.load_workbook(src, read_only=True, data_only=True)
+    box = collections.defaultdict(lambda: [0.0, 0, set(), set(), 0.0, set()])
+    #        key=(year, region, cn) → [usd, qty, {sku}, {cust}, new_usd, {new_cust}]
+    mx = 0
+    for sh, yr in (('오더라인_2025', '25'), ('오더라인_2026', '26')):
+        if sh not in wb.sheetnames: continue
+        rs = wb[sh].iter_rows(values_only=True)
+        h = [str(x) for x in next(rs)]
+        need = ('월', 'CTR Code', '② 중국전용', '③ 신규 SKU', '권역',
+                '정가(USD)', '오더수량(순)', '판매처', 'Cty')
+        miss = [k for k in need if k not in h]
+        if miss: sys.exit('%s 에 없는 열: %s' % (sh, ' · '.join(miss)))
+        I = {k: h.index(k) for k in need}
+        for r in rs:
+            if not r or r[0] is None: continue
+            mo = int(r[I['월']] or 0)
+            if yr == '26' and mo > mx: mx = mo
+            reg = str(r[I['권역']] or '').strip()
+            reg = CTY_REGION.get(str(r[I['Cty']] or '').strip().upper(), reg)
+            yes = lambda k: str(r[I[k]] or '').strip().upper() == 'Y'
+            u = float(r[I['정가(USD)']] or 0); q = int(float(r[I['오더수량(순)']] or 0))
+            sku = str(r[I['CTR Code']] or '').strip(); cus = str(r[I['판매처']] or '').strip()
+            for cn in ((False,) if not yes('② 중국전용') else (False, True)):
+                v = box[(yr, reg, cn, mo)]
+                v[0] += u; v[1] += q; v[2].add(sku); v[3].add(cus)
+                if yes('③ 신규 SKU'): v[4] += u; v[5].add(cus)
+    wb.close()
+
+    def table(cn, with_new):
+        out, tot26, tot25 = [], 0.0, 0.0
+        per = {}
+        for reg in ORDER:
+            a = {}
+            for yr in ('25', '26'):
+                u = q = nu = 0.0; sk = set(); cu = set(); nc = set()
+                for mo in range(1, mx + 1):
+                    v = box.get((yr, reg, cn, mo))
+                    if not v: continue
+                    u += v[0]; q += v[1]; sk |= v[2]; cu |= v[3]; nu += v[4]; nc |= v[5]
+                a[yr] = (u, int(q), len(sk), len(cu), nu, len(nc))
+            per[reg] = a
+            tot26 += a['26'][0]; tot25 += a['25'][0]
+        for reg in ORDER:
+            a = per[reg]
+            d = {'k': reg, 'a26': round(a['26'][0], 2), 'a25': round(a['25'][0], 2),
+                 'q26': a['26'][1], 'sku': a['26'][2],
+                 'cust': a['26'][3], 'cust25': a['25'][3],
+                 'share': round(a['26'][0] / tot26 * 100, 1) if tot26 else 0,
+                 'share25': round(a['25'][0] / tot25 * 100, 1) if tot25 else 0,
+                 'yoy': (round((a['26'][0] - a['25'][0]) / a['25'][0] * 100, 1)
+                         if a['25'][0] else None)}
+            if with_new:
+                d['new26'] = round(a['26'][4], 2); d['new_cust'] = a['26'][5]
+            out.append(d)
+        return sorted(out, key=lambda x: -x['a26'])
+
+    return table(False, False), table(True, True), mx
+
+
 def grid(path):
     import openpyxl
     ws = openpyxl.load_workbook(path, read_only=True, data_only=True)['요약']
@@ -85,11 +157,9 @@ if '--src' in sys.argv:
             rows.append(d | {'k': k})
         return rows
 
-    regions = region_tbl('3a.', {'a26': 1, 'share': 2, 'q26': 3, 'cust': 4, 'sku': 5,
-                                 'a25': 6, 'share25': 7, 'yoy': 8, 'cust25': 9})
-    regions_cn = region_tbl('3b.', {'a26': 1, 'share': 2, 'q26': 3, 'cust': 4, 'sku': 5,
-                                    'a25': 6, 'share25': 7, 'yoy': 8, 'cust25': 9,
-                                    'new26': 10, 'new_cust': 11})
+    # 권역 표는 요약 시트를 쓰지 않고 오더라인에서 다시 셈 — 요약 시트가 러시아와
+    # 우크라이나를 CIS 로 묶어 두었기 때문임(CTY_REGION 참고).
+    regions, regions_cn, cut_m = region_from_lines(src)
 
     # 4. 차종 Top — 머리글 행을 바로 찾는다('4.' 로 앵커를 잡으면 다른 셀에 걸림)
     h = next((j for j, r in enumerate(G)
@@ -122,7 +192,10 @@ if '--src' in sys.argv:
                src=re.sub(r'^[0-9a-f]{8,}-', '', os.path.basename(src)),
                series=series, regions=regions, regions_cn=regions_cn,
                models=models[:15], parts=parts,
-               note='월별 3기준 표(위)와 같은 자료임. 여기에는 그 표에 없는 2025 대비·권역·차종·부품만 둠.')
+               cut_m=cut_m,
+               note='월별 3기준 표(위)와 같은 자료임. 여기에는 그 표에 없는 2025 대비·권역·차종·부품만 둠.',
+               note_region='권역표는 요약 시트가 아니라 오더라인에서 다시 셈 — 요약 시트가 러시아·우크라이나를 '
+                           'CIS 로 묶어 두어서임. 러시아(RUS)는 따로 떼고 우크라이나는 유럽(EU)으로 넣었음.')
     json.dump(agg, open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 else:
     agg = json.load(open(OUT, encoding='utf-8'))
