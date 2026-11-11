@@ -4,22 +4,22 @@
  "src": "promo_dashboard_v10_6.html",
  "cut": "2026-10-26",
  "cut_from": "2026-09-21",
- "a25": 3306452.72,
- "a26": 3482118.27,
- "yoy": 5.3,
+ "a25": 3281236.78,
+ "a26": 3460240.3,
+ "yoy": 5.5,
  "target_mult": 1.2,
- "target": 3982480.4,
+ "target": 3952221.28,
  "target_fix": {
   "MENA|Portfolio Expansion Program": 30000.0
  },
- "achv": 87.4359,
+ "achv": 87.5518,
  "camps_started": 12,
  "camps_total": 12,
  "n_cust": 57,
  "sku_tgt": 1024,
- "sku_conv25": 327,
- "sku_conv26": 446,
- "ord_sku": 5331,
+ "sku_conv25": 306,
+ "sku_conv26": 431,
+ "ord_sku": 5316,
  "krw_per_usd": 1280,
  "cost_krw": 78125472.0,
  "exp_krw": 188282100.0,
@@ -90,17 +90,17 @@
    "cut": "2026-10-20"
   },
   {
-   "region": "CIS",
-   "program": "중국차 프로모션",
-   "a25": 25215.94,
-   "a26": 23213.19,
-   "cut": "2026-10-26"
-  },
-  {
    "region": "LATAM",
    "program": "중국차 프로모션",
    "a25": 10238.78,
    "a26": 17031.25,
+   "cut": "2026-10-26"
+  },
+  {
+   "region": "CIS",
+   "program": "중국차 프로모션",
+   "a25": 0.0,
+   "a26": 1335.22,
    "cut": "2026-10-26"
   },
   {

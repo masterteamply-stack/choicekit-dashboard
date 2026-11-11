@@ -42,6 +42,13 @@ PLAN = {
 }
 COUNTRY = {'LATAM': [], 'MENA': []}     # 아래에서 자료로 채움
 
+# 중국차 오더 원장이 CIS 로 묶어 둔 나라 중 권역을 바로잡을 것.
+# 국가 코드로 봄 — 2025 시트는 영문('Russian Fed.'), 2026 은 한글('러시아') 이라
+# 이름으로 거르면 한쪽이 샘.
+#   RU  CTR RUS LLC 는 러시아 법인(내부 거래)이라 CIS 캠페인 수치가 아님
+#   UA  우크라이나는 유럽 소속
+CTY_REGION = {'RU': 'RUS', 'UA': 'EU'}
+
 
 def months(a, b):
     y, m = int(a[:4]), int(a[5:7]); out = []
@@ -62,7 +69,7 @@ def read(src):
         rs = wb[sh].iter_rows(values_only=True)
         h = [str(x) for x in next(rs)]
         need = ('생성일', '월', 'CTR Code', '② 중국전용', '권역',
-                '정가(USD)', '오더수량(순)', '판매처', '국가(명)')
+                '정가(USD)', '오더수량(순)', '판매처', '국가(명)', 'Cty')
         miss = [k for k in need if k not in h]
         if miss: sys.exit('%s 에 없는 열: %s' % (sh, ' · '.join(miss)))
         I = {k: h.index(k) for k in need}
@@ -71,6 +78,7 @@ def read(src):
             d = str(r[I['생성일']])[:10]
             if d > mx: mx = d
             reg = str(r[I['권역']] or '').strip()
+            reg = CTY_REGION.get(str(r[I['Cty']] or '').strip().upper(), reg)
             if reg not in PLAN: continue
             cn = str(r[I['② 중국전용']] or '').strip().upper() == 'Y'
             v = agg[(reg, cn, d[:7])]
