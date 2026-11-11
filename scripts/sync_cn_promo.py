@@ -6,9 +6,11 @@
   python3 scripts/sync_cn_promo.py ... --check
 
 기산일
-  카탈로그가 나간 다음 달부터 셈. LATAM 4월 배포 → 2026-05 부터,
-  MENA 10월 배포 → 2026-11 부터. 전년은 같은 달 구간(연도만 -1).
-  목표는 다른 캠페인과 같은 식 — 전년 동기 ×1.2 (sellinGoal 이 a25 로 계산함).
+  카탈로그가 2026-04 에 전 권역으로 나갔으므로 LATAM·MENA·CIS 모두 4월부터 셈.
+  전년은 같은 달 구간(연도만 -1). 목표는 다른 캠페인과 같은 식 —
+  전년 동기 ×1.2 (sellinGoal 이 a25 로 계산함).
+  권역별로 다른 것은 콘텐츠를 돌린 시점임 — 10월 MENA·LATAM 프로모션 콘텐츠,
+  11월 CIS 이메일(론칭 인포그래픽·카탈로그) 예정.
 
 합산은 '② 중국전용' 만
   ① 커버 전체(237품번)는 공용 부품이 섞여 있어 ChoiceKit 대상 SKU 21종·
@@ -17,9 +19,8 @@
   그래서 a25/a26(연관 오더) = 중국전용, all25/all26(전 품목 기준) = 커버 전체
   로 넣음 — 화면이 이 둘을 원래 따로 보여 주고 서로 더하지 않음.
 
-MENA
-  11월 기산인데 오더 원장이 10월까지라 아직 실적이 없음. started=false 로 두어
-  합계·목표에 들어가지 않고 '시작 예정' 쪽에 나오게 함.
+아직 오더가 없는 권역
+  started=false 로 두어 합계·목표에 들어가지 않고 '시작 예정' 쪽에 나옴.
 """
 import argparse, collections, datetime, json, os, re, sys
 
@@ -29,11 +30,15 @@ OUT = os.path.join(ROOT, 'cn_promo.json')
 PROGRAM = '중국차 프로모션'    # 화면 표기 — 다른 캠페인과 달리 한글로 둠(권역 표에서 바로 눈에 띄게)
 
 # 권역 → (카탈로그 배포월, 집계 시작월, 화면에 적을 말)
+# 카탈로그는 2026-04 에 전 권역으로 나갔음. 그래서 집계 기산은 세 권역 모두 4월로
+# 같게 두고, 권역마다 다른 것은 '콘텐츠를 언제 본격적으로 돌렸는가' 로만 적음.
 PLAN = {
-    'LATAM': {'pub': '2026-04', 'from': '2026-05',
-              'why': '4월 카탈로그 배포 · 5월 오더부터 집계'},
-    'MENA':  {'pub': '2026-10', 'from': '2026-11',
-              'why': '10월 카탈로그 배포 · 11월 오더부터 집계'},
+    'LATAM': {'pub': '2026-04', 'from': '2026-04',
+              'why': '4월 카탈로그 배포 · 10월 프로모션 콘텐츠 본격 배포'},
+    'MENA':  {'pub': '2026-04', 'from': '2026-04',
+              'why': '4월 카탈로그 배포 · 10월 프로모션 콘텐츠 본격 배포'},
+    'CIS':   {'pub': '2026-04', 'from': '2026-04',
+              'why': '4월 카탈로그 배포 · 11월 이메일 인포그래픽·카탈로그 예정'},
 }
 COUNTRY = {'LATAM': [], 'MENA': []}     # 아래에서 자료로 채움
 
@@ -125,7 +130,17 @@ def main():
                 pv, ps = _cell((reg, True, '%d%s' % (int(m[:4]) - 1, m[4:])))
                 d['mser'].append({'m': m, 'cur': cu, 'sku': cs, 'prv': pv, 'sku_prv': ps})
             rows.append(d)
-        agg2 = {'_readme': '중국차 프로모션 — 카탈로그 배포 다음 달부터의 오더. '
+        # 권역이 같은 카탈로그를 쓰므로 전환 품번은 합집합으로 셈
+        u26, u25 = set(), set()
+        for d in rows:
+            for m in d['months']:
+                v = agg.get((d['region'], True, m))
+                if v: u26 |= v[2]
+            for m in d['months_prev']:
+                v = agg.get((d['region'], True, m))
+                if v: u25 |= v[2]
+        agg2 = {'union26': len(u26), 'union25': len(u25),
+                '_readme': '중국차 프로모션 — 카탈로그 배포 다음 달부터의 오더. '
                            'a25/a26(합산 대상)는 ② 중국전용, all25/all26 은 ① 커버 전체(참고). '
                            '재생성: python3 scripts/sync_cn_promo.py --src <xlsx>',
                 '_basis': '① 커버 전체는 공용 부품이 섞여 ChoiceKit 대상 SKU 와 겹치므로 연관 오더에 더하지 않음.',
@@ -134,6 +149,11 @@ def main():
         json.dump(agg2, open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     else:
         agg2 = json.load(open(OUT, encoding='utf-8'))
+
+    # 세 권역이 같은 카탈로그를 쓰므로 전환 종수는 합집합으로 셈.
+    # 대표 권역(MAIN)은 당해 금액이 가장 큰 곳 — 거기에만 대상 품번을 달아 둠.
+    _run = [r for r in agg2['rows'] if r['cn26'] > 0]
+    MAIN = max(_run, key=lambda r: r['cn26'])['region'] if _run else None
 
     html = open(HTML, encoding='utf-8', newline='').read()
     m = re.search(r'<script>const D = (\{.*?\});</script>', html, re.S)
@@ -162,11 +182,19 @@ def main():
             'a25': r['cn25'], 'a26': r['cn26'],
             'all25': r['all25'], 'all26': r['all26'],
             'q25': r['cn25_q'], 'q26': r['cn26_q'],
-            's25': r['cn25_sku'], 's26': r['cn26_sku'],
-            # 아직 시작 안 한 권역은 대상 품번을 0 으로 둠 — 넣어 두면 화면의
-            # '대상 SKU' 합계가 campaign_kpi.json(집행분만 셈)과 어긋남
-            'tgt_sku': agg2['tgt_sku'] if started else 0,
-            'ord_sku': r['cn26_sku'],
+            's25': agg2['union25'] if r['region'] == MAIN else 0,
+            's26': agg2['union26'] if r['region'] == MAIN else 0,
+            # 카탈로그는 183품번 하나를 세 권역이 같이 씀. 권역마다 달아 두면
+            # '대상 SKU' 합계가 3배로 부풀어, 대표 권역 한 곳에만 달고 나머지는 0.
+            # 합계에 들어가는 전환 종수도 권역 합이 아니라 합집합을 씀.
+            # 칸에 보이는 글은 sku_disp 로 권역별 숫자를 그대로 적음.
+            'tgt_sku': agg2['tgt_sku'] if (started and r['region'] == MAIN) else 0,
+            'ord_sku': (agg2['union26'] if r['region'] == MAIN else 0) if started else 0,
+            # 대상 품번을 대표 권역에만 달아 둔 탓에 다른 권역이 '전품목' 으로 보이지
+            # 않게, 표에 적을 글은 따로 넘김
+            'tgt_disp': ('대상 %d종' % agg2['tgt_sku']) if started and agg2['tgt_sku'] else None,
+            'sku_disp': ('%d / %d종 · %d%% 전환' % (r['cn26_sku'], agg2['tgt_sku'],
+                         round(r['cn26_sku'] / agg2['tgt_sku'] * 100))) if started and agg2['tgt_sku'] else None,
             'yoy': round((r['cn26'] - r['cn25']) / r['cn25'] * 100, 1) if r['cn25'] else None,
             'yoyA': round((r['all26'] - r['all25']) / r['all25'] * 100, 1) if r['all25'] else None,
             'cost': 0.0, 'exp': 0.0, 'so_t': 0.0, 'so_r': 0.0,
