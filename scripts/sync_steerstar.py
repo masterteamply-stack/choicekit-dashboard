@@ -23,6 +23,21 @@ import json, os, re, sys, unicodedata
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HTML = os.path.join(ROOT, 'promo_dashboard_v10_6.html')
 LEAD_TGT = 200          # 설문 참여 수 목표 — 전사 공통
+
+# 원본 엑셀 문구를 화면용으로 고쳐 쓰는 곳.
+# 엑셀을 다시 받아 돌려도 이 문구가 유지되게 여기에 적어 둠
+# (엑셀 쪽이 먼저 고쳐지면 이 줄을 지우면 됨).
+SUB_FIX = {
+    'Seri Wathana Enterprise Co., Ltd.':
+        ('이벤트기간 (4/19~10/31) 오더 $180,000 창출',
+         'Seri Expo 이후 (4~11월) 오더 $180,000 창출'),
+}
+# 비고(note) 도 같은 방식으로 고정함
+NOTE_FIX = {
+    'Retems Logistics':
+        ('첫 오더도 아직 현지에 도착하지않아 추가 SteerStar 활동이 불가한 상황',
+         '첫 오더 물량이 나갔고 백오더 없음. 추가 오더는 11월 입수 예정이라 오더 미션 달성은 확실시됨'),
+}
 MONTHS = [f'{i}월' for i in range(1, 13)]
 DROP = '26 SteerStar 제외'
 
@@ -31,6 +46,21 @@ def txt(v):
     if v is None: return ''
     s = unicodedata.normalize('NFC', str(v)).strip()
     return '' if s == '-' else re.sub(r'\s*\n\s*', ' · ', s)
+
+
+def _fix(table, name, s, what):
+    """엑셀 문구를 화면용으로 바꿔 줌. 원문이 예상과 다르면 건드리지 않고 그대로 둠."""
+    f = table.get(name)
+    if not f: return s
+    old, new = f
+    if s.strip() == old: return new
+    if s.strip() == new: return s
+    print('  ※ %s 의 %s 가 예상과 달라 그대로 둠: %r' % (name, what, s[:60]))
+    return s
+
+
+def sub_fix(name, s):  return _fix(SUB_FIX, name, s, '미션 문구')
+def note_fix(name, s): return _fix(NOTE_FIX, name, s, '비고')
 
 
 def num(v):
@@ -65,10 +95,10 @@ for r in sheet(wb, 'SteerStar Plan')[1:]:
     ch = [txt(r[i]) for i in (3, 4, 5, 6, 7) if txt(r[i])]
     plan[name] = dict(region=region, country=txt(r[1]), name=name,
                       act=txt(r[8]), when=txt(r[9]).replace('Arpil', 'April'),
-                      main=txt(r[10]), sub=txt(r[12]),
+                      main=txt(r[10]), sub=sub_fix(name, txt(r[12])),
                       # BizRewards 는 금액만 적힌 칸과 설명이 적힌 칸이 섞여 있음
                       credit=(f'${int(r[19]):,}' if isinstance(r[19], (int, float)) else txt(r[19])),
-                      note=txt(r[20]), ch=ch,
+                      note=note_fix(name, txt(r[20])), ch=ch,
                       dropped=(txt(r[12]) == DROP))
     order_of.append(name)
 
