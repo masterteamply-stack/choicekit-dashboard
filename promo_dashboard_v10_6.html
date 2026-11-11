@@ -423,7 +423,7 @@ tfoot td.ocol{background:#15605a;color:#fff}
   <div class="page on" id="p7"><div id="sepFilter" class="sepfilter"></div><div id="sepBody"></div></div>
 
   <!-- P8 중국차 오더 리포트 -->
-  <div class="page" id="p8"><div class="sepfilter" style="flex-wrap:wrap;gap:4px 0"><label style="font-size:12px;font-weight:600;margin-right:6px">권역</label><select id="cnRegion" style="padding:4px 8px;border-radius:6px;border:1px solid var(--ring);background:var(--card);color:var(--ink);max-width:230px"></select><label style="font-size:12px;font-weight:600;margin:0 6px 0 14px">고객사</label><select id="cnCust" style="padding:4px 8px;border-radius:6px;border:1px solid var(--ring);background:var(--card);color:var(--ink);max-width:230px"></select><label style="font-size:12px;font-weight:600;margin:0 6px 0 14px">브랜드</label><select id="cnBrand" style="padding:4px 8px;border-radius:6px;border:1px solid var(--ring);background:var(--card);color:var(--ink);max-width:230px"></select><label style="font-size:12px;font-weight:600;margin:0 6px 0 14px">차종</label><select id="cnVeh" style="padding:4px 8px;border-radius:6px;border:1px solid var(--ring);background:var(--card);color:var(--ink);max-width:230px"></select></div><div id="cnBody"></div></div>
+  <div class="page" id="p8"><div class="sepfilter" style="flex-wrap:wrap;gap:4px 0"><label style="font-size:12px;font-weight:600;margin-right:6px">권역</label><select id="cnRegion" style="padding:4px 8px;border-radius:6px;border:1px solid var(--ring);background:var(--card);color:var(--ink);max-width:260px"></select><label style="font-size:12px;font-weight:600;margin:0 6px 0 14px">고객사</label><select id="cnCust" style="padding:4px 8px;border-radius:6px;border:1px solid var(--ring);background:var(--card);color:var(--ink);max-width:260px"></select><span class="sub3" style="font-size:11px;margin-left:12px">권역은 탭 전체에 걸림 · 고객사는 월별 표를 뺀 아래 분석에 걸림(월별 표는 권역 단위 자료임)</span></div><div id="cnBody"></div></div>
   <!-- P9 설문 인사이트 -->
   <div class="page" id="p9"><div id="survBody"></div></div>
 
@@ -3916,32 +3916,47 @@ function cnFillSelects(reg){
   if(sc){ sc.innerHTML=opt('ALL',`전체 고객사 · ${ck.length}곳`,CN_CUST)
       +ck.map(k=>opt(k,`${I.custs[k]} · ${fmtC(ca[k])}`,CN_CUST)).join('');
     if(!sc._w){ sc._w=1; sc.addEventListener('change',e=>{CN_CUST=e.target.value; cnOrderReport();}); } }
-  /* 브랜드 — 오더가 난 품번의 브랜드만 */
+  /* 브랜드·차종 셀렉터는 2-0 카드 안에 있음(상단에 두면 다른 표가 안 바뀌어 헷갈림).
+     여기서는 고른 값이 아직 쓸 수 있는지만 봐 두고, 실제 <option> 은 cnVehSel 이 그림. */
   const ba={}; (I.ORD||[]).forEach(r=>{ if(reg!=='ALL'&&cnRegOf(r)!==reg) return;
     if(CN_CUST!=='ALL'&&String(r[3])!==CN_CUST) return;
     const bs=cnBrandOf(I.codes[r[0]]); bs.forEach(b=>{ba[b]=(ba[b]||0)+r[4]/bs.length;}); });
   const bk=Object.keys(ba).sort((a,b)=>ba[b]-ba[a]);
   if(CN_BRAND!=='ALL' && bk.indexOf(CN_BRAND)<0) CN_BRAND='ALL';
-  const sb=$('#cnBrand');
-  if(sb){ sb.innerHTML=opt('ALL',`전체 브랜드 · ${bk.length}개`,CN_BRAND)
-      +bk.map(b=>opt(b,`${b} · ${fmtC(ba[b])}`,CN_BRAND)).join('');
-    if(!sb._w){ sb._w=1; sb.addEventListener('change',e=>{CN_BRAND=e.target.value; CN_VEH='ALL'; cnOrderReport();}); } }
+  cnFillSelects._brand=bk.map(b=>({k:b,a:ba[b]}));
   /* 차종 — 브랜드를 고르면 그 브랜드 것만. 커버 품번이 있는 차종만 올림 */
   const inv=cnVehList();
   let vk=Object.keys(inv).map(Number).filter(v=>(I.vehs||[])[v]);
   if(CN_BRAND!=='ALL') vk=vk.filter(v=>cnVehBrand(v)===CN_BRAND);
   vk.sort((a,b)=>(inv[b].length-inv[a].length)||String(I.vehs[a]).localeCompare(String(I.vehs[b])));
   if(CN_VEH!=='ALL' && vk.indexOf(+CN_VEH)<0) CN_VEH='ALL';
-  const sv=$('#cnVeh');
-  if(sv){ sv.innerHTML=opt('ALL',`전체 차종 · ${vk.length}종`,CN_VEH)
-      +vk.map(v=>opt(v,`${I.vehs[v]} · 품번 ${inv[v].length}`,CN_VEH)).join('');
-    if(!sv._w){ sv._w=1; sv.addEventListener('change',e=>{CN_VEH=e.target.value; cnOrderReport();}); } }
+  cnFillSelects._veh=vk.map(v=>({v,n:inv[v].length,nm:I.vehs[v]}));
 }
 
 /* ── 차종별 커버리지 ────────────────────────────────────────────────
    한 차종에 적용되는 CTR 품번을 모두 늘어놓고, 고객사가 그중 몇 개를
    샀는지 본다. 풀세트로 갔는지, 한두 품목만 집었는지 한눈에 보라고 만든 표.
    '대상'은 브랜드커버 파일 기준이고, 오더가 한 번도 없던 품번도 칸으로 남겨 둠. */
+function cnVehSel(){
+  /* 브랜드·차종 셀렉터 — 이 표에만 걸리므로 표 머리에 같이 둠 */
+  const o=(v,t,sel)=>`<option value="${esc(String(v))}"${sel===String(v)?' selected':''}>${esc(t)}</option>`;
+  const B=cnFillSelects._brand||[], V=cnFillSelects._veh||[];
+  const S='padding:3px 7px;border-radius:6px;border:1px solid var(--ring);background:var(--card);color:var(--ink);font-size:12px;max-width:250px';
+  return `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:2px 0 10px">`
+   +`<span class="sub3" style="font-size:11.5px;font-weight:600">브랜드</span>`
+   +`<select id="cnBrand" style="${S}">`+o('ALL',`전체 브랜드 · ${B.length}개`,CN_BRAND)
+     +B.map(x=>o(x.k,`${x.k} · ${fmtC(x.a)}`,CN_BRAND)).join('')+`</select>`
+   +`<span class="sub3" style="font-size:11.5px;font-weight:600;margin-left:8px">차종</span>`
+   +`<select id="cnVeh" style="${S}">`+o('ALL',`전체 차종 · ${V.length}종`,CN_VEH)
+     +V.map(x=>o(x.v,`${x.nm} · 품번 ${x.n}`,CN_VEH)).join('')+`</select>`
+   +`<span class="sub3" style="font-size:11px;margin-left:6px">이 두 가지는 이 표에만 걸림</span></div>`;
+}
+function cnVehWire(){
+  const sb=$('#cnBrand'), sv=$('#cnVeh');
+  if(sb) sb.onchange=e=>{CN_BRAND=e.target.value; CN_VEH='ALL'; cnOrderReport();};
+  if(sv) sv.onchange=e=>{CN_VEH=e.target.value; cnOrderReport();};
+}
+
 function cnVehCoverage(reg,cust,brand,veh){
   const I=CNINS;
   if(veh==='ALL'){
@@ -3959,7 +3974,8 @@ function cnVehCoverage(reg,cust,brand,veh){
     if(!live.length) return '';
     const part=live.filter(r=>r.hit<r.n);
     return `<div class="card"><h3>2-0 · 차종별 커버리지 <span class="sub3" style="font-weight:400">· 대상 품번 중 몇 종이 오더로 갔나</span></h3>`
-     +`<p class="note">위 드롭다운에서 <b>차종</b>을 고르면 그 차종의 품번을 고객사별로 쪼개 봄. `
+     +cnVehSel()
+     +`<p class="note">아래 <b>차종</b>을 고르면 그 차종의 품번을 고객사별로 쪼개 봄. `
      +`여기서는 오더가 난 ${live.length}개 차종을 금액순으로 둠 — 그중 <b>${part.length}개</b>가 품번 일부만 나갔음.`
      +`${cust!=='ALL'?` · 고객사 <b>${esc(I.custs[cust]||'')}</b> 기준`:''}</p>`
      +cnWrap(`<table class="lts" style="font-size:12px"><thead><tr>`
@@ -3985,6 +4001,7 @@ function cnVehCoverage(reg,cust,brand,veh){
   const full=ks.filter(k=>all.every(c=>cell[k+'|'+c]>0)).length;
   const tile=(l,v,s)=>`<div class="tile"><div class="lab">${l}</div><div class="val">${v}</div>${s?`<div class="sub2">${s}</div>`:''}</div>`;
   let h=`<div class="card"><h3>2-0 · ${esc(nm)} · 차종 커버리지</h3>`
+   +cnVehSel()
    +`<p class="note">이 차종에 적용되는 CTR 품번 <b>${all.length}종</b>을 모두 늘어놓고, 고객사가 그중 몇 종을 샀는지 봄. `
    +`대상은 브랜드커버 파일 기준이라 오더가 한 번도 없던 품번도 칸으로 남겨 둠.`
    +`${reg!=='ALL'?` · 권역 <b>${esc(reg)}</b>`:''}${cust!=='ALL'?` · 고객사 <b>${esc(I.custs[cust]||'')}</b>`:''}</p>`
@@ -4191,6 +4208,7 @@ function cnOrderReport(){
   h+=cnInsHTML(reg,cust);
   h+=cnSumPanel(reg);
   $('#cnBody').innerHTML=h;
+  cnVehWire();
 }
 
 function activateTab(b){if(!b)return;
