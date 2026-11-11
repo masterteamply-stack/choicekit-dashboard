@@ -255,6 +255,8 @@ def main():
                     e.update(cls=K.get('cls'), new=(K.get('cls') or {}).get('신규'),
                              new_amt=K.get('new_amt'), up_amt=K.get('up_amt'),
                              dn_amt=K.get('dn_amt'), top=K.get('top'),
+                             by_brand=K.get('by_brand'), by_region=K.get('by_region'),
+                             by_part=K.get('by_part'),
                              basis=K.get('basis'), rule=K.get('rule'),
                              note='품번 단위까지 집계됨 · 원장 %s' % K.get('src'))
                 else:

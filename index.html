@@ -13300,6 +13300,7 @@ async function loadCampaignKpi() {
    와 같은 파일에서 나오므로 두 대시보드가 같은 값을 보여 준다.
    만드는 쪽: scripts/sync_sku_impact.py */
 window.CKSKUI = null;
+window.CKKJK = null;        // steerstar_sku.json — SteerStar 추가 오더미션 품번 단위
 const _CNP_KEY = '__cnpromo__';     // 중국차 — 원장이 따로라 품번 드릴다운이 없음
 async function loadSkuImpact() {
   if (location.protocol === 'file:') return;
@@ -13313,6 +13314,19 @@ async function loadSkuImpact() {
         `$${Math.round(j.before).toLocaleString()} → $${Math.round(j.after).toLocaleString()} · 원장 ~${j.cut}`);
     }
   } catch (e) { console.warn('[skui] load failed (non-fatal):', e); }
+}
+
+async function loadSteerstarSku() {
+  if (location.protocol === 'file:') return;
+  try {
+    const res = await fetch(_resolveGhRepoBase() + '/steerstar_sku.json', { cache: 'no-store' });
+    if (!res.ok) { if (res.status !== 404) console.warn(`[kjk] HTTP ${res.status}`); return; }
+    const j = await res.json();
+    if (j && j.a26 != null) {
+      window.CKKJK = j;
+      console.log(`[kjk] ✅ ${j.cust} 일본·한국 차종 $${Math.round(j.a26).toLocaleString()} · 달성률 ${j.rate}% · 원장 ~${j.cut}`);
+    }
+  } catch (e) { console.warn('[kjk] load failed (non-fatal):', e); }
 }
 
 /* ── SKU 기반 오더 전환 효과 · 종합 ───────────────────────────────────────
@@ -13358,6 +13372,154 @@ function _cnSkuTable(X){
      +'<td class="n">'+skuiMoney(x.before)+'</td><td class="n"><b>'+skuiMoney(x.after)+'</b></td>'
      +'<td class="n '+(x.inc>=0?'skui-up':'skui-dn')+'">'+(x.inc>=0?'+':'')+skuiMoney(x.inc)+'</td></tr>').join('')
    +'</tbody></table></div>';
+}
+
+/* ── SteerStar 추가 오더미션 · Kailos 일본·한국 차종 SKU 전환 ────────────────
+   단일 소스: steerstar_sku.json (scripts/sync_steerstar_sku.py).
+   효과 분석은 const KJK, 메인은 window.CKKJK — 같은 파일이다.
+   읽는 법: 이 미션은 '같은 품번을 더 팔기'가 아니라 '품번을 넓히기'로 가고 있다.
+   신규 + 재전환 품번이 미션 매출의 대부분을 만들고, 연속 품번은 거의 제자리다.
+   그래서 이탈 품번을 줄이는 게 다음 레버다.                                   */
+function kjkData(){ return (typeof KJK!=='undefined'&&KJK)||window.CKKJK||null; }
+
+function kjkHTML(){
+  const K=kjkData(); if(!K||K.a26==null) return '';
+  const M=skuiMoney, N=skuiNum, E=skuiEsc;
+  const nat=K.by_nat||[], jp=nat.find(x=>x.k==='일본'), kr=nat.find(x=>x.k==='한국');
+  const tile=(l,v,s)=>'<div class="skui-tile"><div class="skui-lab">'+l+'</div>'
+    +'<div class="skui-val">'+v+'</div>'+(s?'<div class="skui-sub">'+s+'</div>':'')+'</div>';
+
+  let h='<div class="skui">'
+   +'<div class="skui-hd"><span class="skui-bar"></span><div>'
+   +'<b>SteerStar 추가 오더미션 · '+E(K.cust)+' ('+E(K.country)+') — 품번 단위</b>'
+   +'<div class="skui-sub">「'+E(K.mission)+'」 · 원장 ~'+E(K.cut)
+   +' · 미션 대상 오더 '+M(K.a26)+' / 전체 오더 '+M(K.tot26)+'</div></div></div>';
+
+  h+='<div class="skui-tiles">'
+   +tile('미션 달성률', K.rate.toFixed(1)+'%', '목표 '+M(K.tgt)+' · 25년 기준 '+M(K.b25))
+   +tile('일본 차종', M(jp?jp.a26:0), jp?('25년 '+M(jp.b25)+' · '+skuiPct(jp.yoy)):'')
+   +tile('한국 차종', M(kr?kr.a26:0), kr?('25년 '+M(kr.b25)+' · '+skuiPct(kr.yoy)):'')
+   +tile('품번 확장 기여', K.cover_pct.toFixed(1)+'%',
+         '신규 '+K.new.n+'종 + 재전환 '+K.recov.n+'종 = '+M(K.cover_amt))
+   +'</div>';
+
+  /* 미션 증가액 분해 — 어디서 왔는지 */
+  const dc=K.decomp||[], mx=Math.max.apply(null,dc.map(x=>Math.abs(x.v)).concat([1]));
+  h+='<div class="skui-cls" style="margin-top:14px"><b>미션 증가액 '+M(K.a26-K.b25)+' 의 출처</b></div>'
+   +'<div class="skui-wrap"><table class="skui-tbl"><tbody>';
+  dc.forEach(x=>{
+    const w=Math.round(Math.abs(x.v)/mx*100), up=x.v>=0;
+    h+='<tr><td style="width:46%">'+E(x.k)+'</td>'
+     +'<td class="n '+(up?'skui-up':'skui-dn')+'" style="width:16%">'+(up?'+':'')+M(x.v)+'</td>'
+     +'<td style="width:38%;white-space:normal"><span style="display:inline-block;height:9px;border-radius:5px;'
+     +'width:'+w+'%;background:'+(up?'var(--green,#2fb344)':'var(--red,#e5484d)')+';opacity:.55"></span></td></tr>';
+  });
+  h+='</tbody></table></div>';
+
+  /* 신규 · 재전환 · 이탈 품번 */
+  const sec=(title,note,by,top,amtKey)=>{
+    let t='<div class="skui-cls" style="margin-top:12px"><b>'+title+'</b> '
+      +(by||[]).map(x=>E(x.k)+' '+x.n+'종 '+M(x.amt)).join(' · ')
+      +(note?' <span class="skui-mut">— '+note+'</span>':'')+'</div>';
+    if(!top||!top.length) return t;
+    t+='<div class="skui-wrap"><table class="skui-tbl"><thead><tr>'
+     +'<th>CTR 코드</th><th>차종</th><th>품명</th><th class="n">2024</th><th class="n">2025</th>'
+     +'<th class="n">2026</th><th class="n">수량</th><th class="n">오더건</th></tr></thead><tbody>';
+    top.forEach(x=>{
+      t+='<tr><td><b>'+E(x.sku)+'</b></td><td>'+E(x.nat)+'</td><td>'+E(x.name)+'</td>'
+       +'<td class="n">'+(x.y24?M(x.y24):'·')+'</td><td class="n">'+(x.y25?M(x.y25):'·')+'</td>'
+       +'<td class="n"><b>'+M(x.y26)+'</b></td>'
+       +'<td class="n">'+N(x.qty)+'</td><td class="n">'+N(x.ord)+'</td></tr>';
+    });
+    return t+'</tbody></table></div>';
+  };
+  h+=sec('① 신규 전환 — 2026 에 처음 오더된 품번 (일본·한국 '+K.new.n+'종 '+M(K.new.amt)+')',
+         '전체 신규 '+K.new.n_all+'종 중', K.new.by_nat, K.new.top);
+  h+=sec('② 재전환 — 25년 끊겼다 26년 복귀 (일본·한국 '+K.recov.n+'종 '+M(K.recov.amt)+')',
+         '2024 에 소량 들어갔다 2025 공백 후 몇 배로 돌아온 패턴', K.recov.by_nat, K.recov.top);
+  h+=sec('③ 이탈 — 25년 오더가 있었는데 26년 0 ('+K.lost.n+'종 '+M(K.lost.amt)+')',
+         '넓힌 만큼 빠져 순증이 깎이는 지점', null, K.lost.top);
+
+  const bl=[];
+  bl.push('<b>품번을 넓혀서 달성하고 있다</b> · 신규 '+K.new.n+'종 '+M(K.new.amt)
+    +' + 재전환 '+K.recov.n+'종 '+M(K.recov.amt)+' = <b>'+M(K.cover_amt)+'</b> 로 '
+    +'미션 오더의 <b>'+K.cover_pct.toFixed(1)+'%</b>. 25·26 둘 다 오더된 연속 품번 '
+    +K.keep.n+'종은 '+M(K.keep.inc)+' 로 사실상 제자리 — 같은 품번을 더 판 게 아니라 '
+    +'<b>품목 수를 늘려</b> 만든 성장임.');
+  bl.push('<b>재전환이 가장 센 레버</b> · '+K.recov.n+'종이 '+M(K.recov.amt)+' 를 만들어 '
+    +'신규('+M(K.new.amt)+')보다 큼. 2024 에 소량 테스트 → 2025 공백 → 2026 몇 배로 복귀하는 '
+    +'모양이라, 호주 전략(재고 확보 후 요청 시 빠른 납품)이 실제로 먹힌 쪽은 '
+    +'<b>새 품번 소개보다 이미 한 번 써 본 품번의 재구매</b>임.');
+  if(K.lost&&K.lost.amt>0) bl.push('<b>다음 레버는 이탈 '+K.lost.n+'종 '+M(K.lost.amt)+'</b> · '
+    +'신규+재전환 '+M(K.cover_amt)+' 를 만들었는데 이탈이 '+M(-K.lost.amt)+' 를 깎아 '
+    +'순증이 '+M(K.a26-K.b25)+' 로 줄었음. 이 품번만 유지했다면 목표 '+M(K.tgt)+' 를 넘김.');
+  if(jp&&kr) bl.push('<b>일본은 품번 수, 한국은 품번당 단가</b> · 신규 전환에서 일본 '
+    +(K.new.by_nat.find(x=>x.k==='일본')||{n:0}).n+'종 vs 한국 '
+    +(K.new.by_nat.find(x=>x.k==='한국')||{n:0}).n+'종인데 금액은 한국이 더 큼 — '
+    +'한국 차종 신규가 품번당 금액이 높다. 일본은 '+skuiPct(jp.yoy)+', 한국은 '+skuiPct(kr.yoy)+'.');
+  if(K.na_late>0) bl.push('<b>공식 시트 실적이 '+M(K.na_late)+' 과소</b> · SAP 차종 매핑이 빠진 '
+    +'(#N/A) 17행 중 2·3월 '+M(K.na_feb_mar)+' 만 집계되고 9·10월 '+M(K.na_late)+' 이 빠졌음. '
+    +'메이커 코드가 전부 KH·KK·KD·HO 라 일본·한국 차종이 맞음 → 달성률 '
+    +K.ss_rate.toFixed(1)+'% 가 아니라 <b>'+K.rate.toFixed(1)+'%</b>.');
+  h+='<ul class="skui-bl">'+bl.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
+
+  h+='<p class="skui-basis">기준 · '+E(K.basis)+' · 2026 은 원장이 '+E(K.cut)
+   +' 까지라 2025 연간이 아니라 같은 날짜 구간과 비교함 · 원장 '+E((K.src||[]).join(' + '))+'</p>';
+  return h+'</div>';
+}
+
+
+/* 중국차 프로모션을 한 단계 더 — 브랜드·권역·부품군 축으로 어디가 열렸는지 */
+function cnDeepHTML(X){
+  if(!X||!X.by_brand) return '';
+  const M=skuiMoney, N=skuiNum, E=skuiEsc;
+  const axis=(title,rows,note)=>{
+    if(!rows||!rows.length) return '';
+    const mx=Math.max.apply(null,rows.map(r=>r.after||0).concat([1]));
+    let t='<div class="skui-cls" style="margin-top:12px"><b>'+title+'</b>'
+      +(note?' <span class="skui-mut">— '+note+'</span>':'')+'</div>'
+      +'<div class="skui-wrap"><table class="skui-tbl"><thead><tr>'
+      +'<th>구분</th><th class="n">품번</th><th class="n">신규</th>'
+      +'<th class="n">집행 전</th><th class="n">집행 후</th><th class="n">YoY</th><th></th>'
+      +'</tr></thead><tbody>';
+    rows.forEach(r=>{
+      const allNew = r.n>0 && r.new===r.n;
+      t+='<tr><td><b>'+E(r.k)+'</b>'+(allNew?' <span class="skui-up" style="font-size:10px">전량 신규</span>':'')+'</td>'
+       +'<td class="n">'+N(r.n)+'종</td>'
+       +'<td class="n">'+(r.new?'<b>'+r.new+'종</b>':'·')+'</td>'
+       +'<td class="n">'+(r.before?M(r.before):'·')+'</td>'
+       +'<td class="n"><b>'+M(r.after)+'</b></td>'
+       +'<td class="n">'+(r.yoy==null?'<span class="skui-mut">신규</span>':skuiPct(r.yoy))+'</td>'
+       +'<td style="white-space:normal;width:22%"><span style="display:inline-block;height:9px;border-radius:5px;width:'
+       +Math.round((r.after||0)/mx*100)+'%;background:var(--brand,#6ab6ff);opacity:.5"></span></td></tr>';
+    });
+    return t+'</tbody></table></div>';
+  };
+  let h='<div class="skui-cls" style="margin-top:16px"><b>중국차 프로모션 · 어디가 열렸나</b> '
+   +'<span class="skui-mut">'+E(X.basis)+'</span></div>';
+  h+=axis('권역별', X.by_region, '품번이 여러 권역에 걸리면 양쪽에 셈');
+  h+=axis('중국 브랜드별', X.by_brand, null);
+  h+=axis('부품군별', X.by_part, null);
+  const bl=[];
+  const allnew=(X.by_brand||[]).filter(r=>r.n>0&&r.new===r.n);
+  if(allnew.length) bl.push('<b>브랜드 커버리지가 새로 열렸다</b> · '
+    +allnew.map(r=>E(r.k)+' '+r.n+'종 '+M(r.after)).join(' · ')
+    +' 는 전년 오더가 0 이던 브랜드임 — 카탈로그가 브랜드 단위로 먹힌 증거.');
+  const rg=(X.by_region||[]);
+  const newrg=rg.filter(r=>r.before===0), grow=rg.filter(r=>r.before>0).sort((a,b)=>(b.yoy||0)-(a.yoy||0));
+  if(newrg.length) bl.push('<b>'+newrg.map(r=>E(r.k)).join('·')+' 는 신규 진입</b> · 전년 0 → '
+    +M(newrg.reduce((s,r)=>s+r.after,0))+' ('+newrg.reduce((s,r)=>s+r.n,0)+'종 전량 신규). '
+    +(grow.length?E(grow[0].k)+' 는 '+skuiPct(grow[0].yoy)+' 로 가장 빠르게 커짐.':''));
+  const pt=(X.by_part||[]), up=pt.filter(r=>(r.yoy||0)>0)[0], dn=pt.filter(r=>r.yoy!=null&&r.yoy<0);
+  if(up) bl.push('<b>부품군은 '+E(up.k)+' 가 견인</b> · '+M(up.before)+' → '+M(up.after)
+    +' ('+skuiPct(up.yoy)+')'
+    +(dn.length?'. 반대로 '+dn.map(r=>E(r.k)+' '+skuiPct(r.yoy)).join(' · ')+' 는 역주행 — 같은 카탈로그 안에서도 품목군별로 반응이 갈림.':'.'));
+  const lost=(X.top&&X.top['이탈'])||[];
+  if(lost.length) bl.push('<b>이탈 '+(X.cls&&X.cls['이탈']||lost.length)+'종은 고객 1~2곳에 몰려 있다</b> · '
+    +lost.slice(0,3).map(x=>E(x.sku)+' '+E(x.brand)+' '+M(x.before)+'→0').join(' · ')
+    +' — 금액은 작지만 단일 고객 의존이라 재오더 확인이 필요한 쪽.');
+  if(bl.length) h+='<ul class="skui-bl">'+bl.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
+  return h;
 }
 
 function skuImpactHTML(){
@@ -13440,6 +13602,8 @@ function skuImpactHTML(){
     +'합계 한 줄로 캠페인 성패를 판단하면 안 되는 구조.');
   h+='<ul class="skui-bl">'+bl.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
 
+  if(X) h+=cnDeepHTML(X);
+
   h+='<p class="skui-basis">기준 · 양쪽 모두 <b>캠페인 시작일 ~ '+skuiEsc(S.cut)+'</b>(오더 원장 마감)이고 전년은 같은 구간 · '
    +'전년도 <b>그 캠페인의 고객사</b>만'
    +(S.drop_amt?' (캠페인 밖 고객사 '+skuiMoney(S.drop_amt)+' · '+skuiNum(S.drop_ords)+'건 제외)':'')
@@ -13451,7 +13615,7 @@ function skuImpactHTML(){
 
 function renderSkuImpactBlock() {
   const el = document.getElementById('skuImpactBlock'); if (!el) return;
-  try { el.innerHTML = skuImpactHTML(); } catch (e) { console.warn('[skui] render failed:', e); }
+  try { el.innerHTML = skuImpactHTML() + kjkHTML(); } catch (e) { console.warn('[skui] render failed:', e); }
 }
 
 function applyKpiBridge() {
@@ -14228,7 +14392,7 @@ function injectCopyLinkButtons() {
   localStorage.removeItem('ck_has_personal_data');
   // 효과 분석 기준 KPI 는 환율까지 들고 있어 데이터보다 먼저 읽어 둠
   try { await loadCampaignKpi(); } catch (e) { console.warn('[kpi] skipped:', e); }
-  try { await loadSkuImpact(); renderSkuImpactBlock(); } catch (e) { console.warn('[skui] skipped:', e); }
+  try { await loadSkuImpact(); await loadSteerstarSku(); renderSkuImpactBlock(); } catch (e) { console.warn('[skui] skipped:', e); }
   try { await loadSharedData(true); } catch (e) { console.warn('Shared data load skipped:', e); }
   // Load explicit per-campaign target SKU lists (SA_list etc.) — best-effort.
   try { await loadCampaignTargetSkus(); } catch (e) { console.warn('target SKU load skipped:', e); }

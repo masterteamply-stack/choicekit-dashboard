@@ -141,6 +141,23 @@ def main():
          'dn_amt': round(sum(x['inc'] for x in byk['감소'] + byk['이탈'])),
          'top': {k: byk[k][:10] for k in byk},
          'items': items}
+
+    # 브랜드 · 권역 · 부품군 롤업 — 어디서 열렸는지 보려면 이 축이 필요하다
+    def roll(keyf, multi=False):
+        g = collections.defaultdict(lambda: {'n': 0, 'new': 0, 'before': 0.0, 'after': 0.0})
+        for x in items:
+            ks = keyf(x) if multi else [keyf(x)]
+            for k in ks or ['(미지정)']:
+                v = g[k]; v['n'] += 1
+                if x['kind'] == '신규': v['new'] += 1
+                v['before'] += x['before']; v['after'] += x['after']
+        out = [{'k': k, **{m: (round(v[m], 2) if isinstance(v[m], float) else v[m]) for m in v},
+                'yoy': (round((v['after'] / v['before'] - 1) * 100, 1) if v['before'] > 0 else None)}
+               for k, v in g.items()]
+        return sorted(out, key=lambda x: -x['after'])
+    D['by_brand'] = roll(lambda x: x['brand'] or '(미지정)')
+    D['by_region'] = roll(lambda x: x['region'], multi=True)
+    D['by_part'] = roll(lambda x: x['part'] or '(미지정)')
     json.dump(D, open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 
     print(f"중국차 품번 단위 · 원장 ~{cut} · {f26} 부터")

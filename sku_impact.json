@@ -1030,6 +1030,148 @@
      }
     ]
    },
+   "by_brand": [
+    {
+     "k": "CHERY",
+     "n": 34,
+     "new": 8,
+     "before": 5871.64,
+     "after": 11754.69,
+     "yoy": 100.2
+    },
+    {
+     "k": "HAVAL",
+     "n": 9,
+     "new": 0,
+     "before": 1937.22,
+     "after": 2897.66,
+     "yoy": 49.6
+    },
+    {
+     "k": "MG",
+     "n": 13,
+     "new": 13,
+     "before": 0.0,
+     "after": 2820.84,
+     "yoy": null
+    },
+    {
+     "k": "SOUEAST",
+     "n": 5,
+     "new": 0,
+     "before": 1178.72,
+     "after": 869.5,
+     "yoy": -26.2
+    },
+    {
+     "k": "BYD",
+     "n": 5,
+     "new": 5,
+     "before": 0.0,
+     "after": 560.52,
+     "yoy": null
+    },
+    {
+     "k": "JAC",
+     "n": 2,
+     "new": 0,
+     "before": 734.4,
+     "after": 276.4,
+     "yoy": -62.4
+    },
+    {
+     "k": "MG / SAIC",
+     "n": 1,
+     "new": 1,
+     "before": 0.0,
+     "after": 208.0,
+     "yoy": null
+    },
+    {
+     "k": "HAVAL / GREAT WALL",
+     "n": 1,
+     "new": 0,
+     "before": 516.8,
+     "after": 0.0,
+     "yoy": -100.0
+    }
+   ],
+   "by_region": [
+    {
+     "k": "LATAM",
+     "n": 69,
+     "new": 26,
+     "before": 10238.78,
+     "after": 19193.21,
+     "yoy": 87.5
+    },
+    {
+     "k": "CIS",
+     "n": 14,
+     "new": 6,
+     "before": 2072.76,
+     "after": 7882.93,
+     "yoy": 280.3
+    },
+    {
+     "k": "MENA",
+     "n": 9,
+     "new": 9,
+     "before": 0.0,
+     "after": 2359.94,
+     "yoy": null
+    }
+   ],
+   "by_part": [
+    {
+     "k": "OUTER TIE ROD",
+     "n": 28,
+     "new": 13,
+     "before": 2618.96,
+     "after": 8042.88,
+     "yoy": 207.1
+    },
+    {
+     "k": "INNER TIE ROD",
+     "n": 17,
+     "new": 6,
+     "before": 2719.4,
+     "after": 4628.1,
+     "yoy": 70.2
+    },
+    {
+     "k": "BALL JOINT",
+     "n": 11,
+     "new": 7,
+     "before": 1674.6,
+     "after": 3712.54,
+     "yoy": 121.7
+    },
+    {
+     "k": "CONTROL ARM",
+     "n": 6,
+     "new": 0,
+     "before": 1169.44,
+     "after": 1315.4,
+     "yoy": 12.5
+    },
+    {
+     "k": "STABILIZER LINK",
+     "n": 6,
+     "new": 1,
+     "before": 1738.38,
+     "after": 867.49,
+     "yoy": -50.1
+    },
+    {
+     "k": "SIDE ROD / TIE ROD ASSY",
+     "n": 2,
+     "new": 0,
+     "before": 318.0,
+     "after": 821.2,
+     "yoy": 158.2
+    }
+   ],
    "rule": "RUS 제외 · 우크라이나는 EU · LATAM·MENA·CIS 만"
   }
  ],
