@@ -1701,6 +1701,10 @@ header .mono b.t-orange {
 .skui-basis{margin:10px 0 0;padding:7px 9px;font-size:10.5px;line-height:1.6;
   color:var(--muted,#8a8a8f);border-left:2px solid rgba(106,182,255,.45);
   background:rgba(106,182,255,.05);border-radius:4px}
+.skui-excl{display:inline-block;margin-left:8px;padding:1px 7px;border-radius:9px;font-size:10px;
+  font-weight:700;letter-spacing:.02em;color:var(--brand,#6ab6ff);
+  border:1px solid rgba(106,182,255,.45);background:rgba(106,182,255,.08);vertical-align:2px}
+.skui-solo{border-style:dashed}
 .skui-up{color:var(--green,#2fb344)}
 .skui-dn{color:var(--red,#e5484d)}
 .skui-mut{color:var(--muted,#8a8a8f)}
@@ -13402,11 +13406,13 @@ function kjkHTML(){
   const tile=(l,v,s)=>'<div class="skui-tile"><div class="skui-lab">'+l+'</div>'
     +'<div class="skui-val">'+v+'</div>'+(s?'<div class="skui-sub">'+s+'</div>':'')+'</div>';
 
-  let h='<div class="skui">'
+  let h='<div class="skui skui-solo">'
    +'<div class="skui-hd"><span class="skui-bar"></span><div>'
    +'<b>SteerStar 추가 오더미션 · '+E(K.cust)+' ('+E(K.country)+') — 품번 단위</b>'
-   +'<div class="skui-sub">「'+E(K.mission)+'」 · 원장 ~'+E(K.cut)
-   +' · 미션 대상 오더 '+M(K.a26)+' / 전체 오더 '+M(K.tot26)+'</div></div></div>';
+   +'<span class="skui-excl">이 고객사 단독 미션 · 합산 대상 아님</span>'
+   +'<div class="skui-sub">「'+E(K.mission)+'」 · 원장 ~'+E(K.cut)+'<br>'
+   +'<b>'+E(K.cust)+' 전체 오더 '+M(K.tot26)+' 안에서 미션 대상은 '+M(K.a26)+'</b> ('
+   +(K.a26/K.tot26*100).toFixed(1)+'% · 부분집합이라 더하면 안 됨)</div></div></div>';
 
   h+='<div class="skui-tiles">'
    +tile('미션 달성률', K.rate.toFixed(1)+'%', '목표 '+M(K.tgt)+' · 25년 기준 '+M(K.b25))
@@ -13476,7 +13482,11 @@ function kjkHTML(){
     +K.ss_rate.toFixed(1)+'% 가 아니라 <b>'+K.rate.toFixed(1)+'%</b>.');
   h+='<ul class="skui-bl">'+bl.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
 
-  h+='<p class="skui-basis">기준 · '+E(K.basis)+' · 2026 은 원장이 '+E(K.cut)
+  h+='<p class="skui-basis"><b>중복 집계 없음</b> · 이 금액은 '+E(K.cust)+' 한 곳의 미션이며 '
+   +'SteerStar 오더 미션 합계에 <b>이미 한 번 들어가 있는 값</b>임 — 따로 더하지 않음. '
+   +'위 「SKU 기반 오더 전환 효과 · 종합」은 집행 권역이 CIS·LATAM·MENA 라 '
+   +E(K.region)+' 는 애초에 들어가지 않으므로 그쪽과도 겹치지 않음.<br>'
+   +'기준 · '+E(K.basis)+' · 2026 은 원장이 '+E(K.cut)
    +' 까지라 2025 연간이 아니라 같은 날짜 구간과 비교함 · 원장 '+E((K.src||[]).join(' + '))+'</p>';
   return h+'</div>';
 }

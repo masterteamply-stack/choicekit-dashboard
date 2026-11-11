@@ -314,7 +314,8 @@ def main():
                 for c in sorted(sel, key=key)[:n]]
 
     K = {
-        'src': [os.path.basename(KA), os.path.basename(OF)],
+        # 업로드 임시 파일명이 그대로 화면에 나가지 않게 정리
+        'src': ['Kailos 오더 원장 2026.11.11', '2026 1~10월 일본·한국 차종 SKU (SAP)'],
         'cust': 'Kailos International', 'country': '호주', 'region': 'OCEANIA',
         'mission': '일본 & 한국 차종의 25년 대비 26년 오더 최대 100% 성장',
         'cut': cut, 'basis': '차종 국적 = 공식 파일 Maker Country(SAP) · 없으면 그 값으로 학습한 Old CTR Code 맵',
@@ -344,6 +345,17 @@ def main():
     K['cover_n'] = K['new']['n'] + K['recov']['n']
     K['cover_amt'] = round(K['new']['amt'] + K['recov']['amt'], 2)
     K['cover_pct'] = round(K['cover_amt'] / jk26 * 100, 1) if jk26 else None
+
+    # 중복 집계 방지 — 이 고객사 권역이 SKU 임팩트 종합에 들어가 있으면 멈춘다.
+    # (들어가 있는데 블록을 그대로 두면 같은 오더가 두 군데서 세어짐)
+    si = os.path.join(OUT, 'sku_impact.json')
+    if os.path.exists(si):
+        R2 = (json.load(open(si, encoding='utf-8')).get('regions') or [])
+        if K['region'] in R2 or K['region'][:2] in [str(x)[:2] for x in R2]:
+            sys.exit('중복 위험: %s 가 sku_impact 집행 권역 %s 에 들어 있음 — '
+                     '블록을 그대로 두면 같은 오더가 두 번 세어짐.' % (K['region'], R2))
+        print('중복 확인 · %s 는 SKU 임팩트 종합 권역 %s 에 없음 — 겹치지 않음'
+              % (K['region'], ' · '.join(R2)))
 
     jp = os.path.join(OUT, 'steerstar_sku.json')
     json.dump(K, open(jp, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
