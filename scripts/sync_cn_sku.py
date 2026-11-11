@@ -34,6 +34,7 @@ KEEP = ('LATAM', 'MENA', 'CIS')
 FROM_MD = '04-01'                           # 4월 카탈로그 배포
 COLS = ('생성일', '매칭 코드', '② 중국전용', 'Cty', '권역',
         '정가(USD)', '판매처(명)', 'Parts', '중국 브랜드(정규화)')
+VCOLS = ('CTR Code', '차종')          # 차종매칭 시트 — 품번이 어느 차종에 쓰이나
 
 
 def shift1y(d):
@@ -87,6 +88,17 @@ def main():
     import openpyxl
     wb = openpyxl.load_workbook(a.src, read_only=True, data_only=True)
     R26, R25 = read(wb, '오더라인_2026'), read(wb, '오더라인_2025')
+    # 품번 → 차종 (한 품번이 여러 차종에 쓰이면 모두 들고 간다)
+    veh = collections.defaultdict(set)
+    if '차종매칭' in wb.sheetnames:
+        it = wb['차종매칭'].iter_rows(values_only=True)
+        hv = [str(x) for x in next(it)]
+        if all(c in hv for c in VCOLS):
+            J = {c: hv.index(c) for c in VCOLS}
+            for r in it:
+                if not r or r[0] is None: continue
+                v = str(r[J['차종']] or '').strip()
+                if v: veh[str(r[J['CTR Code']]).strip()].add(v)
     wb.close()
 
     cut = max(r['d'] for r in R26)
@@ -158,6 +170,21 @@ def main():
     D['by_brand'] = roll(lambda x: x['brand'] or '(미지정)')
     D['by_region'] = roll(lambda x: x['region'], multi=True)
     D['by_part'] = roll(lambda x: x['part'] or '(미지정)')
+
+    # 권역별 인기 차종 · 주요 제품 — 어느 지역에서 어떤 차가 팔리나
+    def rollby(keyf):
+        g = collections.defaultdict(lambda: collections.defaultdict(lambda: [0.0, 0]))
+        for x in items:
+            for r in x['region'] or ['(미지정)']:
+                for k in (keyf(x) or ['(미매핑)']):
+                    c = g[r][k]; c[0] += x['after']; c[1] += 1
+        return {r: [{'k': k, 'amt': round(v[0], 2), 'n': v[1]}
+                    for k, v in sorted(d.items(), key=lambda y: -y[1][0])[:5] if v[0] > 0]
+                for r, d in g.items()}
+    D['veh_by_region'] = rollby(lambda x: sorted(veh.get(x['sku'], ())))
+    D['part_by_region'] = rollby(lambda x: [x['part'] or '(미지정)'])
+    D['brand_by_region'] = rollby(lambda x: [x['brand'] or '(미지정)'])
+    D['veh_mapped'] = sum(1 for x in items if veh.get(x['sku']))
     json.dump(D, open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 
     print(f"중국차 품번 단위 · 원장 ~{cut} · {f26} 부터")

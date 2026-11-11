@@ -126,6 +126,11 @@ def main():
     rows = list(csv.DictReader(open(os.path.join(ROOT, 'orders.csv'), encoding='utf-8-sig')))
     cut = max((r.get('order date') or '')[:10] for r in rows if r.get('order date'))
     exec_rgn, roster = set(), collections.defaultdict(set)
+    # 고객사 축 — 종합 증감이 한두 고객에 쏠렸는지 보려면 이게 있어야 함
+    cu_amt = collections.defaultdict(float); cu_sku = collections.defaultdict(set)
+    cu_pro = collections.defaultdict(set)
+    pv_amt = collections.defaultdict(float); pv_sku = collections.defaultdict(set)
+    pv_pro = collections.defaultdict(set)
     cur = collections.defaultdict(float)     # sku → 당해 금액
     cur_q = collections.defaultdict(float)
     cur_cust = collections.defaultdict(set)
@@ -148,7 +153,9 @@ def main():
             if co and co[0] <= d <= co[1]: continue
         if s in sku_rgn and rg not in sku_rgn[s]: continue
         cur[s] += num(r.get('amount')); cur_q[s] += num(r.get('qty'))
-        cur_cust[s].add((r.get('customer') or '').strip()); n_ord += 1
+        _c = (r.get('customer') or '').strip()
+        cur_cust[s].add(_c); n_ord += 1
+        cu_amt[_c] += num(r.get('amount')); cu_sku[_c].add(s); cu_pro[_c].add(p)
     for p, c in sku_camps.items():
         for x in (c.get('target_customers') or []):
             roster[p].add(str(x).strip().upper())
@@ -180,7 +187,9 @@ def main():
         if roster[p] and (o.get('customer') or '').strip().upper() not in roster[p]:
             drop_amt += amt; drop_n += 1; continue
         prv[s] += amt; prv_q[s] += o.get('qty') or 0
-        prv_cust[s].add((o.get('customer') or '').strip())
+        _c = (o.get('customer') or '').strip()
+        prv_cust[s].add(_c)
+        pv_amt[_c] += amt; pv_sku[_c].add(s); pv_pro[_c].add(p)
 
     # 품번 분류
     cls = collections.Counter()
@@ -221,9 +230,33 @@ def main():
         'up_amt': round(sum(x['inc'] for x in buckets['증가'])),
         'dn_amt': round(sum(x['inc'] for x in buckets['감소'] + buckets['이탈'])),
         'top': {k: buckets[k][:10] for k in buckets},
+        'by_cust': None,
         'by_camp': [],
         'extra': [],        # orders.csv 밖 원장을 쓰는 SKU 캠페인 (중국차) — 합계에 더함
         'aside': [],        # 같이 보되 합계에는 더하지 않는 것 (고객사 단독 미션)
+    }
+
+    # ── 고객사별 증감 — 종합이 한두 고객에 쏠렸는지 보려면 필요함 ─────────────
+    cu = []
+    for c in set(pv_amt) | set(cu_amt):
+        b0, a0 = round(pv_amt.get(c, 0), 2), round(cu_amt.get(c, 0), 2)
+        if b0 <= 0 and a0 <= 0: continue
+        cu.append({'k': c, 'before': b0, 'after': a0, 'inc': round(a0 - b0, 2),
+                   'yoy': round((a0 / b0 - 1) * 100, 1) if b0 > 0 else None,
+                   'n_before': len(pv_sku.get(c, ())), 'n_after': len(cu_sku.get(c, ())),
+                   'promos': sorted(pv_pro.get(c, set()) | cu_pro.get(c, set()))})
+    cu.sort(key=lambda x: x['inc'])
+    top1 = cu[0] if cu else None
+    dn = [x for x in cu if x['inc'] < 0]
+    up = [x for x in cu if x['inc'] > 0]
+    D['by_cust'] = {
+        'n': len(cu), 'n_up': len(up), 'n_dn': len(dn),
+        'dn': cu[:8], 'up': list(reversed(cu))[:8],
+        'lead': top1,
+        'lead_share': (round(top1['inc'] / (ta - tb) * 100) if (top1 and (ta - tb)) else None),
+        'ex_lead': (round(ta - tb - top1['inc'], 2) if top1 else None),
+        'dn_sum': round(sum(x['inc'] for x in dn), 2),
+        'up_sum': round(sum(x['inc'] for x in up), 2),
     }
 
     # ── 중국차 프로모션 — orders.csv 에 태그가 없고 원장이 따로임 ──────────────
@@ -258,6 +291,9 @@ def main():
                              dn_amt=K.get('dn_amt'), top=K.get('top'),
                              by_brand=K.get('by_brand'), by_region=K.get('by_region'),
                              by_part=K.get('by_part'),
+                             veh_by_region=K.get('veh_by_region'),
+                             part_by_region=K.get('part_by_region'),
+                             brand_by_region=K.get('brand_by_region'),
                              basis=K.get('basis'), rule=K.get('rule'),
                              note='품번 단위까지 집계됨 · 원장 %s' % K.get('src'))
                 else:

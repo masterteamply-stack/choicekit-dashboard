@@ -13559,6 +13559,36 @@ function cnDeepHTML(X){
   h+=axis('권역별', X.by_region, '품번이 여러 권역에 걸리면 양쪽에 셈');
   h+=axis('중국 브랜드별', X.by_brand, null);
   h+=axis('부품군별', X.by_part, null);
+
+  /* 권역별 인기 차종 · 주요 제품 — 표 설명 아래에 간략히 */
+  if(X.veh_by_region){
+    const rs=(X.by_region||[]).map(r=>r.k);
+    const pick=(m,r)=>((m||{})[r]||[]);
+    h+='<div class="skui-cls" style="margin-top:12px"><b>권역별 인기 차종 · 주요 제품</b> '
+     +'<span class="skui-mut">금액은 집행 후(당해) 기준 · 한 품번이 여러 차종에 쓰이면 각 차종에 셈</span></div>'
+     +'<div class="skui-wrap"><table class="skui-tbl"><thead><tr>'
+     +'<th>권역</th><th>인기 차종 (상위 3)</th><th>주요 브랜드</th><th>주요 제품</th></tr></thead><tbody>';
+    rs.forEach(r=>{
+      const v=pick(X.veh_by_region,r), br=pick(X.brand_by_region,r), pt=pick(X.part_by_region,r);
+      const cell=a=>a.length?a.slice(0,3).map(x=>E(x.k)+' <span class="skui-mut">'+M(x.amt)+'</span>').join('<br>')
+                            :'<span class="skui-mut">·</span>';
+      h+='<tr><td><b>'+E(r)+'</b></td>'
+       +'<td style="white-space:normal">'+cell(v)+'</td>'
+       +'<td style="white-space:normal">'+cell(br)+'</td>'
+       +'<td style="white-space:normal">'+cell(pt)+'</td></tr>';
+    });
+    h+='</tbody></table></div>';
+    const lat=pick(X.veh_by_region,'LATAM'), cis=pick(X.veh_by_region,'CIS'), men=pick(X.veh_by_region,'MENA');
+    const same=lat.length&&cis.length&&lat[0].k===cis[0].k;
+    const note=[];
+    if(same) note.push('<b>LATAM·CIS 는 같은 차를 본다</b> — 둘 다 '+E(lat[0].k)
+      +' 가 1위고 CHERY Tiggo 계열이 상위를 채움. 같은 카탈로그·같은 소재를 두 권역에 그대로 쓸 수 있다는 뜻.');
+    if(men.length) note.push('<b>MENA 만 결이 다르다</b> — '+men.slice(0,2).map(x=>E(x.k)).join(' · ')
+      +' 로 MG 계열이 상위임. MENA 9종이 전량 신규인 것도 이 때문 — '
+      +'LATAM·CIS 용 CHERY 소재를 그대로 보내면 안 맞는다.');
+    if(note.length) h+='<ul class="skui-bl">'+note.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
+  }
+
   const bl=[];
   const allnew=(X.by_brand||[]).filter(r=>r.n>0&&r.new===r.n);
   if(allnew.length) bl.push('<b>브랜드 커버리지가 새로 열렸다</b> · '
@@ -13578,6 +13608,54 @@ function cnDeepHTML(X){
     +lost.slice(0,3).map(x=>E(x.sku)+' '+E(x.brand)+' '+M(x.before)+'→0').join(' · ')
     +' — 금액은 작지만 단일 고객 의존이라 재오더 확인이 필요한 쪽.');
   if(bl.length) h+='<ul class="skui-bl">'+bl.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
+  return h;
+}
+
+
+/* 종합 증감이 한두 고객에 쏠렸는지 — 품번은 늘었는데 금액만 줄었는지까지 같이 본다 */
+function custDeepHTML(S){
+  const B=S&&S.by_cust; if(!B||!B.lead) return '';
+  const M=skuiMoney, N=skuiNum, E=skuiEsc;
+  const L=B.lead, tot=(S.after||0)-(S.before||0);
+  const row=(x,hi)=>{
+    const wide=(x.n_after||0)-(x.n_before||0);
+    return '<tr'+(hi?' class="skui-aside"':'')+'><td><b>'+E(x.k)+'</b>'
+     +(hi?'<span class="skui-excl">단독 영향</span>':'')
+     +'<div class="skui-sub" style="margin-top:1px">'+E((x.promos||[]).join(' · '))+'</div></td>'
+     +'<td class="n">'+M(x.before)+'</td><td class="n"><b>'+M(x.after)+'</b></td>'
+     +'<td class="n '+(x.inc>=0?'skui-up':'skui-dn')+'"><b>'+(x.inc>=0?'+':'')+M(x.inc)+'</b></td>'
+     +'<td class="n">'+(x.yoy==null?'<span class="skui-mut">신규</span>':skuiPct(x.yoy))+'</td>'
+     +'<td class="n">'+N(x.n_before)+' → <b>'+N(x.n_after)+'</b>'
+     +' <span class="'+(wide>=0?'skui-up':'skui-dn')+'">'+(wide>=0?'+':'')+wide+'</span></td></tr>';
+  };
+  let h='<div class="skui-cls" style="margin-top:16px"><b>고객사별 — 감소가 어디에 쏠렸나</b> '
+   +'<span class="skui-mut">대상 고객 '+N(B.n)+'곳 중 증가 '+N(B.n_up)+'곳 · 감소 '+N(B.n_dn)+'곳 · '
+   +'증가합 '+M(B.up_sum)+' vs 감소합 '+M(B.dn_sum)+'</span></div>'
+   +'<div class="skui-wrap"><table class="skui-tbl"><thead><tr>'
+   +'<th>고객사 · 참여 캠페인</th><th class="n">집행 전</th><th class="n">집행 후</th>'
+   +'<th class="n">증감</th><th class="n">YoY</th><th class="n">오더 품번 수</th>'
+   +'</tr></thead><tbody>';
+  (B.dn||[]).slice(0,6).forEach((x,i)=>{ h+=row(x, i===0); });
+  h+='<tr class="skui-note2"><td colspan="6">↑ 감소 상위 &nbsp;·&nbsp; ↓ 증가 상위</td></tr>';
+  (B.up||[]).slice(0,6).forEach(x=>{ h+=row(x,0); });
+  h+='</tbody></table></div>';
+
+  const bl=[];
+  bl.push('<b>'+E(L.k)+' 한 곳이 종합을 끌어내렸다</b> · '+M(L.before)+' → '+M(L.after)+' ('
+    +M(L.inc)+'). 전체 순감 '+M(tot)+' 의 <b>'+Math.abs(B.lead_share)+'%</b> 에 해당해, '
+    +'이 고객을 빼면 나머지 '+N(B.n-1)+'곳 합계는 <b class="skui-up">'
+    +(B.ex_lead>=0?'+':'')+M(B.ex_lead)+'</b> 로 오히려 늘었음.');
+  if((L.n_after||0)>(L.n_before||0)) bl.push('<b>'+E(L.k)+'은 캠페인에서 빠진 게 아니다</b> · '
+    +'오더 품번이 '+N(L.n_before)+'종 → <b>'+N(L.n_after)+'종</b> ('
+    +'+'+((L.n_after||0)-(L.n_before||0))+'종) 으로 오히려 넓어졌음. '
+    +'품목 참여는 늘었는데 금액만 줄었다는 건 <b>전년 기저가 유난히 높았다</b>는 뜻이지 '
+    +'캠페인 이탈이 아님. 전년 '+M(L.before)+'는 대상 고객 전체 전년 '+M(S.before)+' 의 '
+    +Math.round(L.before/(S.before||1)*100)+'% 였음.');
+  const widen=(B.up||[]).filter(x=>(x.n_after||0)>(x.n_before||0)).slice(0,3);
+  if(widen.length) bl.push('<b>나머지 고객은 품번을 넓히며 늘었다</b> · '
+    +widen.map(x=>E(x.k)+' '+N(x.n_before)+'→'+N(x.n_after)+'종 '+(x.inc>=0?'+':'')+M(x.inc)).join(' · ')
+    +' — 캠페인이 노린 커버리지 확장은 '+E(L.k)+' 밖에서 제대로 작동했음.');
+  h+='<ul class="skui-bl">'+bl.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
   return h;
 }
 
@@ -13645,7 +13723,7 @@ function skuImpactParts(){
      +'<td class="n">'+skuiNum(X.conv)+'종</td><td class="n">'+(X.new?'<b>'+X.new+'종</b>':'·')+'</td>'
      +'<td class="n">'+skuiMoney(X.before)+'</td><td class="n"><b>'+skuiMoney(X.after)+'</b></td>'
      +'<td class="n skui-up">+'+skuiMoney(X.inc)+'</td><td class="n">'+skuiPct(X.yoy)+'</td></tr>'
-     +'<tr class="skui-note2"><td colspan="10">중국차는 오더 원장이 orders.csv 밖임 — '+skuiEsc(X.basis)
+     +'<tr class="skui-note2"><td colspan="10">'+skuiEsc(X.basis)
      +(X.rule?' · '+skuiEsc(X.rule):'')+'. '+skuiEsc(X.note)+'</td></tr>';
   }
   /* 합계에 더하지 않는 단독 미션은 표에 같이 두되 '합계 제외' 로 적는다 */
@@ -13673,10 +13751,16 @@ function skuImpactParts(){
   if(newBy.length) bl.push('<b>신규 전환 '+skuiNum(C['신규']||0)+'종 · '+skuiMoney(S.new_amt)+'</b> · '
     +newBy.map(r=>skuiEsc(r.p)+' '+r.new+'종').join(' · ')
     +' — 전년 오더가 0이던 품번에서 당해 오더가 발생한 것. 부스팅이 노린 지점.');
+  const _L=(S.by_cust||{}).lead, _B=S.by_cust;
   if(main) bl.push('<b>종합이 '+(yAll>=0?'+':'')+yAll.toFixed(1)+'% 인 이유</b> · '
-    +skuiEsc(main.p)+' 한 캠페인 때문. 전년 기저 '+skuiMoney(main.before)
-    +'(전체의 '+Math.round(main.before/bAll*100)+'%)에서 '+skuiMoney(main.inc)+'('+main.yoy.toFixed(1)+'%). '
-    +(dn.length?'이미 주력이던 품번의 역기저 — '+dn.slice(0,3).map(x=>skuiEsc(x.sku)+' '+skuiMoney(x.inc)).join(' · ')+'.':''));
+    +skuiEsc(main.p)+' 한 캠페인, 더 좁히면 <b>'+(_L?skuiEsc(_L.k):'한 고객사')+' 한 곳</b> 때문. '
+    +skuiEsc(main.p)+' 전년 기저 '+skuiMoney(main.before)
+    +'(전체의 '+Math.round(main.before/bAll*100)+'%)에서 '+skuiMoney(main.inc)+'('+main.yoy.toFixed(1)+'%)인데, '
+    +(_L?('그중 '+skuiEsc(_L.k)+' 한 곳이 '+skuiMoney(_L.inc)+' — 전체 순감의 '
+      +Math.abs(_B.lead_share)+'%. 이 고객을 빼면 나머지는 '
+      +(_B.ex_lead>=0?'+':'')+skuiMoney(_B.ex_lead)+' 로 순증. '):'')
+    +(dn.length?'품번으로는 '+dn.slice(0,3).map(x=>skuiEsc(x.sku)+' '+skuiMoney(x.inc)).join(' · ')+' 의 역기저임.':'')
+    +' <span class="skui-mut">아래 고객사 표 참고.</span>');
   bl.push('<b>귀결</b> · 확장과 주력 유지를 나눠 읽어야 함. 신규·확장 캠페인은 '
     +'오더가 없던 품번을 열어 '+skuiMoney(S.new_amt)+' 를 새로 만들었고, 기존 품번에서도 '
     +skuiNum(C['증가']||0)+'종이 '+skuiMoney(S.up_amt)+' 늘었음. '
@@ -13687,6 +13771,7 @@ function skuImpactParts(){
   const deepHd='<div class="skui-cls" style="margin-top:18px;padding-top:12px;'
    +'border-top:1px solid var(--border,rgba(127,127,127,.25))"><b>프로모션·미션별 품번 전환 상세</b> '
    +'<span class="skui-mut">위 표의 한 줄을 품번·브랜드·권역까지 펼친 것</span></div>';
+  deep+=custDeepHTML(S);              /* 고객사별 — 감소가 어디에 쏠렸나 */
   if(X) deep+=cnDeepHTML(X);          /* 프로모션별 상세 */
   let deepCust='';                     /* 고객사 단독 미션 상세 — 두는 자리가 다름 */
   (S.aside||[]).forEach(A=>{ deepCust+=kjkSectionHTML(A); });

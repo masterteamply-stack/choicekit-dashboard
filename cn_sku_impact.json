@@ -1633,5 +1633,215 @@
    "after": 821.2,
    "yoy": 158.2
   }
- ]
+ ],
+ "veh_by_region": {
+  "LATAM": [
+   {
+    "k": "CHERY Tiggo 8 2018",
+    "amt": 4032.31,
+    "n": 7
+   },
+   {
+    "k": "CHERY Tiggo 7 2020",
+    "amt": 2908.7,
+    "n": 7
+   },
+   {
+    "k": "CHERY Arrizo 3 2014 to 20",
+    "amt": 2282.28,
+    "n": 7
+   },
+   {
+    "k": "CHERY Omoda 5 2022",
+    "amt": 2176.35,
+    "n": 5
+   },
+   {
+    "k": "Haval H6 2020",
+    "amt": 1634.6,
+    "n": 3
+   }
+  ],
+  "CIS": [
+   {
+    "k": "CHERY Tiggo 8 2018",
+    "amt": 3402.71,
+    "n": 5
+   },
+   {
+    "k": "CHERY Tiggo 7 2020",
+    "amt": 2679.55,
+    "n": 5
+   },
+   {
+    "k": "CHERY Omoda 5 2022",
+    "amt": 1875.55,
+    "n": 4
+   },
+   {
+    "k": "Haval H6 2020",
+    "amt": 1634.6,
+    "n": 3
+   },
+   {
+    "k": "CHERY Tiggo 2 2016",
+    "amt": 1531.6,
+    "n": 2
+   }
+  ],
+  "MENA": [
+   {
+    "k": "MG ZS 2017",
+    "amt": 1554.94,
+    "n": 5
+   },
+   {
+    "k": "MG 3 2011 to 24",
+    "amt": 936.0,
+    "n": 3
+   },
+   {
+    "k": "MG 3 2017",
+    "amt": 936.0,
+    "n": 3
+   },
+   {
+    "k": "MG 3 Xross 2011",
+    "amt": 936.0,
+    "n": 3
+   },
+   {
+    "k": "MG ZS 2021",
+    "amt": 933.1,
+    "n": 3
+   }
+  ]
+ },
+ "part_by_region": {
+  "LATAM": [
+   {
+    "k": "OUTER TIE ROD",
+    "amt": 8042.88,
+    "n": 28
+   },
+   {
+    "k": "INNER TIE ROD",
+    "amt": 4628.1,
+    "n": 17
+   },
+   {
+    "k": "BALL JOINT",
+    "amt": 3518.14,
+    "n": 10
+   },
+   {
+    "k": "CONTROL ARM",
+    "amt": 1315.4,
+    "n": 6
+   },
+   {
+    "k": "STABILIZER LINK",
+    "amt": 867.49,
+    "n": 6
+   }
+  ],
+  "CIS": [
+   {
+    "k": "OUTER TIE ROD",
+    "amt": 2643.04,
+    "n": 4
+   },
+   {
+    "k": "INNER TIE ROD",
+    "amt": 2315.85,
+    "n": 5
+   },
+   {
+    "k": "CONTROL ARM",
+    "amt": 1315.4,
+    "n": 2
+   },
+   {
+    "k": "BALL JOINT",
+    "amt": 1282.5,
+    "n": 2
+   },
+   {
+    "k": "STABILIZER LINK",
+    "amt": 326.14,
+    "n": 1
+   }
+  ],
+  "MENA": [
+   {
+    "k": "BALL JOINT",
+    "amt": 1232.24,
+    "n": 5
+   },
+   {
+    "k": "OUTER TIE ROD",
+    "amt": 936.2,
+    "n": 3
+   },
+   {
+    "k": "INNER TIE ROD",
+    "amt": 191.5,
+    "n": 1
+   }
+  ]
+ },
+ "brand_by_region": {
+  "LATAM": [
+   {
+    "k": "CHERY",
+    "amt": 11754.69,
+    "n": 34
+   },
+   {
+    "k": "HAVAL",
+    "amt": 2897.66,
+    "n": 9
+   },
+   {
+    "k": "MG",
+    "amt": 2626.44,
+    "n": 12
+   },
+   {
+    "k": "SOUEAST",
+    "amt": 869.5,
+    "n": 5
+   },
+   {
+    "k": "BYD",
+    "amt": 560.52,
+    "n": 5
+   }
+  ],
+  "CIS": [
+   {
+    "k": "CHERY",
+    "amt": 5530.77,
+    "n": 9
+   },
+   {
+    "k": "HAVAL",
+    "amt": 2352.16,
+    "n": 5
+   }
+  ],
+  "MENA": [
+   {
+    "k": "MG",
+    "amt": 2151.94,
+    "n": 8
+   },
+   {
+    "k": "MG / SAIC",
+    "amt": 208.0,
+    "n": 1
+   }
+  ]
+ },
+ "veh_mapped": 70
 }
