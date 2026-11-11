@@ -3854,20 +3854,29 @@ function kjkHeadHTML(K){
    +(K.a26/K.tot26*100).toFixed(1)+'% · 부분집합이라 더하면 안 됨)</div></div></div>';
 }
 
-function kjkDetailHTML(K){
+function kjkDetailHTML(K, compact){
   if(!K||K.a26==null) return '';
   const M=skuiMoney, N=skuiNum, E=skuiEsc;
   const nat=K.by_nat||[], jp=nat.find(x=>x.k==='일본'), kr=nat.find(x=>x.k==='한국');
   const tile=(l,v,s)=>'<div class="skui-tile"><div class="skui-lab">'+l+'</div>'
     +'<div class="skui-val">'+v+'</div>'+(s?'<div class="skui-sub">'+s+'</div>':'')+'</div>';
 
-  let h='<div class="skui-tiles">'
+  /* 합쳐 넣을 때는 타일 격자를 쓰지 않는다 — 위 종합 KPI 행과 같은 모양이라
+     별도 지표가 하나 더 있는 것처럼 보임. 중국차 상세와 같은 한 줄 요약으로. */
+  let h = compact
+   ? ('<div class="skui-cls">미션 달성률 <b>'+K.rate.toFixed(1)+'%</b> '
+      +'<span class="skui-mut">(목표 '+M(K.tgt)+' · 25년 기준 '+M(K.b25)+')</span> · '
+      +'일본 <b>'+M(jp?jp.a26:0)+'</b> '+(jp?skuiPct(jp.yoy):'')+' · '
+      +'한국 <b>'+M(kr?kr.a26:0)+'</b> '+(kr?skuiPct(kr.yoy):'')+' · '
+      +'품번 확장 기여 <b>'+K.cover_pct.toFixed(1)+'%</b> '
+      +'<span class="skui-mut">(신규 '+K.new.n+'종 + 재전환 '+K.recov.n+'종 = '+M(K.cover_amt)+')</span></div>')
+   : ('<div class="skui-tiles">'
    +tile('미션 달성률', K.rate.toFixed(1)+'%', '목표 '+M(K.tgt)+' · 25년 기준 '+M(K.b25))
    +tile('일본 차종', M(jp?jp.a26:0), jp?('25년 '+M(jp.b25)+' · '+skuiPct(jp.yoy)):'')
    +tile('한국 차종', M(kr?kr.a26:0), kr?('25년 '+M(kr.b25)+' · '+skuiPct(kr.yoy)):'')
    +tile('품번 확장 기여', K.cover_pct.toFixed(1)+'%',
          '신규 '+K.new.n+'종 + 재전환 '+K.recov.n+'종 = '+M(K.cover_amt))
-   +'</div>';
+   +'</div>');
 
   /* 미션 증가액 분해 — 어디서 왔는지 */
   const dc=K.decomp||[], mx=Math.max.apply(null,dc.map(x=>Math.abs(x.v)).concat([1]));
@@ -3945,7 +3954,7 @@ function kjkSectionHTML(A){
    +'<span class="skui-excl">합계 제외</span> '
    +'<span class="skui-mut">「'+skuiEsc(K.mission)+'」 · '+skuiEsc(K.cust)+' 전체 오더 '
    +skuiMoney(K.tot26)+' 안의 부분집합</span></div>'
-   +kjkDetailHTML(K);
+   +kjkDetailHTML(K, true);
 }
 
 
@@ -4120,6 +4129,9 @@ function skuImpactParts(){
     +'합계 한 줄로 캠페인 성패를 판단하면 안 되는 구조.');
   const bullets='<ul class="skui-bl">'+bl.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
 
+  const deepHd='<div class="skui-cls" style="margin-top:18px;padding-top:12px;'
+   +'border-top:1px solid var(--border,rgba(127,127,127,.25))"><b>프로모션·미션별 품번 전환 상세</b> '
+   +'<span class="skui-mut">위 표의 한 줄을 품번·브랜드·권역까지 펼친 것</span></div>';
   if(X) deep+=cnDeepHTML(X);          /* 프로모션별 상세 */
   let deepCust='';                     /* 고객사 단독 미션 상세 — 두는 자리가 다름 */
   (S.aside||[]).forEach(A=>{ deepCust+=kjkSectionHTML(A); });
@@ -4130,7 +4142,7 @@ function skuImpactParts(){
    +(outSum?' · <b>'+Object.keys(S.regions_out).join('·')+'</b> 는 SKU 대상 프로모션 집행 지역이 아니라 제외(전년 '+skuiMoney(outSum)+')':'')
    +' · 대상 SKU 는 각 캠페인 target_skus 합집합이라 Portfolio 의 전 품목 카탈로그가 분모를 키움 — 전환율은 캠페인별로 볼 것.</p>';
 
-  return {head:head, tiles:tiles, cls:clsline, table:table,
+  return {head:head, tiles:tiles, cls:clsline, table:table, deepHd:deepHd,
           deep:deep, deepCust:deepCust, bullets:bullets, basis:basis};
 }
 
