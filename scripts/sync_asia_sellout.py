@@ -15,7 +15,10 @@ for r in src['rows']:
         k=r['k'], code=r['code'], codes=r.get('codes') or [r['code']],
         country=r['country'], cur=r['cur'], fx=r['fx'],
         programs=r.get('programs', []), m=m, usd=r.get('usd') or sum(m),
-        last=r.get('last', ''), status=r.get('status', ''), dup=r.get('dup', '')))
+        last=r.get('last', ''), status=r.get('status', ''), dup=r.get('dup', ''),
+        # 고객사 묶음 목표 — 프로그램 행 목표를 더하면 겹쳐 올라가므로 원본 요약표 값을 씀
+        tgt=r.get('tgt'), si_tgt=r.get('si_tgt'), si_act=r.get('si_act'),
+        period=r.get('period', '')))
 rows.sort(key=lambda r: -r['usd'])
 tgt = src['target']
 usd = sum(r['usd'] for r in rows)

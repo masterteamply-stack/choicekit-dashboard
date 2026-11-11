@@ -1,7 +1,7 @@
 {
  "_readme": "ASIA Sell-out 원장(영업사원·매장·딜러 단위) 요약. 재생성: python3 scripts/sync_asia_trade.py --src <xlsx>",
  "_basis": "프로그램 단위 원장이라 한 고객사가 두 프로그램에 걸리면 같은 판매가 두 번 잡힘. 고객사 단위 합계(중복 제거)는 asia_sellout.json 을 봐야 함.",
- "src": "tp.xlsx",
+ "src": "CTR_Trade_promotion_Nov_1111_updated.xlsx",
  "lines": 1520,
  "usd": 1083138.35,
  "months": {

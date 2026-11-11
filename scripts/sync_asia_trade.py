@@ -118,6 +118,33 @@ def main():
                      'm': m, 'usd': sum(m),
                      'last': '' if last.lower().startswith('no data') else last})
 
+    # ── 2b) 고객사 요약(C 표) — 한 고객사가 여러 프로그램에 걸릴 때의 '묶음 목표'
+    # 프로그램 행 목표를 그냥 더하면 안 됨. 원본이 고객사별로 따로 적어 둔 값이 있고
+    # (GP 는 SCA+LTL 만 묶어 $32,543, New Product Sell-Out 은 빼 둠) 그게 정본임.
+    hic = next((i for i, r in enumerate(G5)
+                if r and any(str(x or '').strip().startswith('Sell-out Target') for x in r)), -1)
+    csum, ctot = {}, None
+    if hic >= 0:
+        hc = [re.sub(r'\s+', ' ', str(x or '')).strip() for x in G5[hic]]
+        Jc = {c: i for i, c in enumerate(hc) if c}
+        gi = lambda *n: next((Jc[c] for c in Jc for x in n if c.startswith(x)), None)
+        i_t = next((i for c, i in Jc.items() if c.startswith('Sell-out Target')), None)
+        i_a = next((i for c, i in Jc.items() if c.startswith('Sell-out Actual')), None)
+        i_st = next((i for c, i in Jc.items() if c.startswith('Sell-in Target')), None)
+        i_sa = next((i for c, i in Jc.items() if c.startswith('Sell-in Actual')), None)
+        for r in G5[hic + 1:]:
+            if not r or not str(r[0] or '').strip(): break
+            k = name(r[0])
+            row = {'tgt': round(f(r[i_t]), 2), 'act': round(f(r[i_a]), 2),
+                   'si_tgt': round(f(r[i_st]), 2) if i_st is not None else None,
+                   'si_act': round(f(r[i_sa]), 2) if i_sa is not None else None,
+                   'period': str(r[2] or '').strip(),
+                   'progs': [x.strip() for x in re.split(r'[\n;]', str(r[1] or '')) if x.strip()]}
+            if k.lower() in ('total', 'subtotal'): ctot = row; break
+            csum[k] = row
+    if not csum:
+        sys.exit("5.Sell-out by Customer 의 고객사 요약(C) 표를 찾지 못했음.")
+
     # ── 3) 원장(Raw Data) — 결과 탭의 상세
     GR = rows_of(wb['4.Raw Data'])
     hir, hr = header(GR, 'Customer', 8)
@@ -169,6 +196,12 @@ def main():
     code_of = {r['k']: (r.get('code'), r.get('codes')) for r in old_so['rows']}
     rew_of = {(r['p'], r['k']): r.get('rew', 0) for r in old_pg['rows']}
     for c in cust:
+        g = csum.get(c['k'])
+        if g:
+            c['tgt'] = g['tgt']; c['si_tgt'] = g['si_tgt']; c['si_act'] = g['si_act']
+            c['period'] = g['period']
+            if abs(g['act'] - c['usd']) > 2:
+                print(f"  ※ {c['k']} 월별 합계 ${c['usd']:,.0f} ↔ 요약표 ${g['act']:,.0f} 가 다름")
         cd, cds = code_of.get(c['k'], ('', None))
         c['code'] = cd or ''
         if cds: c['codes'] = cds
@@ -179,8 +212,11 @@ def main():
 
     cut = max([c['last'] for c in cust if c['last']] or [''])
     so = dict(old_so)
+    # 목표도 고객사 요약표의 합계를 씀 — 프로그램 행을 더하면 한 고객사가 여러
+    # 프로그램에 걸릴 때 목표가 겹쳐 올라감(지금은 New Product Sell-Out $12,638 만큼).
     so.update(source_file=raw['src'], asof=cut or old_so.get('asof'), months=MN,
-              target=round(sum(p['tgt'] for p in progs)),
+              target=round(ctot['tgt'] if ctot else sum(g['tgt'] for g in csum.values())),
+              target_src='5.Sell-out by Customer · 고객사 요약(C) 표의 목표 합계',
               rows=sorted(cust, key=lambda r: -r['usd']))
     pg = dict(old_pg)
     pg.update(source_file=raw['src'], asof=cut or old_pg.get('asof'), cut=cut,

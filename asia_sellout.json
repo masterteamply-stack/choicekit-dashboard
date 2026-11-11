@@ -1,6 +1,6 @@
 {
  "_readme": "ASIA Sell-out 원자료(고객사별 월별). 값 수정 후 `python3 scripts/sync_asia_sellout.py` 한 번이면 promo_dashboard_v10_6.html 의 const AO 가 갱신됨.",
- "source_file": "tp.xlsx",
+ "source_file": "CTR_Trade_promotion_Nov_1111_updated.xlsx",
  "asof": "2026-10",
  "months": [
   "2026-05",
@@ -10,8 +10,8 @@
   "2026-09",
   "2026-10"
  ],
- "target_src": "marketing.csv SELL-OUT Target($) 합계",
- "target": 835539,
+ "target_src": "5.Sell-out by Customer · 고객사 요약(C) 표의 목표 합계",
+ "target": 822901,
  "note_dup": "한 고객사가 Sales Champion Award(영업사원 단위)와 Order to Earn POSM·Long-Term Loyalty(매장·딜러 단위)에 동시에 걸려 같은 판매가 두 번 잡힘. 아래 USD 금액은 중복을 걷어낸 값이라 프로그램별 금액을 더한 것보다 작음.",
  "note_scope": "현지 통화 원자료를 고객사별 고정 환율로 USD 환산한 값. 월은 sell-out 발생월 기준이며, 고객사마다 자료가 들어온 마지막 달이 다름.",
  "rows": [
@@ -34,6 +34,10 @@
    ],
    "usd": 249693,
    "last": "2026-09",
+   "tgt": 246153.85,
+   "si_tgt": 699952.02,
+   "si_act": 443891.2,
+   "period": "2026.05.01~10.31",
    "code": "200371",
    "status": "Order to Earn POSM · Sales Champion Award · 자료 2026-09까지"
   },
@@ -56,6 +60,10 @@
    ],
    "usd": 153459,
    "last": "2026-09",
+   "tgt": 246153.85,
+   "si_tgt": 312021.0,
+   "si_act": 244932.56,
+   "period": "2026.05.01~10.31",
    "code": "200464",
    "status": "Order to Earn POSM · Sales Champion Award · 자료 2026-09까지"
   },
@@ -78,6 +86,10 @@
    ],
    "usd": 140194,
    "last": "2026-09",
+   "tgt": 87719.3,
+   "si_tgt": 332551.65,
+   "si_act": 299620.9,
+   "period": "2026.06.01~10.31",
    "code": "200241",
    "status": "CTR Display & Visibility · Sales Champion Award · 자료 2026-09까지"
   },
@@ -100,6 +112,10 @@
    ],
    "usd": 136326,
    "last": "2026-09",
+   "tgt": 100000.0,
+   "si_tgt": 179233.5,
+   "si_act": 285467.0,
+   "period": "2026.05.01~10.31",
    "code": "289997",
    "codes": [
     "289997",
@@ -127,6 +143,10 @@
    ],
    "usd": 109387,
    "last": "2026-10",
+   "tgt": 32543.44,
+   "si_tgt": 221329.5,
+   "si_act": 247013.39,
+   "period": "2026.05.01~10.31",
    "code": "288352",
    "status": "Long-Term Loyalty · New Product Sell-Out · Sales Champion Award · 자료 2026-10까지"
   },
@@ -148,6 +168,10 @@
    ],
    "usd": 27432,
    "last": "2026-09",
+   "tgt": 15797.79,
+   "si_tgt": 35591.0,
+   "si_act": 39722.72,
+   "period": "2026.05.01~10.31",
    "code": "200691",
    "status": "Sales Champion Award · 자료 2026-09까지"
   },
@@ -169,6 +193,10 @@
    ],
    "usd": 25004,
    "last": "2026-10",
+   "tgt": 22567.16,
+   "si_tgt": 116028.0,
+   "si_act": 49463.0,
+   "period": "2026.05.01~11.30",
    "code": "288291",
    "status": "Long-Term Loyalty · 자료 2026-10까지"
   },
@@ -190,6 +218,10 @@
    ],
    "usd": 14855,
    "last": "2026-07",
+   "tgt": 43859.65,
+   "si_tgt": 66072.5,
+   "si_act": 13059.16,
+   "period": "2026.06.01~10.31",
    "code": "200242",
    "status": "Sales Champion Award · 자료 2026-07까지"
   },
@@ -211,6 +243,10 @@
    ],
    "usd": 14438,
    "last": "2026-09",
+   "tgt": 12307.69,
+   "si_tgt": 107807.52,
+   "si_act": 50698.56,
+   "period": "2026.06.01~11.30",
    "code": "200264",
    "status": "Long-Term Loyalty · 자료 2026-09까지"
   },
@@ -233,6 +269,10 @@
    ],
    "usd": 1131,
    "last": "2026-05",
+   "tgt": 15797.79,
+   "si_tgt": 175970.0,
+   "si_act": 47123.4,
+   "period": "2026.05.01~10.31",
    "code": "200332",
    "status": "New Product Sell-Out · Sales Champion Award · 자료 2026-05까지"
   },
@@ -254,6 +294,10 @@
    ],
    "usd": 0,
    "last": "",
+   "tgt": 0.0,
+   "si_tgt": 237640.0,
+   "si_act": 233651.9,
+   "period": "2026.07.01~11.30",
    "code": "289248",
    "status": "CTR Display & Visibility · 자료 미수령"
   },
@@ -275,6 +319,10 @@
    ],
    "usd": 0,
    "last": "",
+   "tgt": 0.0,
+   "si_tgt": 90827.0,
+   "si_act": 0.0,
+   "period": "2026.07.01~11.30",
    "code": "200335",
    "status": "CTR Display & Visibility · 자료 미수령"
   }
