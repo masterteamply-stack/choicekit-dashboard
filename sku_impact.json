@@ -1,0 +1,499 @@
+{
+ "src": "orders.csv + baseline_data · campaign_target_skus.json · marketing.csv",
+ "cut": "2026-10-20",
+ "floor": "2026-01-02",
+ "camps": [
+  "Asian vehicle",
+  "CTR MarketFit Campaign",
+  "European vehicle",
+  "Portfolio Expansion Program"
+ ],
+ "camp_start": {
+  "Asian vehicle": "2026-03-02",
+  "CTR MarketFit Campaign": "2026-02-11",
+  "European vehicle": "2026-03-02",
+  "Portfolio Expansion Program": "2026-01-09"
+ },
+ "regions": [
+  "CIS",
+  "LATAM",
+  "MENA"
+ ],
+ "regions_out": {
+  "KOREA": 414257,
+  "NA": 139145,
+  "ASIA": 41512
+ },
+ "tgt_sku": 6656,
+ "conv_sku": 356,
+ "conv_rate": 5.3,
+ "before": 1881463.8,
+ "after": 1642387.72,
+ "delta": -239076.08,
+ "yoy": -12.7,
+ "orders": 3303,
+ "drop_amt": 571727,
+ "drop_ords": 1693,
+ "cls": {
+  "증가": 118,
+  "감소": 95,
+  "신규": 136,
+  "유지": 7,
+  "미전환": 6293,
+  "이탈": 7
+ },
+ "new_amt": 35026,
+ "up_amt": 148951,
+ "dn_amt": -422064,
+ "top": {
+  "신규": [
+   {
+    "sku": "GY1378G",
+    "promo": "Portfolio Expansion Program",
+    "before": 0,
+    "after": 3385.6,
+    "inc": 3385.6,
+    "cust": 2
+   },
+   {
+    "sku": "GY0479G",
+    "promo": "Portfolio Expansion Program",
+    "before": 0,
+    "after": 2446.28,
+    "inc": 2446.28,
+    "cust": 2
+   },
+   {
+    "sku": "GY0480G",
+    "promo": "Portfolio Expansion Program",
+    "before": 0,
+    "after": 2074.02,
+    "inc": 2074.02,
+    "cust": 2
+   },
+   {
+    "sku": "GV0775",
+    "promo": "European vehicle",
+    "before": 0,
+    "after": 1040.62,
+    "inc": 1040.62,
+    "cust": 4
+   },
+   {
+    "sku": "GK1053",
+    "promo": "Portfolio Expansion Program",
+    "before": 0,
+    "after": 820.48,
+    "inc": 820.48,
+    "cust": 1
+   },
+   {
+    "sku": "GK1412",
+    "promo": "Portfolio Expansion Program",
+    "before": 0,
+    "after": 761.04,
+    "inc": 761.04,
+    "cust": 1
+   },
+   {
+    "sku": "CR0715",
+    "promo": "European vehicle",
+    "before": 0,
+    "after": 663.3,
+    "inc": 663.3,
+    "cust": 4
+   },
+   {
+    "sku": "GK0554",
+    "promo": "Portfolio Expansion Program",
+    "before": 0,
+    "after": 624.0,
+    "inc": 624.0,
+    "cust": 1
+   },
+   {
+    "sku": "GK0346",
+    "promo": "Portfolio Expansion Program",
+    "before": 0,
+    "after": 597.0,
+    "inc": 597.0,
+    "cust": 1
+   },
+   {
+    "sku": "GK0732",
+    "promo": "Portfolio Expansion Program",
+    "before": 0,
+    "after": 523.2,
+    "inc": 523.2,
+    "cust": 1
+   }
+  ],
+  "증가": [
+   {
+    "sku": "CL0477",
+    "promo": "CTR MarketFit Campaign",
+    "before": 8576.6,
+    "after": 44679.2,
+    "inc": 36102.6,
+    "cust": 21
+   },
+   {
+    "sku": "CL0557",
+    "promo": "Asian vehicle",
+    "before": 143494.26,
+    "after": 153379.63,
+    "inc": 9885.37,
+    "cust": 14
+   },
+   {
+    "sku": "CB0210R",
+    "promo": "Asian vehicle",
+    "before": 11095.25,
+    "after": 18109.85,
+    "inc": 7014.6,
+    "cust": 12
+   },
+   {
+    "sku": "CL0555",
+    "promo": "Asian vehicle",
+    "before": 49307.11,
+    "after": 55847.6,
+    "inc": 6540.49,
+    "cust": 13
+   },
+   {
+    "sku": "CB0426",
+    "promo": "Asian vehicle",
+    "before": 35734.46,
+    "after": 42034.46,
+    "inc": 6300.0,
+    "cust": 14
+   },
+   {
+    "sku": "CB0427",
+    "promo": "Asian vehicle",
+    "before": 34571.95,
+    "after": 39637.33,
+    "inc": 5065.38,
+    "cust": 12
+   },
+   {
+    "sku": "GV1087",
+    "promo": "Asian vehicle",
+    "before": 362.16,
+    "after": 4499.36,
+    "inc": 4137.2,
+    "cust": 9
+   },
+   {
+    "sku": "CL0311",
+    "promo": "Asian vehicle",
+    "before": 9454.5,
+    "after": 13544.35,
+    "inc": 4089.85,
+    "cust": 12
+   },
+   {
+    "sku": "CB0210L",
+    "promo": "Asian vehicle",
+    "before": 13100.31,
+    "after": 17121.19,
+    "inc": 4020.88,
+    "cust": 12
+   },
+   {
+    "sku": "GV0538",
+    "promo": "Asian vehicle",
+    "before": 7611.15,
+    "after": 11041.02,
+    "inc": 3429.87,
+    "cust": 13
+   }
+  ],
+  "유지": [
+   {
+    "sku": "GV0438",
+    "promo": "Asian vehicle",
+    "before": 60386.81,
+    "after": 59876.03,
+    "inc": -510.78,
+    "cust": 13
+   },
+   {
+    "sku": "GV0470",
+    "promo": "Asian vehicle",
+    "before": 23591.69,
+    "after": 23198.39,
+    "inc": -393.3,
+    "cust": 13
+   },
+   {
+    "sku": "CE0299",
+    "promo": "Asian vehicle",
+    "before": 4028.72,
+    "after": 3983.2,
+    "inc": -45.52,
+    "cust": 4
+   },
+   {
+    "sku": "CB0451L",
+    "promo": "European vehicle",
+    "before": 2595.07,
+    "after": 2553.21,
+    "inc": -41.86,
+    "cust": 4
+   },
+   {
+    "sku": "GV0574L",
+    "promo": "Asian vehicle",
+    "before": 1703.91,
+    "after": 1723.95,
+    "inc": 20.04,
+    "cust": 10
+   },
+   {
+    "sku": "CE0732L",
+    "promo": "Asian vehicle",
+    "before": 1741.95,
+    "after": 1725.59,
+    "inc": -16.36,
+    "cust": 9
+   },
+   {
+    "sku": "GY0713G",
+    "promo": "Portfolio Expansion Program",
+    "before": 1241.6,
+    "after": 1241.6,
+    "inc": 0.0,
+    "cust": 2
+   }
+  ],
+  "감소": [
+   {
+    "sku": "CL0586",
+    "promo": "Asian vehicle",
+    "before": 113690.02,
+    "after": 42758.23,
+    "inc": -70931.79,
+    "cust": 20
+   },
+   {
+    "sku": "CL0597",
+    "promo": "Asian vehicle",
+    "before": 120982.9,
+    "after": 98993.21,
+    "inc": -21989.69,
+    "cust": 14
+   },
+   {
+    "sku": "CR0634",
+    "promo": "Asian vehicle",
+    "before": 33666.56,
+    "after": 14133.45,
+    "inc": -19533.11,
+    "cust": 9
+   },
+   {
+    "sku": "GV0439",
+    "promo": "Asian vehicle",
+    "before": 65653.01,
+    "after": 50539.13,
+    "inc": -15113.88,
+    "cust": 13
+   },
+   {
+    "sku": "CB0186",
+    "promo": "Asian vehicle",
+    "before": 27206.33,
+    "after": 12690.68,
+    "inc": -14515.65,
+    "cust": 10
+   },
+   {
+    "sku": "CR0649",
+    "promo": "Asian vehicle",
+    "before": 24492.71,
+    "after": 11238.24,
+    "inc": -13254.47,
+    "cust": 10
+   },
+   {
+    "sku": "CL0573",
+    "promo": "Asian vehicle",
+    "before": 28215.49,
+    "after": 15541.6,
+    "inc": -12673.89,
+    "cust": 11
+   },
+   {
+    "sku": "CL0574",
+    "promo": "Asian vehicle",
+    "before": 41299.4,
+    "after": 28706.67,
+    "inc": -12592.73,
+    "cust": 13
+   },
+   {
+    "sku": "CL0575",
+    "promo": "Asian vehicle",
+    "before": 42813.5,
+    "after": 30312.87,
+    "inc": -12500.63,
+    "cust": 13
+   },
+   {
+    "sku": "CB0418",
+    "promo": "Asian vehicle",
+    "before": 54149.88,
+    "after": 41681.46,
+    "inc": -12468.42,
+    "cust": 24
+   }
+  ],
+  "이탈": [
+   {
+    "sku": "GV0999",
+    "promo": "European vehicle",
+    "before": 297.0,
+    "after": 0,
+    "inc": -297.0,
+    "cust": 1
+   },
+   {
+    "sku": "GV0996",
+    "promo": "European vehicle",
+    "before": 291.0,
+    "after": 0,
+    "inc": -291.0,
+    "cust": 1
+   },
+   {
+    "sku": "GV1000",
+    "promo": "European vehicle",
+    "before": 206.4,
+    "after": 0,
+    "inc": -206.4,
+    "cust": 1
+   },
+   {
+    "sku": "GV1091",
+    "promo": "Asian vehicle",
+    "before": 172.0,
+    "after": 0,
+    "inc": -172.0,
+    "cust": 1
+   },
+   {
+    "sku": "CR0712",
+    "promo": "European vehicle",
+    "before": 116.6,
+    "after": 0,
+    "inc": -116.6,
+    "cust": 1
+   },
+   {
+    "sku": "GV0828",
+    "promo": "European vehicle",
+    "before": 7.22,
+    "after": 0,
+    "inc": -7.22,
+    "cust": 1
+   },
+   {
+    "sku": "GV0833",
+    "promo": "European vehicle",
+    "before": 5.52,
+    "after": 0,
+    "inc": -5.52,
+    "cust": 1
+   }
+  ]
+ },
+ "by_camp": [
+  {
+   "p": "Asian vehicle",
+   "start": "2026-03-02",
+   "n": 133,
+   "conv": 130,
+   "new": 0,
+   "before": 1796016.74,
+   "after": 1474348.08,
+   "inc": -321668.66,
+   "yoy": -17.9,
+   "region": [
+    "CIS"
+   ]
+  },
+  {
+   "p": "CTR MarketFit Campaign",
+   "start": "2026-02-11",
+   "n": 16,
+   "conv": 10,
+   "new": 4,
+   "before": 15593.91,
+   "after": 49548.55,
+   "inc": 33954.64,
+   "yoy": 217.7,
+   "region": [
+    "LATAM"
+   ]
+  },
+  {
+   "p": "European vehicle",
+   "start": "2026-03-02",
+   "n": 195,
+   "conv": 170,
+   "new": 96,
+   "before": 59776.71,
+   "after": 88761.77,
+   "inc": 28985.06,
+   "yoy": 48.5,
+   "region": [
+    "CIS"
+   ]
+  },
+  {
+   "p": "Portfolio Expansion Program",
+   "start": "2026-01-09",
+   "n": 6312,
+   "conv": 46,
+   "new": 36,
+   "before": 10076.44,
+   "after": 29729.32,
+   "inc": 19652.88,
+   "yoy": 195.0,
+   "region": [
+    "MENA"
+   ]
+  }
+ ],
+ "extra": [
+  {
+   "p": "중국차 프로모션",
+   "start": "2026-04",
+   "cut": "2026-10-26",
+   "n": 183,
+   "conv": 63,
+   "conv_prev": 43,
+   "new": null,
+   "before": 10238.78,
+   "after": 19387.61,
+   "inc": 9148.83,
+   "yoy": 89.4,
+   "cust": 10,
+   "region": [
+    "LATAM",
+    "MENA",
+    "CIS"
+   ],
+   "basis": "② 중국전용 품번 · 월 단위 · 원장 ~2026-10-26 · 2026-04부터",
+   "note": "품번별 전년 비교는 중국차 원장에 전년 품번 행이 없어 권역 단위까지만 가능"
+  }
+ ],
+ "tgt_all": 6839,
+ "conv_all": 419,
+ "before_all": 1891702.58,
+ "after_all": 1661775.33,
+ "delta_all": -229927.25,
+ "yoy_all": -12.2
+}

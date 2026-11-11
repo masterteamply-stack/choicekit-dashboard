@@ -1673,6 +1673,39 @@ header .mono b.t-orange {
   0%   { box-shadow: 0 0 0 3px rgba(200,16,46,0.35); }
   100% { box-shadow: 0 0 0 0 rgba(200,16,46,0); }
 }
+/* SKU 기반 오더 전환 효과 블록 — 두 대시보드 공용. 호스트 CSS 변수에 기대되,
+   없으면 쓸 수 있는 기본값을 둠. */
+.skui{border:1px solid var(--border,rgba(127,127,127,.28));border-radius:10px;
+  background:var(--surface-2,rgba(127,127,127,.05));padding:14px 16px;margin:14px 0}
+.skui-hd{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px}
+.skui-hd b{font-size:15px}
+.skui-bar{display:inline-block;width:5px;min-height:34px;border-radius:3px;
+  background:var(--brand,#6ab6ff);flex:0 0 auto}
+.skui-lab{font-size:10.5px;letter-spacing:.04em;color:var(--muted,#8a8a8f);text-transform:uppercase}
+.skui-val{font-size:19px;font-weight:800;margin-top:2px;line-height:1.25}
+.skui-sub{font-size:11px;color:var(--muted,#8a8a8f);margin-top:3px;line-height:1.5}
+.skui-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.skui-tile{border:1px solid var(--border,rgba(127,127,127,.22));border-radius:8px;
+  background:var(--surface,rgba(127,127,127,.04));padding:10px 12px}
+.skui-cls{margin:12px 0 4px;font-size:11.5px;color:var(--muted,#8a8a8f);line-height:1.7}
+.skui-cls b{color:var(--text,inherit)}
+.skui-wrap{overflow-x:auto;margin:8px 0 2px}
+.skui-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.skui-tbl th,.skui-tbl td{padding:6px 8px;border-bottom:1px solid var(--border,rgba(127,127,127,.18));text-align:left;white-space:nowrap}
+.skui-tbl th{font-size:10.5px;letter-spacing:.03em;color:var(--muted,#8a8a8f);text-transform:uppercase}
+.skui-tbl .n{text-align:right;font-variant-numeric:tabular-nums}
+.skui-tbl tr.skui-x td{background:rgba(106,182,255,.06)}
+.skui-tbl tr.skui-note2 td{font-size:10.5px;color:var(--muted,#8a8a8f);white-space:normal;line-height:1.55;border-bottom:none}
+.skui-bl{margin:12px 0 0;padding-left:18px;font-size:12px;line-height:1.75}
+.skui-bl li{margin-bottom:5px}
+.skui-basis{margin:10px 0 0;padding:7px 9px;font-size:10.5px;line-height:1.6;
+  color:var(--muted,#8a8a8f);border-left:2px solid rgba(106,182,255,.45);
+  background:rgba(106,182,255,.05);border-radius:4px}
+.skui-up{color:var(--green,#2fb344)}
+.skui-dn{color:var(--red,#e5484d)}
+.skui-mut{color:var(--muted,#8a8a8f)}
+@media (max-width:640px){.skui{padding:12px}.skui-val{font-size:17px}}
+
 </style>
 
 <!-- ===== SHARED DATA SOURCE =====
@@ -1887,6 +1920,9 @@ header .mono b.t-orange {
       </div>
 
     </section>
+
+    <!-- SKU 기반 오더 전환 효과 — 종합 수치 바로 아래 (sku_impact.json) -->
+    <div id="skuImpactBlock"></div>
 
     <!-- Sortable widget area -->
     <div id="widgetArea" style="display:flex;flex-direction:column;gap:18px">
@@ -2237,9 +2273,11 @@ header .mono b.t-orange {
             <p class="label-mono" style="margin-top:4px">Before / after promotion</p>
           </div>
           <div class="chart-tools">
-            <span class="label-mono muted" style="font-size:11px">Region</span>
-            <select id="selSkuAggRegion" style="min-width:120px;font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface)"><option value="__all__">All regions</option></select>
-            <span class="label-mono muted" style="font-size:11px;margin-left:8px">Promotion</span>
+            <!-- 권역 드롭다운은 뺌 (2026-11-11) — SKU 대상 프로모션은 집행 권역이 캠페인에
+                 묶여 있어(Asian/European=CIS · Portfolio=MENA · MarketFit=LATAM) 권역을 따로
+                 고르면 같은 걸 두 번 거르는 셈이었음. 프로모션 단위로만 고른다. -->
+            <select id="selSkuAggRegion" style="display:none"><option value="__all__">__all__</option></select>
+            <span class="label-mono muted" style="font-size:11px">Promotion</span>
             <select id="selSkuAggPromo" style="min-width:220px;font-size:12px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface)"></select>
             <span class="label-mono muted" style="margin-left:8px;font-size:11px;display:none">Compare</span>
             <div class="seg" id="segSkuCmp" style="display:none">
@@ -10212,29 +10250,39 @@ function listSkus(orders) {
 
 function populateSkuUI(fOrders) {
   const _ord = fOrders || state.orders || [];
-  const _skuRgn = state.skuAggRegion || '__all__';
-  const promoKeys = _campsInRegion(_ord, _skuRgn);
-
-  // Region + Promotion selectors. Picking a region resets the promotion to All.
-  const rgnSelA = document.getElementById('selSkuAggRegion');
-  if (rgnSelA) {
-    rgnSelA.innerHTML = _regionOptsHTML(_ord, _skuRgn);
-    rgnSelA.value = _skuRgn;
-    if (!rgnSelA._ckH) { rgnSelA._ckH = true; rgnSelA.addEventListener('change', e => {
-      state.skuAggRegion = e.target.value; state.skuAggPromo = '__all__';
-      try{localStorage.setItem('ck_sku_agg_region',state.skuAggRegion);localStorage.setItem('ck_sku_agg_promo','__all__');}catch(_){}
-      const fO=state.orders.filter(matchOrder).filter(o=>isRegionVisible(o.region)); renderSkuExplorer(fO, []); }); }
-  }
+  /* 권역 선택은 쓰지 않음 — 프로모션을 고르면 그 캠페인의 집행 권역이 따라온다 */
+  state.skuAggRegion = '__all__';
   const aggSel = document.getElementById('selSkuAggPromo');
   if (aggSel) {
-    // SKU Explorer는 SKU 기반 캠페인만 분석 (customer 기반 SELL-OUT/Mexico/Strategic 제외)
-    const _skuCfgP = state.campaignTargetSkus || {};
-    const _skuBasedSel = new Set(Object.keys(_skuCfgP).filter(p => (_skuCfgP[p].match_by||'sku').toLowerCase() !== 'customer'));
-    const cur = state.skuAggPromo || '__all__';
-    if (cur !== '__all__' && (!promoKeys.includes(cur) || !_skuBasedSel.has(String(cur).split(_RSPLIT)[0]))) state.skuAggPromo = '__all__';
-    aggSel.innerHTML = _promoRegionOptsFromOrders(_scopeOrdersByRegion(_ord, _skuRgn), state.skuAggPromo, 'All SKU campaigns', _skuBasedSel);
+    /* SKU 기반 캠페인만 (customer 기반 SELL-OUT·Mexico·Strategic 제외).
+       권역으로 쪼갠 키가 아니라 캠페인 이름 그대로 — 캠페인 하나에 집행 권역이
+       정해져 있으므로 권역을 따로 고를 이유가 없음. */
+    const _cfgP = state.campaignTargetSkus || {};
+    const _rgOf = p => { const c = _cfgP[p]||{};
+      const rs = (Array.isArray(c.region)?c.region:(c.region?[c.region]:[])).map(x=>normalizeRegion(x)).filter(Boolean);
+      return rs.join('·'); };
+    const camps = Object.keys(_cfgP)
+      .filter(p => (_cfgP[p].match_by||'sku').toLowerCase() !== 'customer')
+      .sort((a,b) => (_cfgP[b].target_skus||[]).length - (_cfgP[a].target_skus||[]).length);
+    let cur = String(state.skuAggPromo || '__all__').split(_RSPLIT)[0];
+    if (cur !== '__all__' && cur !== _CNP_KEY && !camps.includes(cur)) cur = '__all__';
+    state.skuAggPromo = cur;
+    /* 개수는 sku_impact.json 의 귀속 결과를 먼저 쓴다 — 두 캠페인에 걸친 품번이
+       한쪽으로만 귀속되므로 설정 파일의 원 목록 길이와 다를 수 있음. */
+    const _bc = {}; ((window.CKSKUI||{}).by_camp||[]).forEach(c => { _bc[c.p] = c; });
+    const _nOf = p => (_bc[p] ? _bc[p].n : (_cfgP[p].target_skus||[]).length);
+    const nAll = (window.CKSKUI && window.CKSKUI.tgt_sku) || camps.reduce((s,p) => s + _nOf(p), 0);
+    aggSel.innerHTML =
+      `<option value="__all__">SKU 기반 프로모션 전체 (${camps.length}건 · 대상 ${nAll.toLocaleString()}종)</option>`
+      + camps.map(p => `<option value="${p}">${p} · ${(_bc[p]&&(_bc[p].region||[]).join('·'))||_rgOf(p)||'–'} · ${_nOf(p).toLocaleString()}종</option>`).join('')
+      + (window.CKSKUI && window.CKSKUI.extra && window.CKSKUI.extra.length
+          ? window.CKSKUI.extra.map(e => `<option value="${_CNP_KEY}">${e.p} · ${(e.region||[]).join('·')} · ${e.n}종 (별도 원장)</option>`).join('')
+          : '');
     aggSel.value = state.skuAggPromo;
-    if (!aggSel._ckH) { aggSel._ckH = true; aggSel.addEventListener('change', e => { _applyPromoSelValue(e.target.value,'skuAggPromo','skuAggRegion','ck_sku_agg_region'); try{localStorage.setItem('ck_sku_agg_promo',state.skuAggPromo);}catch(_){} const fO=state.orders.filter(matchOrder).filter(o=>isRegionVisible(o.region)); renderSkuExplorer(fO, []); }); }
+    if (!aggSel._ckH) { aggSel._ckH = true; aggSel.addEventListener('change', e => {
+      state.skuAggPromo = e.target.value; state.skuAggRegion = '__all__';
+      try{localStorage.setItem('ck_sku_agg_promo',state.skuAggPromo);localStorage.setItem('ck_sku_agg_region','__all__');}catch(_){}
+      const fO=state.orders.filter(matchOrder).filter(o=>isRegionVisible(o.region)); renderSkuExplorer(fO, []); }); }
   }
   // Mode/tab are fixed now: always aggregate + before/after.
   state.skuMode = 'aggregate';
@@ -10622,7 +10670,7 @@ function renderSkuYearly(annualSeries, opts) {
      ① 전년도 그 캠페인의 고객사만 센다            → _baRoster()
      ② 양쪽 끝일을 오더 원장 마감일로 끊는다        → _baCut()
    어느 기준인지 화면에 적어 둬야 함(기준 섞지 않기). */
-let _baCache = { n: -1, cut: '', roster: null };
+let _baCache = { n: -1, cut: '', roster: null, skuP: null, skuRP: null };
 function _baMaps() {
   const src = state.orders || [];
   if (_baCache.n === src.length && _baCache.roster) return _baCache;
@@ -10636,13 +10684,26 @@ function _baMaps() {
      태그된 고객사. 전년에만 사고 올해 끊긴 고객사도 명부에 있으면 남는다. */
   const cfg = state.campaignTargetSkus || {};
   Object.keys(cfg).forEach(p => (cfg[p].target_customers || []).forEach(c => add(p, c)));
+  /* baseline 행의 캠페인 귀속 — promoKeyOfOrder 는 promotion_category 가
+     'PRE_ORDER' 나 빈 값일 때만 품번으로 역추적한다. 그런데 baseline 에는
+     'STANDARD' 로 찍힌 행이 307건 있어 그 분기를 타지 못하고 'STANDARD' 를
+     돌려줬다. 그러면 명부를 못 찾아 그대로 통과해, 캠페인 밖 고객사의 전년
+     오더가 남았다(칠레 MANNHEIM 등 $8,649). 품번×권역으로 직접 찾는다. */
+  const skuP = {}, skuRP = {};
+  Object.keys(cfg).forEach(p => {
+    const c = cfg[p] || {};
+    if ((c.match_by||'sku').toLowerCase() === 'customer') return;
+    const rs = (Array.isArray(c.region)?c.region:(c.region?[c.region]:[])).map(x=>normalizeRegion(x)).filter(Boolean);
+    (c.target_skus||[]).forEach(x => { const k = String(x).trim().toUpperCase();
+      skuP[k] = p; rs.forEach(r => { skuRP[k + '|' + r] = p; }); });
+  });
   src.forEach(o => {
     if (o[PRE_ORDER_MARK]) return;
     add(o.promotion_category, o.customer);
     const d = o.order_date || '';
     if (d > cut) cut = d;
   });
-  _baCache = { n: src.length, cut: cut || _todayStr(), roster };
+  _baCache = { n: src.length, cut: cut || _todayStr(), roster, skuP, skuRP };
   return _baCache;
 }
 function buildBaStats(orders, startDate) {
@@ -10684,7 +10745,13 @@ function buildBaStats(orders, startDate) {
     } else if (d >= beforeFrom && d <= beforeTo) {
       /* ① 그 캠페인 고객사가 아니면 전년에서 뺀다. 명부를 못 찾으면 그대로 둔다
          (캠페인을 역추적할 수 없는 행을 임의로 지우지 않기 위함). */
-      const rost = M.roster[promoKeyOfOrder(o)];
+      /* baseline 행은 품번×권역으로 캠페인을 찾는다 (promoKeyOfOrder 는
+         promotion_category='STANDARD' 인 행을 역추적하지 못함). */
+      const _sk = (o.sku || '').trim().toUpperCase();
+      const _key = isBaseline
+        ? ((M.skuRP && M.skuRP[_sk + '|' + normalizeRegion(o.region||'')]) || (M.skuP && M.skuP[_sk]) || promoKeyOfOrder(o))
+        : promoKeyOfOrder(o);
+      const rost = M.roster[_key];
       if (rost && rost.size && !rost.has(String(o.customer || '').trim().toUpperCase())) {
         dropAmt += amt; dropOrds++; return;
       }
@@ -10831,7 +10898,31 @@ function renderSkuAggregate(fOrders) {
   const brkTbl  = document.getElementById('tblSkuAggBreakdown');
 
   const promo = state.skuAggPromo || '__all__';
-  const skuRgn = state.skuAggRegion || '__all__';
+  const skuRgn = '__all__';
+  /* 중국차는 오더 원장이 orders.csv 밖에 있어 품번별 전년 비교가 안 됨.
+     캠페인 단위 요약만 보여 주고 나머지 패널은 비운다. */
+  if (promo === _CNP_KEY) {
+    const X = ((window.CKSKUI||{}).extra||[])[0];
+    if (meta) meta.innerHTML = X
+      ? `<b>${X.p}</b> · ${(X.region||[]).join(' · ')} · 대상 ${X.n}종 · 오더 전환 ${X.conv}종 · `
+        + `고객 ${X.cust}곳 · ${X.basis}`
+      : '중국차 프로모션 자료를 아직 불러오지 못했음.';
+    clearSkuPanels();
+    const _e = document.getElementById('skuAggEffect');
+    if (_e) _e.innerHTML = X ? `<div class="skui"><div class="skui-hd"><span class="skui-bar"></span><div>`
+      + `<b>${X.p} · 캠페인 단위</b><div class="skui-sub">${X.basis}</div></div></div>`
+      + `<div class="skui-tiles">`
+      + `<div class="skui-tile"><div class="skui-lab">대상 SKU</div><div class="skui-val">${X.n}종</div>`
+      + `<div class="skui-sub">중국차 카탈로그 · 중국 차종 전용</div></div>`
+      + `<div class="skui-tile"><div class="skui-lab">오더 전환</div><div class="skui-val">${X.conv}종</div>`
+      + `<div class="skui-sub">전년 ${X.conv_prev}종 · 고객 ${X.cust}곳</div></div>`
+      + `<div class="skui-tile"><div class="skui-lab">집행 전 → 후</div>`
+      + `<div class="skui-val">${skuiMoney(X.before)} → ${skuiMoney(X.after)}</div>`
+      + `<div class="skui-sub">${skuiPct(X.yoy)} · ${skuiMoney(X.inc)}</div></div></div>`
+      + `<p class="skui-basis">${X.note} — 품번별로 보시려면 중국차 오더분석 원장이 필요함.</p></div>` : '';
+    { const _i=document.getElementById('skuAggInsight'); if(_i) _i.innerHTML=''; }
+    return;
+  }
 
   // ── 데이터 소스: state.orders + baseline (state.preOrders) ──
   // Include baseline so YoY-period Before window has real data. orders.csv
@@ -11241,7 +11332,8 @@ function renderSkuAggregate(fOrders) {
           const g=_custBA[cust]=_custBA[cust]||{before:0,after:0,region:(o.region||'').trim()};
           if(!isBase && d>=anc && d<=_todC) g.after+=amt;
           else if(d>=_shift1yC(anc) && d<=_shift1yC(_todC)) {
-            const _ro=_bmaps.roster[promoKeyOfOrder(o)];
+            const _sk2=(o.sku||'').trim().toUpperCase();
+            const _ro=_bmaps.roster[(isBase&&((_bmaps.skuRP&&_bmaps.skuRP[_sk2+'|'+normalizeRegion(o.region||'')])||(_bmaps.skuP&&_bmaps.skuP[_sk2])))||promoKeyOfOrder(o)];
             if(_ro && _ro.size && !_ro.has(cust.toUpperCase())) return;
             g.before+=amt;
           }
@@ -11404,7 +11496,13 @@ function renderSkuCustomerConversion(promo, cfg, allowR, allOrd, startDate) {
   // 시작일 기준 올해/작년 기간
   const startStr = (typeof startDate === 'string') ? startDate : (startDate && startDate.byPromo ? startDate.byPromo[promo] : null);
   const start = startStr || '2026-01-01';
-  const yEnd  = (window._todayStr || new Date().toISOString().slice(0,10));
+  /* _todayStr 은 함수임 — 예전엔 함수 객체가 그대로 들어가 shift1y 가 터졌음.
+     끝일은 다른 패널과 같게 오더 원장 마감(= min(오늘, cut))으로 맞춘다. */
+  const yEnd  = (() => {
+    const t = (typeof _todayStr === 'function') ? _todayStr() : new Date().toISOString().slice(0,10);
+    const c = (typeof _baMaps === 'function') ? (_baMaps().cut || '') : '';
+    return (c && c < t) ? c : t;
+  })();
   const shift1y = (s) => s ? (String(parseInt(s.slice(0,4))-1) + s.slice(4)) : '';
   const pStart = shift1y(start), pEnd = shift1y(yEnd);
 
@@ -13192,7 +13290,144 @@ async function loadCampaignKpi() {
   } catch (e) { console.warn('[kpi] load failed (non-fatal):', e); }
 }
 
+/* ── SKU 임팩트 (sku_impact.json) ─────────────────────────────────────────
+   SKU 기반 오더 전환 캠페인의 품번 단위 효과. 효과 분석 대시보드의 const SKUI
+   와 같은 파일에서 나오므로 두 대시보드가 같은 값을 보여 준다.
+   만드는 쪽: scripts/sync_sku_impact.py */
+window.CKSKUI = null;
+const _CNP_KEY = '__cnpromo__';     // 중국차 — 원장이 따로라 품번 드릴다운이 없음
+async function loadSkuImpact() {
+  if (location.protocol === 'file:') return;
+  try {
+    const res = await fetch(_resolveGhRepoBase() + '/sku_impact.json', { cache: 'no-store' });
+    if (!res.ok) { if (res.status !== 404) console.warn(`[skui] HTTP ${res.status}`); return; }
+    const j = await res.json();
+    if (j && j.tgt_sku != null) {
+      window.CKSKUI = j;
+      console.log(`[skui] ✅ 대상 ${j.tgt_sku.toLocaleString()}종 · 전환 ${j.conv_sku}종 · ` +
+        `$${Math.round(j.before).toLocaleString()} → $${Math.round(j.after).toLocaleString()} · 원장 ~${j.cut}`);
+    }
+  } catch (e) { console.warn('[skui] load failed (non-fatal):', e); }
+}
+
+/* ── SKU 기반 오더 전환 효과 · 종합 ───────────────────────────────────────
+   단일 소스: sku_impact.json (scripts/sync_sku_impact.py).
+   효과 분석은 const SKUI, 메인은 window.CKSKUI — 같은 파일이라 두 대시보드가
+   같은 값을 보여 준다.
+   읽는 법: '확장'과 '주력 유지'를 나눠 봐야 함. 오더가 없던 품번을 여는
+   캠페인(European·MarketFit·Portfolio·중국차)은 전부 증가했고, 이미 주력이던
+   품번을 다루는 Asian vehicle 은 전년 기저가 높아 금액이 줄어든다.            */
+function skuiData(){ return (typeof SKUI!=='undefined'&&SKUI)||window.CKSKUI||null; }
+function skuiMoney(n){
+  const a=Math.abs(n||0);
+  if(a>=1e6) return '$'+(n/1e6).toFixed(2)+'M';
+  if(a>=1e3) return '$'+Math.round(n/1e3)+'K';
+  return '$'+Math.round(n||0).toLocaleString();
+}
+function skuiNum(n){ return Math.round(n||0).toLocaleString(); }
+function skuiPct(v){
+  if(v==null) return '<span class="skui-mut">–</span>';
+  const c=v>=0?'skui-up':'skui-dn';
+  return '<span class="'+c+'">'+(v>=0?'+':'')+v.toFixed(1)+'%</span>';
+}
+function skuiEsc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function skuImpactHTML(){
+  const S=skuiData(); if(!S||S.tgt_sku==null) return '';
+  const C=S.cls||{}, X=(S.extra||[])[0]||null;
+  const tgtAll=S.tgt_all||S.tgt_sku, convAll=S.conv_all||S.conv_sku;
+  const bAll=S.before_all!=null?S.before_all:S.before, aAll=S.after_all!=null?S.after_all:S.after;
+  const yAll=S.yoy_all!=null?S.yoy_all:S.yoy;
+  const convRate=tgtAll?(convAll/tgtAll*100):null;
+  const outSum=Object.values(S.regions_out||{}).reduce((a,b)=>a+b,0);
+
+  // 확장형(전년 기저가 작고 늘어난) vs 주력(기저가 크고 줄어든)
+  const rows=(S.by_camp||[]).slice().sort((a,b)=>(b.before||0)-(a.before||0));
+  const grew=rows.filter(r=>(r.yoy||0)>0).concat(X&&X.yoy>0?[X]:[]);
+  const main=rows.filter(r=>(r.inc||0)<0).sort((a,b)=>a.inc-b.inc)[0]||null;
+  const newBy=rows.filter(r=>r.new>0).sort((a,b)=>b.new-a.new);
+  const dn=(S.top&&S.top['감소'])||[];
+
+  const tile=(lab,val,sub)=>'<div class="skui-tile"><div class="skui-lab">'+lab+'</div>'
+    +'<div class="skui-val">'+val+'</div>'+(sub?'<div class="skui-sub">'+sub+'</div>':'')+'</div>';
+
+  let h='<div class="skui">'
+   +'<div class="skui-hd"><span class="skui-bar"></span><div>'
+   +'<b>SKU 기반 오더 전환 효과 · 종합</b>'
+   +'<div class="skui-sub">SKU 대상 프로모션을 집행한 권역의 캠페인만 취합 — '
+   + skuiEsc((S.regions||[]).join(' · '))+' · 원장 ~'+skuiEsc(S.cut)
+   + (X?' (중국차는 ~'+skuiEsc(X.cut)+' · 월 단위)':'')+'</div></div></div>';
+
+  h+='<div class="skui-tiles">'
+   +tile('대상 SKU', skuiNum(tgtAll)+'종', X?('중국차 '+X.n+'종 포함'):'')
+   +tile('오더 전환', skuiNum(convAll)+'종', convRate!=null?convRate.toFixed(1)+'% · 전년에 없던 품번 '+skuiNum(C['신규']||0)+'종 포함':'')
+   +tile('신규 전환 창출', skuiMoney(S.new_amt), '전년 오더 0 → 당해 오더 발생')
+   +tile('집행 전 → 후', skuiMoney(bAll)+' → '+skuiMoney(aAll), skuiPct(yAll)+' · '+skuiMoney(aAll-bAll))
+   +'</div>';
+
+  h+='<div class="skui-cls">품번 분류 <b>'+skuiNum(C['신규']||0)+'</b> 신규 · '
+   +'<b>'+skuiNum(C['증가']||0)+'</b> 증가 · <b>'+skuiNum(C['유지']||0)+'</b> 유지 · '
+   +'<b>'+skuiNum(C['감소']||0)+'</b> 감소 · <b>'+skuiNum(C['이탈']||0)+'</b> 이탈 · '
+   +'<b>'+skuiNum(C['미전환']||0)+'</b> 미전환 '
+   +'<span class="skui-mut">(증가 '+skuiMoney(S.up_amt)+' · 감소·이탈 '+skuiMoney(S.dn_amt)+')</span></div>';
+
+  h+='<div class="skui-wrap"><table class="skui-tbl"><thead><tr>'
+   +'<th>프로모션</th><th>집행 권역</th><th>시작</th><th class="n">대상</th><th class="n">전환</th>'
+   +'<th class="n">신규</th><th class="n">집행 전</th><th class="n">집행 후</th><th class="n">증감</th><th class="n">YoY</th>'
+   +'</tr></thead><tbody>';
+  rows.forEach(r=>{
+    h+='<tr><td><b>'+skuiEsc(r.p)+'</b></td><td>'+skuiEsc((r.region||[]).join(' · '))+'</td>'
+     +'<td>'+skuiEsc(r.start||'–')+'</td><td class="n">'+skuiNum(r.n)+'종</td>'
+     +'<td class="n">'+skuiNum(r.conv)+'종</td><td class="n">'+(r.new?'<b>'+r.new+'종</b>':'·')+'</td>'
+     +'<td class="n">'+skuiMoney(r.before)+'</td><td class="n"><b>'+skuiMoney(r.after)+'</b></td>'
+     +'<td class="n '+((r.inc||0)>=0?'skui-up':'skui-dn')+'">'+((r.inc||0)>=0?'+':'')+skuiMoney(r.inc)+'</td>'
+     +'<td class="n">'+skuiPct(r.yoy)+'</td></tr>';
+  });
+  if(X){
+    h+='<tr class="skui-x"><td><b>'+skuiEsc(X.p)+'</b></td><td>'+skuiEsc((X.region||[]).join(' · '))+'</td>'
+     +'<td>'+skuiEsc(X.start||'–')+'</td><td class="n">'+skuiNum(X.n)+'종</td>'
+     +'<td class="n">'+skuiNum(X.conv)+'종</td><td class="n">·</td>'
+     +'<td class="n">'+skuiMoney(X.before)+'</td><td class="n"><b>'+skuiMoney(X.after)+'</b></td>'
+     +'<td class="n skui-up">+'+skuiMoney(X.inc)+'</td><td class="n">'+skuiPct(X.yoy)+'</td></tr>'
+     +'<tr class="skui-note2"><td colspan="10">중국차는 오더 원장이 따로임 — '+skuiEsc(X.basis)
+     +'. '+skuiEsc(X.note)+'</td></tr>';
+  }
+  h+='</tbody></table></div>';
+
+  const bl=[];
+  if(grew.length) bl.push('<b>오더가 없던 품번을 여는 쪽에서 작동했다</b> · '
+    +grew.map(r=>skuiEsc(r.p)+' '+(r.yoy>=0?'+':'')+r.yoy.toFixed(1)+'%').join(' · ')
+    +' — 커버리지를 넓히는 캠페인은 모두 전년 대비 증가.');
+  if(newBy.length) bl.push('<b>신규 전환 '+skuiNum(C['신규']||0)+'종 · '+skuiMoney(S.new_amt)+'</b> · '
+    +newBy.map(r=>skuiEsc(r.p)+' '+r.new+'종').join(' · ')
+    +' — 전년 오더가 0이던 품번에서 당해 오더가 발생한 것. 부스팅이 노린 지점.');
+  if(main) bl.push('<b>종합이 '+(yAll>=0?'+':'')+yAll.toFixed(1)+'% 인 이유</b> · '
+    +skuiEsc(main.p)+' 한 캠페인 때문. 전년 기저 '+skuiMoney(main.before)
+    +'(전체의 '+Math.round(main.before/bAll*100)+'%)에서 '+skuiMoney(main.inc)+'('+main.yoy.toFixed(1)+'%). '
+    +(dn.length?'이미 주력이던 품번의 역기저 — '+dn.slice(0,3).map(x=>skuiEsc(x.sku)+' '+skuiMoney(x.inc)).join(' · ')+'.':''));
+  bl.push('<b>귀결</b> · 확장과 주력 유지를 나눠 읽어야 함. 신규·확장 캠페인은 '
+    +'오더가 없던 품번을 열어 '+skuiMoney(S.new_amt)+' 를 새로 만들었고, 기존 품번에서도 '
+    +skuiNum(C['증가']||0)+'종이 '+skuiMoney(S.up_amt)+' 늘었음. '
+    +'반면 주력 품번의 역기저가 '+skuiMoney(S.dn_amt)+' 라 합계에서는 확장 성과가 가려짐. '
+    +'합계 한 줄로 캠페인 성패를 판단하면 안 되는 구조.');
+  h+='<ul class="skui-bl">'+bl.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
+
+  h+='<p class="skui-basis">기준 · 양쪽 모두 <b>캠페인 시작일 ~ '+skuiEsc(S.cut)+'</b>(오더 원장 마감)이고 전년은 같은 구간 · '
+   +'전년도 <b>그 캠페인의 고객사</b>만'
+   +(S.drop_amt?' (캠페인 밖 고객사 '+skuiMoney(S.drop_amt)+' · '+skuiNum(S.drop_ords)+'건 제외)':'')
+   +(outSum?' · <b>'+Object.keys(S.regions_out).join('·')+'</b> 는 SKU 대상 프로모션 집행 지역이 아니라 제외(전년 '+skuiMoney(outSum)+')':'')
+   +' · 대상 SKU 는 각 캠페인 target_skus 합집합이라 Portfolio 의 전 품목 카탈로그가 분모를 키움 — 전환율은 캠페인별로 볼 것.</p>';
+
+  return h+'</div>';
+}
+
+function renderSkuImpactBlock() {
+  const el = document.getElementById('skuImpactBlock'); if (!el) return;
+  try { el.innerHTML = skuImpactHTML(); } catch (e) { console.warn('[skui] render failed:', e); }
+}
+
 function applyKpiBridge() {
+  renderSkuImpactBlock();
   const K = window.CKPI; if (!K) return;
   const set = (id, v) => { const e = document.getElementById(id); if (e) e.innerHTML = v; };
   const d = usdToDisplay(), m = n => fmtMoney(n * d);
@@ -13965,6 +14200,7 @@ function injectCopyLinkButtons() {
   localStorage.removeItem('ck_has_personal_data');
   // 효과 분석 기준 KPI 는 환율까지 들고 있어 데이터보다 먼저 읽어 둠
   try { await loadCampaignKpi(); } catch (e) { console.warn('[kpi] skipped:', e); }
+  try { await loadSkuImpact(); renderSkuImpactBlock(); } catch (e) { console.warn('[skui] skipped:', e); }
   try { await loadSharedData(true); } catch (e) { console.warn('Shared data load skipped:', e); }
   // Load explicit per-campaign target SKU lists (SA_list etc.) — best-effort.
   try { await loadCampaignTargetSkus(); } catch (e) { console.warn('target SKU load skipped:', e); }
