@@ -2616,7 +2616,7 @@ function sepMonth(A){
    +(()=>{const _t=campSkuTile();
      return _t
       ? `<div class="tile"><div class="lab">${_t.lab}</div><div class="val">${_t.n.toLocaleString()}<span style="font-size:15px;color:var(--muted)">종</span></div><div class="sub2 sub3">${_t.sub}</div></div>`
-      : `<div class="tile"><div class="lab">캠페인 오더 발생 SKU</div><div class="val">${_gosku.toLocaleString()}<span style="font-size:15px;color:var(--muted)">종</span></div><div class="sub2 sub3">캠페인별 합 · 한 품번이 두 캠페인에 걸리면 두 번 셈</div></div>`;})()
+      : `<div class="tile"><div class="lab">캠페인 연관 오더 발생 SKU</div><div class="val">${_gosku.toLocaleString()}<span style="font-size:15px;color:var(--muted)">종</span></div><div class="sub2 sub3">캠페인별 합 · 한 품번이 두 캠페인에 걸리면 두 번 셈</div></div>`;})()
    +`<div class="tile"><div class="lab">성장 권역</div><div class="val">${_gr.filter(r=>r.a26>r.a25).length}<span style="font-size:16px;color:var(--muted)"> / ${_gr.length}</span></div></div>`
    +`<div class="tile"><div class="lab">집행 캠페인</div><div class="val">${Tov.run}<span style="font-size:16px;color:var(--muted)"> / ${Tov.n}</span></div><div class="sub2">대상 고객 ${Tov.cust.size.toLocaleString()}곳${(()=>{const q=cumCust(+String(D.today).slice(5,7));return q?' · 오더 발생 '+q.ord+'곳 ('+q.conv+'%)':'';})()}</div></div>`
    +`<div class="tile"><div class="lab">달성률</div><div class="val">${Tov.prog.toFixed(0)}%</div><div class="sub2">관측 ${Tov.obs.toLocaleString()}일 / 계획 ${Tov.tot.toLocaleString()}일</div></div></div>`;
@@ -3722,7 +3722,7 @@ function octMonth(A){
       sub:`<span class="${cls(_s26-_s25)}">${_s25?((_s26-_s25)/_s25*100>=0?'+':'')+((_s26-_s25)/_s25*100).toFixed(0)+'%':'–'}</span> · 대상 ${_tsku.toLocaleString()}종 중 ${(_s26/_tsku*100).toFixed(1)}%`}:null,
      (()=>{const _t=campSkuTile();
        return _t ? {lab:_t.lab, val:_t.n.toLocaleString()+'종', sub:_t.sub}
-                 : {lab:'캠페인 오더 발생 SKU', val:_gosku.toLocaleString()+'종',
+                 : {lab:'캠페인 연관 오더 발생 SKU', val:_gosku.toLocaleString()+'종',
                     sub:'캠페인별 합 · 한 품번이 두 캠페인에 걸리면 두 번 셈'};})(),
      {lab:'순증액',val:fmtC(_g26-_g25)},
      {lab:'집행 캠페인',val:`${Tov.run} / ${Tov.n}`,sub:`대상 고객 ${Tov.cust.size.toLocaleString()}곳`},
@@ -4106,7 +4106,7 @@ function campSkuTile(){
   const sub='전체 오더 원장 '+C.ledger.toLocaleString()+'종 중 '
     +(C.cover_pct!=null?'<b>'+C.cover_pct+'%</b>':'–')
     +' · 캠페인별 합 '+C.sum.toLocaleString()+'종(중복 포함)';
-  return {n:C.union, lab:'캠페인 오더 발생 SKU', sub:sub, cover:C.cover_pct, ledger:C.ledger};
+  return {n:C.union, lab:'캠페인 연관 오더 발생 SKU', sub:sub, cover:C.cover_pct, ledger:C.ledger};
 }
 
 function skuImpactHTML(){
