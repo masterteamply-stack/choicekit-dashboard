@@ -67,8 +67,22 @@ CTRY = {'ECUADOR': '에콰도르', 'PERU': '페루', 'COLOMBIA': '콜롬비아',
 def ctry(v):
     v = (v or '').strip()
     return CTRY.get(v.upper(), v)
+# 제품명이 'STABILIZER LINK' / 'STABILIZER LINK ASSY' 처럼 갈려 있어 그대로 세면
+# 같은 품종이 둘로 쪼개짐. 꼬리말을 떼어 한 이름으로 모은다.
+def part(v):
+    v = (v or '').strip().upper()
+    v = re.sub(r'\s+(ASSY|AM|ASS.Y)$', '', v)
+    v = re.sub(r'^S/LINK$', 'STABILIZER LINK', v)
+    return v or '(미지정)'
+# 품번 → 모델군 (MF 의 대상 목록 기준). 한 품번이 두 군에 걸리면 금액을 나눠 센다.
+grp = collections.defaultdict(list)
+for g in groups.values():
+    for c in g['skus']: grp[c].append(g['make'] + ' ' + g['model'])
+
 cu = collections.defaultdict(lambda: {'sku': set(), 'q': 0.0, 'a': 0.0, 'n': 0,
-                                      'first': '9999', 'last': ''})
+                                      'first': '9999', 'last': '',
+                                      'part': collections.Counter(),
+                                      'model': collections.Counter()})
 for r in orders:
     c = r['CTR Code'].strip()
     if c not in start: continue
@@ -76,16 +90,30 @@ for r in orders:
     if d < start[c]: continue
     k = (ctry(r['country']), r['customer'].strip())
     v = cu[k]
-    v['sku'].add(c); v['q'] += float(r['qty'] or 0); v['a'] += float(r['amount'] or 0)
+    amt = float(r['amount'] or 0)
+    v['sku'].add(c); v['q'] += float(r['qty'] or 0); v['a'] += amt
     v['n'] += 1
+    v['part'][part(r['product'])] += amt
+    for m in grp.get(c, []): v['model'][m] += amt / len(grp[c])
     if d < v['first']: v['first'] = d
     if d > v['last']: v['last'] = d
 cust_rows = sorted(
     [{'country': k[0], 'cust': k[1], 'sku': len(v['sku']), 'q': round(v['q']),
       'a': round(v['a']), 'n': v['n'], 'first': v['first'], 'last': v['last'],
-      'avg': round(v['a'] / len(v['sku'])) if v['sku'] else 0}
+      'avg': round(v['a'] / len(v['sku'])) if v['sku'] else 0,
+      'part': (v['part'].most_common(1)[0][0] if v['part'] else ''),
+      'part_pct': (round(v['part'].most_common(1)[0][1] / v['a'] * 100) if v['part'] and v['a'] else None),
+      'part_n': len(v['part']),
+      'model': (v['model'].most_common(1)[0][0] if v['model'] else ''),
+      'model_pct': (round(v['model'].most_common(1)[0][1] / v['a'] * 100) if v['model'] and v['a'] else None),
+      'model_n': len(v['model'])}
      for k, v in cu.items()], key=lambda x: -x['a'])
-cust_tot = {'n_country': len({x['country'] for x in cust_rows}),
+_pt = collections.Counter(); _md = collections.Counter()
+for v in cu.values():
+    _pt.update(v['part']); _md.update(v['model'])
+cust_tot = {'top_part': [{'k': k, 'a': round(a)} for k, a in _pt.most_common(4)],
+            'top_model': [{'k': k, 'a': round(a)} for k, a in _md.most_common(4)],
+            'n_country': len({x['country'] for x in cust_rows}),
             'n_cust': len(cust_rows),
             'sku': len({c for v in cu.values() for c in v['sku']}),
             'a': round(sum(x['a'] for x in cust_rows)),

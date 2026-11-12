@@ -228,7 +228,13 @@
    "n": 68,
    "first": "2026-02-20",
    "last": "2026-09-21",
-   "avg": 8131
+   "avg": 8131,
+   "part": "BALL JOINT",
+   "part_pct": 49,
+   "part_n": 5,
+   "model": "CHEVROLET Aveo",
+   "model_pct": 93,
+   "model_n": 4
   },
   {
    "country": "에콰도르",
@@ -239,7 +245,13 @@
    "n": 27,
    "first": "2026-02-20",
    "last": "2026-08-24",
-   "avg": 4106
+   "avg": 4106,
+   "part": "STABILIZER LINK",
+   "part_pct": 57,
+   "part_n": 6,
+   "model": "CHEVROLET Aveo",
+   "model_pct": 92,
+   "model_n": 4
   },
   {
    "country": "페루",
@@ -250,7 +262,13 @@
    "n": 35,
    "first": "2026-03-03",
    "last": "2026-08-28",
-   "avg": 2226
+   "avg": 2226,
+   "part": "LWR CONTROL ARM",
+   "part_pct": 39,
+   "part_n": 5,
+   "model": "NISSAN Versa",
+   "model_pct": 43,
+   "model_n": 4
   },
   {
    "country": "콜롬비아",
@@ -261,7 +279,13 @@
    "n": 45,
    "first": "2026-02-20",
    "last": "2026-09-21",
-   "avg": 1411
+   "avg": 1411,
+   "part": "STABILIZER LINK",
+   "part_pct": 68,
+   "part_n": 6,
+   "model": "CHEVROLET Aveo",
+   "model_pct": 81,
+   "model_n": 5
   },
   {
    "country": "파나마",
@@ -272,7 +296,13 @@
    "n": 14,
    "first": "2026-03-12",
    "last": "2026-05-14",
-   "avg": 2307
+   "avg": 2307,
+   "part": "STABILIZER LINK",
+   "part_pct": 62,
+   "part_n": 5,
+   "model": "NISSAN Versa",
+   "model_pct": 41,
+   "model_n": 3
   },
   {
    "country": "칠레",
@@ -283,7 +313,13 @@
    "n": 20,
    "first": "2026-06-16",
    "last": "2026-09-07",
-   "avg": 895
+   "avg": 895,
+   "part": "OUTER TIE ROD",
+   "part_pct": 50,
+   "part_n": 4,
+   "model": "NISSAN Versa",
+   "model_pct": 65,
+   "model_n": 4
   },
   {
    "country": "바베이도스",
@@ -294,7 +330,13 @@
    "n": 8,
    "first": "2026-03-23",
    "last": "2026-03-23",
-   "avg": 1889
+   "avg": 1889,
+   "part": "LWR CONTROL ARM",
+   "part_pct": 47,
+   "part_n": 3,
+   "model": "NISSAN Versa",
+   "model_pct": 85,
+   "model_n": 2
   },
   {
    "country": "엘살바도르",
@@ -305,7 +347,13 @@
    "n": 8,
    "first": "2026-03-11",
    "last": "2026-07-06",
-   "avg": 1252
+   "avg": 1252,
+   "part": "STABILIZER LINK",
+   "part_pct": 53,
+   "part_n": 4,
+   "model": "NISSAN Versa",
+   "model_pct": 72,
+   "model_n": 3
   },
   {
    "country": "페루",
@@ -316,7 +364,13 @@
    "n": 18,
    "first": "2026-04-28",
    "last": "2026-08-20",
-   "avg": 419
+   "avg": 419,
+   "part": "STABILIZER LINK",
+   "part_pct": 49,
+   "part_n": 5,
+   "model": "NISSAN Tiida",
+   "model_pct": 35,
+   "model_n": 4
   },
   {
    "country": "파라과이",
@@ -327,7 +381,13 @@
    "n": 5,
    "first": "2026-05-20",
    "last": "2026-09-11",
-   "avg": 844
+   "avg": 844,
+   "part": "STABILIZER LINK",
+   "part_pct": 65,
+   "part_n": 3,
+   "model": "TOYOTA Corolla",
+   "model_pct": 90,
+   "model_n": 3
   },
   {
    "country": "페루",
@@ -338,7 +398,13 @@
    "n": 15,
    "first": "2026-03-20",
    "last": "2026-09-10",
-   "avg": 600
+   "avg": 600,
+   "part": "BALL JOINT",
+   "part_pct": 46,
+   "part_n": 5,
+   "model": "CHEVROLET Aveo",
+   "model_pct": 42,
+   "model_n": 4
   },
   {
    "country": "칠레",
@@ -349,7 +415,13 @@
    "n": 7,
    "first": "2026-08-19",
    "last": "2026-08-19",
-   "avg": 573
+   "avg": 573,
+   "part": "LWR CONTROL ARM",
+   "part_pct": 49,
+   "part_n": 3,
+   "model": "NISSAN Versa",
+   "model_pct": 63,
+   "model_n": 3
   },
   {
    "country": "가이아나",
@@ -360,7 +432,13 @@
    "n": 6,
    "first": "2026-04-27",
    "last": "2026-04-27",
-   "avg": 984
+   "avg": 984,
+   "part": "STABILIZER LINK",
+   "part_pct": 75,
+   "part_n": 3,
+   "model": "NISSAN Versa",
+   "model_pct": 62,
+   "model_n": 2
   },
   {
    "country": "콜롬비아",
@@ -371,7 +449,13 @@
    "n": 11,
    "first": "2026-03-20",
    "last": "2026-08-24",
-   "avg": 303
+   "avg": 303,
+   "part": "LWR CONTROL ARM",
+   "part_pct": 49,
+   "part_n": 5,
+   "model": "CHEVROLET Aveo",
+   "model_pct": 71,
+   "model_n": 3
   },
   {
    "country": "아르헨티나",
@@ -382,7 +466,13 @@
    "n": 11,
    "first": "2026-09-18",
    "last": "2026-09-18",
-   "avg": 220
+   "avg": 220,
+   "part": "BALL JOINT",
+   "part_pct": 34,
+   "part_n": 4,
+   "model": "NISSAN Versa",
+   "model_pct": 49,
+   "model_n": 3
   },
   {
    "country": "파나마",
@@ -393,7 +483,13 @@
    "n": 16,
    "first": "2026-03-17",
    "last": "2026-09-21",
-   "avg": 222
+   "avg": 222,
+   "part": "STABILIZER LINK",
+   "part_pct": 38,
+   "part_n": 5,
+   "model": "NISSAN Versa",
+   "model_pct": 52,
+   "model_n": 4
   },
   {
    "country": "과테말라",
@@ -404,7 +500,13 @@
    "n": 15,
    "first": "2026-09-14",
    "last": "2026-09-14",
-   "avg": 73
+   "avg": 73,
+   "part": "OUTER TIE ROD",
+   "part_pct": 36,
+   "part_n": 4,
+   "model": "NISSAN Versa",
+   "model_pct": 32,
+   "model_n": 4
   },
   {
    "country": "과테말라",
@@ -415,7 +517,13 @@
    "n": 2,
    "first": "2026-03-12",
    "last": "2026-03-12",
-   "avg": 981
+   "avg": 981,
+   "part": "STABILIZER LINK",
+   "part_pct": 100,
+   "part_n": 1,
+   "model": "NISSAN Versa",
+   "model_pct": 50,
+   "model_n": 2
   },
   {
    "country": "페루",
@@ -426,7 +534,13 @@
    "n": 2,
    "first": "2026-08-18",
    "last": "2026-08-18",
-   "avg": 468
+   "avg": 468,
+   "part": "STABILIZER LINK",
+   "part_pct": 68,
+   "part_n": 2,
+   "model": "NISSAN Tiida",
+   "model_pct": 66,
+   "model_n": 2
   },
   {
    "country": "온두라스",
@@ -437,7 +551,13 @@
    "n": 4,
    "first": "2026-03-11",
    "last": "2026-09-04",
-   "avg": 210
+   "avg": 210,
+   "part": "STABILIZER LINK",
+   "part_pct": 44,
+   "part_n": 3,
+   "model": "TOYOTA Corolla",
+   "model_pct": 36,
+   "model_n": 4
   },
   {
    "country": "푸에르토리코",
@@ -448,7 +568,13 @@
    "n": 3,
    "first": "2026-07-13",
    "last": "2026-07-27",
-   "avg": 389
+   "avg": 389,
+   "part": "LWR CONTROL ARM",
+   "part_pct": 92,
+   "part_n": 2,
+   "model": "NISSAN Versa",
+   "model_pct": 100,
+   "model_n": 1
   },
   {
    "country": "과테말라",
@@ -459,7 +585,13 @@
    "n": 7,
    "first": "2026-04-20",
    "last": "2026-04-20",
-   "avg": 145
+   "avg": 145,
+   "part": "BALL JOINT",
+   "part_pct": 53,
+   "part_n": 3,
+   "model": "NISSAN Versa",
+   "model_pct": 78,
+   "model_n": 2
   },
   {
    "country": "코스타리카",
@@ -470,7 +602,13 @@
    "n": 4,
    "first": "2026-04-20",
    "last": "2026-04-20",
-   "avg": 184
+   "avg": 184,
+   "part": "BALL JOINT",
+   "part_pct": 55,
+   "part_n": 2,
+   "model": "CHEVROLET Aveo",
+   "model_pct": 100,
+   "model_n": 1
   },
   {
    "country": "아르헨티나",
@@ -481,7 +619,13 @@
    "n": 7,
    "first": "2026-03-06",
    "last": "2026-08-25",
-   "avg": 106
+   "avg": 106,
+   "part": "BALL JOINT",
+   "part_pct": 63,
+   "part_n": 3,
+   "model": "CHEVROLET Aveo",
+   "model_pct": 54,
+   "model_n": 4
   },
   {
    "country": "코스타리카",
@@ -492,7 +636,13 @@
    "n": 4,
    "first": "2026-05-20",
    "last": "2026-07-20",
-   "avg": 136
+   "avg": 136,
+   "part": "OUTER TIE ROD",
+   "part_pct": 91,
+   "part_n": 2,
+   "model": "CHEVROLET Aveo",
+   "model_pct": 91,
+   "model_n": 2
   },
   {
    "country": "코스타리카",
@@ -503,7 +653,13 @@
    "n": 4,
    "first": "2026-09-03",
    "last": "2026-09-03",
-   "avg": 94
+   "avg": 94,
+   "part": "OUTER TIE ROD",
+   "part_pct": 59,
+   "part_n": 3,
+   "model": "CHEVROLET Aveo",
+   "model_pct": 100,
+   "model_n": 1
   },
   {
    "country": "엘살바도르",
@@ -514,7 +670,13 @@
    "n": 1,
    "first": "2026-03-11",
    "last": "2026-03-11",
-   "avg": 373
+   "avg": 373,
+   "part": "STABILIZER LINK",
+   "part_pct": 100,
+   "part_n": 1,
+   "model": "NISSAN Versa",
+   "model_pct": 50,
+   "model_n": 2
   },
   {
    "country": "도미니카 공화국",
@@ -525,7 +687,13 @@
    "n": 3,
    "first": "2026-04-21",
    "last": "2026-08-13",
-   "avg": 142
+   "avg": 142,
+   "part": "INNER TIE ROD",
+   "part_pct": 68,
+   "part_n": 2,
+   "model": "NISSAN Versa",
+   "model_pct": 68,
+   "model_n": 2
   },
   {
    "country": "브라질",
@@ -536,10 +704,52 @@
    "n": 2,
    "first": "2026-08-18",
    "last": "2026-08-18",
-   "avg": 17
+   "avg": 17,
+   "part": "BUSH",
+   "part_pct": 100,
+   "part_n": 1,
+   "model": "TOYOTA Corolla",
+   "model_pct": 100,
+   "model_n": 1
   }
  ],
  "cust_tot": {
+  "top_part": [
+   {
+    "k": "STABILIZER LINK",
+    "a": 120386
+   },
+   {
+    "k": "BALL JOINT",
+    "a": 86456
+   },
+   {
+    "k": "LWR CONTROL ARM",
+    "a": 54115
+   },
+   {
+    "k": "OUTER TIE ROD",
+    "a": 52854
+   }
+  ],
+  "top_model": [
+   {
+    "k": "CHEVROLET Aveo",
+    "a": 224832
+   },
+   {
+    "k": "NISSAN Versa",
+    "a": 64933
+   },
+   {
+    "k": "NISSAN Tiida",
+    "a": 26930
+   },
+   {
+    "k": "TOYOTA Corolla",
+    "a": 8983
+   }
+  ],
   "n_country": 16,
   "n_cust": 29,
   "sku": 32,
