@@ -132,12 +132,28 @@ def kv_totals(path):
             by[y] += float(r[9] or 0); n[y] += 1
         if not by:
             continue
+        # 오더를 '건' 이 아니라 '접수일' 로 묶는다 — 한 번 보낸 오더가 문서 2~3개로
+        # 쪼개져 들어오기 때문이다(280BA26G1B/1C/1S 는 같은 날 한 묶음).
+        batch = collections.defaultdict(lambda: {'amt': 0.0, 'qty': 0, 'docs': 0})
+        for r in D['ord']:
+            if r[1] != i:
+                continue
+            off = r[2]
+            if off is None or off < -90000:
+                continue
+            d = (ep + datetime.timedelta(days=off)).isoformat()
+            e = batch[d]; e['amt'] += float(r[9] or 0); e['qty'] += int(r[7] or 0); e['docs'] += 1
+        tl = [{'d': d, 'amt': round(v['amt'], 2), 'qty': v['qty'], 'docs': v['docs']}
+              for d, v in sorted(batch.items())]
         out[str(c[0]).strip().upper()] = {
             'name': c[0],
             'region': REG[c[1]] if c[1] < len(REG) else '',
             'country': CTY[c[2]] if c[2] < len(CTY) else '',
             'code': c[3],
             'by_year': [{'y': y, 'amt': round(by[y], 2), 'n': n[y]} for y in sorted(by)],
+            'timeline': tl,
+            'first': tl[0]['d'] if tl else '',
+            'batches': len(tl),
         }
     return out, (D.get('meta', {}).get('srcOrder') or os.path.basename(path)), \
         (D.get('meta', {}).get('snap') or '')
@@ -282,6 +298,13 @@ def main():
             rec['tot26'] = cur[0]['amt'] if cur else 0
             rec['tot25'] = prv[0]['amt'] if prv else 0
             rec['new_cust'] = not any(x['y'] < 2026 for x in t['by_year'])
+            # 첫 오더가 2025 하반기 이후면 '램프업 중' — 전년 동기 비교가 성립하지 않는다.
+            # 전년에 오더 묶음이 한 번뿐이어도 마찬가지(계절 비교가 아니라 거래 시작이다).
+            first = t.get('first') or ''
+            prior = [x for x in (t.get('timeline') or []) if x['d'] < '2026-01-01']
+            rec['first_order'] = first
+            rec['prior_batches'] = len(prior)
+            rec['ramp'] = bool(rec['new_cust'] or first >= '2025-07-01' or len(prior) <= 1)
             if rec['tot26'] and r.get('got'):
                 rec['share'] = round(r['got'] / rec['tot26'] * 100, 1)
 
@@ -414,6 +437,27 @@ def main():
                     cv25, cv26 = rec['sku'].get('cov25'), rec['sku'].get('cov26')
                     rec['sku']['partial'] = bool(
                         (cv25 is not None and cv25 < 90) or (cv26 is not None and cv26 < 90))
+                    # 램프업 중인 거래처는 전년이 '시즌'이 아니라 '첫 거래'다.
+                    # 이탈·감소·YoY 는 뜻이 없으므로 내보내지 않는다.
+                    if rec.get('ramp'):
+                        # 램프업 거래처에서는 '전년' 이 시즌이 아니라 **첫 오더**다.
+                        # 그래서 말을 바꾼다 — 줄었다/끊겼다가 아니라 '아직 재오더 안 됨'.
+                        rec['sku']['ramp'] = True
+                        rec['sku']['base_label'] = '첫 오더(%s) 기준' % (rec.get('first_order') or '')
+                        rec['sku']['ramp_cls'] = {
+                            '첫 오더에 없던 품번을 새로 담음': cls.get('신규', 0),
+                            '첫 오더에도 있었고 더 담음': cls.get('증가', 0),
+                            '첫 오더만큼 담음': cls.get('유지', 0),
+                            '아직 재오더 안 됨': cls.get('이탈', 0) + cls.get('감소', 0),
+                            '한 번도 오더 없음': cls.get('미개척', 0),
+                        }
+                        rec['sku']['ramp_amt'] = {
+                            'new': round(amt['신규'], 2), 'up': round(amt['증가'], 2),
+                            'grow': round(amt['신규'] + amt['증가'], 2),
+                        }
+                        rec['sku']['pending_n'] = cls.get('이탈', 0) + cls.get('감소', 0)
+                        for k0 in ('l_yoy', 'decomp', 'top_dn'):
+                            rec['sku'].pop(k0, None)
                     rec['sku']['span25'] = sp25
                     rec['sku']['span26'] = sp26
                 else:
@@ -470,11 +514,23 @@ def main():
                   % (s.get('top_n'), s.get('top_full_n'), s.get('top_hit'), s.get('top_pct'),
                      format(round(s.get('top_amt') or 0), ','), s.get('off_n'),
                      format(round(s.get('off_amt') or 0), ',')))
-            print('      목록 전체 전년 $%s → 당해 $%s (%s%%) · %s'
-                  % (format(round(s.get('l25') or 0), ','), format(round(s.get('l26') or 0), ','),
-                     s.get('l_yoy'),
-                     ' · '.join('%s %d종' % (k, v) for k, v in (s.get('cls') or {}).items())))
-            for d0 in (s.get('decomp') or []):
+            if s.get('ramp'):
+                print('      ※ 램프업 거래처(첫 오더 %s) — 전년 동기 비교가 성립하지 않아 '
+                      '이탈·감소·YoY 는 내보내지 않음' % (m.get('first_order') or '?'))
+            if s.get('ramp'):
+                ra = s.get('ramp_amt') or {}
+                print('      첫 오더 $%s → 2026 $%s · 오더가 커진 몫 +$%s'
+                      % (format(round(s.get('l25') or 0), ','),
+                         format(round(s.get('l26') or 0), ','),
+                         format(round(ra.get('grow') or 0), ',')))
+                for k0, v0 in (s.get('ramp_cls') or {}).items():
+                    if v0: print('        %-28s %3d종' % (k0, v0))
+            else:
+                print('      목록 전체 전년 $%s → 당해 $%s (%s%%) · %s'
+                      % (format(round(s.get('l25') or 0), ','),
+                         format(round(s.get('l26') or 0), ','), s.get('l_yoy'),
+                         ' · '.join('%s %d종' % (k, v) for k, v in (s.get('cls') or {}).items())))
+            for d0 in (s.get('decomp') or []):   # 램프업이면 비어 있다
                 if d0['v']:
                     print('        %-34s %s$%s' % (d0['k'], '+' if d0['v'] > 0 else '-',
                                                     format(round(abs(d0['v'])), ',')))
