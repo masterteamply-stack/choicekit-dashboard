@@ -13938,9 +13938,10 @@ function ssmSectionHTML(S, opt){
     if(s.mode==='full') sk='신규 <b>'+N(s.conv)+'종</b> + 재전환 <b>'+N(s.recov)+'종</b> '
       +'<span class="skui-mut">= 미션 매출의 '+(s.cover_pct!=null?s.cover_pct.toFixed(1):'–')+'%</span>';
     else if(s.mode==='top'){ const ca=s.cls_amt||{}, cl=s.cls||{};
-      sk='원장에 보이는 '+N(s.top_seen_n||s.top_full_n)+'종 중 <b>'+N(s.top_hit)+'종</b> 전환 '
-       +'<span class="skui-mut">('+(s.top_pct!=null?s.top_pct.toFixed(1):'–')+'% · 목록 '
-       +N(s.top_full_n)+'종 중 '+N(s.top_unseen_n||0)+'종은 원장 밖)</span><br>'
+      sk=(s.top_unseen_n?('원장에 보이는 '+N(s.top_seen_n)+'종'):('목록 '+N(s.top_full_n)+'종'))
+       +' 중 <b>'+N(s.top_hit)+'종</b> 전환 '
+       +'<span class="skui-mut">('+(s.top_pct!=null?s.top_pct.toFixed(1):'–')+'%'
+       +(s.top_unseen_n?(' · '+N(s.top_unseen_n)+'종은 원장 밖'):'')+')</span><br>'
        +'<span class="skui-mut">오더가 커진 몫 <b class="skui-up">+'
        +M((s.ramp_amt&&s.ramp_amt.grow)||((ca['신규']||0)+(ca['증가']||0)))+'</b> '
        +'— '+(s.ramp?'새로 담은 ':'신규 ')+N(cl['신규']||0)+'종 · '
@@ -13968,7 +13969,7 @@ function ssmSectionHTML(S, opt){
     +((kz.sku&&kz.sku.mode==='top')
        ? ('<b>'+E(kz.cust)+'는 '+E(kz.first_order||'')+' 이 첫 오더인 신규 거래처라 전년 대비로 읽으면 안 된다.</b> '
           +'그 힘은 품번을 새로 연 데서가 아니라 <b>첫 오더에도 있던 품번을 더 담게 한 데</b>서 나왔다 — '
-          +'목록 '+N(kz.sku.top_full_n)+'종 가운데 원장에 보이는 '+N(kz.sku.top_seen_n)+'종 중 '
+          +'목록 '+N(kz.sku.top_full_n)+'종 중 '
           +N(kz.sku.top_hit)+'종('+(kz.sku.top_pct!=null?kz.sku.top_pct.toFixed(0):'–')+'%)이 오더로 잡혔고, '
           +'그중 증가 '+N((kz.sku.cls||{})['증가']||0)+'종이 <b>+'+M((kz.sku.cls_amt||{})['증가']||0)+'</b>, '
           +'신규 '+N((kz.sku.cls||{})['신규']||0)+'종이 +'+M((kz.sku.cls_amt||{})['신규']||0)+' 를 더했다. '
@@ -14002,8 +14003,9 @@ function ssmSectionHTML(S, opt){
      +M(K.a26)+' ('+(K.a26/K.tot26*100).toFixed(1)+'%)</span></div>'
      +kjkDetailHTML(K);
   }
-  if(kz&&kz.sku&&(kz.sku.mode==='ledger'||kz.sku.mode==='top')) h+=ssmLedgerHTML(kz);
-  if(az&&az.sku&&az.sku.mode==='none'&&az.total&&(az.total.timeline||[]).length) h+=ssmNoLineHTML(az);
+  [kz,az].forEach(x=>{ if(!x||!x.sku) return;
+    if(x.sku.mode==='ledger'||x.sku.mode==='top') h+=ssmLedgerHTML(x);
+    else if(x.sku.mode==='none'&&x.total&&(x.total.timeline||[]).length) h+=ssmNoLineHTML(x); });
   return (opt&&opt.embed) ? h : (h+'</div>');
 }
 
@@ -14055,9 +14057,13 @@ function ssmLedgerHTML(m){
     const cls=s.cls||{}, ca=s.cls_amt||{}, ramp=!!s.ramp;
     const grow=(s.ramp_amt&&s.ramp_amt.grow)||((ca['신규']||0)+(ca['증가']||0));
     h+='<div class="skui-cls"><b>미션 목록 '+N(s.top_full_n)+'종</b> '
-     +'<span class="skui-mut">(TOP '+N(s.top_n)+' + Pair)</span> 중 이 원장에 보이는 '
-     +'<b>'+N(s.top_seen_n)+'종</b> 가운데 <b>'+N(s.top_hit)+'종</b>이 오더로 전환 — <b>'+pct+'%</b> · '+M(s.top_amt)
+     +'<span class="skui-mut">(TOP '+N(s.top_n)+' + Pair)</span> 중 '
+     +(s.top_unseen_n?('이 원장에 보이는 <b>'+N(s.top_seen_n)+'종</b> 가운데 '):'')
+     +'<b>'+N(s.top_hit)+'종</b>이 오더로 전환 — <b>'+pct+'%</b> · '+M(s.top_amt)
      +' <span class="skui-mut">· 목록 밖 품번 '+N(s.off_n)+'종 '+M(s.off_amt)+'</span></div>';
+    if(s.full_lines) h+='<div class="skui-cls skui-mut" style="margin-top:4px">'
+     +'SAP 오더 라인 전량으로 맞췄다 — ChoiceKit 대상 SKU 밖까지 들어 있어 목록 '
+     +N(s.top_full_n)+'종 전체가 분모다.</div>';
     if(s.top_unseen_n) h+='<div class="skui-cls skui-mut" style="margin-top:4px">'
      +'나머지 <b>'+N(s.top_unseen_n)+'종</b>은 ChoiceKit 대상 SKU 가 아니라 이 원장에 아예 나오지 않는다 — '
      +'<b>안 산 게 아니라 안 보이는 것</b>이라 전환 여부를 여기서 판단할 수 없다. '
@@ -14080,7 +14086,8 @@ function ssmLedgerHTML(m){
      +' · '+(ramp?'더 담은 품번 ':'증가 ')+N(cls['증가']||0)+'종 +'+M(ca['증가']||0)+'</div></div>'
      +'<div class="skui-tile"><div class="skui-lab">전환된 품번</div>'
      +'<div class="skui-val">'+N(s.top_hit)+'종</div>'
-     +'<div class="skui-sub">원장에 보이는 '+N(s.top_seen_n)+'종 중 '+pct+'% · '+M(s.top_amt)+'</div></div>'
+     +'<div class="skui-sub">'+(s.top_unseen_n?('원장에 보이는 '+N(s.top_seen_n)+'종'):('목록 '+N(s.top_full_n)+'종'))
+     +' 중 '+pct+'% · '+M(s.top_amt)+'</div></div>'
      +'<div class="skui-tile"><div class="skui-lab">'+(ramp?'아직 재오더 안 된 품번':'아직 안 열린 품번')+'</div>'
      +'<div class="skui-val">'+N(ramp?(s.pending_n||0):(cls['미개척']||0))+'종</div>'
      +'<div class="skui-sub">'+(ramp

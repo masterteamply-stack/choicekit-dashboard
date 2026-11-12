@@ -31,7 +31,7 @@
   합산          이 미션들은 각 고객사 단독 미션이다. ChoiceKit 연관 오더에
                더하지 않는다 (교집합은 이미 한쪽에서 세고 있다).
 """
-import argparse, collections, csv, glob, json, os, re, sys
+import argparse, collections, csv, datetime, glob, json, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'steerstar_missions.json')
@@ -63,6 +63,77 @@ def ss_rows():
     for r in (SS.get('rows') or []):
         out[(r.get('name') or '').strip()] = r
     return out, SS
+
+
+def read_cis_exports(paths):
+    """SAP 오더 라인 export 에서 고객사별 품번 줄을 읽는다.
+
+    두 가지 서식이 섞여 온다.
+      A) 판매처(명) · CTR Code · 정가(USD) · 생성일  (export_CIS_1-6 형식)
+      B) 납품처(코드) · 이름 2 · 자재(옛 부품번호) · 오더 수량 · 주문_단가
+         (export_7-8_CTR 형식) — CTR Code 가 없어 A 에서 만든 자재→CTR 맵으로 잇는다.
+    그래서 A 를 먼저 다 읽어 맵을 만든 뒤 B 를 읽는다.
+
+    이게 있어야 미션 목록 전체(203·80종)를 분모로 쓸 수 있다. ChoiceKit 원장은
+    대상 SKU 라인만 담아 목록의 3분의 1밖에 안 보였다.
+    """
+    import openpyxl
+    mat2ctr, name = {}, {}
+    rowsA, filesB = [], []
+    for path in paths:
+        wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+        ws = wb[wb.sheetnames[0]]
+        it = ws.iter_rows(values_only=True)
+        h = [str(x) for x in next(it)]
+        if 'CTR Code' in h and '판매처(명)' in h:
+            I = {c: h.index(c) for c in ('자재', 'CTR Code', '판매처(명)', '오더 수량',
+                                         '정가(USD)', '생성일', '자재(명)')}
+            for r in it:
+                mat = str(r[I['자재']] or '').strip()
+                ctr = str(r[I['CTR Code']] or '').strip().upper()
+                if mat and ctr:
+                    mat2ctr[mat] = ctr
+                if ctr:
+                    name.setdefault(ctr, str(r[I['자재(명)']] or '').strip())
+                d = r[I['생성일']]
+                d = d.strftime('%Y-%m-%d') if isinstance(d, datetime.datetime) else str(d)[:10]
+                rowsA.append((str(r[I['판매처(명)']] or '').strip().upper(), ctr,
+                              float(r[I['정가(USD)']] or 0), int(r[I['오더 수량']] or 0), d))
+            wb.close()
+        else:
+            wb.close(); filesB.append(path)
+    rowsB = []
+    for path in filesB:
+        wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+        ws = wb[wb.sheetnames[0]]
+        it = ws.iter_rows(values_only=True)
+        h = [str(x) for x in next(it)]
+        need = ('생성일', '자재', '내역', '이름 2', '오더 수량', '주문_단가', '주문_단위수량')
+        if not all(c in h for c in need):
+            wb.close(); continue
+        I = {c: h.index(c) for c in need}
+        for r in it:
+            mat = str(r[I['자재']] or '').strip()
+            ctr = mat2ctr.get(mat)
+            if not ctr:
+                continue          # 할인줄(SALE_REDUCTION) 등 — 품번이 아니면 버린다
+            name.setdefault(ctr, str(r[I['내역']] or '').strip())
+            q = float(r[I['오더 수량']] or 0)
+            up = float(r[I['주문_단가']] or 0)
+            pu = float(r[I['주문_단위수량']] or 1) or 1
+            d = r[I['생성일']]
+            d = d.strftime('%Y-%m-%d') if isinstance(d, datetime.datetime) else str(d)[:10]
+            rowsB.append((str(r[I['이름 2']] or '').strip().upper(), ctr,
+                          q * up / pu, int(q), d))
+        wb.close()
+    out = collections.defaultdict(lambda: collections.defaultdict(
+        lambda: {'amt': 0.0, 'qty': 0, 'dates': set()}))
+    for cu, ctr, amt, qty, d in rowsA + rowsB:
+        if not cu or not ctr:
+            continue
+        e = out[cu][ctr]; e['amt'] += amt; e['qty'] += qty
+        if d: e['dates'].add(d)
+    return out, name
 
 
 def ck_scope():
@@ -274,6 +345,10 @@ def main():
                                            '미션을 정의하는 TOP 200 / TOP 80 품번 목록. '
                                            '시트 Bauten_Mission SKUs · Retems_Mission SKUs, '
                                            '열 Code + PAIR')
+    ap.add_argument('--cis-export', nargs='*', default=None,
+                    help='SAP 오더 라인 export (export_CIS_1-6.XLSX · export_7-8_CTR.XLSX). '
+                         '여러 개를 한 번에 준다. ChoiceKit 대상 SKU 밖까지 담겨 있어 '
+                         '미션 목록 전체를 분모로 쓸 수 있다.')
     ap.add_argument('--kv', help='전사 오더 원장 대시보드 (KV_Orders_*.html) — '
                                  '고객사별 연도별 전체 오더를 여기서 꺼낸다')
     a = ap.parse_args()
@@ -290,6 +365,13 @@ def main():
                     kvtot[(m0.get('total', {}).get('name') or m0['cust']).strip().upper()] = m0['total']
 
     rows, SS = ss_rows()
+    # SAP 오더 라인 export — 있으면 이게 품번 단위의 원본이 된다
+    cis, cis_name, cis_src = ({}, {}, [])
+    if a.cis_export:
+        cis, cis_name = read_cis_exports(a.cis_export)
+        cis_src = [re.sub(r'^[0-9a-f]{6,}-', '', os.path.basename(x)) for x in a.cis_export]
+    elif os.path.exists(OUT):
+        cis_src = (json.load(open(OUT, encoding='utf-8')).get('line_src') or [])
     tops, tops_src = {}, ''
     if a.mission_xlsx:
         tops, tops_src = read_mission_list(a.mission_xlsx)
@@ -309,7 +391,7 @@ def main():
            '_basis': '각 고객사 단독 미션 — ChoiceKit 연관 오더에 더하지 않는다.',
            'lead_target': SS.get('lead_target'),
            'ledger_src': kvsrc, 'ledger_snap': kvsnap,
-           'mission_list_src': tops_src, 'missions': []}
+           'mission_list_src': tops_src, 'line_src': cis_src, 'missions': []}
 
     for M in MISSIONS:
         r = rows.get(M['cust'])
@@ -359,6 +441,19 @@ def main():
                               'detail': 'steerstar_sku.json'}
         else:
             y25, y26, q25, q26, name, cut, sp25, sp26 = ledger_sku(M['cust'])
+            # SAP export 가 있으면 2026 품번은 그걸로 갈아끼운다 — ChoiceKit 대상
+            # 밖까지 담고 있어 미션 목록 전체를 볼 수 있다.
+            ce = cis.get(M['cust'].strip().upper())
+            if ce:
+                y26 = collections.Counter({k: round(v['amt'], 2) for k, v in ce.items()})
+                q26 = collections.Counter({k: v['qty'] for k, v in ce.items()})
+                name = {**cis_name, **name}
+                ds = sorted({d for v in ce.values() for d in v['dates']})
+                if ds:
+                    cut, sp26 = ds[-1], (ds[0], ds[-1])
+                full_lines = True
+            else:
+                full_lines = False
             top = tops.get(M['key'])
             if not y26 and not y25:
                 why = ('대시보드가 쓰는 CIS 원장은 ChoiceKit 캠페인 고객사만 담고 있어 '
@@ -406,9 +501,14 @@ def main():
                     codes, pairs = top['codes'], top['pairs']
                     full = codes | pairs
                     # 원장이 담는 범위로 좁힌다 — 밖은 '안 샀다' 가 아니라 '안 보인다'
-                    scope = ck_scope()
-                    seen = (full & scope) if scope else set(full)
-                    unseen = full - seen
+                    # 품번 줄이 전량으로 들어왔으면 목록 전체가 분모다.
+                    # ChoiceKit 원장만 있을 때만 '보이는 범위'로 좁힌다.
+                    if full_lines:
+                        seen, unseen = set(full), set()
+                    else:
+                        scope = ck_scope()
+                        seen = (full & scope) if scope else set(full)
+                        unseen = full - seen
                     # 목록은 '미오더' 만이 아니라 **저오더 품번**도 함께 담고 있다.
                     # 그래서 전년 오더가 있는 게 정상이고, 미션 효과는 두 갈래로 본다:
                     #   ① 안 사던 걸 열었나 (신규)   ② 사던 걸 더 사게 했나 (증가)
@@ -472,6 +572,7 @@ def main():
                         # 이 원장이 그 고객사 오더를 얼마나 담고 있나 —
                         # 전사 원장(KV) 대비 비율. 적게 담고 있으면 '없음'을
                         # 근거로 하는 숫자(이탈·감소·YoY)는 못 믿는다.
+                        'full_lines': full_lines,
                         'cov25': (round(l25_all / rec['tot25'] * 100, 1)
                                   if rec.get('tot25') else None),
                         'cov26': (round(l26_all / rec['tot26'] * 100, 1)
@@ -558,13 +659,18 @@ def main():
                      s.get('new_n'), format(round(s.get('new_amt') or 0), ',')))
             print('      ※ ' + s.get('caveat', ''))
         elif s.get('mode') == 'top':
-            print('      미션 목록 %s종(TOP %s + Pair) 중 원장에 보이는 건 %s종 — '
-                  '그중 %s종 전환 (%s%%) $%s'
-                  % (s.get('top_full_n'), s.get('top_n'), s.get('top_seen_n'),
-                     s.get('top_hit'), s.get('top_pct'),
-                     format(round(s.get('top_amt') or 0), ',')))
-            print('      나머지 %s종은 ChoiceKit 대상 SKU 가 아니라 이 원장에 아예 안 나옴 '
-                  '— 전환 여부 확인 불가' % s.get('top_unseen_n'))
+            if s.get('top_unseen_n'):
+                print('      미션 목록 %s종(TOP %s + Pair) 중 원장에 보이는 건 %s종 — '
+                      '그중 %s종 전환 (%s%%) $%s'
+                      % (s.get('top_full_n'), s.get('top_n'), s.get('top_seen_n'),
+                         s.get('top_hit'), s.get('top_pct'),
+                         format(round(s.get('top_amt') or 0), ',')))
+                print('      나머지 %s종은 ChoiceKit 대상 SKU 가 아니라 이 원장에 아예 안 나옴 '
+                      '— 전환 여부 확인 불가' % s.get('top_unseen_n'))
+            else:
+                print('      미션 목록 %s종(TOP %s + Pair) 중 %s종 전환 (%s%%) $%s'
+                      % (s.get('top_full_n'), s.get('top_n'), s.get('top_hit'),
+                         s.get('top_pct'), format(round(s.get('top_amt') or 0), ',')))
             if s.get('ramp'):
                 print('      ※ 램프업 거래처(첫 오더 %s) — 전년 동기 비교가 성립하지 않아 '
                       '이탈·감소·YoY 는 내보내지 않음' % (m.get('first_order') or '?'))

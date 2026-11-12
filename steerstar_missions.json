@@ -5,6 +5,10 @@
  "ledger_src": "ORD_Progress_20261104.csv",
  "ledger_snap": "20261103",
  "mission_list_src": "SteerStar_Order_Mission_for_Bauten__Retems.xlsx",
+ "line_src": [
+  "export_CIS_1-6.XLSX",
+  "export_7-8_CTR.XLSX"
+ ],
  "missions": [
   {
    "key": "kailos",
@@ -2747,16 +2751,16 @@
    "share": 70.9,
    "sku": {
     "mode": "top",
-    "cut": "2026-07-20",
+    "cut": "2026-07-22",
     "base_label": "첫 오더(2025-09-24) 기준",
     "n25": 400,
     "a25": 257687.9,
-    "n26": 90,
-    "a26": 181507.3,
-    "new_n": 23,
-    "new_amt": 7531.12,
-    "rep_n": 67,
-    "rep_amt": 173976.18,
+    "n26": 456,
+    "a26": 376605.71,
+    "new_n": 146,
+    "new_amt": 43791.7,
+    "rep_n": 310,
+    "rep_amt": 332814.01,
     "top": [
      {
       "sku": "CL0557",
@@ -2857,6 +2861,36 @@
     ],
     "top_new": [
      {
+      "sku": "GV0043",
+      "name": "BUSH AM",
+      "y25": 0,
+      "y26": 2041.2,
+      "inc": 2041.2,
+      "qty": 1512,
+      "kind": "신규",
+      "pair": false
+     },
+     {
+      "sku": "CR0703",
+      "name": "INNER TIE ROD ASSY",
+      "y25": 0,
+      "y26": 888.0,
+      "inc": 888.0,
+      "qty": 150,
+      "kind": "신규",
+      "pair": false
+     },
+     {
+      "sku": "GV0464",
+      "name": "BUSH AM",
+      "y25": 0,
+      "y26": 835.2,
+      "inc": 835.2,
+      "qty": 240,
+      "kind": "신규",
+      "pair": false
+     },
+     {
       "sku": "GV0538",
       "name": "BUSH AM",
       "y25": 0,
@@ -2877,6 +2911,16 @@
       "pair": false
      },
      {
+      "sku": "CB0255",
+      "name": "BALL JOINT ASSY",
+      "y25": 0,
+      "y26": 533.76,
+      "inc": 533.76,
+      "qty": 64,
+      "kind": "신규",
+      "pair": false
+     },
+     {
       "sku": "GV0483",
       "name": "BUSH AM",
       "y25": 0,
@@ -2887,11 +2931,31 @@
       "pair": false
      },
      {
+      "sku": "CL0657",
+      "name": "STABILIZER LINK ASSY",
+      "y25": 0,
+      "y26": 496.32,
+      "inc": 496.32,
+      "qty": 96,
+      "kind": "신규",
+      "pair": false
+     },
+     {
       "sku": "GV0148",
       "name": "BUSH AM",
       "y25": 0,
       "y26": 442.68,
       "inc": 442.68,
+      "qty": 124,
+      "kind": "신규",
+      "pair": false
+     },
+     {
+      "sku": "GV0072",
+      "name": "BUSH AM",
+      "y25": 0,
+      "y26": 415.4,
+      "inc": 415.4,
       "qty": 124,
       "kind": "신규",
       "pair": false
@@ -2907,45 +2971,46 @@
       "pair": false
      },
      {
-      "sku": "CL0250",
-      "name": "STABILIZER LINK ASSY",
+      "sku": "CR0368",
+      "name": "INNER TIE ROD ASSY",
       "y25": 0,
-      "y26": 232.32,
-      "inc": 232.32,
-      "qty": 48,
+      "y26": 389.6,
+      "inc": 389.6,
+      "qty": 80,
       "kind": "신규",
       "pair": false
      }
     ],
     "top_n": 200,
     "top_full_n": 203,
-    "top_seen_n": 66,
-    "top_unseen_n": 137,
-    "top_hit": 52,
-    "top_amt": 161729.22,
-    "top_pct": 78.8,
-    "top_pct_all": 25.6,
-    "off_n": 38,
-    "off_amt": 19778.08,
-    "l25": 117202.6,
-    "l26": 161729.22,
-    "l_inc": 44526.62,
+    "top_seen_n": 203,
+    "top_unseen_n": 0,
+    "top_hit": 157,
+    "top_amt": 273001.53,
+    "top_pct": 77.3,
+    "top_pct_all": 77.3,
+    "off_n": 299,
+    "off_amt": 103604.18,
+    "l25": 180777.92,
+    "l26": 273001.53,
+    "l_inc": 92223.61,
     "cls": {
-     "신규": 6,
-     "증가": 29,
-     "감소": 17,
-     "이탈": 6,
-     "미개척": 8
+     "신규": 27,
+     "감소": 37,
+     "증가": 93,
+     "미개척": 27,
+     "이탈": 19
     },
     "cls_amt": {
-     "신규": 3099.2,
-     "증가": 67111.72,
-     "감소": -20193.66,
-     "이탈": -5490.64,
-     "미개척": 0.0
+     "신규": 11487.82,
+     "감소": -26451.67,
+     "증가": 120328.62,
+     "미개척": 0.0,
+     "이탈": -13141.16
     },
+    "full_lines": true,
     "cov25": 110.2,
-    "cov26": 46.9,
+    "cov26": 97.3,
     "top_up": [
      {
       "sku": "CB0426",
@@ -3058,12 +3123,12 @@
       "pair": false
      },
      {
-      "sku": "CB0446",
+      "sku": "CB0247",
       "name": "BALL JOINT ASSY",
-      "y25": 1776.0,
-      "y26": 4649.4,
-      "inc": 2873.4,
-      "qty": 810,
+      "y25": 554.0,
+      "y26": 3759.0,
+      "inc": 3205.0,
+      "qty": 700,
       "kind": "증가",
       "pair": false
      }
@@ -3325,28 +3390,28 @@
       "GV0572R"
      ]
     },
-    "partial": true,
+    "partial": false,
     "ramp": true,
     "ramp_cls": {
-     "첫 오더에 없던 품번을 새로 담음": 6,
-     "첫 오더에도 있었고 더 담음": 29,
+     "첫 오더에 없던 품번을 새로 담음": 27,
+     "첫 오더에도 있었고 더 담음": 93,
      "첫 오더만큼 담음": 0,
-     "아직 재오더 안 됨": 23,
-     "한 번도 오더 없음": 8
+     "아직 재오더 안 됨": 56,
+     "한 번도 오더 없음": 27
     },
     "ramp_amt": {
-     "new": 3099.2,
-     "up": 67111.72,
-     "grow": 70210.92
+     "new": 11487.82,
+     "up": 120328.62,
+     "grow": 131816.44
     },
-    "pending_n": 23,
+    "pending_n": 56,
     "span25": [
      "2025-09-24",
      "2025-09-24"
     ],
     "span26": [
      "2026-03-23",
-     "2026-07-20"
+     "2026-07-22"
     ]
    }
   },
@@ -3418,21 +3483,262 @@
    "ramp": true,
    "share": 22.9,
    "sku": {
-    "mode": "none",
-    "why": "대시보드가 쓰는 CIS 원장은 ChoiceKit 캠페인 고객사만 담고 있어 이 고객사의 품번 줄이 없음 — 전사 오더 원장에는 있다. 2026 첫 거래 고객이라 전년 비교 자체가 없다 — 전 품목이 「당사 미오더」였던 셈이고, 전체 오더 $112,481 중 미션 대상은 $25,810(22.9%)",
-    "top_n": 80,
-    "top_full_n": 80,
-    "known_lines": [
+    "mode": "top",
+    "cut": "2026-07-20",
+    "base_label": "첫 오더(2026-04-20) 기준",
+    "n25": 0,
+    "a25": 0,
+    "n26": 314,
+    "a26": 110480.64,
+    "new_n": 314,
+    "new_amt": 110480.64,
+    "rep_n": 0,
+    "rep_amt": 0,
+    "top": [
      {
-      "sku": "GF0002",
-      "name": "CABIN FILTER",
+      "sku": "CB0208",
+      "name": "BALL JOINT ASSY",
+      "y25": 0,
+      "y26": 1292.0,
       "qty": 200,
-      "open_qty": 200,
-      "amt": 700.0,
-      "d": "2026-10-27"
+      "kind": "신규"
+     },
+     {
+      "sku": "CB0229",
+      "name": "BALL JOINT ASSY",
+      "y25": 0,
+      "y26": 1236.8,
+      "qty": 160,
+      "kind": "신규"
+     },
+     {
+      "sku": "CQ0154",
+      "name": "ASSIST ARM ASSY-COMPLETE",
+      "y25": 0,
+      "y26": 1025.7,
+      "qty": 130,
+      "kind": "신규"
+     },
+     {
+      "sku": "GZ0026",
+      "name": "ENGINE BRACKET ASSY",
+      "y25": 0,
+      "y26": 1007.7,
+      "qty": 30,
+      "kind": "신규"
+     },
+     {
+      "sku": "GV0097P",
+      "name": "CROSS AXIS BALL JOINT ASSY",
+      "y25": 0,
+      "y26": 956.92,
+      "qty": 188,
+      "kind": "신규"
+     },
+     {
+      "sku": "CB0187",
+      "name": "BALL JOINT ASSY",
+      "y25": 0,
+      "y26": 953.4,
+      "qty": 210,
+      "kind": "신규"
+     },
+     {
+      "sku": "CQ0714L",
+      "name": "LWR CONTROL ARM ASSY",
+      "y25": 0,
+      "y26": 952.2,
+      "qty": 30,
+      "kind": "신규"
+     },
+     {
+      "sku": "CQ0714R",
+      "name": "LWR CONTROL ARM ASSY",
+      "y25": 0,
+      "y26": 952.2,
+      "qty": 30,
+      "kind": "신규"
+     },
+     {
+      "sku": "CB0531",
+      "name": "BALL JOINT ASSY",
+      "y25": 0,
+      "y26": 947.0,
+      "qty": 100,
+      "kind": "신규"
+     },
+     {
+      "sku": "GZ0123",
+      "name": "ENGINE BRACKET ASSY",
+      "y25": 0,
+      "y26": 891.3,
+      "qty": 30,
+      "kind": "신규"
+     },
+     {
+      "sku": "CB0205",
+      "name": "BALL JOINT ASSY",
+      "y25": 0,
+      "y26": 863.1,
+      "qty": 210,
+      "kind": "신규"
+     },
+     {
+      "sku": "CQ0841L",
+      "name": "LWR CONTROL ARM ASSY",
+      "y25": 0,
+      "y26": 853.8,
+      "qty": 20,
+      "kind": "신규"
      }
     ],
-    "known_hit": [],
+    "top_new": [
+     {
+      "sku": "CB0208",
+      "name": "BALL JOINT ASSY",
+      "y25": 0,
+      "y26": 1292.0,
+      "inc": 1292.0,
+      "qty": 200,
+      "kind": "신규",
+      "pair": false
+     },
+     {
+      "sku": "CB0229",
+      "name": "BALL JOINT ASSY",
+      "y25": 0,
+      "y26": 1236.8,
+      "inc": 1236.8,
+      "qty": 160,
+      "kind": "신규",
+      "pair": false
+     },
+     {
+      "sku": "GZ0026",
+      "name": "ENGINE BRACKET ASSY",
+      "y25": 0,
+      "y26": 1007.7,
+      "inc": 1007.7,
+      "qty": 30,
+      "kind": "신규",
+      "pair": false
+     },
+     {
+      "sku": "CB0187",
+      "name": "BALL JOINT ASSY",
+      "y25": 0,
+      "y26": 953.4,
+      "inc": 953.4,
+      "qty": 210,
+      "kind": "신규",
+      "pair": false
+     },
+     {
+      "sku": "GZ0027",
+      "name": "ENGINE BRACKET ASSY",
+      "y25": 0,
+      "y26": 804.3,
+      "inc": 804.3,
+      "qty": 30,
+      "kind": "신규",
+      "pair": false
+     },
+     {
+      "sku": "CL0291",
+      "name": "STABILIZER LINK ASSY",
+      "y25": 0,
+      "y26": 678.6,
+      "inc": 678.6,
+      "qty": 156,
+      "kind": "신규",
+      "pair": false
+     },
+     {
+      "sku": "CE0331L",
+      "name": "OUTER TIE ROD ASSY",
+      "y25": 0,
+      "y26": 659.52,
+      "inc": 659.52,
+      "qty": 96,
+      "kind": "신규",
+      "pair": false
+     },
+     {
+      "sku": "CE0331R",
+      "name": "OUTER TIE ROD ASSY",
+      "y25": 0,
+      "y26": 659.52,
+      "inc": 659.52,
+      "qty": 96,
+      "kind": "신규",
+      "pair": false
+     },
+     {
+      "sku": "GZ0005",
+      "name": "ENGINE BRACKET ASSY",
+      "y25": 0,
+      "y26": 651.6,
+      "inc": 651.6,
+      "qty": 30,
+      "kind": "신규",
+      "pair": false
+     },
+     {
+      "sku": "GV0072",
+      "name": "BUSH AM",
+      "y25": 0,
+      "y26": 622.08,
+      "inc": 622.08,
+      "qty": 192,
+      "kind": "신규",
+      "pair": false
+     },
+     {
+      "sku": "GV0322",
+      "name": "BUSH AM",
+      "y25": 0,
+      "y26": 614.4,
+      "inc": 614.4,
+      "qty": 192,
+      "kind": "신규",
+      "pair": false
+     },
+     {
+      "sku": "CL0357",
+      "name": "STABILIZER LINK ASSY",
+      "y25": 0,
+      "y26": 603.0,
+      "inc": 603.0,
+      "qty": 100,
+      "kind": "신규",
+      "pair": false
+     }
+    ],
+    "top_n": 80,
+    "top_full_n": 80,
+    "top_seen_n": 80,
+    "top_unseen_n": 0,
+    "top_hit": 57,
+    "top_amt": 25810.18,
+    "top_pct": 71.2,
+    "top_pct_all": 71.2,
+    "off_n": 257,
+    "off_amt": 84670.46,
+    "l25": 0,
+    "l26": 25810.18,
+    "l_inc": 25810.18,
+    "cls": {
+     "미개척": 23,
+     "신규": 57
+    },
+    "cls_amt": {
+     "미개척": 0.0,
+     "신규": 25810.18
+    },
+    "full_lines": true,
+    "cov25": null,
+    "cov26": 98.2,
+    "top_up": [],
     "list": {
      "codes": [
       "CB0186",
@@ -3538,7 +3844,30 @@
       "GV0592L",
       "GV0592R"
      ]
-    }
+    },
+    "partial": false,
+    "ramp": true,
+    "ramp_cls": {
+     "첫 오더에 없던 품번을 새로 담음": 57,
+     "첫 오더에도 있었고 더 담음": 0,
+     "첫 오더만큼 담음": 0,
+     "아직 재오더 안 됨": 0,
+     "한 번도 오더 없음": 23
+    },
+    "ramp_amt": {
+     "new": 25810.18,
+     "up": 0.0,
+     "grow": 25810.18
+    },
+    "pending_n": 0,
+    "span25": [
+     "",
+     ""
+    ],
+    "span26": [
+     "2026-04-20",
+     "2026-07-20"
+    ]
    }
   }
  ]
