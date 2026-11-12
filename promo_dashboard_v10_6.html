@@ -308,6 +308,13 @@ details.cdet-c>.cdet-body{margin:0;padding:10px 12px 4px}
   color:var(--muted,#8a8a8f);border-left:2px solid rgba(106,182,255,.45);
   background:rgba(106,182,255,.05);border-radius:4px}
 .skui-tbl tr.skui-aside td{background:rgba(106,182,255,.045);border-top:1px dashed var(--border,rgba(127,127,127,.35))}
+/* 긴 표 접기 — 상위 N 행만 보이고 나머지는 버튼으로 */
+.mfmore{display:inline-flex;align-items:center;gap:6px;margin:8px 0 0;padding:5px 12px;
+  font-size:12px;font-weight:700;color:var(--brand);cursor:pointer;
+  border:1px solid var(--border);border-radius:999px;background:var(--surface,transparent)}
+.mfmore:hover{background:rgba(106,182,255,.08)}
+.mfmore i{font-style:normal;font-size:10px;transition:transform .15s}
+.mfmore.on i{transform:rotate(180deg)}
 .skui-excl{display:inline-block;margin-left:8px;padding:1px 7px;border-radius:9px;font-size:10px;
   font-weight:700;letter-spacing:.02em;color:var(--brand,#6ab6ff);
   border:1px solid rgba(106,182,255,.45);background:rgba(106,182,255,.08);vertical-align:2px}
@@ -1988,6 +1995,14 @@ function latamBlock(){
    +mfTable();
 }
 
+
+/* 표 접기 — 버튼 앞의 표에서 .mfx 행을 토글 */
+function mfToggle(b){
+  const wrap=b.previousElementSibling, on=b.classList.toggle('on');
+  if(wrap) wrap.querySelectorAll('tr.mfx').forEach(tr=>{ tr.style.display = on ? '' : 'none'; });
+  b.querySelector('span').textContent = b.dataset[on?'less':'more'];
+}
+
 function mfTable(){
  if(typeof MF==='undefined'||!(MF.rows||[]).length) return '';
  const T=MF.tot;
@@ -2031,30 +2046,41 @@ function mfTable(){
      '어느 나라 어느 고객이 몇 종을 얼마에 사갔나' 가 더 읽힘. */
   +(()=>{const CR=MF.cust_rows||[], CT=MF.cust_tot||{};
     if(!CR.length) return '';
-    const mx=Math.max.apply(null,CR.map(r=>r.a).concat([1]));
-    const bar=v=>`<span style="display:inline-block;height:8px;border-radius:4px;width:${Math.round(v/mx*100)}%;background:var(--brand);opacity:.5"></span>`;
+    const TOPN=10, more=Math.max(0,CR.length-TOPN);
+    /* 막대는 전체 오더 금액 대비 비중 — 최대값 대비로 그리면 1위가 늘 100% 라
+       '얼마나 쏠렸나' 가 안 보임. 폭은 1위가 꽉 차도록만 늘려 그림. */
+    const SUM=CR.reduce((a,r)=>a+r.a,0)||1, TOP=CR[0]?CR[0].a/SUM:1;
+    const bar=v=>{const sh=v/SUM;
+      return `<div style="display:flex;align-items:center;gap:6px">`
+       +`<span style="flex:0 0 58px;height:8px;border-radius:4px;background:var(--track);overflow:hidden">`
+       +`<span style="display:block;height:100%;width:${Math.round(sh/TOP*100)}%;background:var(--brand);opacity:.6"></span></span>`
+       +`<span class="sub3" style="font-size:10.5px">${(sh*100).toFixed(1)}%</span></div>`;};
     return `<div class="tblwrap"><table class="lts" style="font-size:12px"><thead><tr>
        <th style="text-align:left">국가</th><th style="text-align:left">고객사</th>
-       <th>오더 전환 SKU</th><th>오더 금액</th><th></th><th>SKU당</th>
+       <th>오더 전환 SKU</th><th>오더 금액</th><th>비중<div style="font-weight:400;font-size:10px;opacity:.8">전체 대비</div></th><th>SKU당</th>
        <th>수량</th><th>오더 건</th><th style="text-align:left">첫~마지막 오더</th></tr></thead><tbody>`
-     +CR.map(r=>`<tr><td style="text-align:left">${esc(r.country)}</td>
+     +CR.map((r,i)=>`<tr${i>=TOPN?' class="mfx" style="display:none"':''}><td style="text-align:left">${esc(r.country)}</td>
         <td style="text-align:left"><b>${esc(r.cust)}</b></td>
         <td class="num"><b>${r.sku}</b><span class="sub3">종</span></td>
         <td class="num"><b>${fmtC(r.a)}</b></td>
-        <td style="min-width:90px">${bar(r.a)}</td>
+        <td style="min-width:104px">${bar(r.a)}</td>
         <td class="num sub3">${fmtC(r.avg)}</td>
         <td class="num sub3">${r.q.toLocaleString()}</td>
         <td class="num sub3">${r.n}</td>
         <td style="text-align:left" class="sub3">${esc(r.first.slice(5))} ~ ${esc(r.last.slice(5))}</td></tr>`).join('')
      +`</tbody><tfoot><tr><td style="text-align:left">합계</td>
         <td style="text-align:left">${CT.n_country}개국 · ${CT.n_cust}곳</td>
-        <td class="num">${CT.sku}종</td><td class="num">${fmtC(CT.a)}</td><td></td>
+        <td class="num">${CT.sku}종</td><td class="num">${fmtC(CT.a)}</td><td class="num sub3">100%</td>
         <td class="num">${fmtC(Math.round(CT.a/(CT.sku||1)))}</td>
         <td class="num">${(CT.q||0).toLocaleString()}</td><td class="num">${CT.n}</td><td></td></tr></tfoot></table></div>`
+     +(more?`<div class="mfmore" role="button" tabindex="0" onclick="mfToggle(this)"
+        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();mfToggle(this)}"
+        data-more="나머지 ${more}곳 보기" data-less="상위 ${TOPN}곳만 보기"><i>▾</i><span>나머지 ${more}곳 보기</span></div>`:'')
      +`<p class="note fn" style="padding-left:0;margin:5px 0 0">`
      +`품번마다 자기 게시일(프로모션 적용 시작일) 이후 오더만 셈 · ${esc(MF.note_pre)}<br>`
      +`'오더 전환 SKU' = 그 고객사가 실제로 오더한 대상 품번 수 · 'SKU당' = 오더 금액 ÷ 전환 SKU · `
-     +`합계의 전환 ${CT.sku}종은 고객사별 수를 더한 값이 아니라 합집합임 · `
+     +`금액 내림차순 · 기본은 상위 ${TOPN}곳만 보이고 나머지는 위 버튼으로 폄 · `
+     +`합계는 ${CT.n_cust}곳 전체 · 합계의 전환 ${CT.sku}종은 고객사별 수를 더한 값이 아니라 합집합임 · `
      +`원장의 국가명이 한글·영문으로 섞여 있어 한글로 통일함</p></div>`;})();
 }
 
