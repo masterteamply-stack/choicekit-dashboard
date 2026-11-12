@@ -65,6 +65,27 @@ def ss_rows():
     return out, SS
 
 
+def ck_scope():
+    """orders.csv 가 담는 범위 = ChoiceKit 캠페인의 대상 SKU.
+
+    CIS 원장은 캠페인 대상 품번만 추출한 것이라, 미션 목록 중 ChoiceKit 대상이
+    아닌 품번은 **오더가 있어도 이 원장에 안 나온다**. 전환율 분모를 목록 전체로
+    잡으면 '안 샀다'가 아니라 '안 보인다'를 안 샀다고 세게 된다 —
+    Bauten 은 목록 203종 중 59종만 보이고, 그 59종 중 52종이 전환됐다.
+    """
+    p = os.path.join(ROOT, 'campaign_target_skus.json')
+    if not os.path.exists(p):
+        return set()
+    cfg = json.load(open(p, encoding='utf-8'))
+    out = set()
+    for k, c in cfg.items():
+        if (c.get('match_by') or 'sku').lower() != 'sku':
+            continue
+        for x in (c.get('target_skus') or []):
+            out.add(str(x).strip().upper())
+    return out
+
+
 def read_mission_list(path):
     """미션을 정의하는 품번 목록. 시트당 열 Code(본 품번) + PAIR(짝 품번).
 
@@ -365,6 +386,10 @@ def main():
                 if top:
                     codes, pairs = top['codes'], top['pairs']
                     full = codes | pairs
+                    # 원장이 담는 범위로 좁힌다 — 밖은 '안 샀다' 가 아니라 '안 보인다'
+                    scope = ck_scope()
+                    seen = (full & scope) if scope else set(full)
+                    unseen = full - seen
                     # 목록은 '미오더' 만이 아니라 **저오더 품번**도 함께 담고 있다.
                     # 그래서 전년 오더가 있는 게 정상이고, 미션 효과는 두 갈래로 본다:
                     #   ① 안 사던 걸 열었나 (신규)   ② 사던 걸 더 사게 했나 (증가)
@@ -378,7 +403,7 @@ def main():
                         if a0 < b0 * 0.98: return '감소'
                         return '유지'
                     items = []
-                    for k in sorted(full):
+                    for k in sorted(seen):
                         b0, a0 = round(y25.get(k, 0), 2), round(y26.get(k, 0), 2)
                         if b0 <= 0 and a0 <= 0:
                             items.append({'sku': k, 'name': name.get(k, ''), 'y25': 0, 'y26': 0,
@@ -406,9 +431,13 @@ def main():
                     l26_all = round(sum(y26.values()), 2)
                     rec['sku'].update({
                         'top_n': len(codes), 'top_full_n': len(full),
+                        'top_seen_n': len(seen), 'top_unseen_n': len(unseen),
                         'top_hit': len(hit),
                         'top_amt': round(sum(x['y26'] for x in hit), 2),
-                        'top_pct': round(len(hit) / len(full) * 100, 1) if full else None,
+                        # 분모는 '원장에 보이는 품번' — 목록 전체로 잡으면 안 보이는 걸
+                        # 안 샀다고 세게 된다
+                        'top_pct': round(len(hit) / len(seen) * 100, 1) if seen else None,
+                        'top_pct_all': round(len(hit) / len(full) * 100, 1) if full else None,
                         'off_n': len(off), 'off_amt': round(sum(y26[k] for k in off), 2),
                         # 목록 전체의 전년 → 당해. 미션 효과는 이 성장으로 읽는다.
                         'l25': l25, 'l26': l26,
@@ -510,10 +539,13 @@ def main():
                      s.get('new_n'), format(round(s.get('new_amt') or 0), ',')))
             print('      ※ ' + s.get('caveat', ''))
         elif s.get('mode') == 'top':
-            print('      TOP %s(+Pair = %s종) 중 %s종 전환 (%s%%) · $%s · 목록 밖 %s종 $%s'
-                  % (s.get('top_n'), s.get('top_full_n'), s.get('top_hit'), s.get('top_pct'),
-                     format(round(s.get('top_amt') or 0), ','), s.get('off_n'),
-                     format(round(s.get('off_amt') or 0), ',')))
+            print('      미션 목록 %s종(TOP %s + Pair) 중 원장에 보이는 건 %s종 — '
+                  '그중 %s종 전환 (%s%%) $%s'
+                  % (s.get('top_full_n'), s.get('top_n'), s.get('top_seen_n'),
+                     s.get('top_hit'), s.get('top_pct'),
+                     format(round(s.get('top_amt') or 0), ',')))
+            print('      나머지 %s종은 ChoiceKit 대상 SKU 가 아니라 이 원장에 아예 안 나옴 '
+                  '— 전환 여부 확인 불가' % s.get('top_unseen_n'))
             if s.get('ramp'):
                 print('      ※ 램프업 거래처(첫 오더 %s) — 전년 동기 비교가 성립하지 않아 '
                       '이탈·감소·YoY 는 내보내지 않음' % (m.get('first_order') or '?'))
