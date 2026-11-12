@@ -65,6 +65,40 @@ def ss_rows():
     return out, SS
 
 
+def read_mission_list(path):
+    """미션을 정의하는 품번 목록. 시트당 열 Code(본 품번) + PAIR(짝 품번).
+
+    '미오더 제품 TOP 200 with Pair SKUs' 의 Pair 는 좌/우 같은 짝 품번이다.
+    Bauten 은 Code 200 + Pair 51 인데 대부분 이미 200 안에 있어 합집합 203,
+    Retems 는 Code 80 + Pair 20 이 전부 80 안에 들어 합집합도 80 이다.
+    전환율 분모는 합집합을 쓴다 — 짝까지 열어야 미션을 다 한 것이므로.
+    """
+    import openpyxl
+    SHEETS = {'Bauten_Mission SKUs': 'bauten', 'Retems_Mission SKUs': 'retems'}
+    wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    out = {}
+    for sn, key in SHEETS.items():
+        if sn not in wb.sheetnames:
+            print('  ! 시트가 없음:', sn); continue
+        it = wb[sn].iter_rows(values_only=True)
+        h = [str(x) for x in next(it)]
+        if 'Code' not in h:
+            sys.exit('%s 에 Code 열이 없음.' % sn)
+        ic = h.index('Code'); ip = h.index('PAIR') if 'PAIR' in h else None
+        codes, pairs = set(), set()
+        for r in it:
+            if not r or r[ic] is None:
+                continue
+            codes.add(str(r[ic]).strip().upper())
+            if ip is not None and r[ip]:
+                pairs.add(str(r[ip]).strip().upper())
+        out[key] = {'codes': codes, 'pairs': pairs}
+    wb.close()
+    # 업로드 임시 파일명이 그대로 화면에 나가지 않게 정리
+    nm = re.sub(r'^[0-9a-f]{6,}-', '', os.path.basename(path))
+    return out, nm
+
+
 def kv_totals(path):
     """전사 오더 원장(KV_Orders_*.html, ORD_Progress_*.csv 기반)에서 고객사별
     연도별 전체 오더를 꺼낸다.
@@ -179,8 +213,10 @@ def ledger_sku(cust):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--top-kz', help='KZ 미오더 TOP 200 품번 목록 (CTR 코드 1줄 1개)')
-    ap.add_argument('--top-az', help='AZ 미오더 TOP 80 품번 목록')
+    ap.add_argument('--mission-xlsx', help='SteerStar_Order_Mission_for_Bauten_Retems.xlsx — '
+                                           '미션을 정의하는 TOP 200 / TOP 80 품번 목록. '
+                                           '시트 Bauten_Mission SKUs · Retems_Mission SKUs, '
+                                           '열 Code + PAIR')
     ap.add_argument('--kv', help='전사 오더 원장 대시보드 (KV_Orders_*.html) — '
                                  '고객사별 연도별 전체 오더를 여기서 꺼낸다')
     a = ap.parse_args()
@@ -197,12 +233,17 @@ def main():
                     kvtot[(m0.get('total', {}).get('name') or m0['cust']).strip().upper()] = m0['total']
 
     rows, SS = ss_rows()
-    tops = {}
-    for key, path in (('bauten', a.top_kz), ('retems', a.top_az)):
-        if not path:
-            continue
-        codes = {ln.strip().upper() for ln in open(path, encoding='utf-8') if ln.strip()}
-        tops[key] = codes
+    tops, tops_src = {}, ''
+    if a.mission_xlsx:
+        tops, tops_src = read_mission_list(a.mission_xlsx)
+    elif os.path.exists(OUT):   # 목록 xlsx 는 리포에 없다 — 앞서 읽어 둔 걸 들고 간다
+        prev0 = json.load(open(OUT, encoding='utf-8'))
+        tops_src = prev0.get('mission_list_src', '')
+        for m0 in (prev0.get('missions') or []):
+            L = (m0.get('sku') or {}).get('list')
+            if L:
+                tops[m0['key']] = {'codes': set(L.get('codes') or []),
+                                   'pairs': set(L.get('pairs') or [])}
 
     out = {'_readme': 'SteerStar 추가 오더미션 중 SKU 기반인 셋. '
                       '금액·달성률은 SteerStar 공식 관리 파일(효과 분석 const SS)이 원본, '
@@ -210,7 +251,8 @@ def main():
                       '재생성: python3 scripts/sync_steerstar_missions.py',
            '_basis': '각 고객사 단독 미션 — ChoiceKit 연관 오더에 더하지 않는다.',
            'lead_target': SS.get('lead_target'),
-           'ledger_src': kvsrc, 'ledger_snap': kvsnap, 'missions': []}
+           'ledger_src': kvsrc, 'ledger_snap': kvsnap,
+           'mission_list_src': tops_src, 'missions': []}
 
     for M in MISSIONS:
         r = rows.get(M['cust'])
@@ -264,6 +306,11 @@ def main():
                                 format(round(rec.get('tot26') or 0), ','),
                                 format(round(m_got), ','), rec.get('share')))
                 rec['sku'] = {'mode': 'none', 'why': why}
+                if top:   # 목록은 있으니 미션의 분모라도 적어 둔다
+                    rec['sku'].update({'top_n': len(top['codes']),
+                                       'top_full_n': len(top['codes'] | top['pairs']),
+                                       'list': {'codes': sorted(top['codes']),
+                                                'pairs': sorted(top['pairs'])}})
             else:
                 keys26 = [k for k in y26 if y26[k]]
                 new = [k for k in keys26 if not y25.get(k)]
@@ -287,10 +334,32 @@ def main():
                     'top_new': [x for x in items if x['kind'] == '신규'][:12],
                 }
                 if top:
-                    hit = [k for k in keys26 if k in top]
-                    rec['sku'].update({'top_n': len(top), 'top_hit': len(hit),
-                                       'top_amt': round(sum(y26[k] for k in hit), 2),
-                                       'top_pct': round(len(hit) / len(top) * 100, 1) if top else None})
+                    codes, pairs = top['codes'], top['pairs']
+                    full = codes | pairs
+                    hit = [k for k in keys26 if k in full]
+                    off = [k for k in keys26 if k not in full]
+                    # 목록은 '당사 미오더 제품' 이라는데, 우리 2025 원장에는 이미
+                    # 오더가 있는 품번이 섞여 있다. 전환 종수를 그냥 내보내면
+                    # '새로 연 품번' 으로 읽히므로 여기서 갈라 둔다.
+                    hit_new = [k for k in hit if not y25.get(k)]
+                    had25 = [k for k in full if y25.get(k)]
+                    rec['sku'].update({
+                        'top_n': len(codes), 'top_full_n': len(full),
+                        'top_hit': len(hit),
+                        'top_amt': round(sum(y26[k] for k in hit), 2),
+                        'top_pct': round(len(hit) / len(full) * 100, 1) if full else None,
+                        'off_n': len(off), 'off_amt': round(sum(y26[k] for k in off), 2),
+                        'hit_new_n': len(hit_new),
+                        'hit_new_amt': round(sum(y26[k] for k in hit_new), 2),
+                        'list_had25_n': len(had25),
+                        'list_had25_amt': round(sum(y25[k] for k in had25), 2),
+                        'top_items': sorted(({'sku': k, 'name': name.get(k, ''),
+                                              'y25': round(y25.get(k, 0), 2),
+                                              'y26': round(y26[k], 2), 'qty': q26.get(k, 0),
+                                              'pair': k in pairs and k not in codes}
+                                             for k in hit), key=lambda x: -x['y26'])[:12],
+                        'list': {'codes': sorted(codes), 'pairs': sorted(pairs)},
+                    })
                 else:
                     rec['sku']['caveat'] = (
                         '미션을 정의하는 TOP %d 미오더 품번 목록이 아직 없어서, '
@@ -341,9 +410,17 @@ def main():
                      s.get('new_n'), format(round(s.get('new_amt') or 0), ',')))
             print('      ※ ' + s.get('caveat', ''))
         elif s.get('mode') == 'top':
-            print('      TOP %s 중 %s종 전환 (%s%%) · $%s'
-                  % (s.get('top_n'), s.get('top_hit'), s.get('top_pct'),
-                     format(round(s.get('top_amt') or 0), ',')))
+            print('      TOP %s(+Pair = %s종) 중 %s종 전환 (%s%%) · $%s · 목록 밖 %s종 $%s'
+                  % (s.get('top_n'), s.get('top_full_n'), s.get('top_hit'), s.get('top_pct'),
+                     format(round(s.get('top_amt') or 0), ','), s.get('off_n'),
+                     format(round(s.get('off_amt') or 0), ',')))
+            if s.get('list_had25_n'):
+                print('      ⚠ 목록 %s종 중 %s종은 2025 원장에 이미 오더가 있다($%s) — '
+                      '\'당사 미오더\' 라는 목록 전제와 어긋남. 전환 %s종 중 25년에 정말 '
+                      '없던 건 %s종($%s)뿐.'
+                      % (s.get('top_full_n'), s.get('list_had25_n'),
+                         format(round(s.get('list_had25_amt') or 0), ','), s.get('top_hit'),
+                         s.get('hit_new_n'), format(round(s.get('hit_new_amt') or 0), ',')))
         else:
             print('      품번: ' + (s.get('why') or '데이터 없음'))
     print('steerstar_missions.json ' + ('갱신됨' if changed else '변경 없음'))

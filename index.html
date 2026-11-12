@@ -13937,11 +13937,14 @@ function ssmSectionHTML(S, opt){
     let sk;
     if(s.mode==='full') sk='신규 <b>'+N(s.conv)+'종</b> + 재전환 <b>'+N(s.recov)+'종</b> '
       +'<span class="skui-mut">= 미션 매출의 '+(s.cover_pct!=null?s.cover_pct.toFixed(1):'–')+'%</span>';
-    else if(s.mode==='top') sk='TOP '+N(s.top_n)+' 중 <b>'+N(s.top_hit)+'종</b> 전환 '
+    else if(s.mode==='top') sk='미션 목록 '+N(s.top_full_n||s.top_n)+'종 중 <b>'+N(s.top_hit)+'종</b> 전환 '
       +'<span class="skui-mut">('+(s.top_pct!=null?s.top_pct.toFixed(1):'–')+'% · '+M(s.top_amt)+')</span>';
     else if(s.mode==='ledger') sk='26년 오더 <b>'+N(s.n26)+'종</b> · 그중 25년 미오더 <b>'+N(s.new_n)+'종</b> '
       +'<span class="skui-mut">'+M(s.new_amt)+' — 미션 목록 기준 아님</span>';
-    else sk='<span class="skui-mut">원장에 이 고객사 오더가 없어 못 셈</span>';
+    else sk=(s.top_full_n
+      ? ('미션 목록 '+N(s.top_full_n)+'종 중 <b class="skui-mut">–</b> '
+         +'<span class="skui-mut">품번 원장이 없어 종수는 못 셈</span>')
+      : '<span class="skui-mut">원장에 이 고객사 오더가 없어 못 셈</span>');
     h+='<tr><td><b>'+E(m.cust)+'</b><br><span class="skui-mut">'+E(m.region)+' · '+E(m.country)+'</span></td>'
      +'<td style="white-space:normal;max-width:300px">'+E(m.mission)+'</td>'
      +'<td class="n">'+M(m.tgt)+'</td><td class="n"><b>'+M(m.got)+'</b></td>'
@@ -13956,17 +13959,28 @@ function ssmSectionHTML(S, opt){
   if(kz&&kz.rate!=null&&ka&&ka.rate!=null) bits.push(
     '<b>금액 달성률과 품번 확장은 다른 이야기다.</b> '+E(kz.cust)+'(KZ)는 금액으로는 '
     +kz.rate.toFixed(0)+'% 로 크게 넘겼지만 '
-    +((kz.sku&&kz.sku.mode==='ledger')
-       ? '26년 오더 '+N(kz.sku.n26)+'종 중 25년에 안 사던 품번은 '+N(kz.sku.new_n)+'종('
-         +M(kz.sku.new_amt)+')뿐이라, 금액은 기존 주력 품번에서 나왔다'
+    +((kz.sku&&kz.sku.mode==='top')
+       ? ('미션 목록 '+N(kz.sku.top_full_n)+'종 중 연 것은 '+N(kz.sku.top_hit)+'종('
+          +kz.sku.top_pct.toFixed(0)+'%)이다 — 금액은 그 '+N(kz.sku.top_hit)
+          +'종에 몰려 있고('+M(kz.sku.top_amt)+'), 나머지 '
+          +N((kz.sku.top_full_n||0)-(kz.sku.top_hit||0))+'종은 아직 안 열렸다')
+       : (kz.sku&&kz.sku.mode==='ledger')
+       ? ('26년 오더 '+N(kz.sku.n26)+'종 중 25년에 안 사던 품번은 '+N(kz.sku.new_n)+'종('
+          +M(kz.sku.new_amt)+')뿐이라, 금액은 기존 주력 품번에서 나왔다')
        : '품번 전환은 따로 봐야 한다')
     +'. '+E(ka.cust)+'(호주)는 달성률 '+ka.rate.toFixed(0)+'% 로 못 미쳤지만 '
     +'미션 매출의 '+((ka.sku&&ka.sku.cover_pct!=null)?ka.sku.cover_pct.toFixed(0):'–')
-    +'% 가 신규·재전환 품번에서 나왔다 — 미션의 의도대로 간 쪽은 이쪽이다.');
+    +'% 가 신규·재전환 품번에서 나왔다. <b>금액은 KZ, 품번 확장은 호주가 앞선다</b> — '
+    +'미션이 노린 건 뒤쪽이므로 KZ 는 남은 목록 품번을 여는 게 다음 레버다.');
   if(az&&az.sku&&az.sku.mode==='none') bits.push(
-    '<b>'+E(az.cust)+'(AZ)는 품번 분석을 못 한다.</b> 오더 원장에 이 고객사 행이 한 줄도 없다. '
-    +'달성률 '+(az.rate!=null?az.rate.toFixed(0):'–')+'% ('+M(az.got)+')는 SteerStar 관리 파일의 값이고, '
-    +'원장에는 아제르바이잔 2026 오더가 들어와 있지 않다 — 원장 반영 여부를 확인해야 한다.');
+    '<b>'+E(az.cust)+'(AZ)는 적게 산 게 아니라 목록 밖을 샀다.</b> '
+    +'2026 첫 거래 고객인데 전체 오더가 '+M(az.tot26||0)+' 인데도 미션 목록'
+    +(az.sku.top_full_n?(' '+N(az.sku.top_full_n)+'종'):'')+' 안에서 나온 건 '+M(az.got)+' '
+    +'('+(az.share!=null?az.share.toFixed(0):'–')+'%)뿐이라 달성률이 '
+    +(az.rate!=null?az.rate.toFixed(0):'–')+'% 에 그쳤다. '
+    +'<span class="skui-mut">첫 거래 고객에게는 전 품목이 「당사 미오더」였던 셈이니, '
+    +'TOP 80 선정이 이 고객의 수요와 맞았는지 되볼 만하다. 품번별 종수는 대시보드 CIS 원장이 '
+    +'ChoiceKit 캠페인 고객사만 담고 있어 못 센다 — 전사 원장에는 오더 3건이 다 있다.</span>');
   if(bits.length) h+='<div class="skui-cls" style="margin-top:14px">'+bits.join('<br><br>')+'</div>';
 
   /* 고객사별 상세 */
@@ -13987,9 +14001,27 @@ function ssmLedgerHTML(m){
   let h='<div class="skui-cls" style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line-1,#e5e5e7)">'
    +'<b>'+E(m.cust)+' ('+E(m.country)+') 상세</b> '
    +'<span class="skui-mut">「'+E(m.mission)+'」 · 원장 ~'+E(s.cut||'')+'</span></div>';
-  h+='<div class="skui-cls">25년 <b>'+N(s.n25)+'종</b> '+M(s.a25)+' → 26년 <b>'+N(s.n26)+'종</b> '+M(s.a26)
-   +' · 그중 <b>25년에 안 사던 품번 '+N(s.new_n)+'종</b> '+M(s.new_amt)
-   +' <span class="skui-mut">· 기존 품번 재오더 '+N(s.rep_n)+'종 '+M(s.rep_amt)+'</span></div>';
+  if(s.mode==='top'){
+    const pct=s.top_pct!=null?s.top_pct.toFixed(1):'–';
+    h+='<div class="skui-cls"><b>미션 목록 '+N(s.top_full_n)+'종</b> '
+     +'<span class="skui-mut">(TOP '+N(s.top_n)+' + Pair)</span> 중 <b>'+N(s.top_hit)+'종</b>이 오더로 전환 — <b>'+pct+'%</b> · '+M(s.top_amt)
+     +' <span class="skui-mut">· 목록 밖 품번 '+N(s.off_n)+'종 '+M(s.off_amt)+'</span></div>';
+    h+='<div class="skui-cls skui-mut" style="margin-top:4px">26년 오더 '+N(s.n26)+'종 '+M(s.a26)
+     +' 중 '+M(s.top_amt)+'('+Math.round((s.top_amt||0)/(s.a26||1)*100)+'%)가 미션 목록 품번에서 나왔다.</div>';
+    if(s.list_had25_n) h+='<div class="skui-cls" style="margin-top:10px;padding:9px 11px;'
+     +'background:var(--surface-2,#f7f7f8);border-left:2px solid var(--accent,#DC4A1B)">'
+     +'<b>목록의 「당사 미오더」 전제를 확인해야 한다.</b> 목록 '+N(s.top_full_n)+'종 중 '
+     +'<b>'+N(s.list_had25_n)+'종</b>은 우리 2025 원장에 이미 오더가 있다('+M(s.list_had25_amt)+'). '
+     +'그래서 전환 '+N(s.top_hit)+'종 중 25년에 정말 없던 품번은 <b>'+N(s.hit_new_n)+'종</b> '
+     +M(s.hit_new_amt)+' 뿐이고, 나머지 '+N((s.top_hit||0)-(s.hit_new_n||0))+'종 '
+     +M((s.top_amt||0)-(s.hit_new_amt||0))+' 은 전부터 사던 품번이다. '
+     +'<span class="skui-mut">목록이 현지 시장 수요나 다른 기준으로 뽑혔거나, 기준 연도가 '
+     +'우리 원장과 다를 수 있다 — 전환율을 「새로 연 품번」으로 읽기 전에 목록의 기준부터 맞춰야 한다.</span></div>';
+  } else {
+    h+='<div class="skui-cls">25년 <b>'+N(s.n25)+'종</b> '+M(s.a25)+' → 26년 <b>'+N(s.n26)+'종</b> '+M(s.a26)
+     +' · 그중 <b>25년에 안 사던 품번 '+N(s.new_n)+'종</b> '+M(s.new_amt)
+     +' <span class="skui-mut">· 기존 품번 재오더 '+N(s.rep_n)+'종 '+M(s.rep_amt)+'</span></div>';
+  }
   const tbl=(title,rows)=>{
     if(!rows||!rows.length) return '';
     let t='<div class="skui-cls" style="margin-top:10px"><b>'+title+'</b></div>'
@@ -14000,11 +14032,18 @@ function ssmLedgerHTML(m){
       +'<td class="n">'+N(x.qty)+'</td></tr>'; });
     return t+'</tbody></table></div>';
   };
-  h+=tbl('25년에 안 사던 품번 — 금액 상위', s.top_new);
-  h+=tbl('26년 오더 상위 품번', s.top);
-  if(s.caveat) h+='<p class="skui-basis"><b>이 숫자가 미션 달성률이 아닌 이유</b> · '+E(s.caveat)
-   +' 목록 파일이 들어오면 <code>scripts/sync_steerstar_missions.py --top-kz &lt;파일&gt;</code> 로 '
-   +'미션 기준(TOP 200 중 몇 종 전환)으로 바뀐다.</p>';
+  if(s.mode==='top'){
+    h+=tbl('미션 목록 중 전환된 품번 — 금액 상위', s.top_items);
+    h+=tbl('25년에 안 사던 품번 — 금액 상위', s.top_new);
+  } else {
+    h+=tbl('25년에 안 사던 품번 — 금액 상위', s.top_new);
+    h+=tbl('26년 오더 상위 품번', s.top);
+  }
+  if(s.caveat) h+='<p class="skui-basis"><b>이 숫자가 미션 달성률이 아닌 이유</b> · '+E(s.caveat)+'</p>';
+  else if(s.mode==='top') h+='<p class="skui-basis"><b>종수와 금액의 출처가 다름</b> · '
+   +'전환 종수와 옆의 금액은 대시보드 오더 원장(~'+E(s.cut||'')+')에서 센 값이라 '
+   +M(s.a26)+' 범위다. 위 표의 미션 실적 '+M(m.got)+' 은 SteerStar 공식 관리 파일의 값이고 '
+   +'전사 원장 기준이라 더 크다 — 종수는 여기서, 금액 달성률은 공식 파일에서 본다.</p>';
   return h;
 }
 
