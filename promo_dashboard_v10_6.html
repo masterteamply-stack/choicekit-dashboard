@@ -4619,7 +4619,8 @@ function skuReportParts(S, X, SSM) {
            + (bList ? (bConv / bList * 100).toFixed(1) : '–') + '%'
            + (kConv ? ' <span class="skui-mut">· 차종 기준 Kailos 신규 ' + N(kConv) + '종 별도</span>' : ''), true)
     + tile('B · 미션 실적', M(bGot) + '<span style="font-size:14px;color:var(--muted,#8a8a8f);font-weight:400"> / ' + M(bTgt) + '</span>',
-           '달성률 ' + (bTgt ? (bGot / bTgt * 100).toFixed(1) : '–') + '% · SteerStar 공식 집계', true)
+           '달성률 ' + (bTgt ? (bGot / bTgt * 100).toFixed(1) : '–') + '% · 그중 연관 오더에 더할 수 있는 몫 <b>'
+           + M(MS.reduce((t, m) => t + (m.addable || 0), 0)) + '</b>', true)
     + ((S.camp_sku && S.camp_sku.union && S.camp_sku.ledger)
        ? tile('캠페인 연관 오더 발생 SKU',
               N(S.camp_sku.union) + '<span style="font-size:14px;color:var(--muted,#8a8a8f);font-weight:400"> / '
@@ -4636,9 +4637,26 @@ function skuReportParts(S, X, SSM) {
 
   /* ── A 표 ── */
   const rows = (S.by_camp || []).slice().sort((a, b) => (b.after || 0) - (a.after || 0));
+  const rowsAll = X ? rows.concat([X]) : rows;
   let table = '<div class="skui-cls" style="margin-top:14px"><b>A. ChoiceKit SKU 대상 프로모션</b> '
-    + '<span class="skui-mut">대상 품번을 정해 두고 그 품번의 오더가 집행 전 대비 어떻게 변했나 · '
-    + '집행 권역 ' + E((S.regions || []).join(' · ')) + ' · 원장 ~' + E(S.cut) + '</span></div>';
+    + '<span class="skui-mut">대상 품번을 정해 두고, 그 품번의 오더가 집행 전 대비 어떻게 변했나</span></div>';
+  /* A 를 어떻게 읽어야 하는지 — 표 바로 위에 둔다 */
+  const aGrew = rowsAll.filter(r => (r.yoy || 0) > 0);
+  const aMain = rowsAll.filter(r => (r.inc || 0) < 0).sort((x, y) => x.inc - y.inc)[0] || null;
+  const aBl = [];
+  aBl.push('합계는 <b>' + P(yAll) + '</b>(' + M(bAll) + ' → ' + M(aAll) + ')지만, '
+    + '<b>이 한 줄로 성패를 판단하면 안 된다</b> — 확장형과 주력형이 반대로 움직였다.');
+  if (aGrew.length) aBl.push('<b>품번을 넓히는 쪽은 모두 늘었다</b> · '
+    + aGrew.map(r => E(r.p) + ' ' + (r.yoy >= 0 ? '+' : '') + r.yoy.toFixed(1) + '%').join(' · ')
+    + '. 전년에 오더가 없던 품번 <b>' + N(C['신규'] || 0) + '종</b>에서 <b>' + M(S.new_amt) + '</b>를 새로 만들었다.');
+  if (aMain) aBl.push('<b>합계를 끌어내린 건 주력 품번의 역기저다</b> · ' + E(aMain.p) + ' '
+    + M(aMain.inc) + ' (' + P(aMain.yoy) + '). 전년 기저가 큰 캠페인이라 같은 품번에서 빠진 금액이 '
+    + '확장 성과를 덮는다 — 품목 참여가 줄어서가 아니다.');
+  aBl.push('<b>품번 분류</b> · 신규 <b>' + N(C['신규'] || 0) + '</b> · 증가 <b>' + N(C['증가'] || 0) + '</b> · '
+    + '유지 ' + N(C['유지'] || 0) + ' · 감소 ' + N(C['감소'] || 0) + ' · 이탈 ' + N(C['이탈'] || 0)
+    + ' · 미전환 ' + N(C['미전환'] || 0)
+    + ' <span class="skui-mut">(신규 ' + M(S.new_amt) + ' · 증가 ' + M(S.up_amt) + ' · 감소·이탈 ' + M(S.dn_amt) + ')</span>');
+  table += '<ul class="skui-bl">' + aBl.map(x => '<li>' + x + '</li>').join('') + '</ul>';
   table += '<div class="skui-wrap"><table class="skui-tbl"><thead><tr>'
     + '<th>프로모션</th><th>집행 권역</th><th>시작</th><th class="n">대상</th><th class="n">전환</th>'
     + '<th class="n">신규</th><th class="n">집행 전</th><th class="n">집행 후</th><th class="n">증감</th><th class="n">YoY</th>'
@@ -4662,10 +4680,36 @@ function skuReportParts(S, X, SSM) {
   table += '</tbody></table></div>';
 
   /* ── B 표 ── */
-  table += '<div class="skui-cls" style="margin-top:18px"><b>B. SteerStar SKU 기반 오더 미션 · ' + MS.length + '개 고객사</b> '
-    + '<span class="skui-excl">A 와 합산 금지</span> '
-    + '<span class="skui-mut">고객사 한 곳씩 품번 목록을 주고 그 목록을 얼마나 열었나 · '
-    + '금액·달성률은 SteerStar 공식 관리 파일이 원본</span></div>';
+  table += '<div class="skui-cls" style="margin-top:22px"><b>B. SteerStar SKU 기반 오더 미션 · ' + MS.length + '개 고객사</b> '
+    + '<span class="skui-mut">고객사 한 곳씩 품번 목록을 주고, 그 목록을 얼마나 열었나</span></div>';
+  const _m = k => MS.find(x => x.key === k);
+  const kz0 = _m('bauten'), az0 = _m('retems'), ka0 = _m('kailos');
+  const bBl = [];
+  if (kz0 && az0 && kz0.sku && az0.sku) bBl.push('<b>목록은 잘 열렸다</b> · '
+    + E(kz0.cust) + ' 목록 ' + N(kz0.sku.top_full_n) + '종 중 <b>' + N(kz0.sku.top_hit) + '종</b>('
+    + kz0.sku.top_pct.toFixed(0) + '%) · ' + E(az0.cust) + ' ' + N(az0.sku.top_full_n) + '종 중 <b>'
+    + N(az0.sku.top_hit) + '종</b>(' + az0.sku.top_pct.toFixed(0) + '%).');
+  if (kz0 && kz0.sku && kz0.sku.cls) bBl.push('<b>열린 뒤의 성장은 볼륨에서 나왔다</b> · '
+    + E(kz0.cust) + ' 는 원래 사던 품번을 더 담은 쪽이 <b>' + N((kz0.sku.cls || {})['증가'] || 0) + '종 '
+    + M((kz0.sku.cls_amt || {})['증가'] || 0) + '</b> 로, 새로 담은 '
+    + N((kz0.sku.cls || {})['신규'] || 0) + '종 ' + M((kz0.sku.cls_amt || {})['신규'] || 0) + ' 보다 크다. '
+    + (ka0 ? ('반대로 ' + E(ka0.cust) + '(호주)는 미션 매출의 <b>'
+      + ((ka0.sku && ka0.sku.cover_pct != null) ? ka0.sku.cover_pct.toFixed(0) : '–')
+      + '%</b>가 신규·재전환 품번에서 나왔다 — <b>KZ 는 볼륨, 호주는 품번 폭</b>으로 갔다.') : ''));
+  if (kz0 && az0) bBl.push('<b>달성률을 전년 대비로 읽으면 안 된다</b> · '
+    + E(kz0.cust) + '(첫 오더 ' + E(kz0.first_order || '') + ') · ' + E(az0.cust) + '(첫 오더 '
+    + E(az0.first_order || '') + ') 모두 거래가 막 자리잡는 중이다. '
+    + '「줄었다」로 보이는 품번은 이탈이 아니라 재오더 주기가 아직 안 돌아온 것이다.');
+  if (az0) bBl.push('<b>' + E(az0.cust) + ' 는 적게 산 게 아니라 목록 밖을 샀다</b> · '
+    + '전체 오더 ' + M(az0.tot26 || 0) + ' 중 목록 안에서 나온 건 ' + M(az0.got) + '('
+    + (az0.share != null ? az0.share.toFixed(0) : '–') + '%). 목록 품번의 '
+    + (az0.sku && az0.sku.top_pct != null ? az0.sku.top_pct.toFixed(0) : '–') + '%는 이미 열렸으니, '
+    + '남은 품번을 여는 것보다 열린 품번의 볼륨을 키우는 쪽이 빠르다.');
+  const left0 = [];
+  if (kz0 && kz0.sku) left0.push(E(kz0.cust) + ' ' + N((kz0.sku.cls || {})['미개척'] || 0) + '종');
+  if (az0 && az0.sku) left0.push(E(az0.cust) + ' ' + N((az0.sku.cls || {})['미개척'] || 0) + '종');
+  if (left0.length) bBl.push('<b>다음 레버</b> · 아직 한 번도 오더가 없는 목록 품번 — ' + left0.join(' · ') + '.');
+  table += '<ul class="skui-bl">' + bBl.map(x => '<li>' + x + '</li>').join('') + '</ul>';
   table += '<div class="skui-wrap"><table class="skui-tbl"><thead><tr>'
     + '<th>고객사</th><th>권역·국가</th><th>미션</th><th class="n">목표</th><th class="n">실적</th>'
     + '<th class="n">달성률</th><th class="n">목록</th><th class="n">전환</th><th class="n">오더가 커진 몫</th>'
@@ -4697,11 +4741,23 @@ function skuReportParts(S, X, SSM) {
     + '<td class="n skui-up">+' + M(MS.reduce((t, m) => { const s2 = m.sku || {}, ra = s2.ramp_amt || {}, ca = s2.cls_amt || {};
         return t + ((ra.grow != null) ? ra.grow : (s2.mode === 'full' ? ((s2.conv_amt || 0) + (s2.recov_amt || 0)) : ((ca['신규'] || 0) + (ca['증가'] || 0)))); }, 0)) + '</td></tr>';
   table += '</tbody></table></div>';
-  if (ovN) table += '<div class="skui-cls skui-mut" style="margin-top:6px">'
-    + 'A·B 교집합 — B 의 미션 목록 중 <b>' + N(ovN) + '종</b>이 ChoiceKit 대상 SKU 와 겹치고, '
-    + '그 품번의 오더 약 <b>' + M(ovAmt) + '</b> 는 A 쪽 CIS 숫자에 이미 들어가 있다. '
-    + '<b>그래서 두 소계를 더하면 안 된다.</b></div>';
-  return { head, tiles, clsline, table, bConv, bList, bGot, bTgt, ovN, ovAmt, MS };
+  /* 연관 오더에 더할 수 있는 몫 — ChoiceKit 원장에 이미 잡힌 건 빼고 센다.
+     Bauten 은 ChoiceKit 캠페인 고객사라 그 오더가 이미 연관 오더에 들어 있다.
+     Kailos(OCEANIA)·Retems(AZ)는 ChoiceKit 원장에 아예 없어 그대로 더할 수 있다. */
+  const inCk = MS.reduce((t, m) => t + (m.ck_counted || 0), 0);
+  const addable = MS.reduce((t, m) => t + (m.addable || 0), 0);
+  if (bGot) {
+    const dup = MS.filter(m => (m.ck_counted || 0) > 0).map(m => E(m.cust) + ' ' + M(m.ck_counted));
+    const add = MS.filter(m => (m.addable || 0) > 0).map(m => E(m.cust) + ' ' + M(m.addable));
+    table += '<div class="skui-cls" style="margin-top:8px;padding:9px 11px;'
+      + 'background:var(--surface-2,#f7f7f8);border-left:2px solid var(--accent,#DC4A1B)">'
+      + '<b>연관 오더에 더할 때</b> — B 실적 ' + M(bGot) + ' 을 통째로 더하면 안 된다. '
+      + (dup.length ? ('<b>이미 들어가 있는 몫 ' + M(inCk) + '</b> <span class="skui-mut">(' + dup.join(' · ')
+        + ' — ChoiceKit 캠페인 고객사라 그 오더가 연관 오더에 이미 잡혀 있음)</span>은 빼고, ') : '')
+      + '<b>' + M(addable) + '</b> 만 더한다 <span class="skui-mut">(' + add.join(' · ')
+      + ' — ChoiceKit 원장 밖이라 아직 아무 데도 안 잡힌 오더)</span>.</div>';
+  }
+  return { head, tiles, clsline, table, bConv, bList, bGot, bTgt, ovN, ovAmt, inCk, addable, MS };
 }
 
 function skuImpactParts(){
@@ -4762,9 +4818,9 @@ function skuImpactParts(){
       +'. 이미 열린 품번의 볼륨을 키우는 쪽이 새 품번을 여는 것보다 빨랐다는 게 '
       +'B 의 올해 패턴이므로, 남은 품번은 재오더 주기에 맞춰 밀어 보는 편이 낫다.');
   })();
-  if(_R.ovN) bl.push('<b>합산 금지</b> · B 목록 '+skuiNum(_R.ovN)+'종이 A 대상 SKU 와 겹치고 '
-    +'그 오더 약 '+skuiMoney(_R.ovAmt)+' 는 A 의 CIS 숫자에 이미 들어 있다. '
-    +'두 소계를 더하면 같은 오더를 두 번 센다.');
+  if(_R.bGot) bl.push('<b>연관 오더에 더할 때</b> · B 실적 '+skuiMoney(_R.bGot)+' 중 '
+    +skuiMoney(_R.inCk)+' 는 ChoiceKit 캠페인 고객사의 오더라 연관 오더에 이미 잡혀 있다. '
+    +'<b>'+skuiMoney(_R.addable)+' 만 더한다</b> — ChoiceKit 원장 밖이라 아직 아무 데도 안 잡힌 몫이다.');
   const bullets='<ul class="skui-bl">'+bl.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
 
   const deepHd='<div class="skui-cls" style="margin-top:18px;padding-top:12px;'
@@ -4795,9 +4851,9 @@ function skuImpactParts(){
    +'Kailos 는 품번 목록이 아니라 차종(일본·한국) 기준이라 목록 칸이 「차종 기준」이다. '
    +'KZ·AZ 는 첫 오더가 각각 2025-09·2026-04 인 램프업 거래처라 전년 동기 비교를 쓰지 않고 '
    +'「첫 오더 대비」로 본다 — 「줄었다」로 보이는 품번은 이탈이 아니라 재오더 주기가 안 돌아온 것.<br>'
-   +'<b>두 트랙을 더하지 않는 이유</b> — B 의 미션 목록 중 '+skuiNum(_R.ovN)+'종이 A 대상 SKU 와 겹치고, '
-   +'그 품번의 오더 약 '+skuiMoney(_R.ovAmt)+' 는 A 의 CIS 숫자에 이미 들어가 있다. '
-   +'또 B 는 각 고객사 단독 미션이라 ChoiceKit 연관 오더 합계에도 더하지 않는다.</p>';
+   +'<b>연관 오더에 더할 때</b> — B 실적을 통째로 더하면 안 된다. ChoiceKit 캠페인 고객사의 오더는 '
+   +'연관 오더에 이미 잡혀 있으므로 그 몫('+skuiMoney(_R.inCk)+')은 빼고, ChoiceKit 원장 밖이라 '
+   +'아직 아무 데도 안 잡힌 몫('+skuiMoney(_R.addable)+')만 더한다.</p>';
   return {head:head, tiles:tiles, cls:clsline, table:table, deepHd:deepHd,
           deep:deep, deepCust:deepCust, bullets:bullets, basis:basis};
 }

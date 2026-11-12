@@ -426,6 +426,7 @@ def main():
                 rec['share'] = round(r['got'] / rec['tot26'] * 100, 1)
 
         m_got = float(r.get('got') or 0)
+        rec['_ck_counted'] = 0.0
         if M['src'] == 'steerstar_sku':
             p = os.path.join(ROOT, 'steerstar_sku.json')
             if os.path.exists(p):
@@ -443,6 +444,9 @@ def main():
             y25, y26, q25, q26, name, cut, sp25, sp26 = ledger_sku(M['cust'])
             # SAP export 가 있으면 2026 품번은 그걸로 갈아끼운다 — ChoiceKit 대상
             # 밖까지 담고 있어 미션 목록 전체를 볼 수 있다.
+            # ChoiceKit 원장(orders.csv·cis_data)에 이미 잡혀 있는 몫 —
+            # 이건 연관 오더에서 이미 세고 있으므로 다시 더하면 안 된다.
+            ck_counted = round(sum(y26.values()), 2)
             ce = cis.get(M['cust'].strip().upper())
             if ce:
                 y26 = collections.Counter({k: round(v['amt'], 2) for k, v in ce.items()})
@@ -454,6 +458,7 @@ def main():
                 full_lines = True
             else:
                 full_lines = False
+            rec['_ck_counted'] = ck_counted
             top = tops.get(M['key'])
             if not y26 and not y25:
                 why = ('대시보드가 쓰는 CIS 원장은 ChoiceKit 캠페인 고객사만 담고 있어 '
@@ -626,7 +631,15 @@ def main():
             ov_amt = 0.0
             if sc and M['src'] == 'ledger':
                 ov_amt = round(sum(v for k, v in y26.items() if k in sc), 2)
+            # 연관 오더 합산 규칙
+            #   ck_counted  ChoiceKit 원장에 이미 잡힌 몫 → 더하지 않는다
+            #   addable     그 밖의 몫 → 연관 오더에 더할 수 있다
+            got = float(rec.get('got') or 0)
+            ckc = float(rec.get('_ck_counted') or 0)
+            rec['ck_counted'] = round(ckc, 2)
+            rec['addable'] = round(max(got - ckc, 0.0), 2)
             rec['overlap_ck'] = {'n': ov_n, 'amt': ov_amt}
+            rec.pop('_ck_counted', None)
         except Exception:
             rec['overlap_ck'] = {'n': 0, 'amt': 0}
         out['missions'].append(rec)
