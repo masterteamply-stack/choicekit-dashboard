@@ -13697,6 +13697,15 @@ function skuImpactParts(){
    +tile('오더 전환', skuiNum(convAll)+'종', convRate!=null?convRate.toFixed(1)+'% · 전년에 없던 품번 '+skuiNum(C['신규']||0)+'종 포함':'')
    +tile('신규 전환 창출', skuiMoney(S.new_amt), '전년 오더 0 → 당해 오더 발생')
    +tile('집행 전 → 후', skuiMoney(bAll)+' → '+skuiMoney(aAll), skuiPct(yAll)+' · '+skuiMoney(aAll-bAll))
+   /* 전체 품번 중 캠페인이 실제로 다루게 된 품번 — 위 '대상 SKU/오더 전환'은
+      SKU 지정 캠페인 범위고, 이건 전 품목 캠페인까지 포함한 커버리지임. */
+   +((S.camp_sku&&S.camp_sku.union&&S.camp_sku.ledger)
+     ? tile('캠페인 커버리지',
+            skuiNum(S.camp_sku.union)+' <span style="font-size:14px;color:var(--muted,#8a8a8f);font-weight:400">/ '
+            +skuiNum(S.camp_sku.ledger)+'종</span>',
+            '전체 오더 원장의 <b>'+S.camp_sku.cover_pct+'%</b> · 캠페인에서 오더가 난 품번(합집합) · '
+            +'캠페인별 합 '+skuiNum(S.camp_sku.sum)+'종')
+     : '')
    +'</div>';
 
   const clsline='<div class="skui-cls">품번 분류 <b>'+skuiNum(C['신규']||0)+'</b> 신규 · '

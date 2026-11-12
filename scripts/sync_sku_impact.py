@@ -236,6 +236,38 @@ def main():
         'aside': [],        # 같이 보되 합계에는 더하지 않는 것 (고객사 단독 미션)
     }
 
+    # ── 캠페인이 다루게 된 SKU — 합집합으로 센다 ───────────────────────────
+    #   예전 타일은 캠페인별 ord_sku 를 그냥 더해(5,316종) 한 품번이 두 캠페인에
+    #   걸리면 두 번 세었고, 이름도 '오더 전환 SKU' 라 바로 위의 '대상 SKU 오더
+    #   전환'(306→431종)과 뜻이 겹쳤음. 이건 전환이 아니라 캠페인에서 오더가
+    #   발생한 품번 전체임. 전체 오더 원장 품번 수와 같이 보여 커버리지로 읽는다.
+    camp_u = set(); camp_by = collections.defaultdict(set)
+    for r in rows:
+        p0 = (r.get('promotion_category') or '').strip()
+        if not p0 or p0 == '(none)': continue
+        if (r.get('customer') or '').strip().upper() in EXCL_CUST: continue
+        s0 = (r.get('sku') or '').strip().upper()
+        if not s0: continue
+        camp_u.add(s0); camp_by[p0].add(s0)
+    # 전체 오더 원장 품번 수 — 효과 분석의 scope_meta.ALL 이 유일한 출처
+    ledger = None
+    try:
+        _h = open(H, encoding='utf-8').read()
+        _D = json.loads(re.search(r'<script>const D = (\{.*?\});</script>', _h, re.S).group(1))
+        ledger = ((_D.get('scope_meta') or {}).get('ALL') or {}).get('n_sku')
+    except Exception:
+        pass
+    D['camp_sku'] = {
+        'union': len(camp_u),
+        'sum': sum(len(v) for v in camp_by.values()),
+        'by_promo': [{'k': k, 'n': len(v)} for k, v in
+                     sorted(camp_by.items(), key=lambda x: -len(x[1]))],
+        'ledger': ledger,
+        'cover_pct': (round(len(camp_u) / ledger * 100, 1) if ledger else None),
+        'note': '캠페인 태그가 붙은 오더에 실제로 등장한 품번(합집합). '
+                '대상 SKU 지정 캠페인은 전환된 품번, 전 품목 캠페인은 오더가 난 품번 전부.',
+    }
+
     # ── 고객사별 증감 — 종합이 한두 고객에 쏠렸는지 보려면 필요함 ─────────────
     cu = []
     for c in set(pv_amt) | set(cu_amt):

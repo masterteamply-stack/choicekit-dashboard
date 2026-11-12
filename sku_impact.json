@@ -2050,6 +2050,43 @@
    }
   }
  ],
+ "camp_sku": {
+  "union": 4724,
+  "sum": 5137,
+  "by_promo": [
+   {
+    "k": "SELL-OUT Promotion",
+    "n": 3425
+   },
+   {
+    "k": "Mexico Awakening Campaign",
+    "n": 695
+   },
+   {
+    "k": "Strategic Partner Program",
+    "n": 638
+   },
+   {
+    "k": "European vehicle",
+    "n": 171
+   },
+   {
+    "k": "Asian vehicle",
+    "n": 133
+   },
+   {
+    "k": "Portfolio Expansion Program",
+    "n": 43
+   },
+   {
+    "k": "CTR MarketFit Campaign",
+    "n": 32
+   }
+  ],
+  "ledger": 10368,
+  "cover_pct": 45.6,
+  "note": "캠페인 태그가 붙은 오더에 실제로 등장한 품번(합집합). 대상 SKU 지정 캠페인은 전환된 품번, 전 품목 캠페인은 오더가 난 품번 전부."
+ },
  "tgt_all": 6839,
  "conv_all": 419,
  "before_all": 1891702.58,
