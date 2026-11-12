@@ -169,6 +169,7 @@ def ledger_sku(cust):
     y25, y26 = collections.Counter(), collections.Counter()
     q25, q26 = collections.Counter(), collections.Counter()
     name, last = {}, ''
+    d25, d26, od26 = [], [], []
     for dirn in ('data', 'new_data'):
         for r in chunk_rows(dirn):
             if (r.get('customer') or '').upper() != cu:
@@ -180,6 +181,7 @@ def ledger_sku(cust):
             amt = float(r.get('amount_usd') or 0)
             if d[:4] == '2025':
                 y25[k] += amt; q25[k] += int(r.get('qty') or 0)
+                if d: d25.append(d)
             name.setdefault(k, (r.get('product') or '').strip())
     for r in chunk_rows('cis_data'):
         if (r.get('customer') or '').upper() != cu:
@@ -190,6 +192,7 @@ def ledger_sku(cust):
         y26[k] += float(r.get('amount_usd') or 0); q26[k] += int(r.get('qty') or 0)
         name.setdefault(k, (r.get('product') or '').strip())
         d = str(r.get('order_date') or '')[:10]
+        if d: d26.append(d)
         if d > last: last = d
     # orders.csv 가 2026 의 더 넓은 원장일 수 있다 — 큰 쪽을 쓴다
     o26, oq26 = collections.Counter(), collections.Counter()
@@ -205,10 +208,13 @@ def ledger_sku(cust):
             o26[k] += float(r.get('amount') or 0); oq26[k] += int(float(r.get('qty') or 0))
             name.setdefault(k, (r.get('product') or '').strip())
             d = (r.get('order date') or '')[:10]
+            if d: od26.append(d)
             if d > olast: olast = d
     if sum(o26.values()) > sum(y26.values()):
         y26, q26, last = o26, oq26, (olast or last)
-    return y25, y26, q25, q26, name, last
+        d26 = od26
+    return y25, y26, q25, q26, name, last, (min(d25), max(d25)) if d25 else ('', ''), \
+        (min(d26), max(d26)) if d26 else ('', '')
 
 
 def main():
@@ -294,7 +300,7 @@ def main():
                               'b25': K.get('b25'), 'a26': K.get('a26'),
                               'detail': 'steerstar_sku.json'}
         else:
-            y25, y26, q25, q26, name, cut = ledger_sku(M['cust'])
+            y25, y26, q25, q26, name, cut, sp25, sp26 = ledger_sku(M['cust'])
             top = tops.get(M['key'])
             if not y26 and not y25:
                 why = ('대시보드가 쓰는 CIS 원장은 ChoiceKit 캠페인 고객사만 담고 있어 '
@@ -336,30 +342,80 @@ def main():
                 if top:
                     codes, pairs = top['codes'], top['pairs']
                     full = codes | pairs
-                    hit = [k for k in keys26 if k in full]
+                    # 목록은 '미오더' 만이 아니라 **저오더 품번**도 함께 담고 있다.
+                    # 그래서 전년 오더가 있는 게 정상이고, 미션 효과는 두 갈래로 본다:
+                    #   ① 안 사던 걸 열었나 (신규)   ② 사던 걸 더 사게 했나 (증가)
+                    # 분류는 sync_sku_impact.py 와 같은 규칙 — ±2% 는 유지.
+                    def cls_of(b0, a0):
+                        if b0 <= 0:
+                            return '신규' if a0 > 0 else '미개척'
+                        if a0 <= 0:
+                            return '이탈'
+                        if a0 > b0 * 1.02: return '증가'
+                        if a0 < b0 * 0.98: return '감소'
+                        return '유지'
+                    items = []
+                    for k in sorted(full):
+                        b0, a0 = round(y25.get(k, 0), 2), round(y26.get(k, 0), 2)
+                        if b0 <= 0 and a0 <= 0:
+                            items.append({'sku': k, 'name': name.get(k, ''), 'y25': 0, 'y26': 0,
+                                          'inc': 0, 'qty': 0, 'kind': '미개척',
+                                          'pair': k in pairs and k not in codes})
+                            continue
+                        items.append({'sku': k, 'name': name.get(k, ''), 'y25': b0, 'y26': a0,
+                                      'inc': round(a0 - b0, 2), 'qty': q26.get(k, 0),
+                                      'kind': cls_of(b0, a0),
+                                      'pair': k in pairs and k not in codes})
+                    cls = collections.Counter(x['kind'] for x in items)
+                    amt = collections.defaultdict(float)
+                    for x in items:
+                        amt[x['kind']] += x['inc']
+                    byk = collections.defaultdict(list)
+                    for x in items:
+                        byk[x['kind']].append(x)
+                    for v in byk.values():
+                        v.sort(key=lambda x: -abs(x['inc']))
+                    hit = [x for x in items if x['y26'] > 0]
                     off = [k for k in keys26 if k not in full]
-                    # 목록은 '당사 미오더 제품' 이라는데, 우리 2025 원장에는 이미
-                    # 오더가 있는 품번이 섞여 있다. 전환 종수를 그냥 내보내면
-                    # '새로 연 품번' 으로 읽히므로 여기서 갈라 둔다.
-                    hit_new = [k for k in hit if not y25.get(k)]
-                    had25 = [k for k in full if y25.get(k)]
+                    l25 = round(sum(x['y25'] for x in items), 2)
+                    l26 = round(sum(x['y26'] for x in items), 2)
+                    l25_all = round(sum(y25.values()), 2)   # 목록 밖까지 포함한 원장 합
+                    l26_all = round(sum(y26.values()), 2)
                     rec['sku'].update({
                         'top_n': len(codes), 'top_full_n': len(full),
                         'top_hit': len(hit),
-                        'top_amt': round(sum(y26[k] for k in hit), 2),
+                        'top_amt': round(sum(x['y26'] for x in hit), 2),
                         'top_pct': round(len(hit) / len(full) * 100, 1) if full else None,
                         'off_n': len(off), 'off_amt': round(sum(y26[k] for k in off), 2),
-                        'hit_new_n': len(hit_new),
-                        'hit_new_amt': round(sum(y26[k] for k in hit_new), 2),
-                        'list_had25_n': len(had25),
-                        'list_had25_amt': round(sum(y25[k] for k in had25), 2),
-                        'top_items': sorted(({'sku': k, 'name': name.get(k, ''),
-                                              'y25': round(y25.get(k, 0), 2),
-                                              'y26': round(y26[k], 2), 'qty': q26.get(k, 0),
-                                              'pair': k in pairs and k not in codes}
-                                             for k in hit), key=lambda x: -x['y26'])[:12],
+                        # 목록 전체의 전년 → 당해. 미션 효과는 이 성장으로 읽는다.
+                        'l25': l25, 'l26': l26,
+                        'l_inc': round(l26 - l25, 2),
+                        'l_yoy': round((l26 / l25 - 1) * 100, 1) if l25 > 0 else None,
+                        'cls': dict(cls),
+                        'cls_amt': {k: round(v, 2) for k, v in amt.items()},
+                        # 증가액 분해 — 어디서 왔는지
+                        'decomp': [{'k': '신규 전환 (전년 오더 없던 품번)', 'v': round(amt['신규'], 2)},
+                                   {'k': '증가 (전년에도 사던 품번이 더 커짐)', 'v': round(amt['증가'], 2)},
+                                   {'k': '감소', 'v': round(amt['감소'], 2)},
+                                   {'k': '이탈 (전년 있다 올해 0)', 'v': round(amt['이탈'], 2)}],
+                        # 이 원장이 그 고객사 오더를 얼마나 담고 있나 —
+                        # 전사 원장(KV) 대비 비율. 적게 담고 있으면 '없음'을
+                        # 근거로 하는 숫자(이탈·감소·YoY)는 못 믿는다.
+                        'cov25': (round(l25_all / rec['tot25'] * 100, 1)
+                                  if rec.get('tot25') else None),
+                        'cov26': (round(l26_all / rec['tot26'] * 100, 1)
+                                  if rec.get('tot26') else None),
+                        'top_new': byk['신규'][:12],
+                        'top_up': byk['증가'][:12],
+                        'top_dn': (byk['감소'] + byk['이탈'])[:10],
                         'list': {'codes': sorted(codes), 'pairs': sorted(pairs)},
                     })
+                    # 원장이 반쪽이면 '없음'을 근거로 한 수치는 내보내되 못 믿는다고 표시
+                    cv25, cv26 = rec['sku'].get('cov25'), rec['sku'].get('cov26')
+                    rec['sku']['partial'] = bool(
+                        (cv25 is not None and cv25 < 90) or (cv26 is not None and cv26 < 90))
+                    rec['sku']['span25'] = sp25
+                    rec['sku']['span26'] = sp26
                 else:
                     rec['sku']['caveat'] = (
                         '미션을 정의하는 TOP %d 미오더 품번 목록이 아직 없어서, '
@@ -414,13 +470,14 @@ def main():
                   % (s.get('top_n'), s.get('top_full_n'), s.get('top_hit'), s.get('top_pct'),
                      format(round(s.get('top_amt') or 0), ','), s.get('off_n'),
                      format(round(s.get('off_amt') or 0), ',')))
-            if s.get('list_had25_n'):
-                print('      ⚠ 목록 %s종 중 %s종은 2025 원장에 이미 오더가 있다($%s) — '
-                      '\'당사 미오더\' 라는 목록 전제와 어긋남. 전환 %s종 중 25년에 정말 '
-                      '없던 건 %s종($%s)뿐.'
-                      % (s.get('top_full_n'), s.get('list_had25_n'),
-                         format(round(s.get('list_had25_amt') or 0), ','), s.get('top_hit'),
-                         s.get('hit_new_n'), format(round(s.get('hit_new_amt') or 0), ',')))
+            print('      목록 전체 전년 $%s → 당해 $%s (%s%%) · %s'
+                  % (format(round(s.get('l25') or 0), ','), format(round(s.get('l26') or 0), ','),
+                     s.get('l_yoy'),
+                     ' · '.join('%s %d종' % (k, v) for k, v in (s.get('cls') or {}).items())))
+            for d0 in (s.get('decomp') or []):
+                if d0['v']:
+                    print('        %-34s %s$%s' % (d0['k'], '+' if d0['v'] > 0 else '-',
+                                                    format(round(abs(d0['v'])), ',')))
         else:
             print('      품번: ' + (s.get('why') or '데이터 없음'))
     print('steerstar_missions.json ' + ('갱신됨' if changed else '변경 없음'))

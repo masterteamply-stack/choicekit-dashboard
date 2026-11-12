@@ -13937,8 +13937,11 @@ function ssmSectionHTML(S, opt){
     let sk;
     if(s.mode==='full') sk='신규 <b>'+N(s.conv)+'종</b> + 재전환 <b>'+N(s.recov)+'종</b> '
       +'<span class="skui-mut">= 미션 매출의 '+(s.cover_pct!=null?s.cover_pct.toFixed(1):'–')+'%</span>';
-    else if(s.mode==='top') sk='미션 목록 '+N(s.top_full_n||s.top_n)+'종 중 <b>'+N(s.top_hit)+'종</b> 전환 '
-      +'<span class="skui-mut">('+(s.top_pct!=null?s.top_pct.toFixed(1):'–')+'% · '+M(s.top_amt)+')</span>';
+    else if(s.mode==='top'){ const ca=s.cls_amt||{}, cl=s.cls||{};
+      sk='목록 '+N(s.top_full_n||s.top_n)+'종 중 <b>'+N(s.top_hit)+'종</b> 전환 '
+       +'<span class="skui-mut">('+(s.top_pct!=null?s.top_pct.toFixed(1):'–')+'%)</span><br>'
+       +'<span class="skui-mut">오더가 커진 몫 <b class="skui-up">+'+M((ca['신규']||0)+(ca['증가']||0))+'</b> '
+       +'— 신규 '+N(cl['신규']||0)+'종 · 증가 '+N(cl['증가']||0)+'종</span>'; }
     else if(s.mode==='ledger') sk='26년 오더 <b>'+N(s.n26)+'종</b> · 그중 25년 미오더 <b>'+N(s.new_n)+'종</b> '
       +'<span class="skui-mut">'+M(s.new_amt)+' — 미션 목록 기준 아님</span>';
     else sk=(s.top_full_n
@@ -13960,18 +13963,19 @@ function ssmSectionHTML(S, opt){
     '<b>금액 달성률과 품번 확장은 다른 이야기다.</b> '+E(kz.cust)+'(KZ)는 금액으로는 '
     +kz.rate.toFixed(0)+'% 로 크게 넘겼지만 '
     +((kz.sku&&kz.sku.mode==='top')
-       ? ('미션 목록 '+N(kz.sku.top_full_n)+'종 중 연 것은 '+N(kz.sku.top_hit)+'종('
-          +kz.sku.top_pct.toFixed(0)+'%)이다 — 금액은 그 '+N(kz.sku.top_hit)
-          +'종에 몰려 있고('+M(kz.sku.top_amt)+'), 나머지 '
-          +N((kz.sku.top_full_n||0)-(kz.sku.top_hit||0))+'종은 아직 안 열렸다')
+       ? ('그 힘은 품번을 새로 연 데서가 아니라 <b>사던 품번을 더 사게 한 데</b>서 나왔다 — '
+          +'목록 '+N(kz.sku.top_full_n)+'종 중 '+N(kz.sku.top_hit)+'종이 오더로 잡혔고, '
+          +'그중 증가 '+N((kz.sku.cls||{})['증가']||0)+'종이 <b>+'+M((kz.sku.cls_amt||{})['증가']||0)+'</b>, '
+          +'신규 '+N((kz.sku.cls||{})['신규']||0)+'종이 +'+M((kz.sku.cls_amt||{})['신규']||0)+' 를 더했다. '
+          +'아직 한 번도 안 열린 품번이 '+N((kz.sku.cls||{})['미개척']||0)+'종 남아 있다')
        : (kz.sku&&kz.sku.mode==='ledger')
        ? ('26년 오더 '+N(kz.sku.n26)+'종 중 25년에 안 사던 품번은 '+N(kz.sku.new_n)+'종('
           +M(kz.sku.new_amt)+')뿐이라, 금액은 기존 주력 품번에서 나왔다')
        : '품번 전환은 따로 봐야 한다')
     +'. '+E(ka.cust)+'(호주)는 달성률 '+ka.rate.toFixed(0)+'% 로 못 미쳤지만 '
     +'미션 매출의 '+((ka.sku&&ka.sku.cover_pct!=null)?ka.sku.cover_pct.toFixed(0):'–')
-    +'% 가 신규·재전환 품번에서 나왔다. <b>금액은 KZ, 품번 확장은 호주가 앞선다</b> — '
-    +'미션이 노린 건 뒤쪽이므로 KZ 는 남은 목록 품번을 여는 게 다음 레버다.');
+    +'% 가 신규·재전환 품번에서 나왔다. <b>KZ 는 볼륨을 키웠고 호주는 품번을 넓혔다</b> — '
+    +'둘 다 미션 효과지만 성격이 다르다. KZ 의 다음 레버는 아직 안 열린 목록 품번이다.');
   if(az&&az.sku&&az.sku.mode==='none') bits.push(
     '<b>'+E(az.cust)+'(AZ)는 적게 산 게 아니라 목록 밖을 샀다.</b> '
     +'2026 첫 거래 고객인데 전체 오더가 '+M(az.tot26||0)+' 인데도 미션 목록'
@@ -14003,38 +14007,63 @@ function ssmLedgerHTML(m){
    +'<span class="skui-mut">「'+E(m.mission)+'」 · 원장 ~'+E(s.cut||'')+'</span></div>';
   if(s.mode==='top'){
     const pct=s.top_pct!=null?s.top_pct.toFixed(1):'–';
+    const cls=s.cls||{}, ca=s.cls_amt||{};
+    const grow=(ca['신규']||0)+(ca['증가']||0);
     h+='<div class="skui-cls"><b>미션 목록 '+N(s.top_full_n)+'종</b> '
      +'<span class="skui-mut">(TOP '+N(s.top_n)+' + Pair)</span> 중 <b>'+N(s.top_hit)+'종</b>이 오더로 전환 — <b>'+pct+'%</b> · '+M(s.top_amt)
      +' <span class="skui-mut">· 목록 밖 품번 '+N(s.off_n)+'종 '+M(s.off_amt)+'</span></div>';
-    h+='<div class="skui-cls skui-mut" style="margin-top:4px">26년 오더 '+N(s.n26)+'종 '+M(s.a26)
-     +' 중 '+M(s.top_amt)+'('+Math.round((s.top_amt||0)/(s.a26||1)*100)+'%)가 미션 목록 품번에서 나왔다.</div>';
-    if(s.list_had25_n) h+='<div class="skui-cls" style="margin-top:10px;padding:9px 11px;'
+    /* 목록은 '미오더' 만이 아니라 저오더 품번도 담고 있다. 그래서 효과는 두 갈래 —
+       안 사던 걸 열었나(신규), 사던 걸 더 사게 했나(증가). 둘을 합쳐 본다. */
+    h+='<div class="skui-tiles" style="margin-top:10px">'
+     +'<div class="skui-tile"><div class="skui-lab">오더가 커진 몫</div>'
+     +'<div class="skui-val">+'+M(grow)+'</div>'
+     +'<div class="skui-sub">신규 '+N(cls['신규']||0)+'종 +'+M(ca['신규']||0)
+     +' · 증가 '+N(cls['증가']||0)+'종 +'+M(ca['증가']||0)+'</div></div>'
+     +'<div class="skui-tile"><div class="skui-lab">전환된 품번</div>'
+     +'<div class="skui-val">'+N(s.top_hit)+'종</div>'
+     +'<div class="skui-sub">목록 '+N(s.top_full_n)+'종 중 '+pct+'% · '+M(s.top_amt)+'</div></div>'
+     +'<div class="skui-tile"><div class="skui-lab">아직 안 열린 품번</div>'
+     +'<div class="skui-val">'+N(cls['미개척']||0)+'종</div>'
+     +'<div class="skui-sub">양쪽 해 모두 오더 없음 — 다음 레버</div></div>'
+     +'</div>';
+    h+='<div class="skui-cls" style="margin-top:12px">'
+     +'<b>목록은 「한 번도 안 산 품번」만이 아니라 「조금 사던 품번」도 함께 담고 있다.</b> '
+     +'그래서 미션 효과는 둘로 나눠 읽는다 — 안 사던 걸 열었나(신규 '+N(cls['신규']||0)+'종 +'+M(ca['신규']||0)+'), '
+     +'사던 걸 더 사게 했나(증가 '+N(cls['증가']||0)+'종 <b>+'+M(ca['증가']||0)+'</b>). '
+     +'<span class="skui-mut">볼륨이 커진 쪽이 이 미션의 실제 성과다.</span></div>';
+    if(s.partial) h+='<div class="skui-cls" style="margin-top:10px;padding:9px 11px;'
      +'background:var(--surface-2,#f7f7f8);border-left:2px solid var(--accent,#DC4A1B)">'
-     +'<b>목록의 「당사 미오더」 전제를 확인해야 한다.</b> 목록 '+N(s.top_full_n)+'종 중 '
-     +'<b>'+N(s.list_had25_n)+'종</b>은 우리 2025 원장에 이미 오더가 있다('+M(s.list_had25_amt)+'). '
-     +'그래서 전환 '+N(s.top_hit)+'종 중 25년에 정말 없던 품번은 <b>'+N(s.hit_new_n)+'종</b> '
-     +M(s.hit_new_amt)+' 뿐이고, 나머지 '+N((s.top_hit||0)-(s.hit_new_n||0))+'종 '
-     +M((s.top_amt||0)-(s.hit_new_amt||0))+' 은 전부터 사던 품번이다. '
-     +'<span class="skui-mut">목록이 현지 시장 수요나 다른 기준으로 뽑혔거나, 기준 연도가 '
-     +'우리 원장과 다를 수 있다 — 전환율을 「새로 연 품번」으로 읽기 전에 목록의 기준부터 맞춰야 한다.</span></div>';
+     +'<b>감소·이탈은 이 원장으로 판단하지 말 것.</b> 대시보드 원장이 이 고객사 오더를 '
+     +'다 담고 있지 않다 — 26년 '+(s.cov26!=null?s.cov26.toFixed(0):'–')+'%('+M(s.l26)+' / 전사 '+M(m.tot26||0)+')만 들어와 있고, '
+     +'25년치는 '+E((s.span25||[])[0]||'')+' 하루치, 26년치는 '+E((s.span26||[])[0]||'')+' ~ '+E((s.span26||[])[1]||'')+' 두 건이다. '
+     +'기간이 서로 안 맞으니 <b>「안 샀다」를 근거로 하는 수치(이탈 '+N(cls['이탈']||0)+'종 '+M(ca['이탈']||0)
+     +' · 감소 '+N(cls['감소']||0)+'종 '+M(ca['감소']||0)+' · 목록 전체 YoY '+(s.l_yoy!=null?s.l_yoy.toFixed(1)+'%':'–')
+     +')는 실제 감소가 아니라 원장에 안 들어온 오더일 수 있다.</b> '
+     +'<span class="skui-mut">반대로 신규·증가는 들어온 오더에서 확인된 것이라 최소치로 믿을 수 있다. '
+     +'Bauten 전체 오더 줄(품번 단위)이 들어오면 이 칸도 제대로 채워진다.</span></div>';
   } else {
     h+='<div class="skui-cls">25년 <b>'+N(s.n25)+'종</b> '+M(s.a25)+' → 26년 <b>'+N(s.n26)+'종</b> '+M(s.a26)
      +' · 그중 <b>25년에 안 사던 품번 '+N(s.new_n)+'종</b> '+M(s.new_amt)
      +' <span class="skui-mut">· 기존 품번 재오더 '+N(s.rep_n)+'종 '+M(s.rep_amt)+'</span></div>';
   }
-  const tbl=(title,rows)=>{
+  const tbl=(title,rows,withInc)=>{
     if(!rows||!rows.length) return '';
     let t='<div class="skui-cls" style="margin-top:10px"><b>'+title+'</b></div>'
      +'<div class="skui-wrap"><table class="skui-tbl"><thead><tr>'
-     +'<th>CTR 코드</th><th>품명</th><th class="n">2025</th><th class="n">2026</th><th class="n">수량</th></tr></thead><tbody>';
-    rows.forEach(x=>{ t+='<tr><td><b>'+E(x.sku)+'</b></td><td>'+E(x.name)+'</td>'
+     +'<th>CTR 코드</th><th>품명</th><th class="n">2025</th><th class="n">2026</th>'
+     +(withInc?'<th class="n">증감</th>':'')+'<th class="n">수량</th></tr></thead><tbody>';
+    rows.forEach(x=>{ const inc=(x.inc!=null)?x.inc:((x.y26||0)-(x.y25||0));
+      t+='<tr><td><b>'+E(x.sku)+'</b>'+(x.pair?' <span class="skui-mut" style="font-size:9px">pair</span>':'')+'</td>'
+      +'<td>'+E(x.name)+'</td>'
       +'<td class="n">'+(x.y25?M(x.y25):'·')+'</td><td class="n"><b>'+M(x.y26)+'</b></td>'
+      +(withInc?('<td class="n '+(inc>=0?'skui-up':'skui-dn')+'">'+(inc>=0?'+':'')+M(inc)+'</td>'):'')
       +'<td class="n">'+N(x.qty)+'</td></tr>'; });
     return t+'</tbody></table></div>';
   };
   if(s.mode==='top'){
-    h+=tbl('미션 목록 중 전환된 품번 — 금액 상위', s.top_items);
-    h+=tbl('25년에 안 사던 품번 — 금액 상위', s.top_new);
+    h+=tbl('① 오더가 커진 품번 — 전년에도 사던 걸 더 샀다 (증가액 상위)', s.top_up, true);
+    h+=tbl('② 새로 열린 품번 — 전년 오더가 없던 품번', s.top_new, true);
+    if(s.partial!==true) h+=tbl('③ 줄거나 끊긴 품번', s.top_dn, true);
   } else {
     h+=tbl('25년에 안 사던 품번 — 금액 상위', s.top_new);
     h+=tbl('26년 오더 상위 품번', s.top);
