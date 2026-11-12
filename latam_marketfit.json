@@ -217,5 +217,334 @@
   "pre_n": 9,
   "pre_a": 58193
  },
- "sku_check": "LATAM_MarketFit.xlsx (2026-11-03 제공) 의 프로모션 적용 SKU 목록과 대조함 — 9개 모델군 · 72종 · 게시일까지 모두 같아 바꿀 것이 없었음."
+ "sku_check": "LATAM_MarketFit.xlsx (2026-11-03 제공) 의 프로모션 적용 SKU 목록과 대조함 — 9개 모델군 · 72종 · 게시일까지 모두 같아 바꿀 것이 없었음.",
+ "cust_rows": [
+  {
+   "country": "에콰도르",
+   "cust": "HIVIMAR S.A.",
+   "sku": 15,
+   "q": 24484,
+   "a": 121961,
+   "n": 68,
+   "first": "2026-02-20",
+   "last": "2026-09-21",
+   "avg": 8131
+  },
+  {
+   "country": "에콰도르",
+   "cust": "COJAPAN",
+   "sku": 16,
+   "q": 16777,
+   "a": 65696,
+   "n": 27,
+   "first": "2026-02-20",
+   "last": "2026-08-24",
+   "avg": 4106
+  },
+  {
+   "country": "페루",
+   "cust": "REFAX PERU",
+   "sku": 15,
+   "q": 4440,
+   "a": 33395,
+   "n": 35,
+   "first": "2026-03-03",
+   "last": "2026-08-28",
+   "avg": 2226
+  },
+  {
+   "country": "콜롬비아",
+   "cust": "UNIVERSAL DE REPUESTOS",
+   "sku": 22,
+   "q": 10684,
+   "a": 31037,
+   "n": 45,
+   "first": "2026-02-20",
+   "last": "2026-09-21",
+   "avg": 1411
+  },
+  {
+   "country": "파나마",
+   "cust": "RP INTERNATIONAL GROUP INC",
+   "sku": 7,
+   "q": 3610,
+   "a": 16150,
+   "n": 14,
+   "first": "2026-03-12",
+   "last": "2026-05-14",
+   "avg": 2307
+  },
+  {
+   "country": "칠레",
+   "cust": "NORIEGA S.A.C.",
+   "sku": 9,
+   "q": 1335,
+   "a": 8054,
+   "n": 20,
+   "first": "2026-06-16",
+   "last": "2026-09-07",
+   "avg": 895
+  },
+  {
+   "country": "바베이도스",
+   "cust": "MARK'S AUTO SPARE",
+   "sku": 4,
+   "q": 880,
+   "a": 7557,
+   "n": 8,
+   "first": "2026-03-23",
+   "last": "2026-03-23",
+   "avg": 1889
+  },
+  {
+   "country": "엘살바도르",
+   "cust": "SUPER REPUESTOS",
+   "sku": 6,
+   "q": 1460,
+   "a": 7514,
+   "n": 8,
+   "first": "2026-03-11",
+   "last": "2026-07-06",
+   "avg": 1252
+  },
+  {
+   "country": "페루",
+   "cust": "RENUSA",
+   "sku": 11,
+   "q": 619,
+   "a": 4614,
+   "n": 18,
+   "first": "2026-04-28",
+   "last": "2026-08-20",
+   "avg": 419
+  },
+  {
+   "country": "파라과이",
+   "cust": "AUTOMOVIL SUPPLY",
+   "sku": 5,
+   "q": 644,
+   "a": 4220,
+   "n": 5,
+   "first": "2026-05-20",
+   "last": "2026-09-11",
+   "avg": 844
+  },
+  {
+   "country": "페루",
+   "cust": "GC IMP",
+   "sku": 7,
+   "q": 860,
+   "a": 4197,
+   "n": 15,
+   "first": "2026-03-20",
+   "last": "2026-09-10",
+   "avg": 600
+  },
+  {
+   "country": "칠레",
+   "cust": "IMPORTADORA GIMPORT LYDA.",
+   "sku": 7,
+   "q": 492,
+   "a": 4010,
+   "n": 7,
+   "first": "2026-08-19",
+   "last": "2026-08-19",
+   "avg": 573
+  },
+  {
+   "country": "가이아나",
+   "cust": "SANKAR'S AUTOWORKS",
+   "sku": 3,
+   "q": 540,
+   "a": 2953,
+   "n": 6,
+   "first": "2026-04-27",
+   "last": "2026-04-27",
+   "avg": 984
+  },
+  {
+   "country": "콜롬비아",
+   "cust": "IMPORTADORAS ASOCIADAS",
+   "sku": 8,
+   "q": 342,
+   "a": 2427,
+   "n": 11,
+   "first": "2026-03-20",
+   "last": "2026-08-24",
+   "avg": 303
+  },
+  {
+   "country": "아르헨티나",
+   "cust": "RURAL SANTA FE S.A.I.C.A.",
+   "sku": 11,
+   "q": 585,
+   "a": 2424,
+   "n": 11,
+   "first": "2026-09-18",
+   "last": "2026-09-18",
+   "avg": 220
+  },
+  {
+   "country": "파나마",
+   "cust": "R24 AUTOMOTIVE",
+   "sku": 10,
+   "q": 508,
+   "a": 2217,
+   "n": 16,
+   "first": "2026-03-17",
+   "last": "2026-09-21",
+   "avg": 222
+  },
+  {
+   "country": "과테말라",
+   "cust": "Grupo IS, S.A. (Autonova)",
+   "sku": 14,
+   "q": 168,
+   "a": 1029,
+   "n": 15,
+   "first": "2026-09-14",
+   "last": "2026-09-14",
+   "avg": 73
+  },
+  {
+   "country": "과테말라",
+   "cust": "CLUTCHES DE GUATEMALA",
+   "sku": 1,
+   "q": 180,
+   "a": 981,
+   "n": 2,
+   "first": "2026-03-12",
+   "last": "2026-03-12",
+   "avg": 981
+  },
+  {
+   "country": "페루",
+   "cust": "DISTRIBUIDORA VEGA/VEGA MOTORS S",
+   "sku": 2,
+   "q": 140,
+   "a": 937,
+   "n": 2,
+   "first": "2026-08-18",
+   "last": "2026-08-18",
+   "avg": 468
+  },
+  {
+   "country": "온두라스",
+   "cust": "Super Repuestos Honduras S.A. de C.V.",
+   "sku": 4,
+   "q": 150,
+   "a": 839,
+   "n": 4,
+   "first": "2026-03-11",
+   "last": "2026-09-04",
+   "avg": 210
+  },
+  {
+   "country": "푸에르토리코",
+   "cust": "CyM Auto Parts",
+   "sku": 2,
+   "q": 50,
+   "a": 779,
+   "n": 3,
+   "first": "2026-07-13",
+   "last": "2026-07-27",
+   "avg": 389
+  },
+  {
+   "country": "과테말라",
+   "cust": "J.A. VASQUEZ",
+   "sku": 5,
+   "q": 136,
+   "a": 723,
+   "n": 7,
+   "first": "2026-04-20",
+   "last": "2026-04-20",
+   "avg": 145
+  },
+  {
+   "country": "코스타리카",
+   "cust": "SABANA AUTO PARTS S.A.",
+   "sku": 3,
+   "q": 117,
+   "a": 553,
+   "n": 4,
+   "first": "2026-04-20",
+   "last": "2026-04-20",
+   "avg": 184
+  },
+  {
+   "country": "아르헨티나",
+   "cust": "CORVEN S.A.C.I.F.",
+   "sku": 5,
+   "q": 120,
+   "a": 528,
+   "n": 7,
+   "first": "2026-03-06",
+   "last": "2026-08-25",
+   "avg": 106
+  },
+  {
+   "country": "코스타리카",
+   "cust": "IMPORTACIONES SOL DE KOBE S.A.",
+   "sku": 3,
+   "q": 88,
+   "a": 407,
+   "n": 4,
+   "first": "2026-05-20",
+   "last": "2026-07-20",
+   "avg": 136
+  },
+  {
+   "country": "코스타리카",
+   "cust": "SUISEI LTDA.",
+   "sku": 4,
+   "q": 73,
+   "a": 375,
+   "n": 4,
+   "first": "2026-09-03",
+   "last": "2026-09-03",
+   "avg": 94
+  },
+  {
+   "country": "엘살바도르",
+   "cust": "Super Repuestos Honduras S.A.",
+   "sku": 1,
+   "q": 80,
+   "a": 373,
+   "n": 1,
+   "first": "2026-03-11",
+   "last": "2026-03-11",
+   "avg": 373
+  },
+  {
+   "country": "도미니카 공화국",
+   "cust": "ARIAS MOTOR",
+   "sku": 2,
+   "q": 60,
+   "a": 284,
+   "n": 3,
+   "first": "2026-04-21",
+   "last": "2026-08-13",
+   "avg": 142
+  },
+  {
+   "country": "브라질",
+   "cust": "Malb Parts Importacao, Exportacao e",
+   "sku": 2,
+   "q": 20,
+   "a": 34,
+   "n": 2,
+   "first": "2026-08-18",
+   "last": "2026-08-18",
+   "avg": 17
+  }
+ ],
+ "cust_tot": {
+  "n_country": 16,
+  "n_cust": 29,
+  "sku": 32,
+  "a": 326268,
+  "q": 69642,
+  "n": 372
+ }
 }

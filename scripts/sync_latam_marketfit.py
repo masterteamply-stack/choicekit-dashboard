@@ -50,6 +50,48 @@ for r in orders:
     else:
         pre[c] += a
 
+# 국가 × 고객사 — 이 캠페인은 다루는 품번·금액이 작아서 모델군보다 '어느 나라
+# 어느 고객이 몇 종을 얼마에 사갔나' 가 더 읽힌다.
+# 원장의 국가명이 한글·영문으로 섞여 있어(ECUADOR / 에콰도르) 그대로 묶으면
+# 같은 고객사가 두 줄로 쪼개진다. 한글로 통일한다.
+CTRY = {'ECUADOR': '에콰도르', 'PERU': '페루', 'COLOMBIA': '콜롬비아', 'CHILE': '칠레',
+        'GUATEMALA': '과테말라', 'PANAMA': '파나마', 'ARGENTINA': '아르헨티나',
+        'COSTA RICA': '코스타리카', 'BARBADOS': '바베이도스', 'PARAGUAY': '파라과이',
+        'GUYANA': '가이아나', 'DOMINICAN REPUBLIC': '도미니카 공화국',
+        'PUERTO RICO': '푸에르토리코', 'BRAZIL': '브라질', 'EL SALVADOR': '엘살바도르',
+        'HONDURAS': '온두라스', 'MEXICO': '멕시코', 'BOLIVIA': '볼리비아',
+        'NICARAGUA': '니카라과', 'URUGUAY': '우루과이', 'VENEZUELA': '베네수엘라',
+        'TRINIDAD AND TOBAGO': '트리니다드토바고', 'SURINAME': '수리남',
+        'JAMAICA': '자메이카', 'BELIZE': '벨리즈', 'HAITI': '아이티',
+        'CUBA': '쿠바', 'SAINT LUCIA': '세인트루시아'}
+def ctry(v):
+    v = (v or '').strip()
+    return CTRY.get(v.upper(), v)
+cu = collections.defaultdict(lambda: {'sku': set(), 'q': 0.0, 'a': 0.0, 'n': 0,
+                                      'first': '9999', 'last': ''})
+for r in orders:
+    c = r['CTR Code'].strip()
+    if c not in start: continue
+    d = r['order date']
+    if d < start[c]: continue
+    k = (ctry(r['country']), r['customer'].strip())
+    v = cu[k]
+    v['sku'].add(c); v['q'] += float(r['qty'] or 0); v['a'] += float(r['amount'] or 0)
+    v['n'] += 1
+    if d < v['first']: v['first'] = d
+    if d > v['last']: v['last'] = d
+cust_rows = sorted(
+    [{'country': k[0], 'cust': k[1], 'sku': len(v['sku']), 'q': round(v['q']),
+      'a': round(v['a']), 'n': v['n'], 'first': v['first'], 'last': v['last'],
+      'avg': round(v['a'] / len(v['sku'])) if v['sku'] else 0}
+     for k, v in cu.items()], key=lambda x: -x['a'])
+cust_tot = {'n_country': len({x['country'] for x in cust_rows}),
+            'n_cust': len(cust_rows),
+            'sku': len({c for v in cu.values() for c in v['sku']}),
+            'a': round(sum(x['a'] for x in cust_rows)),
+            'q': round(sum(x['q'] for x in cust_rows)),
+            'n': sum(x['n'] for x in cust_rows)}
+
 rows = []
 for g in groups.values():
     hit = [c for c in g['skus'] if c in per]
@@ -63,11 +105,12 @@ tot = dict(n=len(start), hit=len(per), groups=len(rows),
            q=round(sum(v['q'] for v in per.values())), a=round(sum(v['a'] for v in per.values())),
            cust=len(set().union(*[v['cust'] for v in per.values()])) if per else 0,
            pre_n=len(pre), pre_a=round(sum(pre.values())))
-src.update(rows=rows, tot=tot, cut=cut,
+src.update(rows=rows, tot=tot, cut=cut, cust_rows=cust_rows, cust_tot=cust_tot,
            ledger='orders.csv (연관 오더 원장 · ~' + cut + ')',
            note_pre='게시일 이전 오더는 캠페인 실적에서 뺐음 — %d종 $%s.' % (tot['pre_n'], format(tot['pre_a'], ',')))
 
-MF = {k: src[k] for k in ('source_file', 'asof', 'ledger', 'cut', 'note', 'note_pre', 'rows', 'tot')}
+MF = {k: src[k] for k in ('source_file', 'asof', 'ledger', 'cut', 'note', 'note_pre',
+                          'rows', 'tot', 'cust_rows', 'cust_tot')}
 f = os.path.join(ROOT, 'promo_dashboard_v10_6.html')
 html = open(f, encoding='utf-8', newline='').read()
 new = '<script>const MF = ' + json.dumps(MF, ensure_ascii=False, separators=(',', ':')) + ';</script>'
@@ -83,4 +126,5 @@ if changed:
     open(f, 'w', encoding='utf-8', newline='').write(out)
 print(f"LATAM MarketFit · 대상 {tot['n']}종 / {tot['groups']}개 모델군 · 전환 {tot['hit']}종 ({tot['hit']/tot['n']*100:.0f}%)")
 print(f"금액 ${tot['a']:,} · 수량 {tot['q']:,} · 고객 {tot['cust']}곳 · 원장 ~{cut}")
+print(f"국가 {cust_tot['n_country']}곳 · 고객사 {cust_tot['n_cust']}곳 · 전환 {cust_tot['sku']}종 · ${cust_tot['a']:,}")
 print('promo_dashboard_v10_6.html ' + ('갱신됨' if changed else '변경 없음'))
