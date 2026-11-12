@@ -4555,22 +4555,30 @@ function skuImpactDeepHTML(){
 
 /* 조각으로 돌려준다 — 효과 분석은 카드로 감싸고(skuImpactHTML),
    메인은 위젯의 기존 자리(KPI 행·인사이트·메타)에 나눠 넣는다. */
-/* ══════════════════════════════════════════════════════════════════════════
-   SKU 기반 오더 전환 효과 — 종합 리포트
-   ──────────────────────────────────────────────────────────────────────────
-   성격이 다른 두 갈래를 한 화면에서 나눠 본다. 전에는 ChoiceKit 캠페인 표
-   아래에 SteerStar 미션을 덧붙여 두어, 같은 기준인 것처럼 읽혔다.
+/* 섹션별 공유 링크 — 이 섹션만 바로 열리는 주소를 복사한다.
+   위젯 전체 Copy link 는 위젯 단위라, 안쪽 트랙(A·B)을 짚어 보낼 수가 없었음. */
+function skuAnchorBtn(id, col) {
+  return '<button type="button" class="sku-anchor" data-anchor="' + id + '" '
+    + 'title="이 섹션으로 바로 가는 링크를 복사" '
+    + 'style="margin-left:auto;font-size:10px;line-height:1;padding:4px 8px;border-radius:6px;'
+    + 'border:1px solid ' + col + '55;background:transparent;color:' + col + ';cursor:pointer;opacity:.75">'
+    + '🔗 링크</button>';
+}
+function skuCopyAnchor(btn) {
+  const id = btn.getAttribute('data-anchor');
+  const url = location.origin + location.pathname + location.search + '#' + id;
+  const done = () => { const o = btn.innerHTML; btn.innerHTML = '✓ 복사됨';
+    setTimeout(() => { btn.innerHTML = o; }, 1400); };
+  if (navigator.clipboard && navigator.clipboard.writeText)
+    navigator.clipboard.writeText(url).then(done, () => window.prompt('Copy link:', url));
+  else window.prompt('Copy link:', url);
+  try { history.replaceState(null, '', '#' + id); } catch (e) {}
+}
+document.addEventListener('click', function (e) {
+  const b = e.target && e.target.closest && e.target.closest('.sku-anchor');
+  if (b) { e.preventDefault(); e.stopPropagation(); skuCopyAnchor(b); }
+});
 
-     A. ChoiceKit SKU 대상 프로모션   대상 품번을 정해 두고 그 품번의 오더가
-                                      집행 전 대비 어떻게 변했나를 본다.
-                                      모수 = 캠페인 target_skus · 원장 orders.csv
-     B. SteerStar SKU 기반 오더 미션   고객사 한 곳씩 품번 목록을 주고 그 목록을
-        (3개 고객사)                   얼마나 열었나를 본다.
-                                      모수 = 고객사별 미션 목록 · 원장 SAP 라인
-
-   ★ 두 트랙은 더하지 않는다. CIS 고객사(Bauten·Retems)의 미션 목록 중
-     일부가 ChoiceKit 대상 SKU 와 겹쳐, 더하면 같은 오더를 두 번 센다.
-     겹치는 양은 화면에 그대로 적는다.                                      */
 function skuReportParts(S, X, SSM) {
   const M = skuiMoney, N = skuiNum, E = skuiEsc, P = skuiPct;
   const MS = (SSM && SSM.missions) || [];
@@ -4596,14 +4604,16 @@ function skuReportParts(S, X, SSM) {
 
   /* 섹션 구분 — A·B 가 한눈에 갈리도록 색 띠 + 글자 배지로 세게 끊는다.
      전에는 본문과 같은 크기의 한 줄이라 어디서 트랙이 바뀌는지 안 보였음. */
-  const secHd = (ltr, title, sub, col) =>
-    '<div style="margin:26px 0 10px;padding:11px 13px;border-top:3px solid ' + col + ';'
-    + 'background:linear-gradient(to bottom,' + col + '14,transparent 70%)">'
+  const secHd = (ltr, title, sub, col, anchor) =>
+    '<div' + (anchor ? ' id="' + anchor + '"' : '')
+    + ' style="margin:26px 0 10px;padding:11px 13px;border-top:3px solid ' + col + ';'
+    + 'background:linear-gradient(to bottom,' + col + '14,transparent 70%);scroll-margin-top:70px">'
     + '<div style="display:flex;align-items:center;gap:10px">'
     + '<span style="display:inline-flex;align-items:center;justify-content:center;'
     + 'min-width:24px;height:24px;border-radius:7px;background:' + col + ';color:#fff;'
     + 'font-size:13px;font-weight:800;line-height:1">' + ltr + '</span>'
-    + '<b style="font-size:15.5px;letter-spacing:-0.2px;color:' + col + '">' + title + '</b></div>'
+    + '<b style="font-size:15.5px;letter-spacing:-0.2px;color:' + col + '">' + title + '</b>'
+    + (anchor ? skuAnchorBtn(anchor, col) : '') + '</div>'
     + '<div class="skui-mut" style="margin-top:5px;padding-left:34px;font-size:11.5px;line-height:1.5">'
     + sub + '</div></div>';
   const COL_A = 'var(--accent,#DC4A1B)', COL_B = '#1F6FEB';
@@ -4613,8 +4623,10 @@ function skuReportParts(S, X, SSM) {
     + '<div class="skui-lab">' + lab + '</div><div class="skui-val">' + val + '</div>'
     + (sub ? '<div class="skui-sub">' + sub + '</div>' : '') + '</div>';
 
-  const head = '<div class="skui-hd"><span class="skui-bar"></span><div>'
+  const head = '<div class="skui-hd" id="sku-report" style="scroll-margin-top:70px">'
+    + '<span class="skui-bar"></span><div>'
     + '<b>SKU 기반 오더 전환 효과 · 종합</b>'
+    + skuAnchorBtn('sku-report', 'var(--text-2,#636366)')
     + '<span class="skui-mut" style="font-size:10.5px;margin-left:8px">· 위 드롭다운과 무관한 고정 집계</span>'
     + '<div class="skui-sub">성격이 다른 두 갈래로 나눠 봄 — '
     + '<b>A. ChoiceKit SKU 대상 프로모션</b>(대상 품번의 집행 전·후) · '
@@ -4651,7 +4663,7 @@ function skuReportParts(S, X, SSM) {
   const rowsAll = X ? rows.concat([X]) : rows;
   let table = secHd('A', 'ChoiceKit SKU 대상 프로모션',
     '대상 품번을 정해 두고, 그 품번의 오더가 집행 전 대비 어떻게 변했나 · '
-    + N(rowsAll.length) + '개 프로모션', COL_A);
+    + N(rowsAll.length) + '개 프로모션', COL_A, 'sku-track-a');
   /* A 를 어떻게 읽어야 하는지 — 표 바로 위에 둔다 */
   const aGrew = rowsAll.filter(r => (r.yoy || 0) > 0);
   const aMain = rowsAll.filter(r => (r.inc || 0) < 0).sort((x, y) => x.inc - y.inc)[0] || null;
@@ -4694,7 +4706,7 @@ function skuReportParts(S, X, SSM) {
   /* ── B 표 ── */
   table += secHd('B', 'SteerStar SKU 기반 오더 미션',
     '고객사 한 곳씩 품번 목록을 주고, 그 목록을 얼마나 열었나 · '
-    + MS.length + '개 고객사 단독 미션', COL_B);
+    + MS.length + '개 고객사 단독 미션', COL_B, 'sku-track-b');
   const _m = k => MS.find(x => x.key === k);
   const kz0 = _m('bauten'), az0 = _m('retems'), ka0 = _m('kailos');
   const bBl = [];
@@ -4838,7 +4850,7 @@ function skuImpactParts(){
   const bullets='<ul class="skui-bl">'+bl.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
 
   const deepHd=_R.secHd('A', '상세 · 어디서 늘고 어디서 줄었나',
-    '위 A 표의 한 줄을 고객사·품번·권역·차종까지 펼친 것', _R.COL_A);
+    '위 A 표의 한 줄을 고객사·품번·권역·차종까지 펼친 것', _R.COL_A, 'sku-track-a-detail');
   deep+=custDeepHTML(S);              /* 고객사별 — 감소가 어디에 쏠렸나 */
   if(X) deep+=cnDeepHTML(X);          /* 프로모션별 상세 */
   /* 고객사 단독 미션 상세 — 두는 자리가 다름. SKU 기반 추가 오더미션이 셋
@@ -4846,7 +4858,7 @@ function skuImpactParts(){
   let deepCust='';
   const _ssm = ssmData();
   if (_ssm) deepCust = _R.secHd('B', '상세 · 고객사별 미션',
-      '위 B 표의 한 줄을 목록 전환·성장·품번까지 펼친 것', _R.COL_B)
+      '위 B 표의 한 줄을 목록 전환·성장·품번까지 펼친 것', _R.COL_B, 'sku-track-b-detail')
     + ssmSectionHTML(_ssm, {embed:true});
   else (S.aside||[]).forEach(A=>{ deepCust+=kjkSectionHTML(A); });
 
