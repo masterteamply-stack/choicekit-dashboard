@@ -1862,7 +1862,15 @@ function aiTable(){
  /* ASIA 는 Sell-out 이 타깃이라 Sell-out 을 앞에 두고, 뒤에서 Sell-in 오더를 추적함.
     Sell-out 타깃은 리워드 지급 기준표(AP)를 고객사로 합친 값, 실적은 두 프로그램에
     겹친 몫을 걷어낸 고객사 단위 수치(AO)다. */
- const soT=k=>(typeof AP!=='undefined'&&AP.rows)?AP.rows.filter(r=>r.k===k).reduce((a,r)=>a+(r.tgt||0),0):0;
+ /* 목표는 고객사 묶음(AO · 5.Sell-out by Customer 의 C 표)을 먼저 씀.
+    AP(프로그램 단위) 행을 더하면 한 고객사가 여러 프로그램에 걸릴 때 목표가
+    겹쳐 올라감 — GP $38,863(프로그램 합) vs $32,543(고객사 묶음),
+    ATC $22,117 vs $15,798. 실적(soA)이 고객사 묶음이라 목표도 같아야 함. */
+ const soT=k=>{
+   const r=(typeof AO!=='undefined'&&AO.rows)?AO.rows.find(x=>x.k===k):null;
+   if(r&&r.tgt!=null) return r.tgt;
+   return (typeof AP!=='undefined'&&AP.rows)?AP.rows.filter(x=>x.k===k).reduce((a,x)=>a+(x.tgt||0),0):0;
+ };
  const soA=k=>{const r=(typeof AO!=='undefined'&&AO.rows)?AO.rows.find(x=>x.k===k):null; return r?r.usd:null;};
  const rows=AS.rows.slice().sort((a,b)=>(soA(b.k)||0)-(soA(a.k)||0)||b.got-a.got);
  const mx=Math.max(...rows.map(r=>Math.max(r.a25,r.got)),1);
@@ -1906,7 +1914,7 @@ function aiTable(){
        <th>전년 비율<div style="font-weight:400;font-size:10px;opacity:.8">금액 / 수량</div></th><th>증감률</th></tr></thead><tbody>`
   +rows.map(tr).join('')
   +`</tbody><tfoot><tr><td style="text-align:left">합계</td><td></td>
-     <td class="num socol sol">${fmtC(TS)}</td><td class="num socol">${fmtC(TA)}</td><td class="num socol sor">${(TA/TS*100).toFixed(1)}%</td>
+     <td class="num socol sol">${fmtC(TS)}</td><td class="num socol">${fmtC(TA)}</td><td class="num socol sor">${((typeof AO!=='undefined'&&AO.tot&&AO.tot.att!=null)?AO.tot.att:(TA/TS*100)).toFixed(1)}%</td>
      <td class="num">${fmtC(T.a25)}<div class="sub3" style="font-weight:400;font-size:10px">${(T.a25q||0).toLocaleString()}개</div></td>
      <td class="num">${fmtC(T.got)}<div class="sub3" style="font-weight:400;font-size:10px">${(T.gotq||0).toLocaleString()}개</div></td>
      <td class="num">${fmtC(T.s26)}</td>
