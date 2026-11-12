@@ -63,6 +63,50 @@ def main():
                    'tgt': _t.get('tgt'), 'act': _t.get('usd'), 'att': _t.get('att'),
                    'basis': '고객사 묶음 · 5.Sell-out by Customer 의 C 표'}
 
+    # ── 원장(orders.csv)으로 못 세는 캠페인의 월별 시계열 ──────────────────────
+    # 메인 대시보드의 월간 Overview 는 orders.csv 를 월별로 쌓는다. 아래 두 캠페인은
+    # 그 원장 밖이라 월 합계가 비고, TOTAL 이 상단 카드와 어긋났다. 여기서 월별
+    # 원본을 그대로 내려보내면 메인은 '원장 행 대신 이 시계열'을 쓰면 된다
+    # (더하는 게 아니라 대체 — 겹치면 두 번 세니까).
+    #   중국차 프로모션  오더 원장이 아예 다른 파일 → CNP.rows[].mser 가 원본
+    #   NA Lordco       orders.csv 에 2026-01 · 2025 여러 달이 통째로 없음
+    #                   → lordco_data.json 의 order_usd 가 원본 (전 품목 · 연간)
+    mser = {}
+    _c = re.search(r'const CNP\s*=\s*(\{.*?\});', html, re.S)
+    if _c:
+        for r in (json.loads(_c.group(1)).get('rows') or []):
+            if not r.get('started'):
+                continue
+            k = '%s|%s' % (r.get('region'), r.get('program'))
+            cur, prv = {}, {}
+            for s in (r.get('mser') or []):
+                m = s.get('m')
+                if not m:
+                    continue
+                if s.get('cur'):
+                    cur[m] = round(s['cur'], 2)
+                if s.get('prv'):
+                    prv['%d%s' % (int(m[:4]) - 1, m[4:])] = round(s['prv'], 2)
+            if cur or prv:
+                mser[k] = {'a26': cur, 'a25': prv,
+                           'sku26': r.get('cn26_sku'), 'sku25': r.get('cn25_sku'),
+                           'why': '오더 원장 밖 — 중국차 오더분석 파일이 원본'}
+
+    _lp = os.path.join(ROOT, 'lordco_data.json')
+    if os.path.exists(_lp):
+        _l = json.load(open(_lp, encoding='utf-8'))
+        _o = _l.get('order_usd') or {}
+        _mk = lambda yr, arr: {'%d-%02d' % (yr, i + 1): float(v)
+                               for i, v in enumerate(arr or []) if v}
+        cur, prv = _mk(2026, _o.get('y26')), _mk(2025, _o.get('y25'))
+        if cur or prv:
+            # 브리지 rows 의 a26/a25 는 원장 마감월까지만 센다. 월 시계열도 거기서 자른다.
+            _cut = max(cur) if cur else ''
+            prv = {m: v for m, v in prv.items() if not _cut or m <= '%d%s' % (int(_cut[:4]) - 1, _cut[4:])}
+            mser['NA|Strategic Partner Program'] = {
+                'a26': cur, 'a25': prv,
+                'why': 'orders.csv 에 2026-01 등이 없음 — lordco_data.json 이 원본(전 품목·연간)'}
+
     out = {
         '_readme': '효과 분석 대시보드(promo_dashboard_v10_6.html)의 캠페인 KPI. '
                    '메인 대시보드(index.html)가 이 파일을 읽어 같은 값을 보여 줌 — '
@@ -97,8 +141,14 @@ def main():
         # marketing.csv 의 SELL-OUT Target 은 프로그램 단위 합이라 메인 대시보드가
         # 그걸 쓰면 $836K/$864K 로 어긋남. 여기서 같이 내려보냄.
         'so': _ao,
+        # 원장 밖 캠페인의 월별 원본 — 메인의 월간 Overview 가 원장 행 '대신' 쓴다
+        'mser': mser,
+        # s26 = 그 캠페인의 연관 오더에 실제로 걸린 품번 종수(효과 분석 집계).
+        # 메인 표의 'CK 오더 SKU' 올해 칸이 이걸 쓴다 — 금액과 같은 원본에서.
+        # 전년 종수는 효과 분석에도 없어서 메인이 baseline 으로 따로 센다.
         'rows': [{'region': c.get('region'), 'program': c.get('program'),
-                  'a25': c.get('a25'), 'a26': c.get('a26'), 'cut': c.get('cut')}
+                  'a25': c.get('a25'), 'a26': c.get('a26'), 'cut': c.get('cut'),
+                  's26': c.get('ord_sku')}
                  for c in sorted(cs, key=lambda x: -(x.get('a26') or 0))],
     }
 

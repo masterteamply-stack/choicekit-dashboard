@@ -7209,33 +7209,13 @@ function renderRegionExecSummary(fOrders, fMkt) {
     const sub = document.getElementById('kpiAchvSub'); if (sub) sub.textContent = _nTgt ? `(order+sell-out) ÷ target · ${_nTgt} campaigns` : 'order ÷ target';
   } else { try { applyKpiBridge(); } catch (e) {} }
 
-  // ── Note — 근거 + 종합 지표와의 차이 명시 ──
-  // 이 표와 아래 위젯들은 같은 판정(ckRelatedGate)을 쓴다. 다만 이 표의 총계는
-  // 효과 분석 브리지(campaign_kpi.json)로 고정되고, 원장 기반 위젯 합계는 원장
-  // 범위만큼만 나오므로 차액이 생긴다. 그 차액이 무엇인지 여기 적어 둔다.
+  // ── Note (minimal) ──
+  // 근거(연관 오더 판정 · 원장 범위 차액 · 달성률 두 기준)는 화면에 박지 않고
+  // claude/연관오더_집계방법론.md 에 적어 둔다. 열 title 과 각 셀 tooltip 으로 충분함.
   const noteEl = document.getElementById('execSummaryNote');
-  if (noteEl) {
-    let recon = '';
-    try {
-      const _g = ckRelatedGate();
-      const _led = (fOrders || []).reduce((a, o) => a + (_g.ok(o) ? convOrder(o) : 0), 0);
-      // 총계는 agg 에서 직접 — 아래 표의 G 는 아직 집계 전이라 여기서 못 쓴다
-      let _tot = 0;
-      Object.keys(agg).forEach(r => Object.keys(agg[r]).forEach(p => { _tot += agg[r][p].order || 0; }));
-      const _gap = _tot - _led;
-      if (Math.abs(_gap) > 1) recon =
-        `<div style="margin-top:8px;padding:9px 11px;background:var(--surface-2);border-left:2px solid var(--accent);font-size:11.5px;line-height:1.75;text-transform:none;letter-spacing:0;font-family:inherit;color:var(--text-2)">
-          <b>근거</b> — 이 표와 아래 위젯들은 같은 연관 오더 판정을 씁니다(캠페인 시작일 · 대상 SKU/고객사 · LATAM 4버킷 · SELL-OUT은 SELL-IN만).
-          총계 <b>${fmtMoney(_tot)}</b> 는 효과 분석 기준이고, 오더 원장(orders.csv)으로 셀 수 있는 몫은 <b>${fmtMoney(_led)}</b> 라 <b>${fmtMoney(_gap)}</b> 차이가 납니다 —
-          <span class="muted">중국차 프로모션 ${fmtMoney(19387 * usdToDisp)} 는 원장 밖(별도 오더분석 파일), NA Lordco ${fmtMoney(56633 * usdToDisp)} 는 원장에 2026-06 분이 빠져 있어서입니다. 계산 차이가 아니라 원장 범위 차이입니다.</span>
-          <br><b>달성률</b> — 이 표의 달성률은 <b>캠페인 자체 타깃 대비</b>(오더+셀아웃 ÷ 오더타깃+셀아웃타깃)이고,
-          상단 종합 지표의 달성률은 <b>전년 동기×1.2 대비</b>입니다. <span class="muted">분모가 다른 두 지표라 값도 다릅니다 — 섞어 읽지 마십시오.</span>
-        </div>`;
-    } catch (e) {}
-    noteEl.innerHTML =
-      (baselineOn ? '' : '<span class="t-red">Prev Year & YoY need Baseline (top toolbar). </span>') +
-      '<span class="muted">Click a row to drill down: Region → Campaign → Country → Customer. Country target/cost are actual; customer values are allocated by order share.</span>' + recon;
-  }
+  if (noteEl) noteEl.innerHTML =
+    (baselineOn ? '' : '<span class="t-red">Prev Year & YoY need Baseline (top toolbar). </span>') +
+    '<span class="muted">Click a row to drill down: Region → Campaign → Country → Customer. Country target/cost are actual; customer values are allocated by order share.</span>';
 
   // ── Sort segment state / binding ──
 
@@ -7885,11 +7865,26 @@ async function renderPromoChart(fOrders, fMkt) {
   if (_ppRgnSel) _ppRgnSel.innerHTML = _regionOptsHTML(state.orders||[], _regSel);
   const filterSel = document.getElementById('promoFilterSel');
   {
-    const _optCamps = new Set((_optScope || []).map(o => (o.promotion_category||'').trim()).filter(Boolean));
+    // 드롭다운 옵션은 오더 원장에서 뽑는다. 중국차 프로모션은 원장 밖이라 선택지
+    // 자체가 없었다 — 브리지(CKPI.rows)에 있는 캠페인은 가짜 행을 하나씩 얹어
+    // 옵션이 생기게 한다. 집계에는 쓰이지 않고 옵션 목록에만 쓰인다.
+    let _optScopeX = (typeof _optScope !== 'undefined' && _optScope) ? _optScope.slice() : [];
+    try {
+      const _have = new Set(_optScopeX.map(o => (o.promotion_category||'').trim()));
+      const _add = [];
+      ((window.CKPI && CKPI.rows) || []).forEach(r => {
+        const pg = (r.program||'').trim(), rg = normalizeRegion(r.region||'');
+        if (!pg || _have.has(pg)) return;
+        if (_regSel !== '__all__' && _regSel !== rg) return;
+        _add.push({ promotion_category: pg, region: rg, __bridgeOnly__: true });
+      });
+      if (_add.length) _optScopeX = _optScopeX.concat(_add);
+    } catch (e) { console.warn('[promo] 브리지 캠페인 옵션 추가 실패:', e); }
+    const _optCamps = new Set((_optScopeX || []).map(o => (o.promotion_category||'').trim()).filter(Boolean));
     // Region count per campaign in scope — used to detect a plain (no-region) value
     // for a split-only campaign (SELL-OUT Promotion), which has no combined option.
     const _optRgnCnt = {};
-    (_optScope || []).forEach(o => { const p=(o.promotion_category||'').trim(); if(!p) return;
+    (_optScopeX || []).forEach(o => { const p=(o.promotion_category||'').trim(); if(!p) return;
       (_optRgnCnt[p] = _optRgnCnt[p] || new Set()).add((o.region||'').trim()); });
     const _plainSplitOnly = _pSel.camp !== '__all__' && !_pSel.region
       && _SPLIT_ONLY_CAMPS.has(_pSel.camp) && ((_optRgnCnt[_pSel.camp]||new Set()).size > 1);
@@ -7897,7 +7892,7 @@ async function renderPromoChart(fOrders, fMkt) {
     // (a genuinely unified campaign's plain value stays valid via its combined option).
     if (_pSel.camp !== '__all__' && (!_optCamps.has(_pSel.camp) || _plainSplitOnly)) state.promoFilter = '__all__';
     if (filterSel) {
-      filterSel.innerHTML = _promoRegionOptsFromOrders(_optScope, state.promoFilter, 'All promotions');
+      filterSel.innerHTML = _promoRegionOptsFromOrders(_optScopeX, state.promoFilter, 'All promotions');
       filterSel.value = state.promoFilter;
       // If the current filter has no matching option in this scope (e.g. a deep-linked
       // campaign that isn't a valid option here), the <select> falls back to its first
@@ -8464,14 +8459,24 @@ async function renderPromoChart(fOrders, fMkt) {
           if (!_rgC || !_rgC.length || _rgC.includes(normalizeRegion(o.region||''))) _curSkuSet.add(key);
         } else { const _mbP=((_cfgAll[p]||{}).match_by||'sku').toLowerCase(); if(_mbP==='customer' && key) _curSkuSet.add(key); }
       });
-      const _curSkuN = _curSkuSet.size;
+      // 전체 보기일 때는 효과 분석이 센 합집합(ord_sku)을 쓴다 — 아래 캠페인 표의
+      // 🏆 Total 과 같은 값이어야 한다. 캠페인별로 세어 더하면 여러 캠페인이 함께
+      // 다룬 품번을 두 번 세서 서로 다른 숫자가 나온다.
+      const _curSkuN = (promoFilter === '__all__' && window.CKPI && CKPI.ord_sku > 0)
+        ? CKPI.ord_sku : _curSkuSet.size;
       // 전년: summary의 baSkuCount(활성화된 SKU 수)
       const _selCampSku = (typeof _promoSel==='function' ? _promoSel(promoFilter||'__all__').camp : promoFilter) || '__all__';
+      // 전년 종수는 적지 않는다. baseline 은 비대상 행을 품번 없이 월 합계로 접어
+      // 둬서, 세면 늘 과소(366종)로 나와 올해(5,316종) 옆에서 오해를 부른다.
+      // 대상 SKU 의 전년 → 올해 전환은 아래 SKU 섹션에서 따로 본다.
       const _prvSkuN = summary.filter(p=>_selCampSku==='__all__'||((p.promotion||p.key||'').split(_RSPLIT)[0])===_selCampSku).reduce((s,p)=>s+(p.baSkuCount||0),0);
+      const _skuComparable = !(window.CKPI && CKPI.ord_sku > 0);
       const _skuSub = cur => `${fmtMoney(cur)} · ${_curSkuN.toLocaleString()} SKUs`;
-      const _prvSkuSub = cur => `${fmtMoney(cur)} · ${_prvSkuN.toLocaleString()} SKUs`;
+      const _prvSkuSub = cur => _skuComparable
+        ? `${fmtMoney(cur)} · ${_prvSkuN.toLocaleString()} SKUs`
+        : `${fmtMoney(cur)}`;
       const _dSkuN = _curSkuN - _prvSkuN;
-      const _dSkuTag = _prvSkuN > 0
+      const _dSkuTag = (_skuComparable && _prvSkuN > 0)
         ? `<span class="${_dSkuN>=0?'t-green':'t-red'}">${_dSkuN>=0?'▲':'▼'}${Math.abs(_dSkuN)} SKUs</span>`
         : '';
       // ── MoM/QoQ: KPI cards are BUCKET-level — Current Total keeps the full
@@ -9071,6 +9076,7 @@ function renderPromoTable() {
     if(mb2==='sku'){(c2.target_skus||[]).forEach(s=>{_ctrToPromoOv[s.trim()]=p;});}
     else{(c2.target_customers||[]).forEach(c=>{_custToPromoOv[c.trim()]=p;});}
   });
+  const _pPAby={};   // 캠페인 → 월 → 전년 금액 (브리지 맞춤용)
   const _prevSrcOv=(state.preOrdersEnabled&&Array.isArray(_ppP)&&_ppP.length)
     ?(_ppO||[]).concat(_ppP):(_ppO||[]);
   const curPeriods=Array.from(new Set(fOrders.map(o=>periodKey(o.order_date,period)).filter(Boolean))).sort();
@@ -9078,12 +9084,28 @@ function renderPromoTable() {
   if(ovEl&&_cmpMode!=='off'&&curPeriods.length){
     const pCA={},pPA={};
     const PAT_OV=/^PO-([^-]+)-/;
+    // 월간 Overview 도 연관 오더 판정(ckRelatedGate)으로 — 전에는 '유효 캠페인 +
+    // 시작일'만 걸러서 TOTAL 이 $3.77M 으로 상단 카드($3.46M)와 어긋났다.
+    // 오더 원장 밖 캠페인(중국차·NA Lordco)은 원장 행 대신 브리지의 월별 원본
+    // (CKPI.mser)을 쓴다 — 더하는 게 아니라 대체. 겹치면 두 번 세니까.
+    const _ovGate=ckRelatedGate();
+    const _ovMs=(window.CKPI&&CKPI.mser)||{};
+    const _ovSkip=new Set(Object.keys(_ovMs).map(k=>{const i=k.indexOf('|');return normalizeRegion(k.slice(0,i))+'|'+k.slice(i+1);}));
     fOrders.forEach(o=>{
+      if(!_ovGate.ok(o))return;
       const p=(o.promotion_category||'').trim();
       if(!_summaryPromos.has(p))return;
-      if(_ovPS[p]&&o.order_date<_ovPS[p])return;
+      if(_ovSkip.has(normalizeRegion(o.region||'')+'|'+p))return;
       const pk=periodKey(o.order_date,period);if(!pk)return;
       pCA[pk]=(pCA[pk]||0)+convOrder(o);
+    });
+    const _ovUsd=usdToDisplay();
+    Object.keys(_ovMs).forEach(k=>{
+      const i=k.indexOf('|'); const rg=normalizeRegion(k.slice(0,i)), pg=k.slice(i+1);
+      if(_promoFilter!=='__all__'&&_promoFilter!==pg)return;   // 중국차는 summary 생성 뒤에 붙으므로 필터로 직접 본다
+      if(_ppRgn!=='__all__'&&_ppRgn!==rg)return;
+      const ser=_ovMs[k]&&_ovMs[k].a26; if(!ser)return;
+      Object.keys(ser).forEach(m=>{const pk=periodKey(m+'-01',period);if(pk)pCA[pk]=(pCA[pk]||0)+Number(ser[m]||0)*_ovUsd;});
     });
     _prevSrcOv.forEach(o=>{
       const d=o.order_date||'';if(!d)return;
@@ -9093,6 +9115,7 @@ function renderPromoTable() {
         p=_ctrToPromoOv[ct]||_ctrToPromoOv[sk]||_custToPromoOv[(o.customer||'').trim()]||'';
       }
       if(!p||!_summaryPromos.has(p))return;
+      if(_ovSkip.has(normalizeRegion(o.region||'')+'|'+p))return;   // 전년도 브리지 월별로 대체
       const ba=_baAmtOv[p];
       if(!ba||!ba.prevFrom||!ba.prevTo||d<ba.prevFrom||d>ba.prevTo)return;
       const mb2=((_cfgOv[p]||{}).match_by||'sku').toLowerCase();
@@ -9109,7 +9132,37 @@ function renderPromoTable() {
       }
       const amt=(o[PRE_ORDER_MARK]&&o.amount_usd!=null)?Number(o.amount_usd)*usdToDisplay():convOrder(o);
       const _fwdM=_cmpMode==='qoq'?3:_cmpMode==='mom'?1:12;const pk=periodKey(_addMonths(d,_fwdM),period);
-      if(pk)pPA[pk]=(pPA[pk]||0)+amt;
+      if(pk){pPA[pk]=(pPA[pk]||0)+amt;(_pPAby[p]=_pPAby[p]||{})[pk]=(_pPAby[p][pk]||0)+amt;}
+    });
+    // 전년 월 합계를 브리지의 캠페인별 전년(a25)에 맞춘다. baseline 은 비대상 행을
+    // 품번 없이 월 합계로 접어 둬서 캠페인 귀속이 느슨하고, 그대로 두면 전년 TOTAL 이
+    // 상단 카드($3,281,237)와 갈렸다($4.3M). 달별 모양은 baseline 그대로 두고
+    // 캠페인 합만 눌러 맞춘다 — 권역 종합 현황에서 쓰는 방식과 같다.
+    if(window.CKPI&&Array.isArray(CKPI.rows)){
+      const _w25={};
+      CKPI.rows.forEach(r=>{const pg=(r.program||'').trim();if(!pg)return;
+        if(_ppRgn!=='__all__'&&normalizeRegion(r.region||'')!==_ppRgn)return;
+        if(_promoFilter!=='__all__'&&_promoFilter!==pg)return;
+        if(_ovSkip.has(normalizeRegion(r.region||'')+'|'+pg))return;   // mser 가 따로 채움
+        _w25[pg]=(_w25[pg]||0)+Number(r.a25||0)*_ovUsd;});
+      Object.keys(_pPAby).forEach(pg=>{
+        const have=Object.values(_pPAby[pg]).reduce((a,v)=>a+v,0);
+        const want=_w25[pg];
+        if(!(have>0)||want==null)return;
+        const k=want/have;
+        Object.keys(_pPAby[pg]).forEach(pk=>{pPA[pk]=(pPA[pk]||0)+_pPAby[pg][pk]*(k-1);});
+      });
+    }
+    // 전년도 원장 밖 캠페인은 브리지의 월별 원본으로 — 당해와 같은 자리에 오게
+    // _fwdM(yoy=12개월) 만큼 앞으로 밀어 붙인다(기존 원장 경로와 같은 방식).
+    Object.keys(_ovMs).forEach(k=>{
+      const i=k.indexOf('|'); const rg=normalizeRegion(k.slice(0,i)), pg=k.slice(i+1);
+      if(_promoFilter!=='__all__'&&_promoFilter!==pg)return;   // 중국차는 summary 생성 뒤에 붙으므로 필터로 직접 본다
+      if(_ppRgn!=='__all__'&&_ppRgn!==rg)return;
+      const ser=_ovMs[k]&&_ovMs[k].a25; if(!ser)return;
+      const fwd=_cmpMode==='qoq'?3:_cmpMode==='mom'?1:12;
+      Object.keys(ser).forEach(m=>{const pk=periodKey(_addMonths(m+'-01',fwd),period);
+        if(pk)pPA[pk]=(pPA[pk]||0)+Number(ser[m]||0)*_ovUsd;});
     });
     const gC=Object.values(pCA).reduce((s,v)=>s+v,0);
     const gP=Object.values(pPA).reduce((s,v)=>s+v,0);  // pPA는 오더당 단일 캠페인 귀속 → 이미 중복 제거된 전년 합계
@@ -9302,6 +9355,191 @@ function renderPromoTable() {
       });
     });
   }
+  // ── 브리지 정합 — 이 표의 캠페인 금액을 종합 지표와 같은 값으로 ───────────
+  // 이 표는 캠페인별 자체 집계(buildBaStats)를 써서 총계가 상단 카드
+  // ($3,460,240)·권역 종합 현황과 갈려 있었다. 중국차 프로모션은 오더 원장
+  // 밖이라 행이 아예 없었고(그만큼 총계가 모자랐음). 효과 분석 브리지
+  // (CKPI.rows)를 기준으로 캠페인 금액을 맞추고, 빠진 캠페인은 행을 만든다.
+  // 하위(국가·고객사) 값은 같은 비율로 눌러 드릴다운 합이 깨지지 않게 한다.
+  const _RS = '␟';
+  const _ledgerOut = new Set();     // 원장 밖이라 브리지에서만 오는 캠페인 키
+  try {
+    if (window.CKPI && Array.isArray(CKPI.rows)) {
+      const _brg = {};
+      CKPI.rows.forEach(r => {
+        const pg = (r.program || '').trim(), rg = normalizeRegion(r.region || '');
+        if (!pg) return;
+        const e = _brg[pg] || (_brg[pg] = { a26: 0, a25: 0, regions: {} });
+        e.a26 += Number(r.a26 || 0); e.a25 += Number(r.a25 || 0);
+        const q = e.regions[rg] || (e.regions[rg] = { a26: 0, a25: 0 });
+        q.a26 += Number(r.a26 || 0); q.a25 += Number(r.a25 || 0);
+      });
+      const _usd = usdToDisplay();
+      const _want = key => {
+        const i = key.indexOf(_RS);
+        const pg = i >= 0 ? key.slice(0, i) : key, rg = i >= 0 ? normalizeRegion(key.slice(i + 1)) : '';
+        const e = _brg[pg]; if (!e) return null;
+        const v = rg ? e.regions[rg] : e;
+        return v ? { a26: v.a26 * _usd, a25: v.a25 * _usd } : null;
+      };
+      const _scaleDrill = (map, key, k) => {
+        if (!map || !map[key] || !isFinite(k)) return;
+        Object.values(map[key]).forEach(ct => { if (!ct) return; Object.keys(ct).forEach(cu => {
+          if (typeof ct[cu] === 'number') ct[cu] *= k;
+          else if (ct[cu] && typeof ct[cu].amt === 'number') ct[cu].amt *= k;
+        }); });
+      };
+      summary.forEach(s => {
+        const key = (s.promotion || s.key || '').trim();
+        const w = _want(key); if (!w) return;
+        const cur = s.afterAmt || s.orderAmt || 0, pv = s.beforeAmt || 0;
+        if (cur > 0 && Math.abs(w.a26 - cur) > 1) _scaleDrill(dd, key, w.a26 / cur);
+        if (pv > 0 && Math.abs(w.a25 - pv) > 1) _scaleDrill(ddP, key, w.a25 / pv);
+        s.afterAmt = s.orderAmt = w.a26;
+        s.beforeAmt = w.a25;
+        if (s.actual > 0) s.roi = ((w.a26 - s.actual) / s.actual) * 100;
+      });
+      // 브리지에는 있는데 표에 없는 캠페인 — 중국차 프로모션
+      const _seen = new Set(summary.map(s => (s.promotion || s.key || '').split(_RS)[0]));
+      Object.keys(_brg).forEach(pg => {
+        if (_seen.has(pg)) return;
+        if (_promoFilter !== '__all__' && _promoFilter !== pg) return;
+        const regs = Object.keys(_brg[pg].regions).filter(r => r);
+        const mk = (key, rg, v) => {
+          _ledgerOut.add(key);
+          _baAmt[key] = _baAmt[key] || {};
+          dd[key] = dd[key] || {}; ddP[key] = ddP[key] || {}; ddM[key] = ddM[key] || {};
+          ddMC[key] = ddMC[key] || {}; ddStart[key] = ddStart[key] || {};
+          summary.push({ promotion: key, key: key, _region: rg || '', regionLabel: rg || '',
+            orders: 0, afterAmt: v.a26 * _usd, orderAmt: v.a26 * _usd, beforeAmt: v.a25 * _usd,
+            expected: 0, actual: 0, roi: null, baStart: '' });
+        };
+        // 드롭다운에서 '[LATAM] 중국차 프로모션' 처럼 지역을 집어 고른 경우 그 지역만.
+        // 이 캠페인들은 오더 원장에 없어서 _ppRgn 이 안 잡히므로 선택값을 직접 본다.
+        const _selRaw = String(state.promoFilter || '');
+        const _selRg = _selRaw.indexOf(_RS) >= 0 ? normalizeRegion(_selRaw.split(_RS)[1] || '') : '';
+        if (regs.length > 1) regs.forEach(rg => {
+          if (_ppRgn !== '__all__' && _ppRgn !== rg) return;
+          if (_selRg && _selRg !== rg) return;
+          mk(pg + _RS + rg, rg, _brg[pg].regions[rg]);
+        }); else mk(pg, regs[0] || '', _brg[pg]);
+      });
+    }
+  } catch (e) { console.warn('[promo] 브리지 정합 실패:', e); }
+
+  // ── CK 오더 SKU 종수 (전년 → 올해) ────────────────────────────────────────
+  // 'CK ORDERS'(오더 줄 수)는 원장 분할 방식에 따라 달라져 읽을 값이 못 된다.
+  // 캠페인이 실제로 넓힌 건 품번 폭이므로 전년 대비 SKU 종수로 바꿨다.
+  //   올해  연관 오더(ckRelatedGate)에 걸린 품번
+  //   전년  beforeAmt 와 같은 창(prevFrom~prevTo) · 같은 대상 SKU/고객사
+  //   원장 밖 캠페인(중국차)은 브리지의 sku25/sku26 을 그대로 쓴다
+  const _skuSet = {}, _skuFix = {}, _skuBrg = {}, _skuCov = {};
+  // baseline(전년)은 비대상 행을 품번 없이 월 합계로 접어 둔다. 고객사 기반
+  // 캠페인(SELL-OUT·Strategic Partner·Mexico Awakening)은 대상이 '고객사'라
+  // 그 고객의 전년 행이 통째로 접혀 있어 품번 종수를 셀 수가 없다 — 그런 칸은
+  // 전년을 '–' 로 두고 올해만 보여 준다. SKU 기반 캠페인은 baseline 이 대상
+  // 품번을 품번째로 들고 있어 전년 종수가 의미가 있다.
+  const _skuCustBased = new Set(Object.keys(state.campaignTargetSkus || {}).filter(
+    p => (((state.campaignTargetSkus[p] || {}).match_by || 'sku').toLowerCase() === 'customer')));
+  try {
+    const _g2 = ckRelatedGate();
+    const _put = (k, sk, y) => { if (!k || !sk) return;
+      const e = _skuSet[k] || (_skuSet[k] = { cur: new Set(), prv: new Set() }); e[y].add(sk); };
+    (_ppO || []).forEach(o => {
+      if (!_g2.ok(o)) return;
+      const sk = (o.sku || o.ctr_code || '').trim().toUpperCase(); if (!sk) return;
+      const p = (o.promotion_category || '').trim(), rg = normalizeRegion(o.region || '');
+      _put(p, sk, 'cur'); _put(p + _RS + rg, sk, 'cur');
+    });
+    const _cfgS = state.campaignTargetSkus || {}, _tgt = {}, _cst = {};
+    Object.keys(_cfgS).forEach(p => { const c = _cfgS[p] || {};
+      if ((c.match_by || 'sku').toLowerCase() === 'sku')
+        _tgt[p] = new Set((c.target_skus || []).map(x => String(x).trim().toUpperCase()));
+      else _cst[p] = new Set((c.target_customers || []).map(x => String(x).trim())); });
+    const _camps = Object.keys(_cfgS);
+    (_ppP || []).forEach(o => {
+      const sk = (o.sku || o.ctr_code || '').trim().toUpperCase(); if (!sk) return;
+      const d = o.order_date || '', rg = normalizeRegion(o.region || ''), cu = (o.customer || '').trim();
+      _camps.forEach(p => {
+        const ba = _baAmt[p] || {};
+        if (ba.prevFrom && (d < ba.prevFrom || (ba.prevTo && d > ba.prevTo))) return;
+        if (_tgt[p]) { if (_tgt[p].size && !_tgt[p].has(sk)) return; }
+        else if (_cst[p] && _cst[p].size && !_cst[p].has(cu)) return;
+        _put(p, sk, 'prv'); _put(p + _RS + rg, sk, 'prv');
+      });
+    });
+    // 올해 종수는 금액과 같은 원본(브리지)을 우선한다 — 원장만으로 세면 원장에
+    // 빠진 달(NA Lordco 2026-01 등)만큼 적게 나와 금액과 앞뒤가 안 맞는다.
+    const _ms = (window.CKPI && CKPI.mser) || {};
+    Object.keys(_ms).forEach(k => {
+      const i = k.indexOf('|'); if (i < 0) return;
+      const rg = normalizeRegion(k.slice(0, i)), pg = k.slice(i + 1);
+      const v = _ms[k]; if (v.sku26 == null && v.sku25 == null) return;
+      _skuFix[pg + _RS + rg] = { cur: Number(v.sku26 || 0), prv: Number(v.sku25 || 0) };
+    });
+    ((window.CKPI && CKPI.rows) || []).forEach(r => {
+      const pg = (r.program || '').trim(), rg = normalizeRegion(r.region || '');
+      const k = pg + _RS + rg;
+      if (r.s26 == null || !(r.s26 > 0) || _skuFix[k]) return;
+      _skuBrg[k] = Number(r.s26);
+    });
+    // 전년 종수는 baseline 에서 센다. baseline 은 비대상 행을 품번 없이 월 합계로
+    // 접어 둔 게 많아, 품번이 붙은 행이 적은 캠페인은 종수를 믿을 수 없다 —
+    // 그런 칸은 숫자 대신 '–' 로 두고 올해 종수만 보여 준다.
+    (_ppP || []).forEach(o => {
+      const d = o.order_date || '', rg = normalizeRegion(o.region || ''), cu = (o.customer || '').trim();
+      const sk = (o.sku || o.ctr_code || '').trim().toUpperCase();
+      _camps.forEach(p => {
+        const ba = _baAmt[p] || {};
+        if (ba.prevFrom && (d < ba.prevFrom || (ba.prevTo && d > ba.prevTo))) return;
+        if (_tgt[p]) { if (_tgt[p].size && sk && !_tgt[p].has(sk)) return; }
+        else if (_cst[p] && _cst[p].size && !_cst[p].has(cu)) return;
+        [p, p + _RS + rg].forEach(k => {
+          const c = _skuCov[k] || (_skuCov[k] = { n: 0, hit: 0 });
+          c.n++; if (sk) c.hit++;
+        });
+      });
+    });
+  } catch (e) { console.warn('[promo] SKU 종수 집계 실패:', e); }
+  // 여러 행을 묶을 때: 품번 집합은 합집합(같은 품번 두 번 안 셈), 원장 밖
+  // 캠페인은 집합이 없고 중국전용 품번이라 ChoiceKit 대상 SKU 와 겹치지 않으므로 더한다.
+  const _skuOf = keys => {
+    const cur = new Set(), prv = new Set(); let cx = 0, px = 0;
+    const done = new Set(); let covN = 0, covHit = 0;
+    const addN = (fk, m) => { if (done.has(fk) || !m[fk]) return; done.add(fk);
+      cx += (m[fk].cur != null ? m[fk].cur : m[fk]); px += (m[fk].prv || 0); };
+    keys.forEach(k => {
+      const base = k.indexOf(_RS) < 0;
+      const c = _skuCov[k]; if (c) { covN += c.n; covHit += c.hit; }
+      // 올해: 브리지 종수(금액과 같은 원본) > 원장 집합 > 원장 밖 보정
+      if (_skuFix[k]) addN(k, _skuFix);
+      else if (_skuBrg[k]) addN(k, _skuBrg);
+      else if (base) {
+        let any = false;
+        Object.keys(_skuFix).forEach(fk => { if (fk.split(_RS)[0] === k) { addN(fk, _skuFix); any = true; } });
+        Object.keys(_skuBrg).forEach(fk => { if (fk.split(_RS)[0] === k) { addN(fk, _skuBrg); any = true; } });
+        if (!any && _skuSet[k]) _skuSet[k].cur.forEach(x => cur.add(x));
+      } else if (_skuSet[k]) _skuSet[k].cur.forEach(x => cur.add(x));
+      // 전년은 언제나 baseline 집합
+      if (_skuSet[k]) _skuSet[k].prv.forEach(x => prv.add(x));
+    });
+    // 고객사 기반 캠페인이 하나라도 섞이면 전년 종수는 세지 않는다
+    const folded = keys.some(k => _skuCustBased.has(k.split(_RS)[0]));
+    return { cur: cur.size + cx, prv: folded ? null : prv.size + px, folded: folded };
+  };
+  const _skuCellP = (keys, opt) => {
+    let { cur, prv, folded } = _skuOf(keys);
+    // 전체 합계는 캠페인 종수의 단순 합이 아니라 효과 분석이 센 합집합을 쓴다
+    if (opt && opt.grand && window.CKPI && CKPI.ord_sku > 0
+        && _promoFilter === '__all__' && _ppRgn === '__all__') cur = CKPI.ord_sku;
+    if (!cur && !prv) return '<span class="muted">–</span>';
+    if (prv == null) return `<span class="muted" title="${folded ? '고객사 기반 캠페인 — 전년 baseline 이 품번 없이 월 합계로 접혀 있어 종수를 셀 수 없음' : '전년 데이터 없음'}">–</span> <span style="color:var(--text-3)">→</span> <b>${fmtNum(cur)}</b>종`;
+    const d = cur - prv;
+    const tag = !prv ? (cur ? '<span class="t-green" style="font-size:10px">신규</span>' : '')
+      : (d === 0 ? '' : `<span class="${d > 0 ? 't-green' : 't-red'}" style="font-size:10px">${d > 0 ? '▲' : '▼'}${fmtNum(Math.abs(d))}</span>`);
+    return `<span class="muted">${prv ? fmtNum(prv) : '–'}</span> <span style="color:var(--text-3)">→</span> <b>${fmtNum(cur)}</b>종 ${tag}`;
+  };
+
   // ── 전체거래('25→'26) 상위 집계 헬퍼 ──
   // ddCustAll[base][cust] = 고객의 전체(캠페인 무관) 거래 {cur,prev}. split(camp␟REGION) 키는
   // 해당 지역 고객만 합산(고객 국가→region). 캠페인/Subtotal/Total/국가 레벨에서도 표시.
@@ -9363,7 +9601,7 @@ function renderPromoTable() {
     const ptag=_notStarted
       ? `<span class="muted" style="font-size:9px;margin-left:6px;vertical-align:middle">${from} 시작 예정</span>`
       : (from?`<span class="muted" style="font-size:9px;margin-left:6px;vertical-align:middle">${from}${to&&to!==from?' ~ '+to:''}</span>`:'');
-    return`<tr class="promo-main-row" data-promo="${promo.replace(/"/g,'&quot;')}" style="cursor:pointer" onclick="togglePromoDrill(this,'${promo.replace(/'/g,"\'")}')"><td><span style="color:#86868B;font-size:11px;margin-right:4px" class="promo-drill-arrow">▶</span><b>${_disp||'–'}</b>${sbadge(st)}${rbadge(p.regionLabel)}${(()=>{const _RGN=new Set(['CIS','MENA','LATAM','ASIA','NA','EUROPE','OCEANIA','KOREA','ASIA_PACIFIC','MIDDLE_EAST','N_AMERICA']);const _cn=ddM[promo]?Object.keys(ddM[promo]).filter(c=>c&&c!=='–'&&!_RGN.has(c.toUpperCase().replace(/ /g,'_'))).length:0;return _cn>0?`<span style="display:inline-block;background:#86868B14;color:#636366;border:1px solid #86868B33;font-size:9px;font-weight:600;padding:1px 6px;border-radius:6px;margin-left:4px;vertical-align:middle" title="캠페인 참여(마케팅 집행) 국가 수">🌐 ${_cn}개국</span>`:'';})()}${ptag}${p.baStart?`<br><span class="muted" style="font-size:10px;padding-left:16px">from ${p.baStart}</span>`:''}</td><td class="text-right mono">${fmtNum(p.orders)}</td><td class="text-right mono t-green" style="font-weight:700">${fmtMoney(aA)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted">${pA>0?fmtMoney(pA):'–'}</td>`:''}<td class="text-right mono">${dTag2}</td><td class="text-right mono" style="border-left:1px solid var(--border);font-size:10px;white-space:nowrap">${_txCell(_tx.cur,_tx.prev)}</td><td class="text-right mono" style="font-size:10px">${_txYoY(_tx.cur,_tx.prev)}</td><td class="text-right mono t-yellow" style="border-left:1px solid var(--border)">${fmtMoney(p.expected||0)}</td><td class="text-right mono t-orange">${fmtMoney(p.actual||0)}</td><td class="text-right mono ${rCls}" style="font-weight:700">${roi}</td></tr>${buildDrill(promo)}`;
+    return`<tr class="promo-main-row" data-promo="${promo.replace(/"/g,'&quot;')}" style="cursor:pointer" onclick="togglePromoDrill(this,'${promo.replace(/'/g,"\'")}')"><td><span style="color:#86868B;font-size:11px;margin-right:4px" class="promo-drill-arrow">▶</span><b>${_disp||'–'}</b>${sbadge(st)}${rbadge(p.regionLabel)}${(()=>{const _RGN=new Set(['CIS','MENA','LATAM','ASIA','NA','EUROPE','OCEANIA','KOREA','ASIA_PACIFIC','MIDDLE_EAST','N_AMERICA']);const _cn=ddM[promo]?Object.keys(ddM[promo]).filter(c=>c&&c!=='–'&&!_RGN.has(c.toUpperCase().replace(/ /g,'_'))).length:0;return _cn>0?`<span style="display:inline-block;background:#86868B14;color:#636366;border:1px solid #86868B33;font-size:9px;font-weight:600;padding:1px 6px;border-radius:6px;margin-left:4px;vertical-align:middle" title="캠페인 참여(마케팅 집행) 국가 수">🌐 ${_cn}개국</span>`:'';})()}${ptag}${p.baStart?`<br><span class="muted" style="font-size:10px;padding-left:16px">from ${p.baStart}</span>`:''}</td><td class="text-right mono" style="white-space:nowrap">${_skuCellP([promo])}</td><td class="text-right mono t-green" style="font-weight:700">${fmtMoney(aA)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted">${pA>0?fmtMoney(pA):'–'}</td>`:''}<td class="text-right mono">${dTag2}</td><td class="text-right mono" style="border-left:1px solid var(--border);font-size:10px;white-space:nowrap">${_txCell(_tx.cur,_tx.prev)}</td><td class="text-right mono" style="font-size:10px">${_txYoY(_tx.cur,_tx.prev)}</td><td class="text-right mono t-yellow" style="border-left:1px solid var(--border)">${fmtMoney(p.expected||0)}</td><td class="text-right mono t-orange">${fmtMoney(p.actual||0)}</td><td class="text-right mono ${rCls}" style="font-weight:700">${roi}</td></tr>${buildDrill(promo)}`;
   };
   const subRow=(label,rows,color,dedupPrv)=>{
     const tot=rows.reduce((s,p)=>s+(p.afterAmt||p.orderAmt||0),0);
@@ -9373,7 +9611,7 @@ function renderPromoTable() {
     const d=prv>0?((tot-prv)/prv*100):null;
     const dt=d==null?'–':d>=0?`<span class="t-green">▲${d.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(d).toFixed(1)}%</span>`;
     const exp=rows.reduce((s,p)=>s+(p.expected||0),0),act=rows.reduce((s,p)=>s+(p.actual||0),0);
-    return`<tr style="background:${color};font-weight:700;border-top:1px solid var(--border)"><td style="padding-left:8px;font-size:12px"><b>${label}</b><span class="muted" style="font-size:10px;margin-left:6px">${rows.length}개 캠페인</span></td><td class="text-right mono">${fmtNum(rows.reduce((s,p)=>s+(p.orders||0),0))}</td><td class="text-right mono t-green" style="font-weight:800">${fmtMoney(tot)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted">${prv>0?fmtMoney(prv):'–'}</td>`:''}<td class="text-right mono">${dt}</td><td class="text-right mono" style="border-left:1px solid var(--border);font-size:11px;white-space:nowrap">${_txCell(_tx.cur,_tx.prev)}</td><td class="text-right mono">${_txYoY(_tx.cur,_tx.prev)}</td><td class="text-right mono t-yellow" style="border-left:1px solid var(--border)">${fmtMoney(exp)}</td><td class="text-right mono t-orange">${fmtMoney(act)}</td><td class="text-right mono">${act>0?fmtPct(((tot-act)/act)*100):'–'}</td></tr>`;
+    return`<tr style="background:${color};font-weight:700;border-top:1px solid var(--border)"><td style="padding-left:8px;font-size:12px"><b>${label}</b><span class="muted" style="font-size:10px;margin-left:6px">${rows.length}개 캠페인</span></td><td class="text-right mono" style="white-space:nowrap" title="묶음 행은 캠페인 종수의 합 — 두 캠페인이 같은 품번을 다뤘으면 중복될 수 있음">${_skuCellP(rows.map(r=>(r.promotion||r.key||'')))}</td><td class="text-right mono t-green" style="font-weight:800">${fmtMoney(tot)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted">${prv>0?fmtMoney(prv):'–'}</td>`:''}<td class="text-right mono">${dt}</td><td class="text-right mono" style="border-left:1px solid var(--border);font-size:11px;white-space:nowrap">${_txCell(_tx.cur,_tx.prev)}</td><td class="text-right mono">${_txYoY(_tx.cur,_tx.prev)}</td><td class="text-right mono t-yellow" style="border-left:1px solid var(--border)">${fmtMoney(exp)}</td><td class="text-right mono t-orange">${fmtMoney(act)}</td><td class="text-right mono">${act>0?fmtPct(((tot-act)/act)*100):'–'}</td></tr>`;
   };
   // region-split 캠페인(SELL-OUT/Strategic Partner)을 특정 지역([ASIA] SELL-OUT 등)으로 선택하면
   // 그 지역 leg만 표시 — 안 그러면 split이 만든 ∟ASIA·∟LATAM 두 leg가 다 나옴. (__all__/무지역은 전부)
@@ -9381,16 +9619,16 @@ function renderPromoTable() {
   const siS=summary.filter(p=>campSellType(p.promotion||p.key||'')==='SELL-IN'&&_regLegOK(p));
   const soS=summary.filter(p=>campSellType(p.promotion||p.key||'')==='SELL-OUT'&&_regLegOK(p));
   const allS=[...siS,...soS];
-  const gT=allS.reduce((s,p)=>s+(p.afterAmt||p.orderAmt||0),0),gP=(_promoFilter==='__all__'&&window._baBeforeDedup&&typeof window._baBeforeDedup.grand==='number')?window._baBeforeDedup.grand:allS.reduce((s,p)=>s+(p.beforeAmt||0),0);
+  const gT=allS.reduce((s,p)=>s+(p.afterAmt||p.orderAmt||0),0),gP=(!window.CKPI&&_promoFilter==='__all__'&&window._baBeforeDedup&&typeof window._baBeforeDedup.grand==='number')?window._baBeforeDedup.grand:allS.reduce((s,p)=>s+(p.beforeAmt||0),0);
   const gd=gP>0?((gT-gP)/gP*100):null,gdTag=gd==null?'–':gd>=0?`<span class="t-green">▲${gd.toFixed(1)}%</span>`:`<span class="t-red">▼${Math.abs(gd).toFixed(1)}%</span>`;
   const gE=allS.reduce((s,p)=>s+(p.expected||0),0),gA=allS.reduce((s,p)=>s+(p.actual||0),0);
   const colCmp=_cmpMode!=='off'?`<th class="text-right">CK 전년</th>`:'';
-  const head=`<thead><tr><th>PROMOTION</th><th class="text-right">CK ORDERS</th><th class="text-right">CK ORDER AMT</th>${colCmp}<th class="text-right">CK Δ%</th><th class="text-right" style="border-left:1px solid var(--border)">전체거래 ('25→'26)</th><th class="text-right">전체 YoY</th><th class="text-right" style="border-left:1px solid var(--border)">MKT BUDGET</th><th class="text-right">EXECUTED</th><th class="text-right">Marketing ROI</th></tr></thead>`;
+  const head=`<thead><tr><th>PROMOTION</th><th class="text-right" title="캠페인 연관 오더에 실제로 걸린 품번 종수 — 전년 같은 창 → 올해. 오더 줄 수(건수)는 원장 분할 방식에 좌우돼 빼고 이걸로 바꿨음">CK 오더 SKU<br><span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-3);font-size:9px">전년 → 올해</span></th><th class="text-right">CK ORDER AMT</th>${colCmp}<th class="text-right">CK Δ%</th><th class="text-right" style="border-left:1px solid var(--border)">전체거래 ('25→'26)</th><th class="text-right">전체 YoY</th><th class="text-right" style="border-left:1px solid var(--border)">MKT BUDGET</th><th class="text-right">EXECUTED</th><th class="text-right">Marketing ROI</th></tr></thead>`;
   let body='<tbody>';
   const _grpKinds=(arr)=>{const cfgm=state.campaignTargetSkus||{};let hasSku=false,hasCust=false;arr.forEach(p=>{const nm=(p.promotion||p.key||'').split('\u241f')[0];const mb=((cfgm[nm]||{}).match_by||'sku').toLowerCase();if(mb==='customer')hasCust=true;else hasSku=true;});const parts=[];if(hasSku)parts.push('SKU-based');if(hasCust)parts.push('Customer-based');return parts.join(' · ');};
-  if(siS.length){body+=`<tr style="background:rgba(200,16,46,0.04)"><td colspan="${_cmpMode!=='off'?10:9}" style="padding:6px 10px;font-size:11px;font-weight:700;color:#C8102E;letter-spacing:0.05em">📦 SELL-IN · ${_grpKinds(siS)}</td></tr>`;body+=siS.map(buildRow).join('');body+=subRow('📦 SELL-IN Subtotal',siS,'rgba(200,16,46,0.06)',(_promoFilter==='__all__'&&window._baBeforeDedup?window._baBeforeDedup.SELL_IN:undefined));}
-  if(soS.length){body+=`<tr style="background:rgba(10,132,255,0.04)"><td colspan="${_cmpMode!=='off'?10:9}" style="padding:6px 10px;font-size:11px;font-weight:700;color:#0A84FF;letter-spacing:0.05em">🤝 SELL-OUT · ${_grpKinds(soS)}</td></tr>`;body+=soS.map(buildRow).join('');body+=subRow('🤝 SELL-OUT Subtotal',soS,'rgba(10,132,255,0.06)',(_promoFilter==='__all__'&&window._baBeforeDedup?window._baBeforeDedup.SELL_OUT:undefined));}
-  body+=`<tr style="background:rgba(0,0,0,0.06);font-weight:800;border-top:2px solid var(--border)"><td style="font-size:13px"><b>🏆 CHOICE KIT Total</b></td><td class="text-right mono">${fmtNum(allS.reduce((s,p)=>s+(p.orders||0),0))}</td><td class="text-right mono t-green" style="font-size:14px;font-weight:900">${fmtMoney(gT)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted" style="font-size:13px">${gP>0?fmtMoney(gP):'–'}</td>`:''}<td class="text-right mono" style="font-size:12px">${gdTag}</td>${(()=>{const t=_txSum(allS);return `<td class="text-right mono" style="border-left:1px solid var(--border);font-size:11px;white-space:nowrap">${_txCell(t.cur,t.prev)}</td><td class="text-right mono">${_txYoY(t.cur,t.prev)}</td>`;})()}<td class="text-right mono t-yellow" style="border-left:1px solid var(--border)">${fmtMoney(gE)}</td><td class="text-right mono t-orange">${fmtMoney(gA)}</td><td class="text-right mono">${gA>0?fmtPct(((gT-gA)/gA)*100):'–'}</td></tr></tbody>`;
+  if(siS.length){body+=`<tr style="background:rgba(200,16,46,0.04)"><td colspan="${_cmpMode!=='off'?10:9}" style="padding:6px 10px;font-size:11px;font-weight:700;color:#C8102E;letter-spacing:0.05em">📦 SELL-IN · ${_grpKinds(siS)}</td></tr>`;body+=siS.map(buildRow).join('');body+=subRow('📦 SELL-IN Subtotal',siS,'rgba(200,16,46,0.06)',(!window.CKPI&&_promoFilter==='__all__'&&window._baBeforeDedup?window._baBeforeDedup.SELL_IN:undefined));}
+  if(soS.length){body+=`<tr style="background:rgba(10,132,255,0.04)"><td colspan="${_cmpMode!=='off'?10:9}" style="padding:6px 10px;font-size:11px;font-weight:700;color:#0A84FF;letter-spacing:0.05em">🤝 SELL-OUT · ${_grpKinds(soS)}</td></tr>`;body+=soS.map(buildRow).join('');body+=subRow('🤝 SELL-OUT Subtotal',soS,'rgba(10,132,255,0.06)',(!window.CKPI&&_promoFilter==='__all__'&&window._baBeforeDedup?window._baBeforeDedup.SELL_OUT:undefined));}
+  body+=`<tr style="background:rgba(0,0,0,0.06);font-weight:800;border-top:2px solid var(--border)"><td style="font-size:13px"><b>🏆 CHOICE KIT Total</b></td><td class="text-right mono" style="white-space:nowrap" title="캠페인별 종수를 그냥 더하면 여러 캠페인이 함께 다룬 품번을 두 번 세므로, 전체 행은 효과 분석이 센 합집합을 씀">${_skuCellP(allS.map(r=>(r.promotion||r.key||'')),{grand:true})}</td><td class="text-right mono t-green" style="font-size:14px;font-weight:900">${fmtMoney(gT)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted" style="font-size:13px">${gP>0?fmtMoney(gP):'–'}</td>`:''}<td class="text-right mono" style="font-size:12px">${gdTag}</td>${(()=>{const t=_txSum(allS);return `<td class="text-right mono" style="border-left:1px solid var(--border);font-size:11px;white-space:nowrap">${_txCell(t.cur,t.prev)}</td><td class="text-right mono">${_txYoY(t.cur,t.prev)}</td>`;})()}<td class="text-right mono t-yellow" style="border-left:1px solid var(--border)">${fmtMoney(gE)}</td><td class="text-right mono t-orange">${fmtMoney(gA)}</td><td class="text-right mono">${gA>0?fmtPct(((gT-gA)/gA)*100):'–'}</td></tr></tbody>`;
   document.getElementById('tblPromo').innerHTML=head+body;
   } catch(e){console.error('[renderPromoTable]',e);}
 }
