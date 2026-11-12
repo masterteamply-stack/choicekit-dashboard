@@ -171,6 +171,1048 @@
       "docs": 1
      }
     ],
+    "lines": [
+     {
+      "sku": "CB0129",
+      "name": "BALL JOINT",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 71.8,
+      "d": "2026-10-20"
+     },
+     {
+      "sku": "CB0197",
+      "name": "BALL JOINT",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 57.48,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CB0334",
+      "name": "BALL JOINT",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 60.3,
+      "d": "2026-10-20"
+     },
+     {
+      "sku": "CB0341",
+      "name": "BALL JOINT",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 47.1,
+      "d": "2026-10-20"
+     },
+     {
+      "sku": "CB0393",
+      "name": "BALL JOINT",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 54.0,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CB0418",
+      "name": "BALL JOINT",
+      "qty": 16,
+      "open_qty": 16,
+      "amt": 110.08,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0426",
+      "name": "BALL JOINT",
+      "qty": 48,
+      "open_qty": 48,
+      "amt": 318.72,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CB0427",
+      "name": "BALL JOINT",
+      "qty": 16,
+      "open_qty": 16,
+      "amt": 106.24,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0427",
+      "name": "BALL JOINT",
+      "qty": 32,
+      "open_qty": 32,
+      "amt": 212.48,
+      "d": "2026-08-20"
+     },
+     {
+      "sku": "CB0427",
+      "name": "BALL JOINT",
+      "qty": 48,
+      "open_qty": 48,
+      "amt": 318.72,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CB0427",
+      "name": "BALL JOINT",
+      "qty": 32,
+      "open_qty": 32,
+      "amt": 212.48,
+      "d": "2026-10-15"
+     },
+     {
+      "sku": "CB0429",
+      "name": "BALL JOINT",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 65.0,
+      "d": "2026-10-20"
+     },
+     {
+      "sku": "CB0430",
+      "name": "BALL JOINT",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 65.0,
+      "d": "2026-10-20"
+     },
+     {
+      "sku": "CB0452L",
+      "name": "BALL JOINT",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 78.1,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CB0569",
+      "name": "BALL JOINT",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 86.5,
+      "d": "2026-10-20"
+     },
+     {
+      "sku": "CB0596",
+      "name": "BALL JOINT",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 136.6,
+      "d": "2026-05-20"
+     },
+     {
+      "sku": "CB0656",
+      "name": "BALL JOINT",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 99.7,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CE0067",
+      "name": "OUTER TIE ROD",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 67.4,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CE0068",
+      "name": "OUTER TIE ROD",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 67.5,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CE0289",
+      "name": "OUTER TIE ROD",
+      "qty": 18,
+      "open_qty": 18,
+      "amt": 64.8,
+      "d": "2026-08-20"
+     },
+     {
+      "sku": "CE0328L",
+      "name": "OUTER TIE ROD",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 55.3,
+      "d": "2026-10-15"
+     },
+     {
+      "sku": "CE0328R",
+      "name": "OUTER TIE ROD",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 55.3,
+      "d": "2026-10-15"
+     },
+     {
+      "sku": "CE0330L",
+      "name": "OUTER TIE ROD",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 56.4,
+      "d": "2026-10-20"
+     },
+     {
+      "sku": "CE0330R",
+      "name": "OUTER TIE ROD",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 56.4,
+      "d": "2026-10-20"
+     },
+     {
+      "sku": "CE0336L",
+      "name": "OUTER TIE ROD",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 61.2,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CE0336R",
+      "name": "OUTER TIE ROD",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 61.2,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CE0339R",
+      "name": "OUTER TIE ROD",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 55.2,
+      "d": "2026-10-15"
+     },
+     {
+      "sku": "CE0423L",
+      "name": "OUTER TIE ROD",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 114.0,
+      "d": "2026-10-15"
+     },
+     {
+      "sku": "CE0423R",
+      "name": "OUTER TIE ROD",
+      "qty": 40,
+      "open_qty": 40,
+      "amt": 228.0,
+      "d": "2026-10-15"
+     },
+     {
+      "sku": "CE0674",
+      "name": "OUTER TIE ROD",
+      "qty": 40,
+      "open_qty": 40,
+      "amt": 256.8,
+      "d": "2026-08-20"
+     },
+     {
+      "sku": "CE0706",
+      "name": "OUTER TIE ROD",
+      "qty": 30,
+      "open_qty": 30,
+      "amt": 179.7,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CE0731L",
+      "name": "OUTER TIE ROD",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 48.8,
+      "d": "2026-10-20"
+     },
+     {
+      "sku": "CE0731R",
+      "name": "OUTER TIE ROD",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 48.4,
+      "d": "2026-10-20"
+     },
+     {
+      "sku": "CE0781",
+      "name": "OUTER TIE ROD",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 47.4,
+      "d": "2026-10-20"
+     },
+     {
+      "sku": "CE0782",
+      "name": "OUTER TIE ROD",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 47.4,
+      "d": "2026-10-20"
+     },
+     {
+      "sku": "CE0816L",
+      "name": "OUTER TIE ROD",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 72.3,
+      "d": "2026-10-20"
+     },
+     {
+      "sku": "CE0816R",
+      "name": "OUTER TIE ROD",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 72.6,
+      "d": "2026-10-20"
+     },
+     {
+      "sku": "CE0941L",
+      "name": "OUTER TIE ROD",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 70.6,
+      "d": "2026-10-20"
+     },
+     {
+      "sku": "CE0941R",
+      "name": "OUTER TIE ROD",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 70.6,
+      "d": "2026-10-20"
+     },
+     {
+      "sku": "CL0060",
+      "name": "STABILIZER LINK",
+      "qty": 36,
+      "open_qty": 36,
+      "amt": 292.32,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CL0086",
+      "name": "STABILIZER LINK",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 44.76,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CL0086",
+      "name": "STABILIZER LINK",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 44.76,
+      "d": "2026-10-15"
+     },
+     {
+      "sku": "CL0120",
+      "name": "STABILIZER LINK",
+      "qty": 24,
+      "open_qty": 24,
+      "amt": 105.6,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0141",
+      "name": "STABILIZER LINK",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 31.0,
+      "d": "2026-10-20"
+     },
+     {
+      "sku": "CL0142",
+      "name": "STABILIZER LINK",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 31.0,
+      "d": "2026-10-20"
+     },
+     {
+      "sku": "CL0186",
+      "name": "STABILIZER LINK",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 62.0,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CL0194",
+      "name": "STABILIZER LINK",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 62.0,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CL0215L",
+      "name": "STABILIZER LINK",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 100.0,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CL0215L",
+      "name": "STABILIZER LINK",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 50.0,
+      "d": "2026-10-15"
+     },
+     {
+      "sku": "CL0215R",
+      "name": "STABILIZER LINK",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 100.0,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CL0215R",
+      "name": "STABILIZER LINK",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 50.0,
+      "d": "2026-10-15"
+     },
+     {
+      "sku": "CL0247",
+      "name": "STABILIZER LINK",
+      "qty": 30,
+      "open_qty": 30,
+      "amt": 101.4,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CL0276",
+      "name": "STABILIZER LINK",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 68.0,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CL0384",
+      "name": "STABILIZER LINK",
+      "qty": 18,
+      "open_qty": 18,
+      "amt": 55.44,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CL0397",
+      "name": "STABILIZER LINK",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 33.6,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CL0420",
+      "name": "STABILIZER LINK",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 29.5,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CL0421",
+      "name": "STABILIZER LINK",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 29.5,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CL0422",
+      "name": "STABILIZER LINK",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 36.4,
+      "d": "2026-10-20"
+     },
+     {
+      "sku": "CL0423",
+      "name": "STABILIZER LINK",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 44.0,
+      "d": "2026-10-20"
+     },
+     {
+      "sku": "CL0424",
+      "name": "STABILIZER LINK",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 46.44,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CL0425L",
+      "name": "STABILIZER LINK",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 55.2,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CL0425L",
+      "name": "STABILIZER LINK",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 55.2,
+      "d": "2026-10-15"
+     },
+     {
+      "sku": "CL0425R",
+      "name": "STABILIZER LINK",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 55.2,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CL0425R",
+      "name": "STABILIZER LINK",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 55.2,
+      "d": "2026-10-15"
+     },
+     {
+      "sku": "CL0434",
+      "name": "STABILIZER LINK",
+      "qty": 18,
+      "open_qty": 18,
+      "amt": 43.2,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CL0486",
+      "name": "STABILIZER LINK",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 295.0,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CL0497",
+      "name": "STABILIZER LINK",
+      "qty": 60,
+      "open_qty": 60,
+      "amt": 270.6,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CL0527",
+      "name": "STABILIZER LINK",
+      "qty": 36,
+      "open_qty": 36,
+      "amt": 118.8,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CL0664L",
+      "name": "STABILIZER LINK",
+      "qty": 25,
+      "open_qty": 25,
+      "amt": 87.25,
+      "d": "2026-10-20"
+     },
+     {
+      "sku": "CL0664R",
+      "name": "STABILIZER LINK",
+      "qty": 25,
+      "open_qty": 25,
+      "amt": 87.25,
+      "d": "2026-10-20"
+     },
+     {
+      "sku": "CL0677L",
+      "name": "STABILIZER LINK",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 38.0,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CL0677R",
+      "name": "STABILIZER LINK",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 38.0,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CL0830",
+      "name": "STABILIZER LINK",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 58.2,
+      "d": "2026-08-20"
+     },
+     {
+      "sku": "CQ0065L",
+      "name": "CONTROL ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 243.8,
+      "d": "2026-08-20"
+     },
+     {
+      "sku": "CQ0065L",
+      "name": "CONTROL ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 243.8,
+      "d": "2026-10-15"
+     },
+     {
+      "sku": "CQ0065R",
+      "name": "CONTROL ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 243.8,
+      "d": "2026-08-20"
+     },
+     {
+      "sku": "CQ0065R",
+      "name": "CONTROL ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 243.8,
+      "d": "2026-10-15"
+     },
+     {
+      "sku": "CQ0148L",
+      "name": "CONTROL ARM",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 237.24,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CQ0148R",
+      "name": "CONTROL ARM",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 237.24,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CQ0152L",
+      "name": "CONTROL ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 157.8,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CQ0152R",
+      "name": "CONTROL ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 157.8,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CQ0168L",
+      "name": "CONTROL ARM",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 454.08,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CQ0168R",
+      "name": "CONTROL ARM",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 454.08,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CQ0173L",
+      "name": "CONTROL ARM",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 378.24,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CQ0173R",
+      "name": "CONTROL ARM",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 362.04,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CQ0199",
+      "name": "CONTROL ARM",
+      "qty": 13,
+      "open_qty": 13,
+      "amt": 83.72,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CQ0204L",
+      "name": "CONTROL ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 334.5,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CQ0204R",
+      "name": "CONTROL ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 316.2,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CQ0248L",
+      "name": "CONTROL ARM",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 387.48,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CQ0248R",
+      "name": "CONTROL ARM",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 387.48,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CQ0281L",
+      "name": "CONTROL ARM",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 291.6,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CQ0281R",
+      "name": "CONTROL ARM",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 291.6,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CQ0295X",
+      "name": "CONTROL ARM",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 447.0,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CQ0295Y",
+      "name": "CONTROL ARM",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 447.0,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CQ0300X",
+      "name": "CONTROL ARM",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 276.0,
+      "d": "2026-10-15"
+     },
+     {
+      "sku": "CQ0300Y",
+      "name": "CONTROL ARM",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 276.0,
+      "d": "2026-10-15"
+     },
+     {
+      "sku": "CQ0301X",
+      "name": "CONTROL ARM",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 324.6,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CQ0301Y",
+      "name": "CONTROL ARM",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 324.6,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CQ0303X",
+      "name": "CONTROL ARM",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 430.56,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CQ0303Y",
+      "name": "CONTROL ARM",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 430.56,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CQ0312X",
+      "name": "CONTROL ARM",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 429.48,
+      "d": "2026-05-20"
+     },
+     {
+      "sku": "CQ0312Y",
+      "name": "CONTROL ARM",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 429.48,
+      "d": "2026-05-20"
+     },
+     {
+      "sku": "CQ0318L",
+      "name": "CONTROL ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 524.5,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CQ0318R",
+      "name": "CONTROL ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 524.5,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CQ0408L",
+      "name": "CONTROL ARM",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 421.8,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CQ0408R",
+      "name": "CONTROL ARM",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 421.8,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CQ0518L",
+      "name": "CONTROL ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 196.0,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CQ0518R",
+      "name": "CONTROL ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 196.0,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CQ0532L",
+      "name": "CONTROL ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 320.1,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CQ0532R",
+      "name": "CONTROL ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 320.1,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CQ0579",
+      "name": "CONTROL ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 362.0,
+      "d": "2026-10-15"
+     },
+     {
+      "sku": "CQ0588L",
+      "name": "CONTROL ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 395.5,
+      "d": "2026-06-19"
+     },
+     {
+      "sku": "CQ0588R",
+      "name": "CONTROL ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 395.5,
+      "d": "2026-06-19"
+     },
+     {
+      "sku": "CQ0644L",
+      "name": "CONTROL ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 230.5,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CQ0644R",
+      "name": "CONTROL ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 230.5,
+      "d": "2026-10-01"
+     },
+     {
+      "sku": "CQ0666L",
+      "name": "CONTROL ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 221.6,
+      "d": "2026-08-20"
+     },
+     {
+      "sku": "CQ0666R",
+      "name": "CONTROL ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 221.6,
+      "d": "2026-08-20"
+     },
+     {
+      "sku": "CQ0684L",
+      "name": "CONTROL ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 300.3,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CQ0684R",
+      "name": "CONTROL ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 300.3,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CQ0711L",
+      "name": "CONTROL ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 140.4,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CQ0711R",
+      "name": "CONTROL ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 140.4,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CQ0899L",
+      "name": "CONTROL ARM",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 453.24,
+      "d": "2026-08-20"
+     },
+     {
+      "sku": "CQ0899R",
+      "name": "CONTROL ARM",
+      "qty": 12,
+      "open_qty": 12,
+      "amt": 453.12,
+      "d": "2026-08-20"
+     },
+     {
+      "sku": "CR0190",
+      "name": "INNER TIE ROD",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 54.4,
+      "d": "2026-08-20"
+     },
+     {
+      "sku": "CR0375",
+      "name": "INNER TIE ROD",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 44.8,
+      "d": "2026-09-21"
+     },
+     {
+      "sku": "CR0385",
+      "name": "INNER TIE ROD",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 265.0,
+      "d": "2026-08-20"
+     },
+     {
+      "sku": "CR0420",
+      "name": "INNER TIE ROD",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 43.7,
+      "d": "2026-08-20"
+     },
+     {
+      "sku": "CR0665",
+      "name": "INNER TIE ROD",
+      "qty": 32,
+      "open_qty": 32,
+      "amt": 150.4,
+      "d": "2026-08-20"
+     },
+     {
+      "sku": "CR0702",
+      "name": "INNER TIE ROD",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 57.4,
+      "d": "2026-10-15"
+     },
+     {
+      "sku": "GV0852",
+      "name": "BUSH",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 21.3,
+      "d": "2026-10-01"
+     }
+    ],
     "first": "2024-10-21",
     "batches": 21
    },
@@ -257,6 +1299,1440 @@
       "amt": 1722.0,
       "qty": 200,
       "docs": 1
+     }
+    ],
+    "lines": [
+     {
+      "sku": "CA0080",
+      "name": "IDLER ARM",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 107.1,
+      "d": "2026-03-23"
+     },
+     {
+      "sku": "CB0109",
+      "name": "BALL JOINT",
+      "qty": 210,
+      "open_qty": 210,
+      "amt": 892.5,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0178",
+      "name": "BALL JOINT",
+      "qty": 36,
+      "open_qty": 36,
+      "amt": 295.92,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0182",
+      "name": "BALL JOINT",
+      "qty": 200,
+      "open_qty": 200,
+      "amt": 1254.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0208",
+      "name": "BALL JOINT",
+      "qty": 300,
+      "open_qty": 300,
+      "amt": 1881.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0211L",
+      "name": "BALL JOINT",
+      "qty": 60,
+      "open_qty": 60,
+      "amt": 371.4,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0211R",
+      "name": "BALL JOINT",
+      "qty": 60,
+      "open_qty": 60,
+      "amt": 371.4,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0247",
+      "name": "BALL JOINT",
+      "qty": 500,
+      "open_qty": 500,
+      "amt": 2685.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0248L",
+      "name": "BALL JOINT",
+      "qty": 96,
+      "open_qty": 96,
+      "amt": 792.96,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0248R",
+      "name": "BALL JOINT",
+      "qty": 96,
+      "open_qty": 96,
+      "amt": 792.96,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0253",
+      "name": "BALL JOINT",
+      "qty": 90,
+      "open_qty": 90,
+      "amt": 556.2,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0254",
+      "name": "BALL JOINT",
+      "qty": 96,
+      "open_qty": 96,
+      "amt": 794.88,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0274",
+      "name": "BALL JOINT",
+      "qty": 60,
+      "open_qty": 60,
+      "amt": 272.4,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0334",
+      "name": "BALL JOINT",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 109.4,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0337",
+      "name": "BALL JOINT",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 85.4,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0379",
+      "name": "BALL JOINT",
+      "qty": 64,
+      "open_qty": 64,
+      "amt": 486.4,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0380",
+      "name": "BALL JOINT",
+      "qty": 32,
+      "open_qty": 32,
+      "amt": 213.12,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0390",
+      "name": "BALL JOINT",
+      "qty": 48,
+      "open_qty": 48,
+      "amt": 384.48,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0395L",
+      "name": "BALL JOINT",
+      "qty": 40,
+      "open_qty": 40,
+      "amt": 534.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0395R",
+      "name": "BALL JOINT",
+      "qty": 40,
+      "open_qty": 40,
+      "amt": 534.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0402L",
+      "name": "BALL JOINT",
+      "qty": 496,
+      "open_qty": 496,
+      "amt": 3343.04,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0402R",
+      "name": "BALL JOINT",
+      "qty": 496,
+      "open_qty": 496,
+      "amt": 3343.04,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0406",
+      "name": "BALL JOINT",
+      "qty": 300,
+      "open_qty": 300,
+      "amt": 1701.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0408",
+      "name": "BALL JOINT",
+      "qty": 300,
+      "open_qty": 300,
+      "amt": 2097.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0412",
+      "name": "BALL JOINT",
+      "qty": 96,
+      "open_qty": 96,
+      "amt": 780.48,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0418",
+      "name": "BALL JOINT",
+      "qty": 496,
+      "open_qty": 496,
+      "amt": 3576.16,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0426",
+      "name": "BALL JOINT",
+      "qty": 1008,
+      "open_qty": 1008,
+      "amt": 6662.88,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0427",
+      "name": "BALL JOINT",
+      "qty": 1008,
+      "open_qty": 1008,
+      "amt": 6662.88,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0429",
+      "name": "BALL JOINT",
+      "qty": 208,
+      "open_qty": 208,
+      "amt": 1643.2,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0430",
+      "name": "BALL JOINT",
+      "qty": 208,
+      "open_qty": 208,
+      "amt": 1643.2,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0432",
+      "name": "BALL JOINT",
+      "qty": 500,
+      "open_qty": 500,
+      "amt": 3370.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0444",
+      "name": "BALL JOINT",
+      "qty": 200,
+      "open_qty": 200,
+      "amt": 1448.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0492",
+      "name": "BALL JOINT",
+      "qty": 36,
+      "open_qty": 36,
+      "amt": 320.76,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CB0669",
+      "name": "BALL JOINT",
+      "qty": 100,
+      "open_qty": 100,
+      "amt": 857.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0193L",
+      "name": "OUTER TIE ROD",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 100.8,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0193R",
+      "name": "OUTER TIE ROD",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 252.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0304",
+      "name": "OUTER TIE ROD",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 99.8,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0342L",
+      "name": "OUTER TIE ROD",
+      "qty": 40,
+      "open_qty": 40,
+      "amt": 277.2,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0342R",
+      "name": "OUTER TIE ROD",
+      "qty": 40,
+      "open_qty": 40,
+      "amt": 277.2,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0345L",
+      "name": "OUTER TIE ROD",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 100.2,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0345R",
+      "name": "OUTER TIE ROD",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 100.2,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0372L",
+      "name": "OUTER TIE ROD",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 106.8,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0372R",
+      "name": "OUTER TIE ROD",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 106.8,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0400",
+      "name": "OUTER TIE ROD",
+      "qty": 108,
+      "open_qty": 108,
+      "amt": 474.12,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0543L",
+      "name": "OUTER TIE ROD",
+      "qty": 24,
+      "open_qty": 24,
+      "amt": 169.92,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0543R",
+      "name": "OUTER TIE ROD",
+      "qty": 24,
+      "open_qty": 24,
+      "amt": 169.92,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0597",
+      "name": "OUTER TIE ROD",
+      "qty": 108,
+      "open_qty": 108,
+      "amt": 469.8,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0640L",
+      "name": "OUTER TIE ROD",
+      "qty": 30,
+      "open_qty": 30,
+      "amt": 152.7,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0640R",
+      "name": "OUTER TIE ROD",
+      "qty": 30,
+      "open_qty": 30,
+      "amt": 152.7,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0680",
+      "name": "OUTER TIE ROD",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 112.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0684",
+      "name": "OUTER TIE ROD",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 104.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0702",
+      "name": "OUTER TIE ROD",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 156.2,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0704",
+      "name": "OUTER TIE ROD",
+      "qty": 288,
+      "open_qty": 288,
+      "amt": 1221.12,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0706",
+      "name": "OUTER TIE ROD",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 104.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0720",
+      "name": "OUTER TIE ROD",
+      "qty": 36,
+      "open_qty": 36,
+      "amt": 223.2,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0737",
+      "name": "OUTER TIE ROD",
+      "qty": 200,
+      "open_qty": 200,
+      "amt": 1256.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0738",
+      "name": "OUTER TIE ROD",
+      "qty": 200,
+      "open_qty": 200,
+      "amt": 1256.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0739",
+      "name": "OUTER TIE ROD",
+      "qty": 100,
+      "open_qty": 100,
+      "amt": 554.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0754",
+      "name": "OUTER TIE ROD",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 102.2,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0755",
+      "name": "OUTER TIE ROD",
+      "qty": 36,
+      "open_qty": 36,
+      "amt": 267.84,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0756",
+      "name": "OUTER TIE ROD",
+      "qty": 36,
+      "open_qty": 36,
+      "amt": 267.84,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0761",
+      "name": "OUTER TIE ROD",
+      "qty": 72,
+      "open_qty": 72,
+      "amt": 359.28,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0762",
+      "name": "OUTER TIE ROD",
+      "qty": 216,
+      "open_qty": 216,
+      "amt": 1114.56,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0763",
+      "name": "OUTER TIE ROD",
+      "qty": 90,
+      "open_qty": 90,
+      "amt": 502.2,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0796",
+      "name": "OUTER TIE ROD",
+      "qty": 40,
+      "open_qty": 40,
+      "amt": 275.2,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0797",
+      "name": "OUTER TIE ROD",
+      "qty": 40,
+      "open_qty": 40,
+      "amt": 275.2,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0872L",
+      "name": "OUTER TIE ROD",
+      "qty": 108,
+      "open_qty": 108,
+      "amt": 881.28,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE0872R",
+      "name": "OUTER TIE ROD",
+      "qty": 108,
+      "open_qty": 108,
+      "amt": 881.28,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CE1006",
+      "name": "OUTER TIE ROD",
+      "qty": 40,
+      "open_qty": 40,
+      "amt": 318.8,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0120",
+      "name": "STABILIZER LINK",
+      "qty": 504,
+      "open_qty": 504,
+      "amt": 2172.24,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0136",
+      "name": "STABILIZER LINK",
+      "qty": 72,
+      "open_qty": 72,
+      "amt": 252.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0302L",
+      "name": "STABILIZER LINK",
+      "qty": 90,
+      "open_qty": 90,
+      "amt": 340.2,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0302R",
+      "name": "STABILIZER LINK",
+      "qty": 90,
+      "open_qty": 90,
+      "amt": 340.2,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0308",
+      "name": "STABILIZER LINK",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 123.6,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0354",
+      "name": "STABILIZER LINK",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 121.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0378",
+      "name": "STABILIZER LINK",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 71.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0379",
+      "name": "STABILIZER LINK",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 71.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0389",
+      "name": "STABILIZER LINK",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 74.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0390",
+      "name": "STABILIZER LINK",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 74.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0458",
+      "name": "STABILIZER LINK",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 73.8,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0459",
+      "name": "STABILIZER LINK",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 73.8,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0548",
+      "name": "STABILIZER LINK",
+      "qty": 72,
+      "open_qty": 72,
+      "amt": 257.76,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0549",
+      "name": "STABILIZER LINK",
+      "qty": 72,
+      "open_qty": 72,
+      "amt": 257.76,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0553",
+      "name": "STABILIZER LINK",
+      "qty": 204,
+      "open_qty": 204,
+      "amt": 783.36,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0554",
+      "name": "STABILIZER LINK",
+      "qty": 204,
+      "open_qty": 204,
+      "amt": 783.36,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0573",
+      "name": "STABILIZER LINK",
+      "qty": 500,
+      "open_qty": 500,
+      "amt": 2005.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0640L",
+      "name": "STABILIZER LINK",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 81.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0640R",
+      "name": "STABILIZER LINK",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 81.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0657",
+      "name": "STABILIZER LINK",
+      "qty": 48,
+      "open_qty": 48,
+      "amt": 248.16,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0679L",
+      "name": "STABILIZER LINK",
+      "qty": 198,
+      "open_qty": 60,
+      "amt": 948.42,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0679R",
+      "name": "STABILIZER LINK",
+      "qty": 198,
+      "open_qty": 198,
+      "amt": 948.42,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0700",
+      "name": "STABILIZER LINK",
+      "qty": 200,
+      "open_qty": 200,
+      "amt": 888.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0758L",
+      "name": "STABILIZER LINK",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 104.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0758R",
+      "name": "STABILIZER LINK",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 104.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0899L",
+      "name": "STABILIZER LINK",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 84.8,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0899R",
+      "name": "STABILIZER LINK",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 84.8,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CL0922",
+      "name": "STABILIZER LINK",
+      "qty": 40,
+      "open_qty": 40,
+      "amt": 148.4,
+      "d": "2026-03-23"
+     },
+     {
+      "sku": "CP0039",
+      "name": "PITMAN ARM",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 109.2,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CR0154",
+      "name": "INNER TIE ROD",
+      "qty": 30,
+      "open_qty": 30,
+      "amt": 129.3,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CR0287",
+      "name": "INNER TIE ROD",
+      "qty": 60,
+      "open_qty": 60,
+      "amt": 276.6,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CR0298",
+      "name": "INNER TIE ROD",
+      "qty": 60,
+      "open_qty": 60,
+      "amt": 290.4,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CR0370",
+      "name": "INNER TIE ROD",
+      "qty": 25,
+      "open_qty": 25,
+      "amt": 163.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CR0379",
+      "name": "INNER TIE ROD",
+      "qty": 60,
+      "open_qty": 60,
+      "amt": 285.6,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CR0574",
+      "name": "INNER TIE ROD",
+      "qty": 40,
+      "open_qty": 40,
+      "amt": 208.4,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CR0575",
+      "name": "INNER TIE ROD",
+      "qty": 40,
+      "open_qty": 40,
+      "amt": 219.6,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CR0578",
+      "name": "INNER TIE ROD",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 52.6,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CR0582",
+      "name": "INNER TIE ROD",
+      "qty": 60,
+      "open_qty": 60,
+      "amt": 330.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CR0614",
+      "name": "INNER TIE ROD",
+      "qty": 40,
+      "open_qty": 40,
+      "amt": 186.8,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CR0639",
+      "name": "INNER TIE ROD",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 54.9,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CR0649",
+      "name": "INNER TIE ROD",
+      "qty": 160,
+      "open_qty": 160,
+      "amt": 939.2,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CR0655",
+      "name": "INNER TIE ROD",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 101.8,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CR0659",
+      "name": "INNER TIE ROD",
+      "qty": 100,
+      "open_qty": 100,
+      "amt": 571.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CR0666",
+      "name": "INNER TIE ROD",
+      "qty": 90,
+      "open_qty": 90,
+      "amt": 585.9,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CR0677",
+      "name": "INNER TIE ROD",
+      "qty": 90,
+      "open_qty": 90,
+      "amt": 569.7,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CR0679",
+      "name": "INNER TIE ROD",
+      "qty": 100,
+      "open_qty": 100,
+      "amt": 613.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CR0684",
+      "name": "INNER TIE ROD",
+      "qty": 100,
+      "open_qty": 100,
+      "amt": 649.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CR0692",
+      "name": "INNER TIE ROD",
+      "qty": 100,
+      "open_qty": 100,
+      "amt": 506.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CR0723",
+      "name": "INNER TIE ROD",
+      "qty": 10,
+      "open_qty": 10,
+      "amt": 53.4,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CR0781",
+      "name": "INNER TIE ROD",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 119.8,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CR0807",
+      "name": "INNER TIE ROD",
+      "qty": 20,
+      "open_qty": 20,
+      "amt": 112.4,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CR0855",
+      "name": "INNER TIE ROD",
+      "qty": 100,
+      "open_qty": 100,
+      "amt": 914.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "CR0948",
+      "name": "INNER TIE ROD",
+      "qty": 200,
+      "open_qty": 200,
+      "amt": 1722.0,
+      "d": "2026-07-22"
+     },
+     {
+      "sku": "GV0148",
+      "name": "BUSH",
+      "qty": 60,
+      "open_qty": 60,
+      "amt": 214.2,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV0364",
+      "name": "BUSH",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 41.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV0420",
+      "name": "BUSH",
+      "qty": 60,
+      "open_qty": 60,
+      "amt": 165.6,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV0438",
+      "name": "BUSH",
+      "qty": 2000,
+      "open_qty": 2000,
+      "amt": 5300.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV0439",
+      "name": "BUSH",
+      "qty": 1000,
+      "open_qty": 1000,
+      "amt": 4030.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV0469",
+      "name": "BUSH",
+      "qty": 200,
+      "open_qty": 200,
+      "amt": 794.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV0470",
+      "name": "BUSH",
+      "qty": 200,
+      "open_qty": 200,
+      "amt": 1030.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV0472",
+      "name": "BUSH",
+      "qty": 60,
+      "open_qty": 60,
+      "amt": 178.8,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV0475",
+      "name": "BUSH",
+      "qty": 60,
+      "open_qty": 60,
+      "amt": 243.6,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV0480",
+      "name": "BUSH",
+      "qty": 500,
+      "open_qty": 500,
+      "amt": 415.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV0481",
+      "name": "BUSH",
+      "qty": 300,
+      "open_qty": 300,
+      "amt": 168.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV0483",
+      "name": "BUSH",
+      "qty": 500,
+      "open_qty": 500,
+      "amt": 325.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV0489",
+      "name": "BUSH",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 40.5,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV0533",
+      "name": "BUSH",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 61.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV0538",
+      "name": "BUSH",
+      "qty": 500,
+      "open_qty": 500,
+      "amt": 500.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV0541",
+      "name": "BUSH",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 59.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV0553",
+      "name": "BUSH",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 151.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV0670",
+      "name": "BUSH",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 155.5,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV0689",
+      "name": "BUSH",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 216.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV1080",
+      "name": "BUSH",
+      "qty": 1000,
+      "open_qty": 1000,
+      "amt": 1970.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV1087",
+      "name": "BUSH",
+      "qty": 120,
+      "open_qty": 120,
+      "amt": 585.6,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV1088",
+      "name": "BUSH",
+      "qty": 160,
+      "open_qty": 160,
+      "amt": 614.4,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV1090",
+      "name": "BUSH",
+      "qty": 300,
+      "open_qty": 300,
+      "amt": 969.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV1093",
+      "name": "BUSH",
+      "qty": 500,
+      "open_qty": 500,
+      "amt": 3335.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV1098",
+      "name": "BUSH",
+      "qty": 200,
+      "open_qty": 200,
+      "amt": 496.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV1109",
+      "name": "BUSH",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 44.5,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV1117",
+      "name": "BUSH",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 139.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV1119",
+      "name": "BUSH",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 156.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV1128",
+      "name": "BUSH",
+      "qty": 500,
+      "open_qty": 500,
+      "amt": 1085.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV1147",
+      "name": "BUSH",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 296.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV1150",
+      "name": "BUSH",
+      "qty": 200,
+      "open_qty": 200,
+      "amt": 624.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GV1202",
+      "name": "BUSH",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 203.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GY0479G",
+      "name": "SHOCK ABSORBER",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 992.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GY0480G",
+      "name": "SHOCK ABSORBER",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 992.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GY0540G",
+      "name": "SHOCK ABSORBER",
+      "qty": 60,
+      "open_qty": 60,
+      "amt": 1165.8,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GY0541G",
+      "name": "SHOCK ABSORBER",
+      "qty": 60,
+      "open_qty": 60,
+      "amt": 1165.8,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GY0542G",
+      "name": "SHOCK ABSORBER",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 739.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GY0907G",
+      "name": "SHOCK ABSORBER",
+      "qty": 90,
+      "open_qty": 90,
+      "amt": 1327.5,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GY0909G",
+      "name": "SHOCK ABSORBER",
+      "qty": 60,
+      "open_qty": 60,
+      "amt": 1589.4,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GY0910G",
+      "name": "SHOCK ABSORBER",
+      "qty": 60,
+      "open_qty": 60,
+      "amt": 1589.4,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GY1057G",
+      "name": "SHOCK ABSORBER",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 729.5,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GY1068G",
+      "name": "SHOCK ABSORBER",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 729.5,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GY1298G",
+      "name": "SHOCK ABSORBER",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 1203.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GY1299G",
+      "name": "SHOCK ABSORBER",
+      "qty": 60,
+      "open_qty": 60,
+      "amt": 1443.6,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GY1304G",
+      "name": "SHOCK ABSORBER",
+      "qty": 60,
+      "open_qty": 60,
+      "amt": 1380.6,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GY1307G",
+      "name": "SHOCK ABSORBER",
+      "qty": 60,
+      "open_qty": 60,
+      "amt": 1380.6,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GY1371G",
+      "name": "SHOCK ABSORBER",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 660.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GY1559G",
+      "name": "SHOCK ABSORBER",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 708.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GY1610G",
+      "name": "SHOCK ABSORBER",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 804.5,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "GY1631G",
+      "name": "SHOCK ABSORBER",
+      "qty": 60,
+      "open_qty": 60,
+      "amt": 1003.8,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "PL0086",
+      "name": "HYBRID STABILIZER LINK",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 269.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "PL0120",
+      "name": "HYBRID STABILIZER LINK",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 287.5,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "PL0291",
+      "name": "HYBRID STABILIZER LINK",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 275.5,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "PL0555",
+      "name": "HYBRID STABILIZER LINK",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 289.5,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "PL0557",
+      "name": "HYBRID STABILIZER LINK",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 280.5,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "PL0586",
+      "name": "HYBRID STABILIZER LINK",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 313.0,
+      "d": "2026-07-20"
+     },
+     {
+      "sku": "PL0597",
+      "name": "HYBRID STABILIZER LINK",
+      "qty": 50,
+      "open_qty": 50,
+      "amt": 297.5,
+      "d": "2026-07-20"
      }
     ],
     "first": "2025-09-24",
@@ -921,6 +3397,16 @@
       "docs": 1
      }
     ],
+    "lines": [
+     {
+      "sku": "GF0002",
+      "name": "CABIN FILTER",
+      "qty": 200,
+      "open_qty": 200,
+      "amt": 700.0,
+      "d": "2026-10-27"
+     }
+    ],
     "first": "2026-04-20",
     "batches": 3
    },
@@ -936,6 +3422,17 @@
     "why": "대시보드가 쓰는 CIS 원장은 ChoiceKit 캠페인 고객사만 담고 있어 이 고객사의 품번 줄이 없음 — 전사 오더 원장에는 있다. 2026 첫 거래 고객이라 전년 비교 자체가 없다 — 전 품목이 「당사 미오더」였던 셈이고, 전체 오더 $112,481 중 미션 대상은 $25,810(22.9%)",
     "top_n": 80,
     "top_full_n": 80,
+    "known_lines": [
+     {
+      "sku": "GF0002",
+      "name": "CABIN FILTER",
+      "qty": 200,
+      "open_qty": 200,
+      "amt": 700.0,
+      "d": "2026-10-27"
+     }
+    ],
+    "known_hit": [],
     "list": {
      "codes": [
       "CB0186",

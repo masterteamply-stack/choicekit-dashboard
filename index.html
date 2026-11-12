@@ -14003,7 +14003,45 @@ function ssmSectionHTML(S, opt){
      +kjkDetailHTML(K);
   }
   if(kz&&kz.sku&&(kz.sku.mode==='ledger'||kz.sku.mode==='top')) h+=ssmLedgerHTML(kz);
+  if(az&&az.sku&&az.sku.mode==='none'&&az.total&&(az.total.timeline||[]).length) h+=ssmNoLineHTML(az);
   return (opt&&opt.embed) ? h : (h+'</div>');
+}
+
+/* 품번 줄이 없는 미션 — 오더는 전사 원장에 있으니 그거라도 보여 주고,
+   품번이 붙은 줄(백오더)은 몇 개든 그대로 깐다. 숫자를 지어내지 않는다. */
+function ssmNoLineHTML(m){
+  const M=skuiMoney, N=skuiNum, E=skuiEsc, s=m.sku||{}, T=m.total||{};
+  const tl=T.timeline||[], ln=s.known_lines||[];
+  let h='<div class="skui-cls" style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line-1,#e5e5e7)">'
+   +'<b>'+E(m.cust)+' ('+E(m.country)+') 상세</b> '
+   +'<span class="skui-mut">「'+E(m.mission)+'」 · 미션 목록 '+N(s.top_full_n||0)+'종</span></div>';
+  h+='<div class="skui-cls">전사 오더 원장에 오더 <b>'+N(tl.length)+'건</b> '+M(m.tot26||0)+' — '
+   +'모두 2026 이고 그 전 거래가 없다(첫 오더 '+E(m.first_order||'')+'). '
+   +'<span class="skui-mut">미션 목록 안에서 나온 건 '+M(m.got)+'('+(m.share!=null?m.share.toFixed(0):'–')+'%)로, '
+   +'이건 SteerStar 공식 집계다.</span></div>';
+  h+='<div class="skui-wrap"><table class="skui-tbl"><thead><tr><th>접수일</th>'
+   +'<th class="n">금액</th><th class="n">수량</th></tr></thead><tbody>'
+   +tl.map(x=>'<tr><td><b>'+E(x.d)+'</b></td><td class="n"><b>'+M(x.amt)+'</b></td>'
+     +'<td class="n">'+N(x.qty)+'</td></tr>').join('')
+   +'</tbody></table></div>';
+  if(ln.length){
+    h+='<div class="skui-cls" style="margin-top:10px"><b>품번이 확인되는 줄 — '+N(ln.length)+'건</b> '
+     +'<span class="skui-mut">전사 원장에서 품번이 붙어 있는 건 미납(백오더) 줄뿐이다. '
+     +'오더 전량의 품번 구성이 아니다.</span></div>'
+     +'<div class="skui-wrap"><table class="skui-tbl"><thead><tr><th>CTR 코드</th><th>품명</th>'
+     +'<th>접수일</th><th class="n">수량</th><th class="n">금액</th><th>미션 목록</th></tr></thead><tbody>'
+     +ln.map(x=>{const inL=(s.known_hit||[]).indexOf(x.sku)>=0;
+       return '<tr><td><b>'+E(x.sku)+'</b></td><td>'+E(x.name)+'</td><td>'+E(x.d)+'</td>'
+        +'<td class="n">'+N(x.qty)+'</td><td class="n">'+M(x.amt)+'</td>'
+        +'<td>'+(inL?'<b class="skui-up">목록 안</b>':'<span class="skui-mut">목록 밖</span>')+'</td></tr>';}).join('')
+     +'</tbody></table></div>';
+  }
+  h+='<p class="skui-basis"><b>품번 단위 전환은 아직 못 센다</b> · 이 고객사는 ChoiceKit 캠페인 '
+   +'고객사가 아니라 대시보드 CIS 원장(대상 SKU 라인만 담음)에 줄이 없고, 전사 원장은 오더 단위까지만 '
+   +'내려온다. 찾아본 곳 — pre order data(CTRA·CTRV·europe·pre_orders), CK_Asian/European_Order, '
+   +'중국차 오더라인, customer_orders.json, cis_october_orders.json. '
+   +'오더 '+N(tl.length)+'건의 품목 리스트를 주시면 목록 '+N(s.top_full_n||0)+'종 대조가 바로 붙는다.</p>';
+  return h;
 }
 
 /* 원장으로만 센 미션의 상세 — 무엇을 셌고 무엇을 못 셌는지 분명히 적는다 */

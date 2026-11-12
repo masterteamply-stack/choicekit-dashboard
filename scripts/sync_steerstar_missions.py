@@ -140,6 +140,7 @@ def kv_totals(path):
     ep = D.get('meta', {}).get('epoch') or '2024-01-01'
     ep = datetime.date(*[int(x) for x in ep.split('-')])
     CUS, REG, CTY = D['cus'], D.get('reg') or [], D.get('cty') or []
+    ITM = D.get('itm') or []
     out = {}
     for i, c in enumerate(CUS):
         by, n = collections.Counter(), collections.Counter()
@@ -166,6 +167,18 @@ def kv_totals(path):
             e = batch[d]; e['amt'] += float(r[9] or 0); e['qty'] += int(r[7] or 0); e['docs'] += 1
         tl = [{'d': d, 'amt': round(v['amt'], 2), 'qty': v['qty'], 'docs': v['docs']}
               for d, v in sorted(batch.items())]
+        # 전사 원장에서 품번이 붙어 있는 유일한 자리 = 백오더 라인(bol).
+        # BOL 행 = [고객, 품목, 주문, ?, 잔량, 잔량금액, …, 접수일오프셋, 접수연, MRP연, …]
+        lines = []
+        for r in (D.get('bol') or []):
+            if r[0] != i:
+                continue
+            it = ITM[r[1]] if r[1] < len(ITM) else ['', '']
+            lines.append({'sku': it[0], 'name': it[1] if len(it) > 1 else '',
+                          'qty': r[2], 'open_qty': r[4],
+                          'amt': round(float(r[5] or 0), 2),
+                          'd': (ep + datetime.timedelta(days=r[7])).isoformat()
+                               if isinstance(r[7], int) and r[7] > -90000 else ''})
         out[str(c[0]).strip().upper()] = {
             'name': c[0],
             'region': REG[c[1]] if c[1] < len(REG) else '',
@@ -173,6 +186,7 @@ def kv_totals(path):
             'code': c[3],
             'by_year': [{'y': y, 'amt': round(by[y], 2), 'n': n[y]} for y in sorted(by)],
             'timeline': tl,
+            'lines': lines,            # 품번이 붙은 줄 (백오더만 — 전량이 아님)
             'first': tl[0]['d'] if tl else '',
             'batches': len(tl),
         }
@@ -357,8 +371,13 @@ def main():
                                 format(round(m_got), ','), rec.get('share')))
                 rec['sku'] = {'mode': 'none', 'why': why}
                 if top:   # 목록은 있으니 미션의 분모라도 적어 둔다
+                    L = top['codes'] | top['pairs']
+                    kn = [x for x in ((t or {}).get('lines') or []) if x.get('sku')]
                     rec['sku'].update({'top_n': len(top['codes']),
-                                       'top_full_n': len(top['codes'] | top['pairs']),
+                                       'top_full_n': len(L),
+                                       'known_lines': kn,
+                                       'known_hit': [x['sku'] for x in kn
+                                                     if x['sku'].strip().upper() in L],
                                        'list': {'codes': sorted(top['codes']),
                                                 'pairs': sorted(top['pairs'])}})
             else:
