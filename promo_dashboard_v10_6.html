@@ -3720,11 +3720,11 @@ function octMonth(A){
      _tc.length?{lab:'대상 SKU 오더 전환',
       val:`${_s25} <span style="color:var(--muted);font-weight:400">→</span> ${_s26}<span style="font-size:15px;color:var(--muted);font-weight:400">종</span>`,
       sub:`<span class="${cls(_s26-_s25)}">${_s25?((_s26-_s25)/_s25*100>=0?'+':'')+((_s26-_s25)/_s25*100).toFixed(0)+'%':'–'}</span> · 대상 ${_tsku.toLocaleString()}종 중 ${(_s26/_tsku*100).toFixed(1)}%`}:null,
-     {lab:'순증액',val:fmtC(_g26-_g25)},
      (()=>{const _t=campSkuTile();
        return _t ? {lab:_t.lab, val:_t.n.toLocaleString()+'종', sub:_t.sub}
                  : {lab:'캠페인 오더 발생 SKU', val:_gosku.toLocaleString()+'종',
                     sub:'캠페인별 합 · 한 품번이 두 캠페인에 걸리면 두 번 셈'};})(),
+     {lab:'순증액',val:fmtC(_g26-_g25)},
      {lab:'집행 캠페인',val:`${Tov.run} / ${Tov.n}`,sub:`대상 고객 ${Tov.cust.size.toLocaleString()}곳`},
      {lab:'성장 권역',val:`${_gr.filter(r=>r.a26>r.a25).length} / ${_gr.length}`}].filter(Boolean),'k8')
    +`<div style="margin:12px 0 0"></div>`
