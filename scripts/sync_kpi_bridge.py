@@ -54,6 +54,15 @@ def main():
     tgt = round(sum(goal(c) for c in cs), 2)
     cuts = sorted(str(c.get('cut')) for c in cs if c.get('cut'))
 
+    _m = re.search(r'const AO\s*=\s*(\{.*?\});', html, re.S)
+    _ao = None
+    if _m:
+        _t = (json.loads(_m.group(1)).get('tot') or {})
+        if _t.get('usd') is not None:
+            _ao = {'region': 'ASIA', 'program': 'SELL-OUT Promotion',
+                   'tgt': _t.get('tgt'), 'act': _t.get('usd'), 'att': _t.get('att'),
+                   'basis': '고객사 묶음 · 5.Sell-out by Customer 의 C 표'}
+
     out = {
         '_readme': '효과 분석 대시보드(promo_dashboard_v10_6.html)의 캠페인 KPI. '
                    '메인 대시보드(index.html)가 이 파일을 읽어 같은 값을 보여 줌 — '
@@ -84,6 +93,10 @@ def main():
         'exp_krw': round(sum(c.get('exp') or 0 for c in cs), 2),
         'cost': round(sum(c.get('cost') or 0 for c in cs) / KRW, 2),
         'exp': round(sum(c.get('exp') or 0 for c in cs) / KRW, 2),
+        # ASIA Sell-out 목표·실적 — 고객사 묶음(const AO · C 표)이 원본.
+        # marketing.csv 의 SELL-OUT Target 은 프로그램 단위 합이라 메인 대시보드가
+        # 그걸 쓰면 $836K/$864K 로 어긋남. 여기서 같이 내려보냄.
+        'so': _ao,
         'rows': [{'region': c.get('region'), 'program': c.get('program'),
                   'a25': c.get('a25'), 'a26': c.get('a26'), 'cut': c.get('cut')}
                  for c in sorted(cs, key=lambda x: -(x.get('a26') or 0))],

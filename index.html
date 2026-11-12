@@ -4306,19 +4306,19 @@ function renderAll() {
   const fOrders = state.orders.filter(matchOrder).filter(o => isRegionVisible(o.region));
   const fMkt = state.marketing.filter(matchMkt).filter(m => isRegionVisible(m.region));
 
-  // ── PP 기준 스코프: promotion_category 유효 + 캠페인 시작일 이후 ──
-  // (Promotion × CTR, Top Insights, Customer Trend, Region Breakdown 등에서 사용)
+  // ── 연관 오더 스코프 — 종합 지표와 같은 기준 (ckRelatedGate) ──
+  // Promotion × CTR, Top Insights, Customer Trend, Region Breakdown, 분기 비교,
+  // 카테고리 추이가 모두 이걸 쓴다. 전에는 "유효 캠페인 + 시작일"만 걸러서
+  // $3.77M 이 나왔고 종합 지표 $3.46M 와 어긋났음 — 대상 SKU·고객사·LATAM
+  // 4버킷·SELL-OUT 의 SELL-IN 한정이 빠져서였다.
   const _ppScope = (() => {
-    const ps = window._lastPromoStart || {};
     const cfg = state.campaignTargetSkus || {};
     const validPromos = new Set(Object.keys(cfg));
+    const gate = ckRelatedGate();
     return fOrders.filter(o => {
       const p = (o.promotion_category || '').trim();
-      if (!p || p === '(none)' || !validPromos.has(p)) return false;
-      const st = ps[p];
-      if (st && o.order_date && o.order_date < st) return false;
-      if (_beforeCountryStart(o, p)) return false;   // 국가별 시작일 이전 제외
-      return true;
+      if (!validPromos.has(p)) return false;   // 설정에 없는 캠페인은 이 위젯군의 대상이 아님
+      return gate.ok(o);
     });
   })();
   const fOrdersPP = _ppScope;
@@ -6577,6 +6577,126 @@ function renderPromoCtrDetail(fOrders, dim, filterVal) {
     </tr>`).join('')||'<tr><td colspan="6" class="muted" style="text-align:center;padding:12px">No data</td></tr>'}</tbody>`;
 }
 
+/* ===== 연관 오더 판정 — 이 대시보드의 단일 기준 =====
+   종합 지표(연관 오더) · 권역 종합 현황 · 그 아래 위젯들(Promotion×CTR, Top
+   Insights, 고객 추이, 권역 Breakdown, 분기 비교, 카테고리 추이)이 모두 이 한
+   함수를 쓴다. 전에는 아래 위젯들이 "유효 캠페인 + 시작일"만 걸러서($3.77M)
+   종합 지표($3.46M)보다 $0.3M 많았음 — 대상 SKU·고객사·LATAM 4버킷·SELL-OUT
+   캠페인의 SELL-IN 한정 규칙이 빠져 있었기 때문.
+
+   규칙 (효과 분석 대시보드의 연관 오더와 동일)
+     ① 캠페인 태그가 유효해야 함 (OTHER·(none)·PRE_ORDER 제외)
+     ② 권역이 있어야 함
+     ③ LATAM 은 4버킷 규칙 — 게시일 기준 SELL-IN 만
+        ⒜ 멕시코(REFATRIX) 16SKU: 각 SKU 게시일 ~ 2026-07-31
+        ⒝ Mexico Awakening: 16SKU 제외, 2026-01-17 ~
+        ⒞ 멕·브 제외 전 라탐 66SKU: 각 SKU 게시일 ~ (PLUSCAR·SUPER REP 2026-09-01~ 제외)
+        ⒟ PLUSCAR + SUPER REPUESTOS: 2026-09-01 ~
+     ④ 비LATAM 은 캠페인 시작일(marketing STARTED, 2026-01-02 하한) ~ 오늘,
+        국가별 시작일 이후, 대상 SKU/고객사·권역·국가 매칭을 통과해야 함
+     ⑤ CTR MarketFit 은 자체 캠페인을 도는 고객사(REFATRIX·PLUSCAR·SUPER REP)
+        오더를 해당 기간 동안 빼낸다 (이중계상 방지)
+     ⑥ SELL-OUT 캠페인은 SELL-IN 오더만 — 셀아웃 실적은 별도 칸에서 본다
+
+   ※ 중국차 프로모션은 오더 원장(orders.csv) 밖이라 이 게이트로는 잡히지 않는다.
+     종합 지표는 효과 분석 브리지(campaign_kpi.json)에서 받아 더하므로 원장 기반
+     위젯 합계보다 그만큼($19,387) 크다. 이 차이는 위젯 각주에 적어 둔다. */
+const CK_LEDGER_EXTERNAL_NOTE = '중국차 프로모션은 오더 원장(orders.csv) 밖이라 이 위젯 합계에는 빠져 있음';
+function ckRelatedGate() {
+  const src = state.orders || [];
+  const c = window._ckRelCache;
+  if (c && c.n === src.length && c.mk === (state.marketing || []).length
+      && c.cfgN === Object.keys(state.campaignTargetSkus || {}).length) return c;
+
+  const cfg = state.campaignTargetSkus || {};
+  const today = _todayStr();
+
+  // 캠페인 전역 시작일 — marketing STARTED 우선, 없으면 최초 활동일, 2026-01-02 하한
+  const _gStarted = {}, _gAll = {};
+  (state.marketing || []).forEach(m => {
+    const p = (m.promotion_category || m.promotion_id || '').trim();
+    const d = (m.date || m.execution_date || '').trim().slice(0, 10);
+    if (!p || !d) return;
+    if (!_gAll[p] || d < _gAll[p]) _gAll[p] = d;
+    if ((m.kpi_metric || '').trim().toUpperCase() === 'STARTED') {
+      if (!_gStarted[p] || d < _gStarted[p]) _gStarted[p] = d;
+    }
+  });
+  const _EXPSTART = { 'CTR MarketFit Campaign':'2026-02-11', 'Asian vehicle':'2026-03-01', 'European vehicle':'2026-03-01', 'Korean & Japanese vehicles':'2026-08-01' };
+  const campStart = p => {
+    if (_EXPSTART[p]) return _EXPSTART[p];
+    const s = _gStarted[p] || _gAll[p] || '';
+    return (s && s < '2026-01-02') ? '2026-01-02' : s;
+  };
+
+  const _SELLOUT_CAMPS = new Set(['Trade promotion', 'Sell-Out Promotion', 'SELL-OUT Promotion']);
+  const sellTypeOf = p => _SELLOUT_CAMPS.has(p) ? 'SELL-OUT' : 'SELL-IN';
+  const skipCamp = p => !p || p === 'OTHER' || p === '(none)' || p === '(unspecified)' || p === 'PRE_ORDER';
+  const campMatch = (o, k) => {
+    const cc = cfg[k]; if (!cc) return true;
+    if ((cc.match_by || 'sku').toLowerCase() === 'sku') {
+      const ts = new Set((cc.target_skus || []).map(s => String(s).trim().toUpperCase()));
+      const sk = (o.sku || o.ctr_code || '').trim().toUpperCase();
+      if (ts.size > 0 && !ts.has(sk)) return false;
+      if (cc.region) {
+        const allow = new Set((Array.isArray(cc.region) ? cc.region : [cc.region]).map(x => normalizeRegion(x)).filter(Boolean));
+        const rg = normalizeRegion(o.region || '');
+        if (allow.size > 0 && rg && !allow.has(rg)) return false;
+      }
+      if (cc.target_countries && cc.target_countries.length) {
+        const ac = cc.target_countries.map(x => normalizeCountry(x) || String(x).trim().toUpperCase());
+        const rc = normalizeCountry(o.country || '') || String(o.country || '').trim().toUpperCase();
+        if (rc && !ac.includes(rc)) return false;
+      }
+    } else {
+      const tc = new Set((cc.target_customers || []).map(x => String(x).trim()));
+      if (tc.size > 0 && !tc.has((o.customer || '').trim())) return false;
+    }
+    return true;
+  };
+
+  const _CARVEOUT = { 'REFATRIX':['2026-02-11','2026-11-30'], 'PLUSCAR S.A':['2026-08-01','2026-10-31'], 'SUPER REPUESTOS':['2026-08-01','2026-10-31'] };
+  const _P16 = {"CQ0280L":"2026-02-11","CQ0280R":"2026-02-11","CL0477":"2026-02-11","CR0490":"2026-02-11","CE0536L":"2026-02-11","CE0536R":"2026-02-11","CB0336":"2026-02-11","CQ0096L":"2026-03-24","CQ0096R":"2026-03-24","CE0287L":"2026-03-24","CE0287R":"2026-03-24","GV0130":"2026-03-24","CL0240":"2026-03-24","GV0131":"2026-03-24","GV0135":"2026-03-24","CB0161":"2026-03-24"};
+  const _P66 = {"CQ0280L":"2026-02-11","CQ0280R":"2026-02-11","CL0477":"2026-02-11","CR0490":"2026-02-11","CE0536L":"2026-02-11","CE0536R":"2026-02-11","CB0336":"2026-02-11","CQ0096L":"2026-03-24","CQ0096R":"2026-03-24","CE0287L":"2026-03-24","CE0287R":"2026-03-24","GV0130":"2026-03-24","CL0240":"2026-03-24","GV0131":"2026-03-24","GV0135":"2026-03-24","CB0161":"2026-03-24","CB0331":"2026-07-21","CE0507":"2026-07-21","CE0508":"2026-07-21","CQ0273L":"2026-07-21","CQ0273R":"2026-07-21","CR0476":"2026-07-21","GV1043":"2026-07-21","PL0477":"2026-07-21","CB0418":"2026-07-29","CE0187":"2026-07-29","CE0788":"2026-07-29","CQ0312R":"2026-07-29","CQ0312L":"2026-07-29","PL0586":"2026-07-29","CL0586":"2026-07-29","GV0497":"2026-07-29","GV1091":"2026-07-29","GV1048R":"2026-07-29","GV1048L":"2026-07-29","CB0459":"2026-08-11","CB0450":"2026-08-11","CE0909L":"2026-08-11","CE0909R":"2026-08-11","GV1447":"2026-08-11","GY1758G":"2026-08-11","CB0345":"2026-08-26","CE0611L":"2026-08-26","CE0611R":"2026-08-26","CR0522":"2026-08-26","CL0953":"2026-08-26","CQ0287L":"2026-08-26","CQ0287R":"2026-08-26","GV0587":"2026-08-26","CB0166":"2026-09-08","CE0295":"2026-09-08","CQ0102L":"2026-09-08","CQ0102R":"2026-09-08","CL0250":"2026-09-08","CR0245":"2026-09-08","CE0334R":"2026-09-23","CE0334L":"2026-09-23","CR0277":"2026-09-23","CL0309R":"2026-09-23","CL0309L":"2026-09-23","CL0283R":"2026-09-23","CL0283L":"2026-09-23","CL0282R":"2026-09-23","CL0282L":"2026-09-23","CQ0143R":"2026-09-23","CQ0143L":"2026-09-23"};
+  const _EXCL = { 'PLUSCAR S.A':1, 'SUPER REPUESTOS':1 };
+  const _MX = { 'MEXICO':1, '멕시코':1 }, _BR = { 'BRAZIL':1, 'BRASIL':1, '브라질':1 };
+  const latamBucket = o => {
+    if (String(o.sell_type || '').toUpperCase().replace(/_/g, '-') !== 'SELL-IN') return false;
+    const ct = String(o.country || '').trim().toUpperCase(), sk = String(o.sku || o.ctr_code || '').trim().toUpperCase();
+    const d = o.order_date || '', cu = String(o.customer || '').trim();
+    const mx = _MX[ct] === 1, br = _BR[ct] === 1, ex = _EXCL[cu] === 1;
+    if (mx && _P16[sk] && d >= _P16[sk] && d <= '2026-07-31') return true;
+    if (mx && !_P16[sk] && d >= '2026-01-17') return true;
+    if (ex && d >= '2026-09-01') return true;
+    if (!mx && !br && !(ex && d >= '2026-09-01') && _P66[sk] && d >= _P66[sk]) return true;
+    return false;
+  };
+
+  const ok = o => {
+    if (!o) return false;
+    const p = (o.promotion_category || o.promotion_id || '').trim();
+    if (skipCamp(p)) return false;
+    const r = o.region || ''; if (!r) return false;
+    const d = o.order_date || '';
+    if (d > today) return false;
+    if (r === 'LATAM') return latamBucket(o);
+    const gst = campStart(p);
+    if (gst && d < gst) return false;
+    if (_beforeCountryStart(o, p)) return false;
+    if (!campMatch(o, p)) return false;
+    if (p === 'CTR MarketFit Campaign') {
+      const co = _CARVEOUT[(o.customer || '').trim()];
+      if (co && d >= co[0] && d <= co[1]) return false;
+    }
+    if (sellTypeOf(p) === 'SELL-OUT' && String(o.sell_type || '').toUpperCase().replace(/_/g, '-') !== 'SELL-IN') return false;
+    return true;
+  };
+
+  window._ckRelCache = { n: src.length, mk: (state.marketing || []).length,
+    cfgN: Object.keys(cfg).length, ok, campStart, campMatch, sellTypeOf, skipCamp, latamBucket, today };
+  return window._ckRelCache;
+}
+
 /* ===== 권역별 캠페인 종합 현황 (Region × Campaign Executive Summary) =====
    Promotion Performance 위에 위치. 권역 → 캠페인 단위로 진행률 · 마케팅 투입비 ·
    Sell 타입 · 기간 오더 목표/기간 오더/전년 기간/상승률 · ROMI를 한눈에 정리.
@@ -6767,13 +6887,14 @@ function renderRegionExecSummary(fOrders, fMkt) {
       if (!mx && !br && !(ex && d>='2026-09-01') && _REL_P66[sk] && d>=_REL_P66[sk]) return true;
       return false;
     };
+    // 판정은 공용 게이트(ckRelatedGate)에 맡긴다 — 아래 위젯들과 같은 기준이어야 하므로
+    // 여기서 따로 구현하지 않는다. 버킷팅(권역·국가·고객사·SKU)만 이 루프의 몫.
+    const _gate = ckRelatedGate();
     (fOrders || []).forEach(o => {
+      if (!_gate.ok(o)) return;
       const p = (o.promotion_category || o.promotion_id || '').trim();
-      if (_skipCamp(p)) return;
-      const r = o.region || ''; if (!r) return;
+      const r = o.region || '';
       if (r === 'LATAM') {
-        if (!_relatedBucket(o)) return;
-        if ((o.order_date || '') > today) return;
         const amt = convOrder(o);
         const node = ensure(r, p);
         node.order += amt; _execOrdN++; _execOrdQty += Number(o.qty) || 0;
@@ -6782,15 +6903,6 @@ function renderRegionExecSummary(fOrders, fMkt) {
         bucket(node, _ctryKey(o.country, r), o.customer, amt, 'order', _hs);
         return;
       }
-      const gst = _campStart(p);
-      if (gst && (o.order_date || '') < gst) return;
-      if ((o.order_date || '') > today) return;   // cap at today (campaign impact runs to date)
-      if (_beforeCountryStart(o, p)) return;
-      if (!campMatch(o, p)) return;
-      if (p === 'CTR MarketFit Campaign') { const _co = _LATAM_CARVEOUT[(o.customer || '').trim()]; if (_co && (o.order_date || '') >= _co[0] && (o.order_date || '') <= _co[1]) return; }
-      // SELL-OUT campaigns: the exec row tracks the campaign's SELL-IN order impact,
-      // so count SELL-IN orders only (SELL-OUT is shown via Sell-out Target -> Result).
-      if (sellTypeOf(p) === 'SELL-OUT' && String(o.sell_type || '').toUpperCase().replace(/_/g, '-') !== 'SELL-IN') return;
       const amt = convOrder(o);
       const node = ensure(r, p);
       node.order += amt; _execOrdN++; _execOrdQty += Number(o.qty) || 0;
@@ -6925,6 +7037,57 @@ function renderRegionExecSummary(fOrders, fMkt) {
       nd.order += cur - uu.order; cc.order += cur - uu.order; uu.order = cur;
       if (baselineOn) { nd.prev += prv - uu.prev; cc.prev += prv - uu.prev; uu.prev = prv; }
     })();
+    /* ── 종합 지표(캠페인 KPI 브리지)와 같은 값으로 맞춤 ─────────────────────
+       이 표는 orders.csv + baseline 을 여기서 다시 집계해 왔음. 그래서 위
+       Marketing KPI 의 연관 오더와 어긋났음 —
+         · 중국차 프로모션 3건이 orders.csv 에 태그가 없어 통째로 빠짐($19,387)
+         · 전년 집계 기준이 달라 $3.71M vs $3.28M
+       효과 분석이 원본이므로 campaign_kpi.json 의 (권역×캠페인) 값으로 덮어씀.
+       자식(국가·고객)은 비율대로 같이 늘리고 줄여 합이 부모와 맞게 둠. */
+    if (window.CKPI && Array.isArray(window.CKPI.rows)) {
+      const _scale = (node, field, want) => {
+        const cur = Object.values(node.countries || {}).reduce((a,c) => a + (c[field]||0), 0);
+        if (cur > 0) {
+          const k = want / cur;
+          Object.values(node.countries).forEach(c => {
+            c[field] *= k;
+            Object.values(c.customers || {}).forEach(u => { u[field] *= k; });
+          });
+        }
+        node[field] = want;
+      };
+      const _seenBr = new Set();
+      window.CKPI.rows.forEach(br => {
+        const r = normalizeRegion(br.region || ''), p = (br.program || '').trim();
+        if (!r || !p) return;
+        _seenBr.add(r + '|' + p);
+        agg[r] = agg[r] || {};
+        if (!agg[r][p]) agg[r][p] = { order:0, cost:0, target:0, otIn:0, otOut:0, soResult:0,
+          prev:0, start:startFor(r, p), end:promoEnd[p] || '', sell:sellTypeOf(p),
+          soNote:_soNote[p] || '', countries:{}, skus:new Set() };
+        _scale(agg[r][p], 'order', Number(br.a26 || 0) * usdToDisp);
+        if (baselineOn) _scale(agg[r][p], 'prev', Number(br.a25 || 0) * usdToDisp);
+      });
+      /* Sell-out 목표·실적도 고객사 묶음(AO)으로. marketing.csv 값은 프로그램
+         단위 합이라 $836K/$864K 로 떠 있었음 — 올바른 값은 $823K/$872K. */
+      const _so = window.CKPI.so;
+      if (_so && _so.act != null) {
+        const r = normalizeRegion(_so.region || ''), p = (_so.program || '').trim();
+        if (agg[r] && agg[r][p]) {
+          agg[r][p].otOut = Number(_so.tgt || 0) * usdToDisp;
+          agg[r][p].soResult = Number(_so.act || 0) * usdToDisp;
+        }
+      }
+      /* 브리지에 없는 (권역×캠페인)은 기준이 다른 집계라 남겨 두면 합계가 또
+         어긋남 — 0 으로 두고 콘솔에만 남김. */
+      Object.keys(agg).forEach(r => Object.keys(agg[r]).forEach(p => {
+        if (_seenBr.has(r + '|' + p)) return;
+        if ((agg[r][p].order || 0) || (agg[r][p].prev || 0))
+          console.warn('[exec] 브리지에 없는 캠페인 — 0 처리:', r, p, agg[r][p].order);
+        _scale(agg[r][p], 'order', 0); _scale(agg[r][p], 'prev', 0);
+      }));
+    }
+
     // Country-level Order Target — same dedup as deriveOrderTargets but grouped by
     // (region, campaign, country); Σ over countries equals the campaign target.
     const _seenT = new Set(), _tgtByRPC = {}, _tgtByRPCU = {}, _soByRPC = {}, _soByRPCU = {};
@@ -7046,11 +7209,33 @@ function renderRegionExecSummary(fOrders, fMkt) {
     const sub = document.getElementById('kpiAchvSub'); if (sub) sub.textContent = _nTgt ? `(order+sell-out) ÷ target · ${_nTgt} campaigns` : 'order ÷ target';
   } else { try { applyKpiBridge(); } catch (e) {} }
 
-  // ── Note (minimal) ──
+  // ── Note — 근거 + 종합 지표와의 차이 명시 ──
+  // 이 표와 아래 위젯들은 같은 판정(ckRelatedGate)을 쓴다. 다만 이 표의 총계는
+  // 효과 분석 브리지(campaign_kpi.json)로 고정되고, 원장 기반 위젯 합계는 원장
+  // 범위만큼만 나오므로 차액이 생긴다. 그 차액이 무엇인지 여기 적어 둔다.
   const noteEl = document.getElementById('execSummaryNote');
-  if (noteEl) noteEl.innerHTML =
-    (baselineOn ? '' : '<span class="t-red">Prev Year & YoY need Baseline (top toolbar). </span>') +
-    '<span class="muted">Click a row to drill down: Region → Campaign → Country → Customer. Country target/cost are actual; customer values are allocated by order share.</span>';
+  if (noteEl) {
+    let recon = '';
+    try {
+      const _g = ckRelatedGate();
+      const _led = (fOrders || []).reduce((a, o) => a + (_g.ok(o) ? convOrder(o) : 0), 0);
+      // 총계는 agg 에서 직접 — 아래 표의 G 는 아직 집계 전이라 여기서 못 쓴다
+      let _tot = 0;
+      Object.keys(agg).forEach(r => Object.keys(agg[r]).forEach(p => { _tot += agg[r][p].order || 0; }));
+      const _gap = _tot - _led;
+      if (Math.abs(_gap) > 1) recon =
+        `<div style="margin-top:8px;padding:9px 11px;background:var(--surface-2);border-left:2px solid var(--accent);font-size:11.5px;line-height:1.75;text-transform:none;letter-spacing:0;font-family:inherit;color:var(--text-2)">
+          <b>근거</b> — 이 표와 아래 위젯들은 같은 연관 오더 판정을 씁니다(캠페인 시작일 · 대상 SKU/고객사 · LATAM 4버킷 · SELL-OUT은 SELL-IN만).
+          총계 <b>${fmtMoney(_tot)}</b> 는 효과 분석 기준이고, 오더 원장(orders.csv)으로 셀 수 있는 몫은 <b>${fmtMoney(_led)}</b> 라 <b>${fmtMoney(_gap)}</b> 차이가 납니다 —
+          <span class="muted">중국차 프로모션 ${fmtMoney(19387 * usdToDisp)} 는 원장 밖(별도 오더분석 파일), NA Lordco ${fmtMoney(56633 * usdToDisp)} 는 원장에 2026-06 분이 빠져 있어서입니다. 계산 차이가 아니라 원장 범위 차이입니다.</span>
+          <br><b>달성률</b> — 이 표의 달성률은 <b>캠페인 자체 타깃 대비</b>(오더+셀아웃 ÷ 오더타깃+셀아웃타깃)이고,
+          상단 종합 지표의 달성률은 <b>전년 동기×1.2 대비</b>입니다. <span class="muted">분모가 다른 두 지표라 값도 다릅니다 — 섞어 읽지 마십시오.</span>
+        </div>`;
+    } catch (e) {}
+    noteEl.innerHTML =
+      (baselineOn ? '' : '<span class="t-red">Prev Year & YoY need Baseline (top toolbar). </span>') +
+      '<span class="muted">Click a row to drill down: Region → Campaign → Country → Customer. Country target/cost are actual; customer values are allocated by order share.</span>' + recon;
+  }
 
   // ── Sort segment state / binding ──
 
@@ -7076,7 +7261,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
     <th class="text-right" title="vs same period last year">YoY Growth</th>
     <th class="text-right" title="오더로 전환된 target SKU 수 / 캠페인 order target SKU 총수 (SKU 기반 캠페인만; 고객사 기반은 –)">SKU 전환</th>
     <th class="text-right" title="SELL-OUT Target → Result(실적) · 달성률. marketing.csv SELL-OUT Target($)/Result($)" style="color:var(--accent)">Sell-out Target → 실적</th>
-    <th style="min-width:120px" title="SELL-OUT은 SELL-OUT 달성률, SELL-IN/OUT 믹스는 두 개 합산, SELL-IN은 Order÷Target">달성률</th>
+    <th style="min-width:120px" title="캠페인이 스스로 세운 타깃 대비 — SELL-OUT은 셀아웃 달성률, 믹스는 두 개 합산, SELL-IN은 Order÷Target. 상단 종합 지표의 달성률은 전년 동기×1.2 대비라서 분모가 다름">달성률<br><span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-3);font-size:9px">캠페인 타깃 대비</span></th>
     <th class="text-right" title="(Order − Marketing Cost) ÷ Marketing Cost">ROMI</th>
   </tr></thead>`;
 

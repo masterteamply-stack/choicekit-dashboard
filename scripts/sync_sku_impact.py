@@ -236,6 +236,63 @@ def main():
         'aside': [],        # 같이 보되 합계에는 더하지 않는 것 (고객사 단독 미션)
     }
 
+    # ── 품번 단위 로우데이터 — 차종·품종·권역·최다 고객까지 ───────────────
+    #   '어느 캠페인이 얼마' 다음에 '그래서 어떤 품번이 누구에게 어디서 열렸나'
+    #   를 바로 볼 수 있어야 흐름이 끊기지 않는다.
+    def norm_part(v):
+        v = (v or '').strip().upper()
+        v = re.sub(r'\s+(ASSY|AM|ASS\.Y)$', '', v)
+        return re.sub(r'^S/LINK$', 'STABILIZER LINK', v) or '(미지정)'
+    sku_model, sku_part, sku_rg2 = {}, {}, collections.defaultdict(collections.Counter)
+    sku_cu = collections.defaultdict(collections.Counter)
+    for r in rows:
+        p0 = (r.get('promotion_category') or '').strip()
+        if p0 not in sku_camps: continue
+        if (r.get('customer') or '').strip().upper() in EXCL_CUST: continue
+        s0 = (r.get('sku') or '').strip().upper()
+        if not s0 or s0 not in tgt: continue
+        d0 = (r.get('order date') or '')[:10]
+        if not d0 or d0 < start.get(p0, '9999') or d0 > cut: continue
+        if own.get(p0) and s0 not in own[p0]: continue
+        sku_model.setdefault(s0, (r.get('make_model') or '').strip())
+        sku_part.setdefault(s0, norm_part(r.get('product')))
+        sku_rg2[s0][nrg(r.get('region'))] += num(r.get('amount'))
+        sku_cu[s0][(r.get('customer') or '').strip()] += num(r.get('amount'))
+    raw = []
+    for s0 in sorted(set(cur) | set(prv)):
+        b0, a0 = round(prv.get(s0, 0), 2), round(cur.get(s0, 0), 2)
+        if b0 <= 0 and a0 <= 0: continue
+        top = sku_cu[s0].most_common(1)
+        raw.append({'sku': s0, 'promo': sku_promo.get(s0),
+                    'model': sku_model.get(s0, ''), 'part': sku_part.get(s0, ''),
+                    'region': (sku_rg2[s0].most_common(1)[0][0] if sku_rg2[s0] else ''),
+                    'cust': (top[0][0] if top else ''),
+                    'cust_amt': (round(top[0][1], 2) if top else 0),
+                    'cust_n': len(sku_cu[s0]),
+                    'before': b0, 'after': a0, 'inc': round(a0 - b0, 2),
+                    'qty': int(cur_q.get(s0, 0))})
+    raw.sort(key=lambda x: -x['after'])
+    D['raw'] = raw
+
+    def roll2(keyf):
+        g = collections.defaultdict(lambda: {'n': 0, 'new': 0, 'before': 0.0, 'after': 0.0})
+        for x in raw:
+            k = keyf(x) or '(미지정)'
+            v = g[k]; v['n'] += 1
+            if x['before'] <= 0 < x['after']: v['new'] += 1
+            v['before'] += x['before']; v['after'] += x['after']
+        out = [{'k': k, 'n': v['n'], 'new': v['new'], 'before': round(v['before'], 2),
+                'after': round(v['after'], 2),
+                'yoy': (round((v['after'] / v['before'] - 1) * 100, 1) if v['before'] > 0 else None)}
+               for k, v in g.items()]
+        return sorted(out, key=lambda x: -x['after'])
+    D['by_region2'] = [r for r in roll2(lambda x: x['region']) if r['after'] > 0 or r['before'] > 0]
+    D['by_part'] = [r for r in roll2(lambda x: x['part']) if r['after'] > 0 or r['before'] > 0]
+    # 차종은 메이커까지 남긴다 — 'CAMRY' 만 적으면 어느 메이커인지 안 보임
+    D['by_model'] = [r for r in roll2(
+        lambda x: re.sub(r'\s*\|\s*', ' ', (x['model'] or '')).strip() or '(미지정)')
+        if r['after'] > 0][:12]
+
     # ── 캠페인이 다루게 된 SKU — 합집합으로 센다 ───────────────────────────
     #   예전 타일은 캠페인별 ord_sku 를 그냥 더해(5,316종) 한 품번이 두 캠페인에
     #   걸리면 두 번 세었고, 이름도 '오더 전환 SKU' 라 바로 위의 '대상 SKU 오더

@@ -25,6 +25,14 @@
  "exp_krw": 188282100.0,
  "cost": 61035.53,
  "exp": 147095.39,
+ "so": {
+  "region": "ASIA",
+  "program": "SELL-OUT Promotion",
+  "tgt": 822901,
+  "act": 871919,
+  "att": 106.0,
+  "basis": "고객사 묶음 · 5.Sell-out by Customer 의 C 표"
+ },
  "rows": [
   {
    "region": "CIS",
