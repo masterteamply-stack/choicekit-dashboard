@@ -11371,7 +11371,7 @@ function renderSkuAggregate(fOrders) {
         const _verdict = _tInc>0 ? '<span class="t-green" style="font-weight:800">효과 있음 ▲</span>' : (_tInc<0 ? '<span class="t-red" style="font-weight:800">전년比 감소 ▼</span>' : '<span class="muted">변화 미미</span>');
         const _pct = v => v>0?`<span class="t-green">▲${v.toFixed(0)}%</span>`:(v<0?`<span class="t-red">▼${Math.abs(v).toFixed(0)}%</span>`:'<span class="muted">–</span>');
         const _incC = v => v>0?`<span class="t-green">+${fmtMoney(v)}</span>`:(v<0?`<span class="t-red">${fmtMoney(v)}</span>`:'<span class="muted">–</span>');
-        /* 종합(ALL) 일 때는 위의 「SKU 기반 캠페인 오더 전환 효과 분석, 종합」 블록이 같은 수치를
+        /* 종합(ALL) 일 때는 위의 「타깃 SKU 오더 전환 효과 · 종합」 블록이 같은 수치를
            이미 보여 준다. 머리글·기준줄·집행 전/후 요약을 두 번 적지 않고, 여기서는
            블록에 없는 품번별 증감 표만 남긴다. 특정 프로모션을 고르면 전부 보여 준다. */
         const _dup = (promo === '__all__') && !!window.CKSKUI;
@@ -13356,7 +13356,7 @@ async function loadSteerstarSku() {
   } catch (e) { console.warn('[kjk] load failed (non-fatal):', e); }
 }
 
-/* ── SKU 기반 캠페인 오더 전환 효과 분석, 종합 ───────────────────────────────────────
+/* ── 타깃 SKU 오더 전환 효과 · 종합 ───────────────────────────────────────
    단일 소스: sku_impact.json (scripts/sync_sku_impact.py).
    효과 분석은 const SKUI, 메인은 window.CKSKUI — 같은 파일이라 두 대시보드가
    같은 값을 보여 준다.
@@ -13510,7 +13510,7 @@ function kjkDetailHTML(K, compact){
 
   h+='<p class="skui-basis"><b>중복 집계 없음</b> · 이 금액은 '+E(K.cust)+' 한 곳의 미션이며 '
    +'SteerStar 오더 미션 합계에 <b>이미 한 번 들어가 있는 값</b>임 — 따로 더하지 않음. '
-   +'위 「SKU 기반 캠페인 오더 전환 효과 분석, 종합」은 집행 권역이 CIS·LATAM·MENA 라 '
+   +'위 「타깃 SKU 오더 전환 효과 · 종합」은 집행 권역이 CIS·LATAM·MENA 라 '
    +E(K.region)+' 는 애초에 들어가지 않으므로 그쪽과도 겹치지 않음.<br>'
    +'기준 · '+E(K.basis)+' · 2026 은 원장이 '+E(K.cut)
    +' 까지라 2025 연간이 아니라 같은 날짜 구간과 비교함 · 원장 '+E((K.src||[]).join(' + '))+'</p>';
@@ -13686,7 +13686,7 @@ function skuImpactParts(){
     +'<div class="skui-val">'+val+'</div>'+(sub?'<div class="skui-sub">'+sub+'</div>':'')+'</div>';
 
   const head='<div class="skui-hd"><span class="skui-bar"></span><div>'
-   +'<b>SKU 기반 캠페인 오더 전환 효과 분석, 종합</b>'
+   +'<b>타깃 SKU 오더 전환 효과 · 종합</b>'
    +'<span class="skui-mut" style="font-size:10.5px;margin-left:8px">· 위 드롭다운과 무관한 고정 집계</span>'
    +'<div class="skui-sub">SKU 대상 프로모션을 집행한 권역의 캠페인만 취합 — '
    + skuiEsc((S.regions||[]).join(' · '))+' · 원장 ~'+skuiEsc(S.cut)
@@ -13703,8 +13703,9 @@ function skuImpactParts(){
      ? tile('캠페인 커버리지',
             skuiNum(S.camp_sku.union)+' <span style="font-size:14px;color:var(--muted,#8a8a8f);font-weight:400">/ '
             +skuiNum(S.camp_sku.ledger)+'종</span>',
-            '전체 오더 원장의 <b>'+S.camp_sku.cover_pct+'%</b> · 캠페인에서 오더가 난 품번(합집합) · '
-            +'캠페인별 합 '+skuiNum(S.camp_sku.sum)+'종')
+            '전체 오더 원장의 <b>'+S.camp_sku.cover_pct+'%</b> · '
+            +'<b>전 품목 캠페인 포함이라 위 타깃 범위와 다름</b> · '
+            +'캠페인에서 오더가 난 품번(합집합) · 캠페인별 합 '+skuiNum(S.camp_sku.sum)+'종')
      : '')
    +'</div>';
 
