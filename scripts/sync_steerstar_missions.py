@@ -65,6 +65,61 @@ def ss_rows():
     return out, SS
 
 
+def kv_totals(path):
+    """전사 오더 원장(KV_Orders_*.html, ORD_Progress_*.csv 기반)에서 고객사별
+    연도별 전체 오더를 꺼낸다.
+
+    왜 이걸 보나 — 대시보드의 CIS 원장(cis_data·orders.csv)은 ChoiceKit 캠페인
+    고객사만 담고 있어서 아제르바이잔이 통째로 없다. '당사 미오더 제품' 미션은
+    캠페인 밖 고객사에도 걸려 있으므로 전사 원장을 봐야 한다.
+
+    D.ord 행 = [오더번호, 고객idx, 접수일오프셋, 납기오프셋, …, 금액(USD), …]
+    오프셋 기준일은 D.meta.epoch.
+    """
+    import datetime
+    h = open(path, encoding='utf-8', errors='replace').read()
+    m = re.search(r'<script[^>]*>\s*(?:const|var|let)\s+D\s*=\s*(\{.*?\})\s*;?\s*</script>', h, re.S)
+    if not m:
+        sys.exit('KV_Orders HTML 에서 const D 를 못 찾음.')
+    D = json.loads(m.group(1))
+    ep = D.get('meta', {}).get('epoch') or '2024-01-01'
+    ep = datetime.date(*[int(x) for x in ep.split('-')])
+    CUS, REG, CTY = D['cus'], D.get('reg') or [], D.get('cty') or []
+    out = {}
+    for i, c in enumerate(CUS):
+        by, n = collections.Counter(), collections.Counter()
+        for r in D['ord']:
+            if r[1] != i:
+                continue
+            off = r[2]
+            if off is None or off < -90000:
+                continue
+            y = (ep + datetime.timedelta(days=off)).year
+            by[y] += float(r[9] or 0); n[y] += 1
+        if not by:
+            continue
+        out[str(c[0]).strip().upper()] = {
+            'name': c[0],
+            'region': REG[c[1]] if c[1] < len(REG) else '',
+            'country': CTY[c[2]] if c[2] < len(CTY) else '',
+            'code': c[3],
+            'by_year': [{'y': y, 'amt': round(by[y], 2), 'n': n[y]} for y in sorted(by)],
+        }
+    return out, (D.get('meta', {}).get('srcOrder') or os.path.basename(path)), \
+        (D.get('meta', {}).get('snap') or '')
+
+
+def kv_find(tot, cust):
+    """이름이 조금씩 다르다 — 'Kailos International' vs 'Kailos International Pty Ltd'."""
+    k = cust.strip().upper()
+    if k in tot:
+        return tot[k]
+    for kk, v in tot.items():
+        if kk.startswith(k) or k.startswith(kk):
+            return v
+    return None
+
+
 def chunk_rows(dirn):
     for f in sorted(glob.glob(os.path.join(ROOT, dirn, 'chunk_*.json'))):
         d = json.load(open(f, encoding='utf-8'))
@@ -126,7 +181,20 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--top-kz', help='KZ 미오더 TOP 200 품번 목록 (CTR 코드 1줄 1개)')
     ap.add_argument('--top-az', help='AZ 미오더 TOP 80 품번 목록')
+    ap.add_argument('--kv', help='전사 오더 원장 대시보드 (KV_Orders_*.html) — '
+                                 '고객사별 연도별 전체 오더를 여기서 꺼낸다')
     a = ap.parse_args()
+
+    kvtot, kvsrc, kvsnap = ({}, '', '')
+    if a.kv:
+        kvtot, kvsrc, kvsnap = kv_totals(a.kv)
+    else:  # 이전에 뽑아 둔 값이 있으면 들고 간다 — 원장 HTML 은 리포에 없다
+        if os.path.exists(OUT):
+            prev = json.load(open(OUT, encoding='utf-8'))
+            kvsrc, kvsnap = prev.get('ledger_src', ''), prev.get('ledger_snap', '')
+            for m0 in (prev.get('missions') or []):
+                if m0.get('total'):
+                    kvtot[(m0.get('total', {}).get('name') or m0['cust']).strip().upper()] = m0['total']
 
     rows, SS = ss_rows()
     tops = {}
@@ -141,7 +209,8 @@ def main():
                       '품번은 원장을 ctr_code 로 이어서 센다. '
                       '재생성: python3 scripts/sync_steerstar_missions.py',
            '_basis': '각 고객사 단독 미션 — ChoiceKit 연관 오더에 더하지 않는다.',
-           'lead_target': SS.get('lead_target'), 'missions': []}
+           'lead_target': SS.get('lead_target'),
+           'ledger_src': kvsrc, 'ledger_snap': kvsnap, 'missions': []}
 
     for M in MISSIONS:
         r = rows.get(M['cust'])
@@ -156,6 +225,19 @@ def main():
                'tgt': r.get('tgt'), 'got': r.get('got'), 'rate': r.get('rate'),
                'leads': r.get('leads'), 'lead_tgt': r.get('lead_tgt')}
 
+        # 전사 오더 원장의 이 고객사 전체 오더 — 미션 대상이 그중 얼마인지 보려면 필요
+        t = kv_find(kvtot, M['cust'])
+        if t:
+            rec['total'] = t
+            cur = [x for x in t['by_year'] if x['y'] == 2026]
+            prv = [x for x in t['by_year'] if x['y'] == 2025]
+            rec['tot26'] = cur[0]['amt'] if cur else 0
+            rec['tot25'] = prv[0]['amt'] if prv else 0
+            rec['new_cust'] = not any(x['y'] < 2026 for x in t['by_year'])
+            if rec['tot26'] and r.get('got'):
+                rec['share'] = round(r['got'] / rec['tot26'] * 100, 1)
+
+        m_got = float(r.get('got') or 0)
         if M['src'] == 'steerstar_sku':
             p = os.path.join(ROOT, 'steerstar_sku.json')
             if os.path.exists(p):
@@ -173,9 +255,15 @@ def main():
             y25, y26, q25, q26, name, cut = ledger_sku(M['cust'])
             top = tops.get(M['key'])
             if not y26 and not y25:
-                rec['sku'] = {'mode': 'none',
-                              'why': '오더 원장에 이 고객사 행이 없음 — 2026 오더가 아직 '
-                                     '원장에 반영되지 않았거나 다른 이름으로 들어가 있음'}
+                why = ('대시보드가 쓰는 CIS 원장은 ChoiceKit 캠페인 고객사만 담고 있어 '
+                       '이 고객사의 품번 줄이 없음 — 전사 오더 원장에는 있다')
+                if rec.get('new_cust'):
+                    why += ('. 2026 첫 거래 고객이라 전년 비교 자체가 없다 — '
+                            '전 품목이 「당사 미오더」였던 셈이고, 전체 오더 '
+                            '$%s 중 미션 대상은 $%s(%s%%)' % (
+                                format(round(rec.get('tot26') or 0), ','),
+                                format(round(m_got), ','), rec.get('share')))
+                rec['sku'] = {'mode': 'none', 'why': why}
             else:
                 keys26 = [k for k in y26 if y26[k]]
                 new = [k for k in keys26 if not y25.get(k)]
@@ -234,10 +322,16 @@ def main():
     print('SteerStar SKU 기반 추가 오더미션 %d건' % len(out['missions']))
     for m in out['missions']:
         s = m.get('sku') or {}
+        if m.get('tot26'):
+            pass
         line = '  %-22s %-8s 목표 $%s → $%s (%s%%)' % (
             m['cust'], m['country'], format(round(m['tgt'] or 0), ','),
             format(round(m['got'] or 0), ','), m['rate'])
         print(line)
+        if m.get('tot26'):
+            print('      전사 원장 전체 오더 25년 $%s → 26년 $%s · 미션이 그중 %s%%%s'
+                  % (format(round(m.get('tot25') or 0), ','), format(round(m['tot26']), ','),
+                     m.get('share'), ' · 26년 첫 거래 고객' if m.get('new_cust') else ''))
         if s.get('mode') == 'full':
             print('      품번: 신규 %s종 · 재전환 %s종 · 확장 기여 %s%%'
                   % (s.get('conv'), s.get('recov'), s.get('cover_pct')))

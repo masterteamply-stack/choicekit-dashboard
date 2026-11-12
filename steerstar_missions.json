@@ -2,6 +2,8 @@
  "_readme": "SteerStar 추가 오더미션 중 SKU 기반인 셋. 금액·달성률은 SteerStar 공식 관리 파일(효과 분석 const SS)이 원본, 품번은 원장을 ctr_code 로 이어서 센다. 재생성: python3 scripts/sync_steerstar_missions.py",
  "_basis": "각 고객사 단독 미션 — ChoiceKit 연관 오더에 더하지 않는다.",
  "lead_target": 200,
+ "ledger_src": "ORD_Progress_20261104.csv",
+ "ledger_snap": "20261103",
  "missions": [
   {
    "key": "kailos",
@@ -18,6 +20,33 @@
    "rate": 80.9,
    "leads": 13,
    "lead_tgt": 200,
+   "total": {
+    "name": "Kailos International Pty Ltd",
+    "region": "Asia & Pacific",
+    "country": "Australia",
+    "code": "288503",
+    "by_year": [
+     {
+      "y": 2024,
+      "amt": 29400.76,
+      "n": 1
+     },
+     {
+      "y": 2025,
+      "amt": 76384.81,
+      "n": 5
+     },
+     {
+      "y": 2026,
+      "amt": 85292.99,
+      "n": 16
+     }
+    ]
+   },
+   "tot26": 85292.99,
+   "tot25": 76384.81,
+   "new_cust": false,
+   "share": 70.5,
    "sku": {
     "mode": "full",
     "cut": "2026-10-20",
@@ -47,6 +76,28 @@
    "rate": 274.4,
    "leads": 0,
    "lead_tgt": 200,
+   "total": {
+    "name": "BAUTEN",
+    "region": "CIS",
+    "country": "Kazakhstan",
+    "code": "289381",
+    "by_year": [
+     {
+      "y": 2025,
+      "amt": 233916.5,
+      "n": 3
+     },
+     {
+      "y": 2026,
+      "amt": 387208.77,
+      "n": 7
+     }
+    ]
+   },
+   "tot26": 387208.77,
+   "tot25": 233916.5,
+   "new_cust": false,
+   "share": 70.9,
    "sku": {
     "mode": "ledger",
     "cut": "2026-07-20",
@@ -273,9 +324,26 @@
    "rate": 64.5,
    "leads": 0,
    "lead_tgt": 200,
+   "total": {
+    "name": "RETEMS LOGISTICS",
+    "region": "CIS",
+    "country": "Azerbaijan",
+    "code": "290059",
+    "by_year": [
+     {
+      "y": 2026,
+      "amt": 112481.24,
+      "n": 3
+     }
+    ]
+   },
+   "tot26": 112481.24,
+   "tot25": 0,
+   "new_cust": true,
+   "share": 22.9,
    "sku": {
     "mode": "none",
-    "why": "오더 원장에 이 고객사 행이 없음 — 2026 오더가 아직 원장에 반영되지 않았거나 다른 이름으로 들어가 있음"
+    "why": "대시보드가 쓰는 CIS 원장은 ChoiceKit 캠페인 고객사만 담고 있어 이 고객사의 품번 줄이 없음 — 전사 오더 원장에는 있다. 2026 첫 거래 고객이라 전년 비교 자체가 없다 — 전 품목이 「당사 미오더」였던 셈이고, 전체 오더 $112,481 중 미션 대상은 $25,810(22.9%)"
    }
   }
  ]

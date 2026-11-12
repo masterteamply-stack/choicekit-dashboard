@@ -7067,6 +7067,14 @@ function renderRegionExecSummary(fOrders, fMkt) {
           soNote:_soNote[p] || '', countries:{}, skus:new Set() };
         _scale(agg[r][p], 'order', Number(br.a26 || 0) * usdToDisp);
         if (baselineOn) _scale(agg[r][p], 'prev', Number(br.a25 || 0) * usdToDisp);
+        // Order Target 도 효과 분석 기준으로 — marketing.csv 의 Order_Target($) 을
+        // 쓰면 합이 $6.7M 이 되어 종합 지표의 목표 $3.95M·달성률 87.6% 와 갈렸다
+        // (이 표는 58% 로 떴음). 브리지의 tgt = 전년 동기 × 1.2 (SELLIN_FIX 반영).
+        if (br.tgt != null) {
+          const _t = Number(br.tgt) * usdToDisp;
+          agg[r][p].target = _t; agg[r][p].otIn = _t;
+          Object.values(agg[r][p].countries || {}).forEach(c => { c.target = 0; });
+        }
       });
       /* Sell-out 목표·실적도 고객사 묶음(AO)으로. marketing.csv 값은 프로그램
          단위 합이라 $836K/$864K 로 떠 있었음 — 올바른 값은 $823K/$872K. */
@@ -7135,7 +7143,12 @@ function renderRegionExecSummary(fOrders, fMkt) {
     return `<div style="display:flex;align-items:center;gap:6px"><div style="flex:1;min-width:54px;height:8px;background:var(--surface-3);border-radius:4px;overflow:hidden"><div style="width:${w}%;height:100%;background:${col}"></div></div><span class="mono" style="font-size:11px;min-width:40px;text-align:right;color:${col};font-weight:700">${pr.toFixed(0)}%</span></div>`;
   };
   // Progress 기준: SELL-OUT 캠페인=SELL-OUT 달성(soResult/otOut), SELL-IN/SELL-OUT 믹스=두 개 합산, SELL-IN=order/target
+  // 달성률 — 효과 분석(종합 지표)과 같은 정의: 연관 오더 ÷ (전년 동기 × 1.2).
+  // 셀아웃 실적·타깃은 넣지 않는다. 전에는 (오더+셀아웃) ÷ (오더타깃+셀아웃타깃)
+  // 이라 같은 화면에 58% 와 87.6% 가 같이 떠 있었다. 셀아웃은 옆의
+  // 「Sell-out Target → 실적」 칸에서 따로 본다.
   const _progOf = (node, camps) => {
+    if (window.CKPI) return progCell(node.order||0, node.target||0);
     const hasSO = camps ? camps.some(c => c.sell === 'SELL-OUT') : (node.sell === 'SELL-OUT');
     const hasSI = camps ? camps.some(c => c.sell !== 'SELL-OUT') : (node.sell !== 'SELL-OUT');
     if (hasSO && hasSI) return progCell((node.order||0) + (node.soResult||0), (node.target||0) + (node.otOut||0));
@@ -7235,13 +7248,13 @@ function renderRegionExecSummary(fOrders, fMkt) {
   };
   const THEAD = `<thead><tr>
     <th style="min-width:300px">Region ▸ Campaign ▸ Country ▸ Customer</th>
-    <th class="text-right" title="Σ Order_Target($) of SELL-IN activities">Order Target</th>
+    <th class="text-right" title="효과 분석 기준 목표 = 전년 동기 × 1.2 (MENA Portfolio 는 전쟁 이슈로 $30,000 정정). 종합 지표의 목표와 같은 값">Order Target<br><span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-3);font-size:9px">전년 동기 × 1.2</span></th>
     <th class="text-right" title="연관 오더(ChoiceKit): 캠페인 연관 오더. LATAM은 4버킷 규칙(게시일 기준 SELL-IN), 비LATAM은 캠페인 기간 오더">연관 오더</th>
     <th class="text-right" title="orders in the same period last year (baseline)">Prior-Yr Same Period</th>
     <th class="text-right" title="vs same period last year">YoY Growth</th>
     <th class="text-right" title="오더로 전환된 target SKU 수 / 캠페인 order target SKU 총수 (SKU 기반 캠페인만; 고객사 기반은 –)">SKU 전환</th>
     <th class="text-right" title="SELL-OUT Target → Result(실적) · 달성률. marketing.csv SELL-OUT Target($)/Result($)" style="color:var(--accent)">Sell-out Target → 실적</th>
-    <th style="min-width:120px" title="캠페인이 스스로 세운 타깃 대비 — SELL-OUT은 셀아웃 달성률, 믹스는 두 개 합산, SELL-IN은 Order÷Target. 상단 종합 지표의 달성률은 전년 동기×1.2 대비라서 분모가 다름">달성률<br><span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-3);font-size:9px">캠페인 타깃 대비</span></th>
+    <th style="min-width:120px" title="연관 오더 ÷ (전년 동기 × 1.2) — 상단 종합 지표의 달성률과 같은 정의. 셀아웃은 옆 칸에서 따로 본다">달성률<br><span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-3);font-size:9px">연관 오더 ÷ 목표</span></th>
     <th class="text-right" title="(Order − Marketing Cost) ÷ Marketing Cost">ROMI</th>
   </tr></thead>`;
 
@@ -7335,7 +7348,7 @@ function renderRegionExecSummary(fOrders, fMkt) {
     <td class="text-right mono">${yoyCell(G.order, G.prev)}</td>
     <td class="text-right">${_skuCell(regionList.reduce((a,R)=>a+R.camps.reduce((b,c)=>b+((c.skus&&c.skus.size)||0),0),0), regionList.reduce((a,R)=>a+R.camps.reduce((b,c)=>b+_tgtSkuN(c.camp),0),0))}</td>
     <td class="text-right mono" style="color:var(--accent)">${_soCell(G.otOut, G.soResult)}</td>
-    <td>${progCell(G.order + G.soResult, G.target + G.otOut)}</td>
+    <td>${window.CKPI ? progCell(G.order, G.target) : progCell(G.order + G.soResult, G.target + G.otOut)}</td>
     <td class="text-right mono">${romiCell(G.order, G.cost)}</td>
   </tr>`;
   tbl.innerHTML = THEAD + `<tbody>${body || '<tr><td colspan="9" class="muted" style="text-align:center;padding:16px">No data</td></tr>'}</tbody>`;

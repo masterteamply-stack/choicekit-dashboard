@@ -154,6 +154,11 @@ def main():
         # 전년 종수는 효과 분석에도 없어서 메인이 baseline 으로 따로 센다.
         'rows': [{'region': c.get('region'), 'program': c.get('program'),
                   'a25': c.get('a25'), 'a26': c.get('a26'), 'cut': c.get('cut'),
+                  # tgt = 이 캠페인의 마케팅 목표(전년 동기 × 1.2, SELLIN_FIX 는 그 값).
+                  # 메인 대시보드의 권역 종합 현황이 'Order Target' 칸에 이걸 쓴다 —
+                  # marketing.csv 의 Order_Target($) 을 쓰면 $6.7M 이 되어 종합 지표의
+                  # 목표 $3.95M·달성률 87.6% 와 갈렸다(그쪽은 58%로 떴음).
+                  'tgt': round(goal(c), 2),
                   's26': c.get('ord_sku')}
                  for c in sorted(cs, key=lambda x: -(x.get('a26') or 0))],
     }
