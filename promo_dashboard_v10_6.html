@@ -4602,10 +4602,10 @@ function skuReportParts(S, X, SSM) {
   const head = '<div class="skui-hd"><span class="skui-bar"></span><div>'
     + '<b>SKU 기반 오더 전환 효과 · 종합</b>'
     + '<span class="skui-mut" style="font-size:10.5px;margin-left:8px">· 위 드롭다운과 무관한 고정 집계</span>'
-    + '<div class="skui-sub">성격이 다른 두 갈래로 나눠 본다 — '
+    + '<div class="skui-sub">성격이 다른 두 갈래로 나눠 봄 — '
     + '<b>A. ChoiceKit SKU 대상 프로모션</b>(대상 품번의 집행 전·후) · '
     + '<b>B. SteerStar SKU 기반 오더 미션</b>(고객사별 목록을 얼마나 열었나). '
-    + '<b>두 트랙은 더하지 않는다</b> — 아래 기준 참고.</div></div></div>';
+    + '<b>두 트랙은 단순 합산하지 않음</b> — 합산 규칙은 B 표 아래 참고.</div></div></div>';
 
   /* ── 종합 타일 ── */
   const tiles = '<div class="skui-tiles">'
@@ -4613,7 +4613,7 @@ function skuReportParts(S, X, SSM) {
            'ChoiceKit SKU 대상 프로모션 ' + N((S.by_camp || []).length + (X ? 1 : 0)) + '건 · 전환율 '
            + (tgtAll ? (convAll / tgtAll * 100).toFixed(1) : '–') + '%')
     + tile('A · 집행 전 → 후', M(bAll) + ' → ' + M(aAll), P(yAll) + ' · ' + M(aAll - bAll)
-           + ' <span class="skui-mut">· 확장은 늘고 주력은 역기저</span>')
+           + ' <span class="skui-mut">· 확장은 증가, 주력은 역기저</span>')
     + tile('B · 미션 목록 전환', N(bConv) + '<span style="font-size:14px;color:var(--muted,#8a8a8f);font-weight:400"> / ' + N(bList) + '종</span>',
            '품번 목록이 있는 ' + MSL.length + '개 고객사 · '
            + (bList ? (bConv / bList * 100).toFixed(1) : '–') + '%'
@@ -4629,11 +4629,8 @@ function skuReportParts(S, X, SSM) {
        : '')
     + '</div>';
 
-  const clsline = '<div class="skui-cls"><b>A</b> 품번 분류 — <b>' + N(C['신규'] || 0) + '</b> 신규 · '
-    + '<b>' + N(C['증가'] || 0) + '</b> 증가 · <b>' + N(C['유지'] || 0) + '</b> 유지 · '
-    + '<b>' + N(C['감소'] || 0) + '</b> 감소 · <b>' + N(C['이탈'] || 0) + '</b> 이탈 · '
-    + '<b>' + N(C['미전환'] || 0) + '</b> 미전환 '
-    + '<span class="skui-mut">(신규 ' + M(S.new_amt) + ' · 증가 ' + M(S.up_amt) + ' · 감소·이탈 ' + M(S.dn_amt) + ')</span></div>';
+  /* 품번 분류는 A 표 위 불렛에만 둔다 — 전에는 여기와 불렛 두 군데에 같은 줄이 떴음 */
+  const clsline = '';
 
   /* ── A 표 ── */
   const rows = (S.by_camp || []).slice().sort((a, b) => (b.after || 0) - (a.after || 0));
@@ -4644,18 +4641,18 @@ function skuReportParts(S, X, SSM) {
   const aGrew = rowsAll.filter(r => (r.yoy || 0) > 0);
   const aMain = rowsAll.filter(r => (r.inc || 0) < 0).sort((x, y) => x.inc - y.inc)[0] || null;
   const aBl = [];
-  aBl.push('합계는 <b>' + P(yAll) + '</b>(' + M(bAll) + ' → ' + M(aAll) + ')지만, '
-    + '<b>이 한 줄로 성패를 판단하면 안 된다</b> — 확장형과 주력형이 반대로 움직였다.');
-  if (aGrew.length) aBl.push('<b>품번을 넓히는 쪽은 모두 늘었다</b> · '
+  aBl.push('합계는 <b>' + P(yAll) + '</b> (' + M(bAll) + ' → ' + M(aAll) + '). '
+    + '다만 <b>이 한 줄로 성패를 판단하면 안 됨</b> — 확장형과 주력형이 반대로 움직였음.');
+  if (aGrew.length) aBl.push('<b>품번을 넓히는 쪽은 모두 증가</b> · '
     + aGrew.map(r => E(r.p) + ' ' + (r.yoy >= 0 ? '+' : '') + r.yoy.toFixed(1) + '%').join(' · ')
-    + '. 전년에 오더가 없던 품번 <b>' + N(C['신규'] || 0) + '종</b>에서 <b>' + M(S.new_amt) + '</b>를 새로 만들었다.');
-  if (aMain) aBl.push('<b>합계를 끌어내린 건 주력 품번의 역기저다</b> · ' + E(aMain.p) + ' '
+    + '. 전년에 오더가 없던 품번 <b>' + N(C['신규'] || 0) + '종</b>에서 <b>' + M(S.new_amt) + '</b> 를 새로 만듦.');
+  if (aMain) aBl.push('<b>합계를 끌어내린 건 주력 품번의 역기저</b> · ' + E(aMain.p) + ' '
     + M(aMain.inc) + ' (' + P(aMain.yoy) + '). 전년 기저가 큰 캠페인이라 같은 품번에서 빠진 금액이 '
-    + '확장 성과를 덮는다 — 품목 참여가 줄어서가 아니다.');
-  aBl.push('<b>품번 분류</b> · 신규 <b>' + N(C['신규'] || 0) + '</b> · 증가 <b>' + N(C['증가'] || 0) + '</b> · '
-    + '유지 ' + N(C['유지'] || 0) + ' · 감소 ' + N(C['감소'] || 0) + ' · 이탈 ' + N(C['이탈'] || 0)
-    + ' · 미전환 ' + N(C['미전환'] || 0)
-    + ' <span class="skui-mut">(신규 ' + M(S.new_amt) + ' · 증가 ' + M(S.up_amt) + ' · 감소·이탈 ' + M(S.dn_amt) + ')</span>');
+    + '확장 성과를 덮음 — 품목 참여가 줄어서가 아님.');
+  aBl.push('<b>품번 분류</b> · 신규 <b>' + N(C['신규'] || 0) + '</b>종 ' + M(S.new_amt)
+    + ' · 증가 <b>' + N(C['증가'] || 0) + '</b>종 ' + M(S.up_amt)
+    + ' · 감소·이탈 <b>' + N((C['감소'] || 0) + (C['이탈'] || 0)) + '</b>종 ' + M(S.dn_amt)
+    + ' <span class="skui-mut">· 유지 ' + N(C['유지'] || 0) + '종 · 미전환 ' + N(C['미전환'] || 0) + '종</span>');
   table += '<ul class="skui-bl">' + aBl.map(x => '<li>' + x + '</li>').join('') + '</ul>';
   table += '<div class="skui-wrap"><table class="skui-tbl"><thead><tr>'
     + '<th>프로모션</th><th>집행 권역</th><th>시작</th><th class="n">대상</th><th class="n">전환</th>'
@@ -4685,26 +4682,26 @@ function skuReportParts(S, X, SSM) {
   const _m = k => MS.find(x => x.key === k);
   const kz0 = _m('bauten'), az0 = _m('retems'), ka0 = _m('kailos');
   const bBl = [];
-  if (kz0 && az0 && kz0.sku && az0.sku) bBl.push('<b>목록은 잘 열렸다</b> · '
+  if (kz0 && az0 && kz0.sku && az0.sku) bBl.push('<b>목록은 잘 열림</b> · '
     + E(kz0.cust) + ' 목록 ' + N(kz0.sku.top_full_n) + '종 중 <b>' + N(kz0.sku.top_hit) + '종</b>('
     + kz0.sku.top_pct.toFixed(0) + '%) · ' + E(az0.cust) + ' ' + N(az0.sku.top_full_n) + '종 중 <b>'
     + N(az0.sku.top_hit) + '종</b>(' + az0.sku.top_pct.toFixed(0) + '%).');
-  if (kz0 && kz0.sku && kz0.sku.cls) bBl.push('<b>열린 뒤의 성장은 볼륨에서 나왔다</b> · '
+  if (kz0 && kz0.sku && kz0.sku.cls) bBl.push('<b>열린 뒤의 성장은 볼륨에서 나옴</b> · '
     + E(kz0.cust) + ' 는 원래 사던 품번을 더 담은 쪽이 <b>' + N((kz0.sku.cls || {})['증가'] || 0) + '종 '
     + M((kz0.sku.cls_amt || {})['증가'] || 0) + '</b> 로, 새로 담은 '
-    + N((kz0.sku.cls || {})['신규'] || 0) + '종 ' + M((kz0.sku.cls_amt || {})['신규'] || 0) + ' 보다 크다. '
+    + N((kz0.sku.cls || {})['신규'] || 0) + '종 ' + M((kz0.sku.cls_amt || {})['신규'] || 0) + ' 보다 큼. '
     + (ka0 ? ('반대로 ' + E(ka0.cust) + '(호주)는 미션 매출의 <b>'
       + ((ka0.sku && ka0.sku.cover_pct != null) ? ka0.sku.cover_pct.toFixed(0) : '–')
-      + '%</b>가 신규·재전환 품번에서 나왔다 — <b>KZ 는 볼륨, 호주는 품번 폭</b>으로 갔다.') : ''));
-  if (kz0 && az0) bBl.push('<b>달성률을 전년 대비로 읽으면 안 된다</b> · '
+      + '%</b>가 신규·재전환 품번에서 나옴 — <b>KZ 는 볼륨, 호주는 품번 폭</b>으로 감.') : ''));
+  if (kz0 && az0) bBl.push('<b>달성률을 전년 대비로 읽으면 안 됨</b> · '
     + E(kz0.cust) + '(첫 오더 ' + E(kz0.first_order || '') + ') · ' + E(az0.cust) + '(첫 오더 '
-    + E(az0.first_order || '') + ') 모두 거래가 막 자리잡는 중이다. '
-    + '「줄었다」로 보이는 품번은 이탈이 아니라 재오더 주기가 아직 안 돌아온 것이다.');
-  if (az0) bBl.push('<b>' + E(az0.cust) + ' 는 적게 산 게 아니라 목록 밖을 샀다</b> · '
+    + E(az0.first_order || '') + ') 모두 거래가 막 자리잡는 중임. '
+    + '「줄었다」로 보이는 품번은 이탈이 아니라 재오더 주기가 아직 안 돌아온 것임.');
+  if (az0) bBl.push('<b>' + E(az0.cust) + ' 는 적게 산 게 아니라 목록 밖을 삼</b> · '
     + '전체 오더 ' + M(az0.tot26 || 0) + ' 중 목록 안에서 나온 건 ' + M(az0.got) + '('
     + (az0.share != null ? az0.share.toFixed(0) : '–') + '%). 목록 품번의 '
-    + (az0.sku && az0.sku.top_pct != null ? az0.sku.top_pct.toFixed(0) : '–') + '%는 이미 열렸으니, '
-    + '남은 품번을 여는 것보다 열린 품번의 볼륨을 키우는 쪽이 빠르다.');
+    + (az0.sku && az0.sku.top_pct != null ? az0.sku.top_pct.toFixed(0) : '–') + '%는 이미 열렸으므로, '
+    + '남은 품번을 여는 것보다 열린 품번의 볼륨을 키우는 쪽이 빠름.');
   const left0 = [];
   if (kz0 && kz0.sku) left0.push(E(kz0.cust) + ' ' + N((kz0.sku.cls || {})['미개척'] || 0) + '종');
   if (az0 && az0.sku) left0.push(E(az0.cust) + ' ' + N((az0.sku.cls || {})['미개척'] || 0) + '종');
@@ -4751,10 +4748,10 @@ function skuReportParts(S, X, SSM) {
     const add = MS.filter(m => (m.addable || 0) > 0).map(m => E(m.cust) + ' ' + M(m.addable));
     table += '<div class="skui-cls" style="margin-top:8px;padding:9px 11px;'
       + 'background:var(--surface-2,#f7f7f8);border-left:2px solid var(--accent,#DC4A1B)">'
-      + '<b>연관 오더에 더할 때</b> — B 실적 ' + M(bGot) + ' 을 통째로 더하면 안 된다. '
+      + '<b>연관 오더에 더할 때</b> — B 실적 ' + M(bGot) + ' 을 통째로 더하면 안 됨. '
       + (dup.length ? ('<b>이미 들어가 있는 몫 ' + M(inCk) + '</b> <span class="skui-mut">(' + dup.join(' · ')
         + ' — ChoiceKit 캠페인 고객사라 그 오더가 연관 오더에 이미 잡혀 있음)</span>은 빼고, ') : '')
-      + '<b>' + M(addable) + '</b> 만 더한다 <span class="skui-mut">(' + add.join(' · ')
+      + '<b>' + M(addable) + '</b> 만 더함 <span class="skui-mut">(' + add.join(' · ')
       + ' — ChoiceKit 원장 밖이라 아직 아무 데도 안 잡힌 오더)</span>.</div>';
   }
   return { head, tiles, clsline, table, bConv, bList, bGot, bTgt, ovN, ovAmt, inCk, addable, MS };
@@ -4785,42 +4782,42 @@ function skuImpactParts(){
   const table=_R.table; let deep='';
 
   const bl=[];
-  bl.push('<b>두 트랙은 다른 질문에 답한다.</b> A 는 「정해 둔 대상 품번이 집행 전보다 더 팔렸나」, '
-    +'B 는 「고객사에 준 목록을 얼마나 열었나」다. A 합계가 '+skuiPct(yAll)+' 인 것과 '
-    +'B 달성률이 '+(_R.bTgt?(_R.bGot/_R.bTgt*100).toFixed(0):'–')+'% 인 것은 서로 반대되는 신호가 아니라 '
-    +'다른 축의 값이다.');
-  if(grew.length) bl.push('<b>A — 오더가 없던 품번을 여는 쪽에서 작동했다</b> · '
+  bl.push('<b>두 트랙은 다른 질문에 답함</b> · A 는 「정해 둔 대상 품번이 집행 전보다 더 팔렸나」, '
+    +'B 는 「고객사에 준 목록을 얼마나 열었나」. A 합계 '+skuiPct(yAll)+' 와 '
+    +'B 달성률 '+(_R.bTgt?(_R.bGot/_R.bTgt*100).toFixed(0):'–')+'% 는 서로 반대되는 신호가 아니라 '
+    +'다른 축의 값임.');
+  if(grew.length) bl.push('<b>A — 오더가 없던 품번을 여는 쪽에서 작동</b> · '
     +grew.map(r=>skuiEsc(r.p)+' '+(r.yoy>=0?'+':'')+r.yoy.toFixed(1)+'%').join(' · ')
     +' — 커버리지를 넓히는 캠페인은 모두 전년 대비 증가. '
-    +'신규 전환 '+skuiNum(C['신규']||0)+'종 '+skuiMoney(S.new_amt)+' 를 새로 만들었다.');
-  if(main) bl.push('<b>A — 합계를 끌어내린 건 주력 품번의 역기저다</b> · '
+    +'신규 전환 '+skuiNum(C['신규']||0)+'종 '+skuiMoney(S.new_amt)+' 를 새로 만듦.');
+  if(main) bl.push('<b>A — 합계를 끌어내린 건 주력 품번의 역기저</b> · '
     +skuiEsc(main.p)+' '+skuiMoney(main.inc)+' ('+skuiPct(main.yoy)+'). '
-    +'전년 기저가 큰 캠페인이라 같은 품번에서 빠진 금액이 확장 성과를 덮는다. '
+    +'전년 기저가 큰 캠페인이라 같은 품번에서 빠진 금액이 확장 성과를 덮음. '
     +'<span class="skui-mut">합계 한 줄로 캠페인 성패를 판단하면 안 되는 구조.</span>');
   (function(){
     const ms=_R.MS||[]; const kz=ms.find(x=>x.key==='bauten'), az=ms.find(x=>x.key==='retems'), ka=ms.find(x=>x.key==='kailos');
-    if(kz&&kz.sku&&kz.sku.top_hit!=null) bl.push('<b>B — 목록은 잘 열렸다</b> · '
+    if(kz&&kz.sku&&kz.sku.top_hit!=null) bl.push('<b>B — 목록은 잘 열림</b> · '
       +skuiEsc(kz.cust)+' 목록 '+skuiNum(kz.sku.top_full_n)+'종 중 '+skuiNum(kz.sku.top_hit)+'종('
       +kz.sku.top_pct.toFixed(0)+'%)'+(az&&az.sku&&az.sku.top_hit!=null?(' · '+skuiEsc(az.cust)+' '
       +skuiNum(az.sku.top_full_n)+'종 중 '+skuiNum(az.sku.top_hit)+'종('+az.sku.top_pct.toFixed(0)+'%)'):'')
       +'. 두 곳 다 거래가 막 자리잡는 중이라(첫 오더 '+skuiEsc(kz.first_order||'')
       +(az?' · '+skuiEsc(az.first_order||''):'')+') 전년 대비가 아니라 '
-      +'「목록을 얼마나 열었나」로 읽어야 한다.');
-    if(kz&&kz.sku&&kz.sku.cls) bl.push('<b>B — 열린 뒤의 성장은 볼륨에서 나왔다</b> · '
+      +'「목록을 얼마나 열었나」로 읽어야 함.');
+    if(kz&&kz.sku&&kz.sku.cls) bl.push('<b>B — 열린 뒤의 성장은 볼륨에서 나옴</b> · '
       +skuiEsc(kz.cust)+' 는 첫 오더에도 있던 품번을 더 담은 쪽이 '
       +skuiNum((kz.sku.cls||{})['증가']||0)+'종 '+skuiMoney((kz.sku.cls_amt||{})['증가']||0)+' 로, '
-      +'새로 담은 '+skuiNum((kz.sku.cls||{})['신규']||0)+'종 '+skuiMoney((kz.sku.cls_amt||{})['신규']||0)+' 보다 크다. '
+      +'새로 담은 '+skuiNum((kz.sku.cls||{})['신규']||0)+'종 '+skuiMoney((kz.sku.cls_amt||{})['신규']||0)+' 보다 큼. '
       +(ka?('반대로 '+skuiEsc(ka.cust)+'(호주)는 미션 매출의 '+((ka.sku&&ka.sku.cover_pct!=null)?ka.sku.cover_pct.toFixed(0):'–')
-      +'%가 신규·재전환 품번에서 나왔다 — <b>KZ 는 볼륨, 호주는 품번 폭</b>으로 갔다.'):''));
+      +'%가 신규·재전환 품번에서 나옴 — <b>KZ 는 볼륨, 호주는 품번 폭</b>으로 감.'):''));
     const left=[]; if(kz&&kz.sku) left.push(skuiEsc(kz.cust)+' '+skuiNum((kz.sku.cls||{})['미개척']||0)+'종');
     if(az&&az.sku) left.push(skuiEsc(az.cust)+' '+skuiNum((az.sku.cls||{})['미개척']||0)+'종');
     if(left.length) bl.push('<b>다음 레버</b> · 아직 한 번도 오더가 없는 목록 품번 — '+left.join(' · ')
-      +'. 이미 열린 품번의 볼륨을 키우는 쪽이 새 품번을 여는 것보다 빨랐다는 게 '
-      +'B 의 올해 패턴이므로, 남은 품번은 재오더 주기에 맞춰 밀어 보는 편이 낫다.');
+      +'. 올해 패턴상 이미 열린 품번의 볼륨을 키우는 쪽이 새 품번을 여는 것보다 빨랐으므로, '
+      +'남은 품번은 재오더 주기에 맞춰 미는 편이 나음.');
   })();
   if(_R.bGot) bl.push('<b>연관 오더에 더할 때</b> · B 실적 '+skuiMoney(_R.bGot)+' 중 '
-    +skuiMoney(_R.inCk)+' 는 ChoiceKit 캠페인 고객사의 오더라 연관 오더에 이미 잡혀 있다. '
-    +'<b>'+skuiMoney(_R.addable)+' 만 더한다</b> — ChoiceKit 원장 밖이라 아직 아무 데도 안 잡힌 몫이다.');
+    +skuiMoney(_R.inCk)+' 는 ChoiceKit 캠페인 고객사의 오더라 연관 오더에 이미 잡혀 있음. '
+    +'<b>'+skuiMoney(_R.addable)+' 만 더함</b> — ChoiceKit 원장 밖이라 아직 아무 데도 안 잡힌 몫임.');
   const bullets='<ul class="skui-bl">'+bl.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
 
   const deepHd='<div class="skui-cls" style="margin-top:18px;padding-top:12px;'
@@ -4838,22 +4835,9 @@ function skuImpactParts(){
     + ssmSectionHTML(_ssm, {embed:true});
   else (S.aside||[]).forEach(A=>{ deepCust+=kjkSectionHTML(A); });
 
-  const basis='<p class="skui-basis"><b>기준</b><br>'
-   +'<b>A · ChoiceKit SKU 대상 프로모션</b> — 모수는 각 캠페인 target_skus, 원장은 orders.csv. '
-   +'집행 전·후 모두 <b>캠페인 시작일 ~ '+skuiEsc(S.cut)+'</b>(원장 마감)이고 전년은 같은 구간, '
-   +'전년도 <b>그 캠페인의 고객사</b>만'
-   +(S.drop_amt?' (캠페인 밖 고객사 '+skuiMoney(S.drop_amt)+' · '+skuiNum(S.drop_ords)+'건 제외)':'')
-   +(outSum?' · <b>'+Object.keys(S.regions_out).join('·')+'</b> 는 SKU 대상 프로모션 집행 지역이 아니라 제외(전년 '+skuiMoney(outSum)+')':'')
-   +'. 대상 SKU 는 캠페인 target_skus 합집합이라 Portfolio 의 전 품목 카탈로그가 분모를 키움 — 전환율은 캠페인별로 볼 것. '
-   +'중국차는 원장이 따로다(~'+skuiEsc(X?X.cut:'')+').<br>'
-   +'<b>B · SteerStar SKU 기반 오더 미션</b> — 모수는 고객사별 미션 품번 목록(TOP n + Pair), '
-   +'원장은 SAP 오더 라인. 금액·달성률은 SteerStar 공식 관리 파일이 원본이고 여기서 다시 계산하지 않는다. '
-   +'Kailos 는 품번 목록이 아니라 차종(일본·한국) 기준이라 목록 칸이 「차종 기준」이다. '
-   +'KZ·AZ 는 첫 오더가 각각 2025-09·2026-04 인 램프업 거래처라 전년 동기 비교를 쓰지 않고 '
-   +'「첫 오더 대비」로 본다 — 「줄었다」로 보이는 품번은 이탈이 아니라 재오더 주기가 안 돌아온 것.<br>'
-   +'<b>연관 오더에 더할 때</b> — B 실적을 통째로 더하면 안 된다. ChoiceKit 캠페인 고객사의 오더는 '
-   +'연관 오더에 이미 잡혀 있으므로 그 몫('+skuiMoney(_R.inCk)+')은 빼고, ChoiceKit 원장 밖이라 '
-   +'아직 아무 데도 안 잡힌 몫('+skuiMoney(_R.addable)+')만 더한다.</p>';
+  /* 기준 각주는 화면에서 뺀다 — 모수·원장·기간·합산 규칙은
+     claude/연관오더_집계방법론.md 와 각 표의 불렛에 있다. */
+  const basis = '';
   return {head:head, tiles:tiles, cls:clsline, table:table, deepHd:deepHd,
           deep:deep, deepCust:deepCust, bullets:bullets, basis:basis};
 }
