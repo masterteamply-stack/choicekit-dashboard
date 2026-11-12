@@ -129,7 +129,13 @@ def main():
         'sku_tgt': sum(c.get('tgt_sku') or 0 for c in tg),
         'sku_conv25': sum(c.get('s25') or 0 for c in tg),
         'sku_conv26': sum(c.get('s26') or 0 for c in tg),
+        # ⚠ 합집합이 아니라 **캠페인별 종수의 단순 합**이다(지역 split 기준).
+        # 여러 캠페인이 같은 품번을 다루면 중복으로 들어간다. 중복 제거한
+        # 합집합은 sku_impact.json 의 camp_sku.union 하나뿐이고, 화면의
+        # '캠페인 연관 오더 발생 SKU' 와 Promotion Performance 의 🏆 Total 은
+        # 그 합집합을 쓴다. 이 값은 '그냥 더하면 몇 종' 을 보여 줄 때만 쓴다.
         'ord_sku': sum(c.get('ord_sku') or 0 for c in cs),
+        'ord_sku_is_sum': True,
         'krw_per_usd': KRW,
         # 비용도 같은 원장(활동 원장)에서 나온 값을 씀. 메인은 marketing.csv 를 따로
         # 집계하고 환율도 달라 $53K / $57K 로 갈렸음.
@@ -161,7 +167,7 @@ def main():
     print(f"  목표 ${tgt:,.0f} (전년 ×{mult}" + (f" · 정정 {len(fix)}건" if fix else "") + f") · 달성률 {out['achv']}%")
     print(f"  집행 캠페인 {out['camps_started']}/{out['camps_total']} · 대상 고객 {out['n_cust']}곳")
     print(f"  대상 SKU {out['sku_tgt']}종 · 전환 {out['sku_conv25']} → {out['sku_conv26']}종 · "
-          f"오더 발생 SKU {out['ord_sku']}종")
+          f"오더 발생 SKU {out['ord_sku']}종(캠페인별 합 · 중복 포함)")
     print(f"  실집행 ${out['cost']:,.0f} (₩{out['cost_krw']:,.0f}) · 예상 ${out['exp']:,.0f} "
           f"(₩{out['exp_krw']:,.0f}) · 예상 대비 "
           f"{out['cost'] / out['exp'] * 100:.0f}%" if out['exp'] else '')

@@ -20,6 +20,7 @@
  "sku_conv25": 306,
  "sku_conv26": 431,
  "ord_sku": 5316,
+ "ord_sku_is_sum": true,
  "krw_per_usd": 1280,
  "cost_krw": 78125472.0,
  "exp_krw": 188282100.0,

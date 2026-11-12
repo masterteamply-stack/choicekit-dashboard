@@ -8459,18 +8459,19 @@ async function renderPromoChart(fOrders, fMkt) {
           if (!_rgC || !_rgC.length || _rgC.includes(normalizeRegion(o.region||''))) _curSkuSet.add(key);
         } else { const _mbP=((_cfgAll[p]||{}).match_by||'sku').toLowerCase(); if(_mbP==='customer' && key) _curSkuSet.add(key); }
       });
-      // 전체 보기일 때는 효과 분석이 센 합집합(ord_sku)을 쓴다 — 아래 캠페인 표의
-      // 🏆 Total 과 같은 값이어야 한다. 캠페인별로 세어 더하면 여러 캠페인이 함께
-      // 다룬 품번을 두 번 세서 서로 다른 숫자가 나온다.
-      const _curSkuN = (promoFilter === '__all__' && window.CKPI && CKPI.ord_sku > 0)
-        ? CKPI.ord_sku : _curSkuSet.size;
+      // 전체 보기일 때는 중복 제거한 합집합(sku_impact camp_sku.union)을 쓴다 —
+      // 아래 캠페인 표의 🏆 Total 과 같은 값이어야 한다. 캠페인별 종수를 더한
+      // 값(5,316 / 5,137)은 합집합이 아니라 중복 포함 '합'이다.
+      const _skuUnionAll = (window.CKSKUI && CKSKUI.camp_sku && CKSKUI.camp_sku.union) || 0;
+      const _curSkuN = (promoFilter === '__all__' && _skuUnionAll > 0)
+        ? _skuUnionAll : _curSkuSet.size;
       // 전년: summary의 baSkuCount(활성화된 SKU 수)
       const _selCampSku = (typeof _promoSel==='function' ? _promoSel(promoFilter||'__all__').camp : promoFilter) || '__all__';
       // 전년 종수는 적지 않는다. baseline 은 비대상 행을 품번 없이 월 합계로 접어
       // 둬서, 세면 늘 과소(366종)로 나와 올해(5,316종) 옆에서 오해를 부른다.
       // 대상 SKU 의 전년 → 올해 전환은 아래 SKU 섹션에서 따로 본다.
       const _prvSkuN = summary.filter(p=>_selCampSku==='__all__'||((p.promotion||p.key||'').split(_RSPLIT)[0])===_selCampSku).reduce((s,p)=>s+(p.baSkuCount||0),0);
-      const _skuComparable = !(window.CKPI && CKPI.ord_sku > 0);
+      const _skuComparable = !(_skuUnionAll > 0);
       const _skuSub = cur => `${fmtMoney(cur)} · ${_curSkuN.toLocaleString()} SKUs`;
       const _prvSkuSub = cur => _skuComparable
         ? `${fmtMoney(cur)} · ${_prvSkuN.toLocaleString()} SKUs`
@@ -9529,9 +9530,14 @@ function renderPromoTable() {
   };
   const _skuCellP = (keys, opt) => {
     let { cur, prv, folded } = _skuOf(keys);
-    // 전체 합계는 캠페인 종수의 단순 합이 아니라 효과 분석이 센 합집합을 쓴다
-    if (opt && opt.grand && window.CKPI && CKPI.ord_sku > 0
-        && _promoFilter === '__all__' && _ppRgn === '__all__') cur = CKPI.ord_sku;
+    // 전체 합계는 **합집합**이어야 한다. 캠페인별 종수를 더한 값(브리지 ord_sku
+    // = 5,316종, sku_impact camp_sku.sum = 5,137종)은 둘 다 중복 포함 '합'이고
+    // 서로 다른 분할(지역 split 여부)에서 나온 값이다 — 합집합이 아니다.
+    // 실제 중복 제거 종수는 sku_impact.json 의 camp_sku.union 하나뿐이다.
+    if (opt && opt.grand && _promoFilter === '__all__' && _ppRgn === '__all__') {
+      const u = (window.CKSKUI && CKSKUI.camp_sku && CKSKUI.camp_sku.union) || 0;
+      if (u > 0) cur = u;
+    }
     if (!cur && !prv) return '<span class="muted">–</span>';
     if (prv == null) return `<span class="muted" title="${folded ? '고객사 기반 캠페인 — 전년 baseline 이 품번 없이 월 합계로 접혀 있어 종수를 셀 수 없음' : '전년 데이터 없음'}">–</span> <span style="color:var(--text-3)">→</span> <b>${fmtNum(cur)}</b>종`;
     const d = cur - prv;
@@ -9628,7 +9634,7 @@ function renderPromoTable() {
   const _grpKinds=(arr)=>{const cfgm=state.campaignTargetSkus||{};let hasSku=false,hasCust=false;arr.forEach(p=>{const nm=(p.promotion||p.key||'').split('\u241f')[0];const mb=((cfgm[nm]||{}).match_by||'sku').toLowerCase();if(mb==='customer')hasCust=true;else hasSku=true;});const parts=[];if(hasSku)parts.push('SKU-based');if(hasCust)parts.push('Customer-based');return parts.join(' · ');};
   if(siS.length){body+=`<tr style="background:rgba(200,16,46,0.04)"><td colspan="${_cmpMode!=='off'?10:9}" style="padding:6px 10px;font-size:11px;font-weight:700;color:#C8102E;letter-spacing:0.05em">📦 SELL-IN · ${_grpKinds(siS)}</td></tr>`;body+=siS.map(buildRow).join('');body+=subRow('📦 SELL-IN Subtotal',siS,'rgba(200,16,46,0.06)',(!window.CKPI&&_promoFilter==='__all__'&&window._baBeforeDedup?window._baBeforeDedup.SELL_IN:undefined));}
   if(soS.length){body+=`<tr style="background:rgba(10,132,255,0.04)"><td colspan="${_cmpMode!=='off'?10:9}" style="padding:6px 10px;font-size:11px;font-weight:700;color:#0A84FF;letter-spacing:0.05em">🤝 SELL-OUT · ${_grpKinds(soS)}</td></tr>`;body+=soS.map(buildRow).join('');body+=subRow('🤝 SELL-OUT Subtotal',soS,'rgba(10,132,255,0.06)',(!window.CKPI&&_promoFilter==='__all__'&&window._baBeforeDedup?window._baBeforeDedup.SELL_OUT:undefined));}
-  body+=`<tr style="background:rgba(0,0,0,0.06);font-weight:800;border-top:2px solid var(--border)"><td style="font-size:13px"><b>🏆 CHOICE KIT Total</b></td><td class="text-right mono" style="white-space:nowrap" title="캠페인별 종수를 그냥 더하면 여러 캠페인이 함께 다룬 품번을 두 번 세므로, 전체 행은 효과 분석이 센 합집합을 씀">${_skuCellP(allS.map(r=>(r.promotion||r.key||'')),{grand:true})}</td><td class="text-right mono t-green" style="font-size:14px;font-weight:900">${fmtMoney(gT)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted" style="font-size:13px">${gP>0?fmtMoney(gP):'–'}</td>`:''}<td class="text-right mono" style="font-size:12px">${gdTag}</td>${(()=>{const t=_txSum(allS);return `<td class="text-right mono" style="border-left:1px solid var(--border);font-size:11px;white-space:nowrap">${_txCell(t.cur,t.prev)}</td><td class="text-right mono">${_txYoY(t.cur,t.prev)}</td>`;})()}<td class="text-right mono t-yellow" style="border-left:1px solid var(--border)">${fmtMoney(gE)}</td><td class="text-right mono t-orange">${fmtMoney(gA)}</td><td class="text-right mono">${gA>0?fmtPct(((gT-gA)/gA)*100):'–'}</td></tr></tbody>`;
+  body+=`<tr style="background:rgba(0,0,0,0.06);font-weight:800;border-top:2px solid var(--border)"><td style="font-size:13px"><b>🏆 CHOICE KIT Total</b></td><td class="text-right mono" style="white-space:nowrap" title="중복 제거한 합집합. 위 캠페인 행을 그냥 더하면 ${(window.CKPI&&CKPI.ord_sku)||'–'}종이지만, 여러 캠페인이 같은 품번을 함께 다뤄 중복이 들어간다">${_skuCellP(allS.map(r=>(r.promotion||r.key||'')),{grand:true})}</td><td class="text-right mono t-green" style="font-size:14px;font-weight:900">${fmtMoney(gT)}</td>${_cmpMode!=='off'?`<td class="text-right mono muted" style="font-size:13px">${gP>0?fmtMoney(gP):'–'}</td>`:''}<td class="text-right mono" style="font-size:12px">${gdTag}</td>${(()=>{const t=_txSum(allS);return `<td class="text-right mono" style="border-left:1px solid var(--border);font-size:11px;white-space:nowrap">${_txCell(t.cur,t.prev)}</td><td class="text-right mono">${_txYoY(t.cur,t.prev)}</td>`;})()}<td class="text-right mono t-yellow" style="border-left:1px solid var(--border)">${fmtMoney(gE)}</td><td class="text-right mono t-orange">${fmtMoney(gA)}</td><td class="text-right mono">${gA>0?fmtPct(((gT-gA)/gA)*100):'–'}</td></tr></tbody>`;
   document.getElementById('tblPromo').innerHTML=head+body;
   } catch(e){console.error('[renderPromoTable]',e);}
 }
@@ -13779,6 +13785,22 @@ async function loadSteerstarSku() {
   } catch (e) { console.warn('[kjk] load failed (non-fatal):', e); }
 }
 
+/* SteerStar 추가 오더미션 중 SKU 기반인 셋 (Kailos · Bauten · Retems).
+   steerstar_missions.json ← scripts/sync_steerstar_missions.py */
+window.CKSSM = null;
+async function loadSteerstarMissions() {
+  if (location.protocol === 'file:') return;
+  try {
+    const res = await fetch(_resolveGhRepoBase() + '/steerstar_missions.json', { cache: 'no-store' });
+    if (!res.ok) { if (res.status !== 404) console.warn(`[ssm] HTTP ${res.status}`); return; }
+    const j = await res.json();
+    if (j && Array.isArray(j.missions) && j.missions.length) {
+      window.CKSSM = j;
+      console.log(`[ssm] ✅ SKU 기반 추가 오더미션 ${j.missions.length}건`);
+    }
+  } catch (e) { console.warn('[ssm] load failed (non-fatal):', e); }
+}
+
 /* ── 타깃 SKU 오더 전환 효과 · 종합 ───────────────────────────────────────
    단일 소스: sku_impact.json (scripts/sync_sku_impact.py).
    효과 분석은 const SKUI, 메인은 window.CKSKUI — 같은 파일이라 두 대시보드가
@@ -13833,8 +13855,125 @@ function _cnSkuTable(X){
 function kjkData(){ return (typeof KJK!=='undefined'&&KJK)||window.CKKJK||null; }
 
 function kjkHTML(){
+  const S=ssmData();
+  if(S) return ssmHTML(S);
   const K=kjkData(); if(!K||K.a26==null) return '';
   return '<div class="skui skui-solo">'+kjkHeadHTML(K)+kjkDetailHTML(K)+'</div>';
+}
+
+/* ── SteerStar 추가 오더미션 · SKU 기반 3건 ──────────────────────────────────
+   단일 소스: steerstar_missions.json (scripts/sync_steerstar_missions.py).
+   금액·달성률은 SteerStar 공식 관리 파일이 원본이고, 품번은 원장을 ctr_code 로
+   이어서 센다(2025 원장의 sku 칸은 옛 부품번호라 sku 로 이으면 전부 '신규'로
+   잡힌다 — 실제로 그렇게 나왔었다).
+   읽는 법: 셋 다 '같은 품번을 더 팔기'가 아니라 '안 사던 품번을 열기' 미션이다.
+   그래서 달성률만 보면 안 되고, 열린 품번이 몇 종인지를 같이 봐야 한다.      */
+function ssmData(){
+  const S=(typeof SSM!=='undefined'&&SSM)||window.CKSSM||null;
+  return (S&&Array.isArray(S.missions)&&S.missions.length)?S:null;
+}
+
+function ssmHTML(S){ return ssmSectionHTML(S); }
+
+function ssmSectionHTML(S, opt){
+  const M=skuiMoney, N=skuiNum, E=skuiEsc;
+  const ms=S.missions||[];
+  const K=kjkData();
+  const rate=r=>r==null?'<span class="skui-mut">–</span>'
+    :'<b class="'+(r>=100?'skui-up':(r>=80?'':'skui-dn'))+'">'+r.toFixed(1)+'%</b>';
+
+  let h=(opt&&opt.embed)
+   ? ('<div class="skui-cls" style="margin-top:18px;padding-top:12px;'
+      +'border-top:1px solid var(--border,rgba(127,127,127,.25))">'
+      +'<b>SteerStar 추가 오더미션 · SKU 기반 '+ms.length+'건</b> '
+      +'<span class="skui-excl">합계 제외</span> '
+      +'<span class="skui-mut">각 고객사 단독 미션 — 셋 다 「안 사던 품번을 여는」 미션이라 '
+      +'금액 달성률과 열린 품번 수를 같이 봐야 한다.</span></div>')
+   : ('<div class="skui skui-solo">'
+      +'<div class="skui-hd"><span class="skui-bar"></span><div>'
+      +'<b>SteerStar 추가 오더미션 · SKU 기반 '+ms.length+'건 — 품번 단위</b>'
+      +'<span class="skui-excl">각 고객사 단독 미션 · 합산 대상 아님</span>'
+      +'<div class="skui-sub">세 미션 모두 <b>안 사던 품번을 여는</b> 미션이다 — '
+      +'금액 달성률과 열린 품번 수를 같이 봐야 한다.</div></div></div>');
+
+  /* 세 미션 한눈에 */
+  h+='<div class="skui-wrap"><table class="skui-tbl"><thead><tr>'
+   +'<th>고객사</th><th>미션</th><th class="n">목표</th><th class="n">실적</th>'
+   +'<th class="n">달성률</th><th>품번 전환</th></tr></thead><tbody>';
+  ms.forEach(m=>{
+    const s=m.sku||{};
+    let sk;
+    if(s.mode==='full') sk='신규 <b>'+N(s.conv)+'종</b> + 재전환 <b>'+N(s.recov)+'종</b> '
+      +'<span class="skui-mut">= 미션 매출의 '+(s.cover_pct!=null?s.cover_pct.toFixed(1):'–')+'%</span>';
+    else if(s.mode==='top') sk='TOP '+N(s.top_n)+' 중 <b>'+N(s.top_hit)+'종</b> 전환 '
+      +'<span class="skui-mut">('+(s.top_pct!=null?s.top_pct.toFixed(1):'–')+'% · '+M(s.top_amt)+')</span>';
+    else if(s.mode==='ledger') sk='26년 오더 <b>'+N(s.n26)+'종</b> · 그중 25년 미오더 <b>'+N(s.new_n)+'종</b> '
+      +'<span class="skui-mut">'+M(s.new_amt)+' — 미션 목록 기준 아님</span>';
+    else sk='<span class="skui-mut">원장에 이 고객사 오더가 없어 못 셈</span>';
+    h+='<tr><td><b>'+E(m.cust)+'</b><br><span class="skui-mut">'+E(m.region)+' · '+E(m.country)+'</span></td>'
+     +'<td style="white-space:normal;max-width:300px">'+E(m.mission)+'</td>'
+     +'<td class="n">'+M(m.tgt)+'</td><td class="n"><b>'+M(m.got)+'</b></td>'
+     +'<td class="n">'+rate(m.rate)+'</td>'
+     +'<td style="white-space:normal;max-width:330px">'+sk+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+
+  /* 읽는 법 — 셋을 나란히 두면 보이는 것 */
+  const kz=ms.find(x=>x.key==='bauten'), az=ms.find(x=>x.key==='retems'), ka=ms.find(x=>x.key==='kailos');
+  const bits=[];
+  if(kz&&kz.rate!=null&&ka&&ka.rate!=null) bits.push(
+    '<b>금액 달성률과 품번 확장은 다른 이야기다.</b> '+E(kz.cust)+'(KZ)는 금액으로는 '
+    +kz.rate.toFixed(0)+'% 로 크게 넘겼지만 '
+    +((kz.sku&&kz.sku.mode==='ledger')
+       ? '26년 오더 '+N(kz.sku.n26)+'종 중 25년에 안 사던 품번은 '+N(kz.sku.new_n)+'종('
+         +M(kz.sku.new_amt)+')뿐이라, 금액은 기존 주력 품번에서 나왔다'
+       : '품번 전환은 따로 봐야 한다')
+    +'. '+E(ka.cust)+'(호주)는 달성률 '+ka.rate.toFixed(0)+'% 로 못 미쳤지만 '
+    +'미션 매출의 '+((ka.sku&&ka.sku.cover_pct!=null)?ka.sku.cover_pct.toFixed(0):'–')
+    +'% 가 신규·재전환 품번에서 나왔다 — 미션의 의도대로 간 쪽은 이쪽이다.');
+  if(az&&az.sku&&az.sku.mode==='none') bits.push(
+    '<b>'+E(az.cust)+'(AZ)는 품번 분석을 못 한다.</b> 오더 원장에 이 고객사 행이 한 줄도 없다. '
+    +'달성률 '+(az.rate!=null?az.rate.toFixed(0):'–')+'% ('+M(az.got)+')는 SteerStar 관리 파일의 값이고, '
+    +'원장에는 아제르바이잔 2026 오더가 들어와 있지 않다 — 원장 반영 여부를 확인해야 한다.');
+  if(bits.length) h+='<div class="skui-cls" style="margin-top:14px">'+bits.join('<br><br>')+'</div>';
+
+  /* 고객사별 상세 */
+  if(K&&K.a26!=null){
+    h+='<div class="skui-cls" style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line-1,#e5e5e7)">'
+     +'<b>'+E(K.cust)+' ('+E(K.country)+') 상세</b> '
+     +'<span class="skui-mut">「'+E(K.mission)+'」 · 전체 오더 '+M(K.tot26)+' 안의 부분집합 '
+     +M(K.a26)+' ('+(K.a26/K.tot26*100).toFixed(1)+'%)</span></div>'
+     +kjkDetailHTML(K);
+  }
+  if(kz&&kz.sku&&(kz.sku.mode==='ledger'||kz.sku.mode==='top')) h+=ssmLedgerHTML(kz);
+  return (opt&&opt.embed) ? h : (h+'</div>');
+}
+
+/* 원장으로만 센 미션의 상세 — 무엇을 셌고 무엇을 못 셌는지 분명히 적는다 */
+function ssmLedgerHTML(m){
+  const M=skuiMoney, N=skuiNum, E=skuiEsc, s=m.sku||{};
+  let h='<div class="skui-cls" style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line-1,#e5e5e7)">'
+   +'<b>'+E(m.cust)+' ('+E(m.country)+') 상세</b> '
+   +'<span class="skui-mut">「'+E(m.mission)+'」 · 원장 ~'+E(s.cut||'')+'</span></div>';
+  h+='<div class="skui-cls">25년 <b>'+N(s.n25)+'종</b> '+M(s.a25)+' → 26년 <b>'+N(s.n26)+'종</b> '+M(s.a26)
+   +' · 그중 <b>25년에 안 사던 품번 '+N(s.new_n)+'종</b> '+M(s.new_amt)
+   +' <span class="skui-mut">· 기존 품번 재오더 '+N(s.rep_n)+'종 '+M(s.rep_amt)+'</span></div>';
+  const tbl=(title,rows)=>{
+    if(!rows||!rows.length) return '';
+    let t='<div class="skui-cls" style="margin-top:10px"><b>'+title+'</b></div>'
+     +'<div class="skui-wrap"><table class="skui-tbl"><thead><tr>'
+     +'<th>CTR 코드</th><th>품명</th><th class="n">2025</th><th class="n">2026</th><th class="n">수량</th></tr></thead><tbody>';
+    rows.forEach(x=>{ t+='<tr><td><b>'+E(x.sku)+'</b></td><td>'+E(x.name)+'</td>'
+      +'<td class="n">'+(x.y25?M(x.y25):'·')+'</td><td class="n"><b>'+M(x.y26)+'</b></td>'
+      +'<td class="n">'+N(x.qty)+'</td></tr>'; });
+    return t+'</tbody></table></div>';
+  };
+  h+=tbl('25년에 안 사던 품번 — 금액 상위', s.top_new);
+  h+=tbl('26년 오더 상위 품번', s.top);
+  if(s.caveat) h+='<p class="skui-basis"><b>이 숫자가 미션 달성률이 아닌 이유</b> · '+E(s.caveat)
+   +' 목록 파일이 들어오면 <code>scripts/sync_steerstar_missions.py --top-kz &lt;파일&gt;</code> 로 '
+   +'미션 기준(TOP 200 중 몇 종 전환)으로 바뀐다.</p>';
+  return h;
 }
 
 function kjkHeadHTML(K){
@@ -14206,8 +14345,12 @@ function skuImpactParts(){
    +'<span class="skui-mut">위 표의 한 줄을 품번·브랜드·권역까지 펼친 것</span></div>';
   deep+=custDeepHTML(S);              /* 고객사별 — 감소가 어디에 쏠렸나 */
   if(X) deep+=cnDeepHTML(X);          /* 프로모션별 상세 */
-  let deepCust='';                     /* 고객사 단독 미션 상세 — 두는 자리가 다름 */
-  (S.aside||[]).forEach(A=>{ deepCust+=kjkSectionHTML(A); });
+  /* 고객사 단독 미션 상세 — 두는 자리가 다름. SKU 기반 추가 오더미션이 셋
+     (Kailos 호주 · Bauten KZ · Retems AZ)이라 한 블록으로 묶어 비교한다. */
+  let deepCust='';
+  const _ssm = ssmData();
+  if (_ssm) deepCust = ssmSectionHTML(_ssm, {embed:true});
+  else (S.aside||[]).forEach(A=>{ deepCust+=kjkSectionHTML(A); });
 
   const basis='<p class="skui-basis">기준 · 양쪽 모두 <b>캠페인 시작일 ~ '+skuiEsc(S.cut)+'</b>(오더 원장 마감)이고 전년은 같은 구간 · '
    +'전년도 <b>그 캠페인의 고객사</b>만'
@@ -15016,7 +15159,7 @@ function injectCopyLinkButtons() {
   localStorage.removeItem('ck_has_personal_data');
   // 효과 분석 기준 KPI 는 환율까지 들고 있어 데이터보다 먼저 읽어 둠
   try { await loadCampaignKpi(); } catch (e) { console.warn('[kpi] skipped:', e); }
-  try { await loadSkuImpact(); await loadSteerstarSku(); renderSkuImpactBlock(); } catch (e) { console.warn('[skui] skipped:', e); }
+  try { await loadSkuImpact(); await loadSteerstarSku(); await loadSteerstarMissions(); renderSkuImpactBlock(); } catch (e) { console.warn('[skui] skipped:', e); }
   try { await loadSharedData(true); } catch (e) { console.warn('Shared data load skipped:', e); }
   // Load explicit per-campaign target SKU lists (SA_list etc.) — best-effort.
   try { await loadCampaignTargetSkus(); } catch (e) { console.warn('target SKU load skipped:', e); }

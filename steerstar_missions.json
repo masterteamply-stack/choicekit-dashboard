@@ -1,0 +1,282 @@
+{
+ "_readme": "SteerStar 추가 오더미션 중 SKU 기반인 셋. 금액·달성률은 SteerStar 공식 관리 파일(효과 분석 const SS)이 원본, 품번은 원장을 ctr_code 로 이어서 센다. 재생성: python3 scripts/sync_steerstar_missions.py",
+ "_basis": "각 고객사 단독 미션 — ChoiceKit 연관 오더에 더하지 않는다.",
+ "lead_target": 200,
+ "missions": [
+  {
+   "key": "kailos",
+   "cust": "Kailos International",
+   "region": "OCEANIA",
+   "country": "호주",
+   "short": "일본·한국 차종",
+   "mission": "일본 & 한국 차종의 25년 대비 26년 오더 최대 100%성장",
+   "act": "Brand Showroom",
+   "when": "July -",
+   "note": "Kailos 리테일 브랜드 (Parts for car)를 통해 관련 종사자 및 오너 대상으로 설문 실시 (9~10월)",
+   "tgt": 74282.0,
+   "got": 60110.9,
+   "rate": 80.9,
+   "leads": 13,
+   "lead_tgt": 200,
+   "sku": {
+    "mode": "full",
+    "cut": "2026-10-20",
+    "conv": 135,
+    "conv_amt": 19127.31,
+    "recov": 72,
+    "recov_amt": 25346.96,
+    "lost": 77,
+    "cover_pct": 72.8,
+    "b25": 37621.16,
+    "a26": 61066.47,
+    "detail": "steerstar_sku.json"
+   }
+  },
+  {
+   "key": "bauten",
+   "cust": "Bauten",
+   "region": "CIS",
+   "country": "카자흐스탄",
+   "short": "KZ 미오더 TOP 200",
+   "mission": "KZ 3개년 전체 오더 제품 중 당사 미오더 제품 TOP 200 with Pair SKUs",
+   "act": "Tech Seminar",
+   "when": "November",
+   "note": "10월 31일 출장시 테크세미나 진행 협의 완료",
+   "tgt": 100000.0,
+   "got": 274396.2,
+   "rate": 274.4,
+   "leads": 0,
+   "lead_tgt": 200,
+   "sku": {
+    "mode": "ledger",
+    "cut": "2026-07-20",
+    "base_label": "2025 원장",
+    "n25": 400,
+    "a25": 257687.9,
+    "n26": 90,
+    "a26": 181507.3,
+    "new_n": 23,
+    "new_amt": 7531.12,
+    "rep_n": 67,
+    "rep_amt": 173976.18,
+    "top": [
+     {
+      "sku": "CL0557",
+      "name": "STABILIZER LINK ASSY",
+      "y25": 17034.0,
+      "y26": 14436.48,
+      "qty": 3504,
+      "kind": "감소"
+     },
+     {
+      "sku": "CL0597",
+      "name": "STABILIZER LINK ASSY",
+      "y25": 16913.76,
+      "y26": 10208.64,
+      "qty": 2496,
+      "kind": "감소"
+     },
+     {
+      "sku": "CB0426",
+      "name": "BALL JOINT ASSY",
+      "y25": 2724.0,
+      "y26": 9941.44,
+      "qty": 1504,
+      "kind": "증가"
+     },
+     {
+      "sku": "CB0427",
+      "name": "BALL JOINT ASSY",
+      "y25": 2724.0,
+      "y26": 9941.44,
+      "qty": 1504,
+      "kind": "증가"
+     },
+     {
+      "sku": "GV0438",
+      "name": "BUSH AM",
+      "y25": 2708.16,
+      "y26": 7928.8,
+      "qty": 2992,
+      "kind": "증가"
+     },
+     {
+      "sku": "CL0586",
+      "name": "S/LINK ASSY",
+      "y25": 4040.0,
+      "y26": 7350.0,
+      "qty": 1500,
+      "kind": "증가"
+     },
+     {
+      "sku": "GV0439",
+      "name": "BUSH AM",
+      "y25": 1992.0,
+      "y26": 5964.4,
+      "qty": 1480,
+      "kind": "증가"
+     },
+     {
+      "sku": "CB0418",
+      "name": "BALL JOINT ASSY",
+      "y25": 2258.72,
+      "y26": 5768.0,
+      "qty": 800,
+      "kind": "증가"
+     },
+     {
+      "sku": "CL0574",
+      "name": "S/LINK ASSY",
+      "y25": 1485.0,
+      "y26": 5760.0,
+      "qty": 1200,
+      "kind": "증가"
+     },
+     {
+      "sku": "CL0575",
+      "name": "STABILIZER LINK ASSY",
+      "y25": 1485.0,
+      "y26": 5760.0,
+      "qty": 1200,
+      "kind": "증가"
+     },
+     {
+      "sku": "CL0086",
+      "name": "STABILIZER LINK ASSY",
+      "y25": 3924.24,
+      "y26": 5730.0,
+      "qty": 1500,
+      "kind": "증가"
+     },
+     {
+      "sku": "CB0402L",
+      "name": "BALL JOINT ASSY",
+      "y25": 2112.8,
+      "y26": 5392.0,
+      "qty": 800,
+      "kind": "증가"
+     }
+    ],
+    "top_new": [
+     {
+      "sku": "GV0538",
+      "name": "BUSH AM",
+      "y25": 0,
+      "y26": 820.0,
+      "qty": 820,
+      "kind": "신규"
+     },
+     {
+      "sku": "GV0480",
+      "name": "BUSH AM",
+      "y25": 0,
+      "y26": 680.6,
+      "qty": 820,
+      "kind": "신규"
+     },
+     {
+      "sku": "PL0597",
+      "name": "STABILIZER LINK ASSY",
+      "y25": 0,
+      "y26": 595.0,
+      "qty": 100,
+      "kind": "신규"
+     },
+     {
+      "sku": "PL0557",
+      "name": "STABILIZER LINK ASSY",
+      "y25": 0,
+      "y26": 561.0,
+      "qty": 100,
+      "kind": "신규"
+     },
+     {
+      "sku": "PL0086",
+      "name": "STABILIZER LINK ASSY",
+      "y25": 0,
+      "y26": 538.0,
+      "qty": 100,
+      "kind": "신규"
+     },
+     {
+      "sku": "GV0483",
+      "name": "BUSH AM",
+      "y25": 0,
+      "y26": 533.0,
+      "qty": 820,
+      "kind": "신규"
+     },
+     {
+      "sku": "PL0586",
+      "name": "STABILIZER LINK ASSY",
+      "y25": 0,
+      "y26": 500.8,
+      "qty": 80,
+      "kind": "신규"
+     },
+     {
+      "sku": "GV0148",
+      "name": "BUSH AM",
+      "y25": 0,
+      "y26": 442.68,
+      "qty": 124,
+      "kind": "신규"
+     },
+     {
+      "sku": "PL0555",
+      "name": "STABILIZER LINK ASSY",
+      "y25": 0,
+      "y26": 405.3,
+      "qty": 70,
+      "kind": "신규"
+     },
+     {
+      "sku": "CB0166",
+      "name": "BALL JOINT ASSY",
+      "y25": 0,
+      "y26": 390.6,
+      "qty": 90,
+      "kind": "신규"
+     },
+     {
+      "sku": "PL0291",
+      "name": "STABILIZER LINK ASSY",
+      "y25": 0,
+      "y26": 385.7,
+      "qty": 70,
+      "kind": "신규"
+     },
+     {
+      "sku": "GV0513",
+      "name": "BUSH AM",
+      "y25": 0,
+      "y26": 284.7,
+      "qty": 130,
+      "kind": "신규"
+     }
+    ],
+    "caveat": "미션을 정의하는 TOP 200 미오더 품번 목록이 아직 없어서, 원장으로 셀 수 있는 2025 대비 신규 품번만 센 값이다. 미션의 분모(TOP 200 중 몇 종 전환)가 아니다."
+   }
+  },
+  {
+   "key": "retems",
+   "cust": "Retems Logistics",
+   "region": "CIS",
+   "country": "아제르바이잔",
+   "short": "AZ 미오더 TOP 80",
+   "mission": "AZ 3개년 전체 오더 제품 중 당사 미오더 제품 TOP 80 with Pair SKUs",
+   "act": "Tech Seminar",
+   "when": "November",
+   "note": "초도 물량 현지 도착 딜레이로 인해, 현지 판매 활동 및 테크세미나 내년으로 연기",
+   "tgt": 40000.0,
+   "got": 25810.2,
+   "rate": 64.5,
+   "leads": 0,
+   "lead_tgt": 200,
+   "sku": {
+    "mode": "none",
+    "why": "오더 원장에 이 고객사 행이 없음 — 2026 오더가 아직 원장에 반영되지 않았거나 다른 이름으로 들어가 있음"
+   }
+  }
+ ]
+}
