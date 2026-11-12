@@ -42,6 +42,23 @@
   "미전환": 6293,
   "이탈": 14
  },
+ "bundle": {
+  "basis": "오더 번호가 없어 고객×주문일자를 오더 한 건으로 셈 · 중국차 프로모션은 원장이 따로라 여기서 빠짐",
+  "batches": 98,
+  "avg_sku": 28.9,
+  "med_sku": 7,
+  "multi_pct": 68.4,
+  "new_batches": 31,
+  "new_batches_mixed": 29,
+  "mix_pct": 93.5,
+  "new_sku": 137,
+  "new_sku_mixed": 136,
+  "new_sku_mix_pct": 99.3,
+  "new_amt": 35026,
+  "new_amt_mixed": 33490,
+  "new_amt_mix_pct": 95.6,
+  "mixed_batch_amt": 745021
+ },
  "new_amt": 42566,
  "up_amt": 153941,
  "dn_amt": -425435,

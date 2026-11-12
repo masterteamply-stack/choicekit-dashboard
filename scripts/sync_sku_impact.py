@@ -134,6 +134,9 @@ def main():
     cur = collections.defaultdict(float)     # sku → 당해 금액
     cur_q = collections.defaultdict(float)
     cur_cust = collections.defaultdict(set)
+    # 풀셋(묶음) 판매를 보려면 '한 오더에 무엇이 같이 실렸나'가 필요하다.
+    # orders.csv 에 오더 번호가 없어 고객×주문일자를 오더 한 건으로 센다.
+    batch = collections.defaultdict(list)    # (고객, 일자) → [(sku, 금액)]
     n_ord = 0
     for r in rows:
         p = (r.get('promotion_category') or '').strip()
@@ -155,6 +158,7 @@ def main():
         cur[s] += num(r.get('amount')); cur_q[s] += num(r.get('qty'))
         _c = (r.get('customer') or '').strip()
         cur_cust[s].add(_c); n_ord += 1
+        batch[(_c, d)].append((s, num(r.get('amount'))))
         cu_amt[_c] += num(r.get('amount')); cu_sku[_c].add(s); cu_pro[_c].add(p)
     for p, c in sku_camps.items():
         for x in (c.get('target_customers') or []):
@@ -209,6 +213,52 @@ def main():
     for k in buckets:
         buckets[k].sort(key=lambda x: -abs(x['inc']))
 
+    # ── 풀셋(묶음) 판매 ──────────────────────────────────────────────────
+    #   이 캠페인들은 '안 팔리던 품번'을 따로 파는 게 아니라, 이미 잘 나가는
+    #   품번과 한 오더에 묶어 파는 설계다. 그래서 전년 오더가 없던 품번이
+    #   '전년에도 사던 품번과 같은 오더에 실렸나'를 센다. 이게 캠페인이 실제로
+    #   작동한 경로이고, 합계 YoY 보다 이 쪽이 설계 의도에 맞는 지표다.
+    nb = nb_mix = 0
+    amt_new = amt_new_mix = amt_mix_batch = 0.0
+    sku_new_seen, sku_new_mix = set(), set()
+    sizes = []
+    for (_c0, _d0), items in batch.items():
+        skus = {s0 for s0, _a0 in items}
+        sizes.append(len(skus))
+        fresh = {s0 for s0 in skus if prv.get(s0, 0) <= 0}
+        kept = skus - fresh
+        if not fresh:
+            continue
+        nb += 1
+        sku_new_seen |= fresh
+        if kept:
+            nb_mix += 1
+            sku_new_mix |= fresh
+            amt_mix_batch += sum(a0 for _s0, a0 in items)
+        for s0, a0 in items:
+            if s0 in fresh:
+                amt_new += a0
+                if kept:
+                    amt_new_mix += a0
+    bundle = {
+        'basis': '오더 번호가 없어 고객×주문일자를 오더 한 건으로 셈 · '
+                 '중국차 프로모션은 원장이 따로라 여기서 빠짐',
+        'batches': len(batch),
+        'avg_sku': round(sum(sizes) / len(sizes), 1) if sizes else None,
+        'med_sku': sorted(sizes)[len(sizes) // 2] if sizes else None,
+        'multi_pct': round(sum(1 for x in sizes if x >= 2) / len(sizes) * 100, 1) if sizes else None,
+        'new_batches': nb,
+        'new_batches_mixed': nb_mix,
+        'mix_pct': round(nb_mix / nb * 100, 1) if nb else None,
+        'new_sku': len(sku_new_seen),
+        'new_sku_mixed': len(sku_new_mix),
+        'new_sku_mix_pct': round(len(sku_new_mix) / len(sku_new_seen) * 100, 1) if sku_new_seen else None,
+        'new_amt': round(amt_new),
+        'new_amt_mixed': round(amt_new_mix),
+        'new_amt_mix_pct': round(amt_new_mix / amt_new * 100, 1) if amt_new else None,
+        'mixed_batch_amt': round(amt_mix_batch),
+    }
+
     tb, ta = round(sum(prv.values()), 2), round(sum(cur.values()), 2)
     conv = sum(1 for s in tgt if cur.get(s, 0) > 0)
     D = {
@@ -226,6 +276,7 @@ def main():
         'orders': n_ord,
         'drop_amt': round(drop_amt), 'drop_ords': drop_n,
         'cls': dict(cls),
+        'bundle': bundle,
         'new_amt': round(sum(x['after'] for x in buckets['신규'])),
         'up_amt': round(sum(x['inc'] for x in buckets['증가'])),
         'dn_amt': round(sum(x['inc'] for x in buckets['감소'] + buckets['이탈'])),
