@@ -614,6 +614,21 @@ def main():
                         '미션을 정의하는 TOP %d 미오더 품번 목록이 아직 없어서, '
                         '원장으로 셀 수 있는 2025 대비 신규 품번만 센 값이다. '
                         '미션의 분모(TOP %d 중 몇 종 전환)가 아니다.' % (M['top_n'], M['top_n']))
+        # ChoiceKit SKU 대상 프로모션과 겹치는 부분 — 두 트랙을 더하면 안 되는 이유.
+        # 종수는 목록∩대상, 금액은 '그 고객사 오더 중 ChoiceKit 대상 품번 몫'
+        # (= orders.csv 에 이미 잡혀 A 쪽에서 세고 있는 금액).
+        try:
+            sc = ck_scope()
+            sk = rec.get('sku') or {}
+            L = set((sk.get('list') or {}).get('codes') or []) | \
+                set((sk.get('list') or {}).get('pairs') or [])
+            ov_n = len(L & sc) if (L and sc) else 0
+            ov_amt = 0.0
+            if sc and M['src'] == 'ledger':
+                ov_amt = round(sum(v for k, v in y26.items() if k in sc), 2)
+            rec['overlap_ck'] = {'n': ov_n, 'amt': ov_amt}
+        except Exception:
+            rec['overlap_ck'] = {'n': 0, 'amt': 0}
         out['missions'].append(rec)
 
     old = json.load(open(OUT, encoding='utf-8')) if os.path.exists(OUT) else None
