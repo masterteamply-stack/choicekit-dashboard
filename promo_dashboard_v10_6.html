@@ -4594,6 +4594,20 @@ function skuReportParts(S, X, SSM) {
   const ovN = MS.reduce((t, m) => t + ((m.overlap_ck || {}).n || 0), 0);
   const ovAmt = MS.reduce((t, m) => t + ((m.overlap_ck || {}).amt || 0), 0);
 
+  /* 섹션 구분 — A·B 가 한눈에 갈리도록 색 띠 + 글자 배지로 세게 끊는다.
+     전에는 본문과 같은 크기의 한 줄이라 어디서 트랙이 바뀌는지 안 보였음. */
+  const secHd = (ltr, title, sub, col) =>
+    '<div style="margin:26px 0 10px;padding:11px 13px;border-top:3px solid ' + col + ';'
+    + 'background:linear-gradient(to bottom,' + col + '14,transparent 70%)">'
+    + '<div style="display:flex;align-items:center;gap:10px">'
+    + '<span style="display:inline-flex;align-items:center;justify-content:center;'
+    + 'min-width:24px;height:24px;border-radius:7px;background:' + col + ';color:#fff;'
+    + 'font-size:13px;font-weight:800;line-height:1">' + ltr + '</span>'
+    + '<b style="font-size:15.5px;letter-spacing:-0.2px;color:' + col + '">' + title + '</b></div>'
+    + '<div class="skui-mut" style="margin-top:5px;padding-left:34px;font-size:11.5px;line-height:1.5">'
+    + sub + '</div></div>';
+  const COL_A = 'var(--accent,#DC4A1B)', COL_B = '#1F6FEB';
+
   const tile = (lab, val, sub, accent) =>
     '<div class="skui-tile"' + (accent ? ' style="border-left:2px solid var(--accent,#DC4A1B)"' : '') + '>'
     + '<div class="skui-lab">' + lab + '</div><div class="skui-val">' + val + '</div>'
@@ -4635,8 +4649,9 @@ function skuReportParts(S, X, SSM) {
   /* ── A 표 ── */
   const rows = (S.by_camp || []).slice().sort((a, b) => (b.after || 0) - (a.after || 0));
   const rowsAll = X ? rows.concat([X]) : rows;
-  let table = '<div class="skui-cls" style="margin-top:14px"><b>A. ChoiceKit SKU 대상 프로모션</b> '
-    + '<span class="skui-mut">대상 품번을 정해 두고, 그 품번의 오더가 집행 전 대비 어떻게 변했나</span></div>';
+  let table = secHd('A', 'ChoiceKit SKU 대상 프로모션',
+    '대상 품번을 정해 두고, 그 품번의 오더가 집행 전 대비 어떻게 변했나 · '
+    + N(rowsAll.length) + '개 프로모션', COL_A);
   /* A 를 어떻게 읽어야 하는지 — 표 바로 위에 둔다 */
   const aGrew = rowsAll.filter(r => (r.yoy || 0) > 0);
   const aMain = rowsAll.filter(r => (r.inc || 0) < 0).sort((x, y) => x.inc - y.inc)[0] || null;
@@ -4677,8 +4692,9 @@ function skuReportParts(S, X, SSM) {
   table += '</tbody></table></div>';
 
   /* ── B 표 ── */
-  table += '<div class="skui-cls" style="margin-top:22px"><b>B. SteerStar SKU 기반 오더 미션 · ' + MS.length + '개 고객사</b> '
-    + '<span class="skui-mut">고객사 한 곳씩 품번 목록을 주고, 그 목록을 얼마나 열었나</span></div>';
+  table += secHd('B', 'SteerStar SKU 기반 오더 미션',
+    '고객사 한 곳씩 품번 목록을 주고, 그 목록을 얼마나 열었나 · '
+    + MS.length + '개 고객사 단독 미션', COL_B);
   const _m = k => MS.find(x => x.key === k);
   const kz0 = _m('bauten'), az0 = _m('retems'), ka0 = _m('kailos');
   const bBl = [];
@@ -4754,7 +4770,8 @@ function skuReportParts(S, X, SSM) {
       + '<b>' + M(addable) + '</b> 만 더함 <span class="skui-mut">(' + add.join(' · ')
       + ' — ChoiceKit 원장 밖이라 아직 아무 데도 안 잡힌 오더)</span>.</div>';
   }
-  return { head, tiles, clsline, table, bConv, bList, bGot, bTgt, ovN, ovAmt, inCk, addable, MS };
+  return { head, tiles, clsline, table, bConv, bList, bGot, bTgt, ovN, ovAmt, inCk, addable, MS,
+           secHd, COL_A, COL_B };
 }
 
 function skuImpactParts(){
@@ -4820,18 +4837,16 @@ function skuImpactParts(){
     +'<b>'+skuiMoney(_R.addable)+' 만 더함</b> — ChoiceKit 원장 밖이라 아직 아무 데도 안 잡힌 몫임.');
   const bullets='<ul class="skui-bl">'+bl.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
 
-  const deepHd='<div class="skui-cls" style="margin-top:18px;padding-top:12px;'
-   +'border-top:1px solid var(--border,rgba(127,127,127,.25))"><b>A 상세 · 어디서 늘고 어디서 줄었나</b> '
-   +'<span class="skui-mut">위 A 표의 한 줄을 고객사·품번·권역·차종까지 펼친 것</span></div>';
+  const deepHd=_R.secHd('A', '상세 · 어디서 늘고 어디서 줄었나',
+    '위 A 표의 한 줄을 고객사·품번·권역·차종까지 펼친 것', _R.COL_A);
   deep+=custDeepHTML(S);              /* 고객사별 — 감소가 어디에 쏠렸나 */
   if(X) deep+=cnDeepHTML(X);          /* 프로모션별 상세 */
   /* 고객사 단독 미션 상세 — 두는 자리가 다름. SKU 기반 추가 오더미션이 셋
      (Kailos 호주 · Bauten KZ · Retems AZ)이라 한 블록으로 묶어 비교한다. */
   let deepCust='';
   const _ssm = ssmData();
-  if (_ssm) deepCust = '<div class="skui-cls" style="margin-top:18px;padding-top:12px;'
-    +'border-top:1px solid var(--border,rgba(127,127,127,.25))"><b>B 상세 · 고객사별 미션</b> '
-    +'<span class="skui-mut">위 B 표의 한 줄을 목록 전환·성장·품번까지 펼친 것</span></div>'
+  if (_ssm) deepCust = _R.secHd('B', '상세 · 고객사별 미션',
+      '위 B 표의 한 줄을 목록 전환·성장·품번까지 펼친 것', _R.COL_B)
     + ssmSectionHTML(_ssm, {embed:true});
   else (S.aside||[]).forEach(A=>{ deepCust+=kjkSectionHTML(A); });
 
